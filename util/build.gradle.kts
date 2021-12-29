@@ -1,9 +1,6 @@
-@Suppress("DSL_SCOPE_VIOLATION")
 plugins {
     id("java-library")
     id("kotlin")
-    alias(libs.plugins.gradle.ktlint)
-    alias(libs.plugins.ksp)
 }
 
 java {
@@ -11,18 +8,8 @@ java {
     targetCompatibility = JavaVersion.VERSION_11
 }
 
-tasks.test {
-    useJUnitPlatform()
-}
-
 dependencies {
-    api(project(":util"))
-
-    implementation(kotlin("reflect"))
-
     api(libs.moshi.core)
-    implementation(libs.moshi.adapters)
-    ksp(libs.moshi.codegen)
 
     testImplementation(kotlin("test-junit5"))
     testImplementation("org.junit.jupiter:junit-jupiter:5.8.2")

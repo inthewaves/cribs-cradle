@@ -14,11 +14,9 @@ class MyClassTest {
 
     val instance = Something("hi", 5)
     val json = adapter.toJson(instance)
-    assertEquals(json, "abc")
+    assertEquals(json, """{"a":"hi","b":5}""")
   }
 }
 
 @JsonClass(generateAdapter = true)
-data class Something(val a: String, val b: Int) {
-
-}
+data class Something(val a: String, val b: Int)

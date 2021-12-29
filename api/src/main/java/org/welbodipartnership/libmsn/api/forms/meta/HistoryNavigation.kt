@@ -10,8 +10,8 @@ import com.squareup.moshi.JsonClass
 data class HistoryNavigation(
   /** A link to the API endpoint when the form was saved */
   @Json(name = "Url")
-  val url: String,
+  val url: String?,
   /** The type of the history record */
   @Json(name = "Text")
-  val text: String
+  val text: String?
 )

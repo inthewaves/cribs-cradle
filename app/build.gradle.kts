@@ -1,10 +1,11 @@
-
+// suppressing due to https://youtrack.jetbrains.com/issue/KTIJ-19369
+@Suppress("DSL_SCOPE_VIOLATION")
 plugins {
   id("com.android.application")
   kotlin("android")
-  // suppressing due to https://youtrack.jetbrains.com/issue/KTIJ-19369
-  @Suppress("DSL_SCOPE_VIOLATION")
+  kotlin("kapt")
   alias(libs.plugins.gradle.ktlint)
+  id("dagger.hilt.android.plugin")
 }
 
 android {
@@ -59,6 +60,7 @@ android {
 
 dependencies {
   api(project(":api"))
+  api(project(":data"))
 
   implementation(libs.androidx.activity.compose)
   implementation(libs.androidx.appcompat)
@@ -70,6 +72,9 @@ dependencies {
   implementation(libs.compose.material)
   implementation(libs.compose.ui.tooling.preview)
 
+  implementation(libs.hilt.library)
+  kapt(libs.hilt.compiler)
+
   implementation(libs.kotlinx.coroutines.android)
 
   implementation(libs.google.tink)
@@ -80,4 +85,10 @@ dependencies {
   androidTestImplementation(libs.androidx.test.espresso.core)
   androidTestImplementation(libs.androidx.compose.ui.test.junit4)
   debugImplementation(libs.androidx.compose.ui.tooling)
+}
+
+// Allow references to generated code
+// https://developer.android.com/training/dependency-injection/hilt-android#setup
+kapt {
+  correctErrorTypes = true
 }

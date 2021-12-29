@@ -21,25 +21,25 @@ import com.squareup.moshi.JsonClass
  */
 @JsonClass(generateAdapter = true)
 data class Meta(
-    @Json(name = "Title")
+  @Json(name = "Title")
   val title: String,
-    @Json(name = "FormId")
+  @Json(name = "FormId")
   val formId: Long,
-    @Json(name = "ObjectId")
+  @Json(name = "ObjectId")
   val objectId: Long,
-    /** Additional information with links to API endpoints to view historical form’s data. */
+  /** Additional information with links to API endpoints to view historical form’s data. */
   @Json(name = "HistoryNavigation")
   val historyNavigation: HistoryNavigation?,
-    /** Additional information about who and when inserted/updated/signed form’s data record */
+  /** Additional information about who and when inserted/updated/signed form’s data record */
   @Json(name = "OperationLog")
   val operationLog: OperationLog,
-    /** information about the actions that can be done with the form (e.g. "Save draft" or "Save") */
+  /** information about the actions that can be done with the form (e.g. "Save draft" or "Save") */
   @Json(name = "Operations")
   val operations: List<Operation>,
-    /** Information about form’s variables */
+  /** Information about form’s variables */
   @Json(name = "Controls")
   val controls: List<Control>,
-    /** A link to the API endpoint to be used to retrieve a patient's form in hierarchical view */
+  /** A link to the API endpoint to be used to retrieve a patient's form in hierarchical view */
   @Json(name = "TreeUrl")
   val treeUrl: String?
 )
