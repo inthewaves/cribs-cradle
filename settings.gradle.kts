@@ -54,7 +54,7 @@ dependencyResolutionManagement {
             alias("androidx-lifecycle-viewmodel-compose").to("androidx.lifecycle:lifecycle-viewmodel-compose:1.0.0-alpha07")
             alias("androidx-lifecycle-viewmodel-ktx").to("androidx.lifecycle", "lifecycle-viewmodel-ktx").versionRef("androidxlifecycle")
 
-            alias("androidx-navigation-compose").to("androidx.navigation:navigation-compose:2.4.0-beta02")
+            alias("androidx-navigation-compose").to("androidx.navigation:navigation-compose:2.4.0-rc01")
 
             version("room",  "2.4.0")
             alias("androidx-room-common").to("androidx.room", "room-common").versionRef("room")
