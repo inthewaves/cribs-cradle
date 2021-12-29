@@ -19,7 +19,7 @@ dependencyResolutionManagement {
             // https://github.com/gradle/gradle/commit/269148642b4499861bced4b028a400f856273bb2
             alias("kotlin-gradle-plugin").to("org.jetbrains.kotlin", "kotlin-gradle-plugin").versionRef("kotlin")
             alias("kotlin-serialization-base").to("org.jetbrains.kotlin", "kotlin-serialization").versionRef("kotlin")
-            alias("kotlinx-serialization-json").to("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.1")
+            alias("kotlinx-serialization-json").to("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2")
             alias("kotlinx-coroutines-android").to("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2")
 
             alias("androidx-core-ktx").to("androidx.core:core-ktx:1.7.0")
