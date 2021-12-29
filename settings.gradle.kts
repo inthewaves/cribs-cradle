@@ -35,13 +35,16 @@ dependencyResolutionManagement {
             alias("signal-argon2").to("org.signal:argon2:13.1")
 
             version("hilt", "2.40.5")
-            alias("dagger-gradlePlugin").to("com.google.dagger", "hilt-android-gradle-plugin").versionRef("hilt")
-            alias("dagger-plugin").toPluginId("dagger.hilt.android.plugin").versionRef("hilt")
+            alias("dagger-android-gradlePlugin").to("com.google.dagger", "hilt-android-gradle-plugin").versionRef("hilt")
+            alias("dagger-android-plugin").toPluginId("dagger.hilt.android.plugin").versionRef("hilt")
             alias("hilt-library").to("com.google.dagger", "hilt-android").versionRef("hilt")
             alias("hilt-compiler").to("com.google.dagger", "hilt-android-compiler").versionRef("hilt")
             version("androidxhilt",  "1.0.0")
             alias("androidx-hilt-work").to("androidx.hilt", "hilt-work").versionRef("androidxhilt")
             alias("androidx-hilt-compiler").to("androidx.hilt", "hilt-compiler").versionRef("androidxhilt")
+
+            alias("dagger-compiler").to("com.google.dagger", "dagger-compiler").versionRef("hilt")
+            alias("dagger-dagger").to("com.google.dagger", "dagger").versionRef("hilt")
 
             // ([^ ]*) = \{ module = "(.*):(.*)", version.ref = "(.*)" \} -> alias("$1").to("$2", "$3").versionRef("$4")
             // ([^ ]*) = "(.*)" -> alias("$1").to("$2")
@@ -60,6 +63,8 @@ dependencyResolutionManagement {
             alias("androidx-room-paging").to("androidx.room", "room-paging").versionRef("room")
             alias("androidx-room-runtime").to("androidx.room", "room-runtime").versionRef("room")
             alias("androidx-room-testing").to("androidx.room", "room-testing").versionRef("room")
+
+            alias("sqlcipher").to("net.zetetic:android-database-sqlcipher:4.5.0")
 
             version("paging", "3.1.0")
             alias("androidx-paging-common").to("androidx.paging", "paging-common-ktx").versionRef("paging")
@@ -80,6 +85,13 @@ dependencyResolutionManagement {
             alias("moshi-adapters").to("com.squareup.moshi", "moshi-adapters").versionRef("moshi")
             // alias("valiktor").to("org.valiktor:valiktor-core:0.12.0")
 
+            version("protobuf", "4.0.0-rc-2")
+            alias("protobuf-javalite").to("com.google.protobuf", "protobuf-javalite").versionRef("protobuf")
+            alias("protobuf-compiler").to("com.google.protobuf", "protoc").versionRef("protobuf")
+            alias("protobuf").toPluginId("com.google.protobuf").version("0.8.18")
+
+            alias("datastore").to("androidx.datastore:datastore:1.0.0")
+
             version("junit5", "5.8.2")
             alias("junit5-androidGradlePlugin").to("de.mannodermaus.gradle.plugins:android-junit5:1.8.2.0")
             alias("junit5-androidGradlePlugin").toPluginId("de.mannodermaus.android-junit5")
@@ -87,6 +99,9 @@ dependencyResolutionManagement {
             alias("junit5-engine").to("org.junit.jupiter", "junit-jupiter-engine").versionRef("junit5")
             alias("junit5-params").to("org.junit.jupiter", "junit-jupiter-params").versionRef("junit5")
 
+            version("mockk", "1.12.1")
+            alias("mockk-mockk").to("io.mockk", "mockk").versionRef("mockk")
+            alias("mockk-agent-jvm").to("io.mockk", "mockk-agent-jvm").versionRef("mockk")
 
             alias("junit-android").to("junit:junit:4.13.2")
             alias("androidx-test-ext-junit").to("androidx.test.ext:junit:1.1.3")

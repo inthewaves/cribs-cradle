@@ -1,6 +1,7 @@
 plugins {
     id("java-library")
     id("kotlin")
+    kotlin("kapt")
 }
 
 java {
@@ -10,6 +11,9 @@ java {
 
 dependencies {
     api(libs.moshi.core)
+    implementation(libs.kotlinx.coroutines.android)
+    api(libs.dagger.dagger)
+    kapt(libs.dagger.compiler)
 
     testImplementation(kotlin("test-junit5"))
     testImplementation("org.junit.jupiter:junit-jupiter:5.8.2")

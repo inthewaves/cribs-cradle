@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+option java_package = "org.welbodipartnership.cradle5.data.settings";
+option java_multiple_files = true;
+
+message UnencryptedSettings {
+  message AesGcmCiphertext {
+    bytes data = 1;
+    bytes iv = 2;
+  }
+  /**
+   * A hash of the user's login password, stored for authentication purposes.
+   */
+  bytes password_hash = 1;
+
+  /**
+   * A key for {@link EncryptedSettings}, wrapped with a keystore key.
+   */
+  AesGcmCiphertext wrapped_settings_key = 2;
+
+  /**
+   * A key for the database, wrapped with a keystore key.
+   */
+  AesGcmCiphertext wrapped_database_key = 3;
+}
+
+message EncryptedSettings {
+  string username = 1;
+}

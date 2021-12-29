@@ -4,6 +4,7 @@ import androidx.room.TypeConverter
 import org.welbodipartnership.cradle5.util.date.FormDate
 import org.welbodipartnership.cradle5.util.date.toFormDateOrThrow
 
+@Suppress("UNUSED")
 object DbTypeConverters {
   @TypeConverter
   @JvmStatic

@@ -1,3 +1,9 @@
+import com.google.protobuf.gradle.builtins
+import com.google.protobuf.gradle.generateProtoTasks
+import com.google.protobuf.gradle.id
+import com.google.protobuf.gradle.protobuf
+import com.google.protobuf.gradle.protoc
+
 @Suppress("DSL_SCOPE_VIOLATION")
 plugins {
     id("com.android.library")
@@ -5,6 +11,7 @@ plugins {
     kotlin("kapt")
     alias(libs.plugins.ksp)
     alias(libs.plugins.gradle.ktlint)
+    alias(libs.plugins.protobuf)
     id("de.mannodermaus.android-junit5")
 }
 
@@ -25,6 +32,43 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
+    sourceSets {
+        getByName("main") {
+
+            // https://github.com/google/protobuf-gradle-plugin/pull/433/files
+            fun com.android.build.api.dsl.AndroidSourceSet.proto(action: SourceDirectorySet.() -> Unit) {
+                (this as? ExtensionAware)!!
+                    .extensions
+                    .getByName("proto")
+                    .let { it as? SourceDirectorySet }!!
+                    .apply(action)
+            }
+
+            proto {
+                srcDir("src/main/proto")
+            }
+        }
+
+    }
+
+}
+
+protobuf {
+    protoc {
+        println(libs.protobuf.compiler.get().toString())
+        artifact = libs.protobuf.compiler.get().toString()
+    }
+
+    generateProtoTasks {
+        all().forEach { task ->
+            task.builtins {
+                id("java") {
+                    option("lite")
+                }
+            }
+        }
+    }
 }
 
 dependencies {
@@ -41,7 +85,18 @@ dependencies {
     implementation(libs.hilt.library)
     kapt(libs.hilt.compiler)
 
+    api(libs.google.tink)
+
+    implementation(libs.moshi.core)
+    ksp(libs.moshi.codegen)
+
+    implementation(libs.protobuf.javalite)
+    implementation(libs.datastore)
+
+    testImplementation(kotlin("test-junit5"))
     testImplementation(libs.junit5.api)
+    testImplementation(libs.mockk.mockk)
+    testImplementation(libs.mockk.agent.jvm)
     testRuntimeOnly(libs.junit5.engine)
     testImplementation(libs.junit5.params)
     androidTestImplementation(libs.androidx.test.ext.junit)
