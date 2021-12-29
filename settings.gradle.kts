@@ -20,7 +20,7 @@ dependencyResolutionManagement {
             alias("kotlin-gradle-plugin").to("org.jetbrains.kotlin", "kotlin-gradle-plugin").versionRef("kotlin")
             alias("kotlin-serialization-base").to("org.jetbrains.kotlin", "kotlin-serialization").versionRef("kotlin")
             alias("kotlinx-serialization-json").to("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2")
-            alias("kotlinx-coroutines-android").to("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2")
+            alias("kotlinx-coroutines-android").to("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.0")
 
             alias("androidx-core-ktx").to("androidx.core:core-ktx:1.7.0")
             alias("androidx-appcompat").to("androidx.appcompat:appcompat:1.4.0")
