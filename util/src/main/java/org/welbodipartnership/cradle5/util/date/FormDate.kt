@@ -10,7 +10,7 @@ import org.welbodipartnership.libmsn.api.util.toDdMmYyyySlashString
 import java.util.Date
 
 /**
- * Represents the date string for form input
+ * Represents the date string for form input as dd/mm/yyyy string
  */
 @JvmInline
 @JsonClass(generateAdapter = true)

@@ -8,11 +8,11 @@ import com.squareup.moshi.JsonClass
  */
 @JsonClass(generateAdapter = true)
 data class OperationLog(
-    @Json(name = "Inserted")
+  @Json(name = "Inserted")
   val inserted: Entry?,
-    @Json(name = "Updated")
+  @Json(name = "Updated")
   val updated: Entry?,
-    @Json(name = "Signed")
+  @Json(name = "Signed")
   val signed: Entry?,
 ) {
   @JsonClass(generateAdapter = true)
