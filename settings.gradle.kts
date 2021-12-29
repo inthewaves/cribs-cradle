@@ -51,7 +51,7 @@ dependencyResolutionManagement {
 
             version("androidxlifecycle", "2.4.0")
             alias("androidx-lifecycle-runtime").to("androidx.lifecycle", "lifecycle-runtime-ktx").versionRef("androidxlifecycle")
-            alias("androidx-lifecycle-viewmodel-compose").to("androidx.lifecycle:lifecycle-viewmodel-compose:1.0.0-alpha07")
+            alias("androidx-lifecycle-viewmodel-compose").to("androidx.lifecycle:lifecycle-viewmodel-compose:2.4.0")
             alias("androidx-lifecycle-viewmodel-ktx").to("androidx.lifecycle", "lifecycle-viewmodel-ktx").versionRef("androidxlifecycle")
 
             alias("androidx-navigation-compose").to("androidx.navigation:navigation-compose:2.4.0-rc01")
