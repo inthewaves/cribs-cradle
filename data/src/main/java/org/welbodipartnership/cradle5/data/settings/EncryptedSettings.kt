@@ -1,17 +1,55 @@
 package org.welbodipartnership.cradle5.data.settings
 
+import android.content.Context
 import androidx.datastore.core.CorruptionException
+import androidx.datastore.core.DataStore
+import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.core.Serializer
+import androidx.datastore.dataStoreFile
 import com.google.crypto.tink.KeysetHandle
 import com.google.crypto.tink.StreamingAead
 import com.google.protobuf.InvalidProtocolBufferException
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import org.welbodipartnership.cradle5.util.coroutines.AppCoroutineDispatchers
 import java.io.InputStream
 import java.io.OutputStream
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class EncryptedSettingsSerializer internal constructor(
+@Singleton
+class EncryptedSettingsManager @Inject constructor(
+  @ApplicationContext private val context: Context,
+  private val appCoroutineDispatchers: AppCoroutineDispatchers,
+  private val unencryptedSettingsManager: UnencryptedSettingsManager
+) {
+  private var dataStore: DataStore<EncryptedSettings>? = null
+
+  internal fun setup(keysetHandle: KeysetHandle) {
+    val serializer = EncryptedSettingsSerializer(
+      keysetHandle.getPrimitive(StreamingAead::class.java),
+      FILENAME
+    )
+
+    dataStore = DataStoreFactory.create(
+      serializer = serializer,
+      produceFile = { context.dataStoreFile(FILENAME) },
+      // these are the default params
+      scope = CoroutineScope(appCoroutineDispatchers.io + SupervisorJob())
+    )
+  }
+
+  companion object {
+    private const val FILENAME = "encrypted_settings.pb"
+    private const val TAG = "EncryptedSettingsManage"
+  }
+}
+
+internal class EncryptedSettingsSerializer internal constructor(
   private val streamingAead: StreamingAead,
   fileName: String,
-) : Serializer<EncryptedSettings>  {
+) : Serializer<EncryptedSettings> {
   private val fileNameBytes = fileName.toByteArray(Charsets.UTF_8)
 
   override val defaultValue: EncryptedSettings
@@ -34,13 +72,13 @@ class EncryptedSettingsSerializer internal constructor(
   }
 
   companion object {
-    const val FILENAME = "encrypted_settings.pb"
+
     const val ENCRYPTION_SCHEME = "AES256_GCM_HKDF_4KB"
 
-    fun create(keysetHandle: KeysetHandle): EncryptedSettingsSerializer {
+    fun create(keysetHandle: KeysetHandle, fileName: String): EncryptedSettingsSerializer {
       return EncryptedSettingsSerializer(
         keysetHandle.getPrimitive(StreamingAead::class.java),
-        FILENAME
+        fileName
       )
     }
   }

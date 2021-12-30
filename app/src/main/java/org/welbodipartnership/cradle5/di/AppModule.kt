@@ -11,6 +11,4 @@ import org.welbodipartnership.cradle5.util.CoroutineModule
     CoroutineModule::class
   ]
 )
-object AppModule {
-
-}
+object AppModule

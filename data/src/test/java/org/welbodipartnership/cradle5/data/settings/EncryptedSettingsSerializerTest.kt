@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Test
 import java.io.ByteArrayOutputStream
 import kotlin.test.assertEquals
 
-
 internal class EncryptedSettingsSerializerTest {
   companion object {
     @JvmStatic

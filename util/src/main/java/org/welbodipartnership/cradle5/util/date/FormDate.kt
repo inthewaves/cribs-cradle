@@ -5,16 +5,15 @@ import com.squareup.moshi.JsonClass
 import com.squareup.moshi.JsonDataException
 import com.squareup.moshi.JsonReader
 import com.squareup.moshi.JsonWriter
-import org.welbodipartnership.libmsn.api.util.fromDdMmYyyyDateOrThrow
-import org.welbodipartnership.libmsn.api.util.toDdMmYyyySlashString
+import org.welbodipartnership.api.util.fromDdMmYyyyDateOrThrow
+import org.welbodipartnership.api.util.toDdMmYyyySlashString
 import java.util.Date
 
 /**
  * Represents the date string for form input as dd/mm/yyyy string
  */
-@JvmInline
 @JsonClass(generateAdapter = true)
-value class FormDate(val date: Date) {
+class FormDate(val date: Date) {
   override fun toString(): String = date.toDdMmYyyySlashString()
 
   class Adapter : JsonAdapter<FormDate>() {

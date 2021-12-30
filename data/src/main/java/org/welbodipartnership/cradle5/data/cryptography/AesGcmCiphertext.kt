@@ -47,7 +47,7 @@ class AesGcmCiphertext internal constructor(val data: ByteArray, val iv: ByteArr
   }
 }
 
-fun UnencryptedSettings.AesGcmCiphertext.toAppAesGcmCiphertext() = AesGcmCiphertext(
+internal fun UnencryptedSettings.AesGcmCiphertext.toAppAesGcmCiphertext() = AesGcmCiphertext(
   data.toByteArray(),
   iv.toByteArray()
 )

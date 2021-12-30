@@ -1,4 +1,4 @@
-package org.welbodipartnership.libmsn.api.util
+package org.welbodipartnership.api.util
 
 import java.util.Calendar
 import java.util.Date

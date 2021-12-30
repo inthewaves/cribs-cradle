@@ -8,22 +8,16 @@ message UnencryptedSettings {
     bytes data = 1;
     bytes iv = 2;
   }
-  /**
-   * A hash of the user's login password, stored for authentication purposes.
-   */
-  bytes password_hash = 1;
+  /* An encrypted Tink KeysetHandle for EncryptedSettings, wrapped with the Android KeyStore key. */
+  AesGcmCiphertext wrapped_settings_key = 1;
 
-  /**
-   * A key for {@link EncryptedSettings}, wrapped with a keystore key.
-   */
-  AesGcmCiphertext wrapped_settings_key = 2;
-
-  /**
-   * A key for the database, wrapped with a keystore key.
-   */
-  AesGcmCiphertext wrapped_database_key = 3;
+  /* A key for the database, wrapped with the Android KeyStore key. */
+  AesGcmCiphertext wrapped_database_key = 2;
 }
 
 message EncryptedSettings {
+  /* The username of the currently logged-in user. */
   string username = 1;
+  /* A hash of the user's login password, stored for authentication purposes. */
+  bytes password_hash = 2;
 }

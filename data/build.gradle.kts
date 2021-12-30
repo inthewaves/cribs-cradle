@@ -15,6 +15,15 @@ plugins {
     id("de.mannodermaus.android-junit5")
 }
 
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    kotlinOptions {
+        freeCompilerArgs = freeCompilerArgs + listOf(
+            "-Xopt-in=kotlin.RequiresOptIn",
+            "-Xopt-in=kotlin.time.ExperimentalTime"
+        )
+    }
+}
+
 android {
     compileSdk = 31
 
@@ -49,9 +58,7 @@ android {
                 srcDir("src/main/proto")
             }
         }
-
     }
-
 }
 
 protobuf {
@@ -79,8 +86,8 @@ dependencies {
     api(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.room.paging)
-
     ksp(libs.androidx.room.compiler)
+    implementation(libs.sqlcipher)
 
     implementation(libs.hilt.library)
     kapt(libs.hilt.compiler)

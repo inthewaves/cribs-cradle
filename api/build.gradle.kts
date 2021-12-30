@@ -1,18 +1,29 @@
 @Suppress("DSL_SCOPE_VIOLATION")
 plugins {
-    id("java-library")
-    id("kotlin")
+    id("com.android.library")
+    kotlin("android")
     alias(libs.plugins.gradle.ktlint)
     alias(libs.plugins.ksp)
+    id("de.mannodermaus.android-junit5")
 }
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
-}
+android {
+    compileSdk = 31
 
-tasks.test {
-    useJUnitPlatform()
+    defaultConfig {
+        minSdk = 21
+        // targetSdk = 31
+        // versionCode 1
+        // versionName "1.0"
+
+        // testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // consumerProguardFiles.add(File("consumer-rules.pro"))
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
 }
 
 dependencies {
@@ -23,7 +34,6 @@ dependencies {
     api(libs.moshi.core)
     implementation(libs.moshi.adapters)
     ksp(libs.moshi.codegen)
-
 
     testImplementation(kotlin("test-junit5"))
     testImplementation("org.junit.jupiter:junit-jupiter:5.8.2")

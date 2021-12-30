@@ -7,7 +7,7 @@ import com.squareup.moshi.JsonWriter
 
 class Base64BytesAdapter : JsonAdapter<ByteArray>() {
   override fun fromJson(reader: JsonReader): ByteArray {
-    return Base64.decode(reader.nextString(), Base64.NO_WRAP);
+    return Base64.decode(reader.nextString(), Base64.NO_WRAP)
   }
 
   override fun toJson(writer: JsonWriter, value: ByteArray?) {
