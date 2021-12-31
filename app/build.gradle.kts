@@ -2,6 +2,7 @@
 @Suppress("DSL_SCOPE_VIOLATION")
 plugins {
     id("com.android.application")
+    id("kotlin-parcelize")
     kotlin("android")
     kotlin("kapt")
     alias(libs.plugins.gradle.ktlint)

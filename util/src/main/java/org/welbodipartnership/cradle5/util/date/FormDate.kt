@@ -1,10 +1,12 @@
 package org.welbodipartnership.cradle5.util.date
 
+import android.os.Parcelable
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.JsonDataException
 import com.squareup.moshi.JsonReader
 import com.squareup.moshi.JsonWriter
+import kotlinx.parcelize.Parcelize
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import java.util.GregorianCalendar
@@ -28,7 +30,8 @@ private const val DD_MM_YYYY_STRING_LENGTH = DAY_WITH_PADDING_LENGTH +
  * The database uses 00/00/{year} to indicate that a birthday is not exact.
  */
 @JsonClass(generateAdapter = true)
-data class FormDate(val day: Int, val month: Int, val year: Int) : Comparable<FormDate> {
+@Parcelize
+data class FormDate(val day: Int, val month: Int, val year: Int) : Comparable<FormDate>, Parcelable {
   val isExact: Boolean get() = day != 0 && month != 0
 
   fun toGmtGregorianCalendar() = GregorianCalendar(TimeZone.getTimeZone("GMT")).apply {
@@ -109,6 +112,15 @@ data class FormDate(val day: Int, val month: Int, val year: Int) : Comparable<Fo
         day = now.dayOfMonth,
         month = now.monthValue,
         year = now.year
+      )
+    }
+
+    fun fromAge(ageInYears: Int): FormDate {
+      val now = LocalDate.now()
+      return FormDate(
+        day = 0,
+        month = 0,
+        year = now.year - ageInYears
       )
     }
   }

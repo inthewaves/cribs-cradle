@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="patient_error_initials_missing">Missing patient initials</string>
+    <string name="patient_error_initials_cant_have_digits">Patient initials must be letters</string>
+</resources>

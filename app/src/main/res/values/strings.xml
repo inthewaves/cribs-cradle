@@ -31,7 +31,7 @@
     <string name="maternal_dealth_underlying_cause_label">Underlying cause of death</string>
     <string name="maternal_dealth_place_label">Place of death</string>
     <string name="outcomes_card_title">Outcomes</string>
-    <string name="registration_card_title">Registration</string>
+    <string name="patient_registration_card_title">Registration</string>
     <string name="patient_registration_date_of_birth_label">Date of birth</string>
     <string name="patients_list_title">Patients list</string>
     <string name="patients_details_title">Patient details</string>
@@ -46,4 +46,8 @@
     <string name="age_must_be_in_range_d_and_d">Age must be in range %1$d to %2$d</string>
     <string name="date_text_field_tap_to_set_date_placeholder">Tap here to select a date</string>
     <string name="new_patient_title">New patient</string>
+    <string name="patient_registration_age_label">Age</string>
+    <string name="form_date_required_error">Missing date</string>
+    <string name="server_enum_unknown_selection_error">Unknown selection value</string>
+    <string name="yes">Yes</string>
 </resources>

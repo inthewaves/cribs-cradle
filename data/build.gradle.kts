@@ -7,6 +7,7 @@ import com.google.protobuf.gradle.protoc
 @Suppress("DSL_SCOPE_VIOLATION")
 plugins {
     id("com.android.library")
+    id("kotlin-parcelize")
     kotlin("android")
     kotlin("kapt")
     alias(libs.plugins.ksp)
@@ -79,6 +80,8 @@ protobuf {
 
 dependencies {
     api(project(":util"))
+
+    implementation(kotlin("reflect"))
 
     implementation(libs.androidx.core.ktx)
 

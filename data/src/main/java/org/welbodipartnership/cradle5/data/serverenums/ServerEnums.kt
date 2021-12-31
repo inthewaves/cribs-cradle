@@ -2,7 +2,6 @@ package org.welbodipartnership.cradle5.data.serverenums
 
 import androidx.collection.ArrayMap
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.Stable
 import org.welbodipartnership.cradle5.data.settings.DynamicServerEnum
 
 /**
@@ -353,12 +352,14 @@ enum class DropdownType(val serverLookupId: Int) {
  * each dropdown dynamic, because an admin can freely add more values. However, we made the type
  * itself sealed, because the form structure itself is assumed to be fixed in the app.
  */
-@Stable
+@Immutable
 class ServerEnum constructor(
   val type: DropdownType,
   unsortedValues: List<Entry>
 ) {
-  val sortedValues = unsortedValues.sortedBy { it.listOrder }
+  val sortedValues: List<Entry> = unsortedValues.sortedBy { it.listOrder }
+
+  val otherEntry: Entry? = sortedValues.asReversed().find { it.name.trim() == "Other" }
 
   fun getValueFromId(id: Int): Entry? = sortedValues.find { it.id == id }
 

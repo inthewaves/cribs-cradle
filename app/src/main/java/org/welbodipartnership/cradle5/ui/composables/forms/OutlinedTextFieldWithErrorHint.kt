@@ -35,7 +35,7 @@ fun OutlinedTextFieldWithErrorHint(
   visualTransformation: VisualTransformation = VisualTransformation.None,
   keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
   keyboardActions: KeyboardActions = KeyboardActions.Default,
-  singleLine: Boolean = false,
+  singleLine: Boolean = true,
   maxLines: Int = Int.MAX_VALUE,
   interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
   shape: Shape = MaterialTheme.shapes.small,
@@ -67,7 +67,8 @@ fun OutlinedTextFieldWithErrorHint(
       if (errorHint != null) {
         Text(
           errorHint,
-          color = MaterialTheme.colors.error
+          color = MaterialTheme.colors.error,
+          fontSize = MaterialTheme.typography.caption.fontSize
         )
       }
     }

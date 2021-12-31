@@ -20,7 +20,7 @@ import org.welbodipartnership.cradle5.util.date.FormDate
  */
 @Composable
 fun PatientCard(patient: Patient, modifier: Modifier = Modifier) {
-  BaseDetailsCard(title = stringResource(R.string.registration_card_title), modifier = modifier) {
+  BaseDetailsCard(title = stringResource(R.string.patient_registration_card_title), modifier = modifier) {
     val spacerHeight = 4.dp
     LabelAndValueOrNone(
       label = stringResource(R.string.patient_registration_card_id_label),

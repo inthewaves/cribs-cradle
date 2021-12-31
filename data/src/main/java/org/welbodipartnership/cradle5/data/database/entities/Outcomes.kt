@@ -1,5 +1,6 @@
 package org.welbodipartnership.cradle5.data.database.entities
 
+import android.content.Context
 import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Entity
@@ -8,7 +9,9 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import org.welbodipartnership.cradle5.data.database.entities.embedded.EnumSelection
 import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
+import org.welbodipartnership.cradle5.data.verification.Verifiable
 import org.welbodipartnership.cradle5.util.date.FormDate
+import kotlin.reflect.KProperty1
 
 @Entity(
   indices = [
@@ -44,7 +47,16 @@ data class Outcomes(
   val surgicalManagement: SurgicalManagementOfHaemorrhage? = null,
   @Embedded(prefix = "perinatal_death_")
   val perinatalDeath: PerinatalDeath? = null
-)
+) : Verifiable<Outcomes> {
+  override fun isValueForPropertyValid(
+    property: KProperty1<out Outcomes, *>,
+    value: Any?,
+    context: Context?
+  ): Verifiable.Result {
+    TODO("Not yet implemented")
+  }
+
+}
 
 /**
  * Represents the first eclampsia fit

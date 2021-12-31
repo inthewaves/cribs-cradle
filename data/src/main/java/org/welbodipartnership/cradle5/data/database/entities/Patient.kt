@@ -1,11 +1,16 @@
 package org.welbodipartnership.cradle5.data.database.entities
 
+import android.content.Context
+import androidx.core.text.isDigitsOnly
 import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import org.welbodipartnership.cradle5.data.R
 import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
+import org.welbodipartnership.cradle5.data.verification.Verifiable
 import org.welbodipartnership.cradle5.util.date.FormDate
+import kotlin.reflect.KProperty1
 
 /**
  * Represents a patient on the server. Note that this representation is different compared to how
@@ -37,6 +42,57 @@ data class Patient(
    * Local notes the user may have saved for the patient. This is not uploaded to the server.
    */
   val localNotes: String? = null
-) {
+) : Verifiable<Patient> {
   val serverPatientId: Long? get() = serverInfo?.objectId
+
+  override fun isValueForPropertyValid(
+    property: KProperty1<out Patient, *>,
+    value: Any?,
+    context: Context?
+  ): Verifiable.Result = isValueValid(property, value, context, instance = this)
+
+  companion object : Verifiable.Verifier<Patient> {
+    const val INITIALS_MAX_LENGTH = 5
+
+    override fun isValueValid(
+      property: KProperty1<out Patient, *>,
+      value: Any?,
+      context: Context?,
+      instance: Patient?,
+      currentValues: Map<String, Any?>?
+    ): Verifiable.Result = when (property) {
+      Patient::initials -> with(value as? String) {
+        if (isNullOrBlank() || length !in 1..INITIALS_MAX_LENGTH) {
+          return Verifiable.Invalid(
+            property, context?.getString(R.string.patient_error_initials_missing)
+          )
+        }
+
+        if (!isDigitsOnly()) {
+          return Verifiable.Invalid(
+            property,
+            context?.getString(R.string.patient_error_initials_cant_have_digits)
+          )
+        }
+
+        return Verifiable.Valid
+      }
+      Patient::presentationDate -> with(value as? FormDate) {
+        if (this == null) {
+          return Verifiable.Invalid(
+            property, "Missing patient presentation date"
+          )
+        }
+        if (this.getAgeInYearsFromNow() < 0) {
+          return Verifiable.Invalid(
+            property, "Can't be in the future"
+          )
+        }
+
+        return Verifiable.Valid
+      }
+
+      else -> Verifiable.Valid
+    }
+  }
 }

@@ -26,17 +26,25 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
 
 open class TextFieldState(
-  val validator: (String) -> Boolean = { true },
-  private val errorFor: (Context, String) -> String = { _, _ -> "" }
+  validator: (String) -> Boolean,
+  errorFor: (Context, String) -> String,
+  initialValue: String = ""
+) : FieldState<String>(validator, errorFor) {
+  override var stateValue: String by mutableStateOf(initialValue)
+}
+
+abstract class FieldState<T>(
+  val validator: (T) -> Boolean = { true },
+  private val errorFor: (Context, T) -> String = { _, _ -> "" },
 ) {
-  var text: String by mutableStateOf("")
+  abstract var stateValue: T
   // was the TextField ever focused
   var isFocusedDirty: Boolean by mutableStateOf(false)
   var isFocused: Boolean by mutableStateOf(false)
   private var displayErrors: Boolean by mutableStateOf(false)
 
   open val isValid: Boolean
-    get() = validator(text)
+    get() = validator(stateValue)
 
   fun createFocusChangeModifier() = Modifier
     .onFocusChanged { focusState ->
@@ -63,7 +71,7 @@ open class TextFieldState(
   @Composable
   open fun getError(): String? {
     return if (showErrors()) {
-      errorFor(LocalContext.current, text)
+      errorFor(LocalContext.current, stateValue)
     } else {
       null
     }

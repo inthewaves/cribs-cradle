@@ -56,6 +56,7 @@ fun DateOutlinedTextField(
   date: FormDate?,
   onDatePicked: (FormDate) -> Unit,
   onPickerClose: () -> Unit = {},
+  modifier: Modifier = Modifier,
   textFieldModifier: Modifier = Modifier,
   enabled: Boolean = true,
   textStyle: TextStyle = LocalTextStyle.current,
@@ -63,14 +64,14 @@ fun DateOutlinedTextField(
   placeholder: @Composable (() -> Unit)? = {
     Text(stringResource(R.string.date_text_field_tap_to_set_date_placeholder))
   },
-  leadingIcon: @Composable (() -> Unit)? = { Icon(Icons.Filled.EditCalendar, null) },
-  trailingIcon: @Composable (() -> Unit)? = null,
+  leadingIcon: @Composable (() -> Unit)? = null,
+  trailingIcon: @Composable (() -> Unit)? = { Icon(Icons.Filled.EditCalendar, null) },
   errorHint: String? = null,
   visualTransformation: VisualTransformation = VisualTransformation.None,
   keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
   keyboardActions: KeyboardActions = KeyboardActions.Default,
   singleLine: Boolean = false,
-  maxLines: Int = Int.MAX_VALUE,
+  maxLines: Int = 1,
   shape: Shape = MaterialTheme.shapes.small,
   colors: TextFieldColors = TextFieldDefaults.outlinedTextFieldColors()
 ) {
@@ -144,7 +145,7 @@ fun DateOutlinedTextField(
   OutlinedTextFieldWithErrorHint(
     value = date?.toString() ?: "",
     onValueChange = {},
-    modifier = Modifier,
+    modifier = modifier,
     textFieldModifier = textFieldModifier,
     enabled = enabled,
     readOnly = true,
@@ -181,7 +182,6 @@ fun DateOutlinedTextFieldPreview() {
     Scaffold {
       Column {
         var selectedDate: MutableState<FormDate?> = remember { mutableStateOf(null) }
-
 
         Text("")
         DateOutlinedTextField(
