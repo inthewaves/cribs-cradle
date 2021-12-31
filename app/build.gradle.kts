@@ -107,6 +107,7 @@ dependencies {
     implementation(libs.accompanist.permissions)
     implementation(libs.accompanist.insets)
     implementation(libs.accompanist.insetsui)
+    implementation(libs.accompanist.systemuicontroller)
 
     implementation(libs.androidx.paging.compose)
 

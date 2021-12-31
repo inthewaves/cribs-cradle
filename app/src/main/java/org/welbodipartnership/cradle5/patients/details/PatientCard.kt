@@ -1,11 +1,9 @@
 package org.welbodipartnership.cradle5.patients.details
 
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.Card
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -22,34 +20,27 @@ import org.welbodipartnership.cradle5.util.date.FormDate
  */
 @Composable
 fun PatientCard(patient: Patient, modifier: Modifier = Modifier) {
-  Card(modifier) {
-    Column(Modifier.fillMaxWidth()) {
-      val spacerHeight = 4.dp
-      val padding = Modifier.padding(horizontal = 16.dp)
-      LabelAndValueOrNone(
-        label = stringResource(R.string.patient_card_id_label),
-        value = patient.id.toString(),
-        modifier = padding
-      )
-      Spacer(modifier = Modifier.height(spacerHeight))
-      LabelAndValueOrNone(
-        label = stringResource(R.string.patient_card_initials_label),
-        value = patient.initials,
-        textModifier = padding
-      )
-      Spacer(modifier = Modifier.height(spacerHeight))
-      LabelAndValueOrNone(
-        label = stringResource(R.string.patient_card_presentation_date_label),
-        value = patient.presentationDate.toString(),
-        textModifier = padding
-      )
-      Spacer(modifier = Modifier.height(spacerHeight))
-      LabelAndValueOrNone(
-        label = stringResource(R.string.patient_card_presentation_date_label),
-        value = patient.presentationDate.toString(),
-        textModifier = padding
-      )
-    }
+  BaseDetailsCard(title = stringResource(R.string.registration_card_title), modifier = modifier) {
+    val spacerHeight = 4.dp
+    LabelAndValueOrNone(
+      label = stringResource(R.string.patient_registration_card_id_label),
+      value = patient.id.toString(),
+    )
+    Spacer(modifier = Modifier.height(spacerHeight))
+    LabelAndValueOrNone(
+      label = stringResource(R.string.patient_registration_initials_label),
+      value = patient.initials,
+    )
+    Spacer(modifier = Modifier.height(spacerHeight))
+    LabelAndValueOrNone(
+      label = stringResource(R.string.patient_registration_presentation_date_label),
+      value = patient.presentationDate.toString(),
+    )
+    Spacer(modifier = Modifier.height(spacerHeight))
+    LabelAndValueOrNone(
+      label = stringResource(R.string.patient_registration_date_of_birth_label),
+      value = patient.dateOfBirth.toString(),
+    )
   }
 }
 
@@ -58,6 +49,7 @@ fun PatientCard(patient: Patient, modifier: Modifier = Modifier) {
 fun PatientCardPreview() {
   CradleTrialAppTheme {
     // Scaffold {
+    val scrollState = rememberScrollState()
     PatientCard(
       patient = Patient(
         initials = "AA",
@@ -65,7 +57,8 @@ fun PatientCardPreview() {
         dateOfBirth = FormDate(day = 19, month = 8, year = 1989),
         isExactDateOfBirth = false,
         lastUpdatedTimestamp = 162224953
-      )
+      ),
+      modifier = Modifier.verticalScroll(scrollState)
     )
     // }
   }

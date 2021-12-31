@@ -52,7 +52,7 @@ private fun LabelAndValue(
   Column(modifier) {
     Text(
       text = label,
-      style = MaterialTheme.typography.subtitle2,
+      style = MaterialTheme.typography.subtitle1,
       modifier = textModifier
     )
     Text(

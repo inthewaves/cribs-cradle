@@ -19,7 +19,7 @@
 package org.welbodipartnership.cradle5
 
 import android.util.Log
-import androidx.collection.ArrayMap
+import androidx.annotation.Keep
 import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -36,43 +36,41 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.composable
 import com.google.accompanist.navigation.animation.navigation
 import org.welbodipartnership.cradle5.facilities.FacilitiesList
-import org.welbodipartnership.cradle5.patients.list.PatientsList
+import org.welbodipartnership.cradle5.patients.details.PatientDetailsScreen
+import org.welbodipartnership.cradle5.patients.list.PatientsListScreen
 
-internal sealed class Screen(val route: String) {
-  object Patients : Screen("patients")
-  object Sync : Screen("sync")
-  object Facilities : Screen("facilities")
+@Keep
+internal enum class Screen(val route: String) {
+  Patients("patients"),
+  Sync("sync"),
+  Facilities("facilities");
 
   // The lazy is needed to prevent nulls (https://youtrack.jetbrains.com/issue/KT-25957)
   companion object {
     val defaultStartRoute: Screen by lazy { Patients }
-
-    val routesToScreenMap: Map<String, Screen> by lazy {
-      Screen::class.sealedSubclasses
-        .asSequence()
-        .filterNotNull()
-        .mapNotNull { it.objectInstance }
-        .associateByTo(ArrayMap(Screen::class.sealedSubclasses.size)) { it.route }
-    }
   }
 }
 
-private sealed class LeafScreen(private val route: String,) {
+internal sealed class LeafScreen(private val route: String,) {
 
   fun createRoute(root: Screen) = "${root.route}/$route"
 
   object Patients : LeafScreen("patients")
   object PatientDetails : LeafScreen("patients/view/{patientPk}") {
+    const val ARG_PATIENT_PRIMARY_KEY = "patientPk"
     fun createRoute(root: Screen, patientPrimaryKey: Long): String {
       return "${root.route}/patients/view/$patientPrimaryKey"
     }
   }
   object PatientCreate : LeafScreen("patients/create")
   object PatientEdit : LeafScreen("patients/edit/{patientPk}") {
+    const val ARG_PATIENT_PRIMARY_KEY = "patientPk"
     fun createRoute(root: Screen, existingPatientPrimaryKey: Long): String {
       return "${root.route}/patients/edit/$existingPatientPrimaryKey"
     }
@@ -125,10 +123,11 @@ private fun NavGraphBuilder.addPatientsList(
       Log.d("PatientsList", "Route is ${navController.currentBackStackEntry?.destination}")
     }
 
-    PatientsList(
+    PatientsListScreen(
       onOpenNewPatientCreation = {
       },
-      onOpenPatientDetails = {
+      onOpenPatientDetails = { patientPk ->
+        navController.navigate(LeafScreen.PatientDetails.createRoute(root, patientPk))
       }
     )
   }
@@ -138,17 +137,16 @@ private fun NavGraphBuilder.addPatientDetails(
   navController: NavController,
   root: Screen,
 ) {
-  /*
   composable(
-    route = LeafScreen.PatientView.createRoute(root),
+    route = LeafScreen.PatientDetails.createRoute(root),
     arguments = listOf(
-      navArgument("patientPk") { type = NavType.LongType }
+      navArgument(LeafScreen.PatientDetails.ARG_PATIENT_PRIMARY_KEY) { type = NavType.LongType }
     )
   ) {
-
+    PatientDetailsScreen(onBackPressed = { navController.navigateUp() })
   }
 
-   */
+
 }
 
 private fun NavGraphBuilder.addFacilitiesTopLevel(

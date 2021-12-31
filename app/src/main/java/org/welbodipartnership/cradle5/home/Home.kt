@@ -93,10 +93,10 @@ fun Home() {
         modifier = Modifier.fillMaxWidth()
       )
     }
-  ) { innerPadding ->
+  ) {
     LoggedInNavigation(
       navController,
-      modifier = Modifier.padding(innerPadding).fillMaxHeight()
+      modifier = Modifier.padding(it).fillMaxHeight()
     )
   }
 }
@@ -108,8 +108,11 @@ private fun NavController.currentScreenAsState(): State<Screen> {
 
   DisposableEffect(this) {
     val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
+
       destination.hierarchy
-        .mapNotNull { Screen.routesToScreenMap[it.route] }
+        .mapNotNull { dest ->
+          Screen.values().find { it.route == dest.route }
+        }
         .firstOrNull()
         ?.let { selectedItem.value = it }
     }

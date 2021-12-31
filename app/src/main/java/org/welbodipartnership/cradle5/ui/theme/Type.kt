@@ -56,7 +56,7 @@ val Typography = Typography(
     fontFamily = FontFamily.Default,
     fontWeight = FontWeight.W500,
     fontSize = 12.sp
-  )
+  ),
 
   /*
   body1 = TextStyle(

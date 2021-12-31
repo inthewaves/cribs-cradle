@@ -40,6 +40,7 @@ dependencyResolutionManagement {
             version("accompanist", "0.21.4-beta")
             alias("accompanist-navigation-animation").to("com.google.accompanist", "accompanist-navigation-animation").versionRef("accompanist")
             alias("accompanist-permissions").to("com.google.accompanist", "accompanist-permissions").versionRef("accompanist")
+            alias("accompanist-systemuicontroller").to("com.google.accompanist", "accompanist-systemuicontroller").versionRef("accompanist")
             alias("accompanist-insets").to("com.google.accompanist", "accompanist-insets").versionRef("accompanist")
             alias("accompanist-insetsui").to("com.google.accompanist", "accompanist-insets-ui").versionRef("accompanist")
 

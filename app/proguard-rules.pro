@@ -8,6 +8,10 @@
 #-dontoptimize
 -dontobfuscate
 
+-verbose
+-allowaccessmodification
+-repackageclasses
+
 # If your project uses WebView with JS, uncomment the following
 # and specify the fully qualified class name to the JavaScript interface
 # class:
@@ -25,7 +29,6 @@
     public <init>(android.content.Context, android.util.AttributeSet);
 }
 
-# For enumeration classes
 -keepclassmembers enum * {
     public static **[] values();
     public static ** valueOf(java.lang.String);
@@ -72,9 +75,11 @@
 }
 
 # @Serializable and @Polymorphic are used at runtime for polymorphic serialization.
--keepattributes RuntimeVisibleAnnotations,AnnotationDefault
+# -keepattributes RuntimeVisibleAnnotations,AnnotationDefault
 
 -keep class org.welbodipartnership.** { *; }
+
+-keep class kotlin.Metadata { *; }
 
 -keep class org.sqlite.** { *; }
 -keep class org.sqlite.database.** { *; }
