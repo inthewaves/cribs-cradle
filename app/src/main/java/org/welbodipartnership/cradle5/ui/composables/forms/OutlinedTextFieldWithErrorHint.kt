@@ -5,7 +5,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
@@ -26,7 +25,7 @@ fun OutlinedTextFieldWithErrorHint(
   textFieldModifier: Modifier = Modifier,
   enabled: Boolean = true,
   readOnly: Boolean = false,
-  textStyle: TextStyle = LocalTextStyle.current,
+  textStyle: TextStyle = MaterialTheme.typography.body2,
   label: @Composable (() -> Unit)? = null,
   placeholder: @Composable (() -> Unit)? = null,
   leadingIcon: @Composable (() -> Unit)? = null,

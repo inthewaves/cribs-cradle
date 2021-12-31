@@ -45,8 +45,9 @@ class MainActivity : AppCompatActivity() {
     super.onCreate(savedInstanceState)
 
     WindowCompat.setDecorFitsSystemWindows(window, false)
+
     setContent {
-      ProvideWindowInsets(consumeWindowInsets = false) {
+      ProvideWindowInsets(consumeWindowInsets = false, windowInsetsAnimationsEnabled = true) {
         CradleTrialAppTheme {
           val systemUiController = rememberSystemUiController()
           val useDarkIcons = MaterialTheme.colors.isLight

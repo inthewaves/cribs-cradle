@@ -49,5 +49,7 @@
     <string name="patient_registration_age_label">Age</string>
     <string name="form_date_required_error">Missing date</string>
     <string name="server_enum_unknown_selection_error">Unknown selection value</string>
+    <string name="server_enum_other_selection_missing_error">Missing other cause</string>
     <string name="yes">Yes</string>
+    <string name="length_of_stay_in_itu_hdu_must_be_in_range_d_and_d_days">Length of stay in ITU / HDU in days must be in range %1$d to %2$d days</string>
 </resources>

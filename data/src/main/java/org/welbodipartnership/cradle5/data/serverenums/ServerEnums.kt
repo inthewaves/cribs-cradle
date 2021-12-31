@@ -2,6 +2,7 @@ package org.welbodipartnership.cradle5.data.serverenums
 
 import androidx.collection.ArrayMap
 import androidx.compose.runtime.Immutable
+import org.welbodipartnership.cradle5.data.database.entities.embedded.EnumSelection
 import org.welbodipartnership.cradle5.data.settings.DynamicServerEnum
 
 /**
@@ -362,6 +363,8 @@ class ServerEnum constructor(
   val otherEntry: Entry? = sortedValues.asReversed().find { it.name.trim() == "Other" }
 
   fun getValueFromId(id: Int): Entry? = sortedValues.find { it.id == id }
+
+  fun getValueFromId(id: EnumSelection): Entry? = getValueFromId(id.selectionId)
 
   fun toDynamicServerEnum(): DynamicServerEnum = DynamicServerEnum.newBuilder()
     .setId(type.serverLookupId)

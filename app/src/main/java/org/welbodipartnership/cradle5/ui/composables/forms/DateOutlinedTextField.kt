@@ -75,70 +75,72 @@ fun DateOutlinedTextField(
   shape: Shape = MaterialTheme.shapes.small,
   colors: TextFieldColors = TextFieldDefaults.outlinedTextFieldColors()
 ) {
-  val context = LocalContext.current
-  val scope = rememberCoroutineScope()
   val channelState = remember { mutableStateOf<SendChannel<Unit>?>(null) }
-  DisposableEffect(date, scope) {
-    val newChannel = scope.actor<Unit>(capacity = Channel.RENDEZVOUS) {
-      for (unused in channel) {
-        val activity = requireNotNull(context.getFragmentActivity()) { "failed to get activity" }
-        val nowDate: Long = with(LocalDate.now()) {
-          val dateTime = LocalDateTime.of(year, month, dayOfMonth, 0, 0)
-          dateTime.atZone(ZoneId.ofOffset("UTC", ZoneOffset.UTC))
-            .toInstant()
-            .toEpochMilli()
-        }
-        val existingDate = date?.toGmtGregorianCalendar()?.timeInMillis
-        val datePicker = MaterialDatePicker.Builder.datePicker()
-          .setSelection(existingDate)
-          .setCalendarConstraints(
-            CalendarConstraints.Builder().apply {
-              setEnd(nowDate)
-              if (existingDate != null) {
-                setOpenAt(existingDate)
-              }
-            }.build()
-          )
-          .build()
+  if (enabled) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    DisposableEffect(date, scope) {
+      val newChannel = scope.actor<Unit>(capacity = Channel.RENDEZVOUS) {
+        for (unused in channel) {
+          val activity = requireNotNull(context.getFragmentActivity()) { "failed to get activity" }
+          val nowDate: Long = with(LocalDate.now()) {
+            val dateTime = LocalDateTime.of(year, month, dayOfMonth, 0, 0)
+            dateTime.atZone(ZoneId.ofOffset("UTC", ZoneOffset.UTC))
+              .toInstant()
+              .toEpochMilli()
+          }
+          val existingDate = date?.toGmtGregorianCalendar()?.timeInMillis
+          val datePicker = MaterialDatePicker.Builder.datePicker()
+            .setSelection(existingDate)
+            .setCalendarConstraints(
+              CalendarConstraints.Builder().apply {
+                setEnd(nowDate)
+                if (existingDate != null) {
+                  setOpenAt(existingDate)
+                }
+              }.build()
+            )
+            .build()
 
-        try {
-          val finalDate: FormDate? = suspendCancellableCoroutine { cont ->
-            datePicker.addOnPositiveButtonClickListener {
-              Log.d("MainActivity", "addOnPosListener")
-              val calendar =
-                GregorianCalendar(TimeZone.getTimeZone("GMT")).apply { time = Date(it) }
-              cont.resume(
-                FormDate(
-                  day = calendar[Calendar.DAY_OF_MONTH],
-                  month = calendar[Calendar.MONTH] + 1,
-                  year = calendar[Calendar.YEAR]
-                ),
-                null
-              )
+          try {
+            val finalDate: FormDate? = suspendCancellableCoroutine { cont ->
+              datePicker.addOnPositiveButtonClickListener {
+                Log.d("MainActivity", "addOnPosListener")
+                val calendar =
+                  GregorianCalendar(TimeZone.getTimeZone("GMT")).apply { time = Date(it) }
+                cont.resume(
+                  FormDate(
+                    day = calendar[Calendar.DAY_OF_MONTH],
+                    month = calendar[Calendar.MONTH] + 1,
+                    year = calendar[Calendar.YEAR]
+                  ),
+                  null
+                )
+              }
+              datePicker.addOnCancelListener {
+                cont.resume(null, null)
+              }
+              datePicker.addOnNegativeButtonClickListener {
+                cont.resume(null, null)
+              }
+              datePicker.show(activity.supportFragmentManager, "date-picker")
             }
-            datePicker.addOnCancelListener {
-              cont.resume(null, null)
+            if (finalDate != null) {
+              onDatePicked(finalDate)
             }
-            datePicker.addOnNegativeButtonClickListener {
-              cont.resume(null, null)
-            }
-            datePicker.show(activity.supportFragmentManager, "date-picker")
+            onPickerClose()
+          } finally {
+            datePicker.clearOnPositiveButtonClickListeners()
+            datePicker.clearOnCancelListeners()
+            datePicker.clearOnNegativeButtonClickListeners()
           }
-          if (finalDate != null) {
-            onDatePicked(finalDate)
-          }
-          onPickerClose()
-        } finally {
-          datePicker.clearOnPositiveButtonClickListeners()
-          datePicker.clearOnCancelListeners()
-          datePicker.clearOnNegativeButtonClickListeners()
         }
       }
-    }
-    channelState.value = newChannel
-    onDispose {
-      newChannel.close()
-      channelState.value = null
+      channelState.value = newChannel
+      onDispose {
+        newChannel.close()
+        channelState.value = null
+      }
     }
   }
 
@@ -162,10 +164,12 @@ fun DateOutlinedTextField(
     maxLines = maxLines,
     interactionSource = remember { MutableInteractionSource() }
       .also { interactionSource ->
-        LaunchedEffect(interactionSource, channelState) {
-          interactionSource.interactions.collect {
-            if (it is PressInteraction.Release) {
-              channelState.value?.trySend(Unit)
+        if (enabled) {
+          LaunchedEffect(interactionSource, channelState) {
+            interactionSource.interactions.collect {
+              if (it is PressInteraction.Release) {
+                channelState.value?.trySend(Unit)
+              }
             }
           }
         }

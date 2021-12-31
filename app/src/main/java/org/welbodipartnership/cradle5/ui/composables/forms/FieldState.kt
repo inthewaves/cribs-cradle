@@ -29,19 +29,30 @@ open class TextFieldState(
   validator: (String) -> Boolean,
   errorFor: (Context, String) -> String,
   initialValue: String = ""
-) : FieldState<String>(validator, errorFor) {
+) : FieldState<String>(validator, errorFor, initialValue) {
+  override val showErrorOnInput: Boolean = false
   override var stateValue: String by mutableStateOf(initialValue)
 }
 
 abstract class FieldState<T>(
   val validator: (T) -> Boolean = { true },
   private val errorFor: (Context, T) -> String = { _, _ -> "" },
+  val initialValue: T,
 ) {
+  abstract val showErrorOnInput: Boolean
+
   abstract var stateValue: T
   // was the TextField ever focused
-  var isFocusedDirty: Boolean by mutableStateOf(false)
+  var isFocusedDirty: Boolean by mutableStateOf(showErrorOnInput)
   var isFocused: Boolean by mutableStateOf(false)
   private var displayErrors: Boolean by mutableStateOf(false)
+
+  fun reset() {
+    isFocusedDirty = showErrorOnInput
+    isFocused = false
+    displayErrors = false
+    stateValue = initialValue
+  }
 
   open val isValid: Boolean
     get() = validator(stateValue)

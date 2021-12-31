@@ -1,7 +1,9 @@
 package org.welbodipartnership.cradle5.patients.details
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Card
 import androidx.compose.material.MaterialTheme
@@ -23,6 +25,7 @@ fun BaseDetailsCard(
   ) {
     Column(Modifier.fillMaxWidth().padding(8.dp)) {
       Text(title, style = MaterialTheme.typography.h4)
+      Spacer(modifier = Modifier.height(4.dp))
       columnContent()
     }
   }

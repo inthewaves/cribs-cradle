@@ -39,6 +39,7 @@ import androidx.navigation.navArgument
 import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.composable
 import com.google.accompanist.navigation.animation.navigation
+import org.welbodipartnership.cradle5.data.serverenums.ServerEnumCollection
 import org.welbodipartnership.cradle5.facilities.FacilitiesList
 import org.welbodipartnership.cradle5.patients.details.PatientDetailsScreen
 import org.welbodipartnership.cradle5.patients.form.PatientForm
@@ -151,7 +152,8 @@ private fun NavGraphBuilder.addPatientCreate(
   composable(
     route = LeafScreen.PatientCreate.createRoute(root),
   ) {
-    PatientForm()
+    // TODO: Use an ambient?
+    PatientForm(ServerEnumCollection.defaultInstance)
   }
 }
 
