@@ -15,7 +15,7 @@ abstract class PatientDao {
   abstract suspend fun insert(patient: Patient): Long
 
   @Transaction
-  @Query("SELECT id, initials, dateOfBirth FROM Patient ORDER BY id DESC")
+  @Query("SELECT id, initials, dateOfBirth FROM Patient ORDER BY id ASC")
   abstract fun patientsPagingSource(): PagingSource<Int, ListPatient>
 
   @Transaction

@@ -94,7 +94,6 @@ fun PatientDetailsScreen(
         }
       }
     }
-
   }
 }
 
@@ -120,5 +119,4 @@ private fun PatientDetailsScreen(
       )
     }
   }
-
 }

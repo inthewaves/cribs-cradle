@@ -187,7 +187,6 @@ fun OutcomesCard(
         style = MaterialTheme.typography.body2,
       )
     }
-
   }
 }
 

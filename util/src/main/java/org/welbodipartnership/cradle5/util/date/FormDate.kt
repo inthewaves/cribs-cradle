@@ -6,6 +6,9 @@ import com.squareup.moshi.JsonDataException
 import com.squareup.moshi.JsonReader
 import com.squareup.moshi.JsonWriter
 import java.time.LocalDate
+import java.time.temporal.ChronoUnit
+import java.util.GregorianCalendar
+import java.util.TimeZone
 
 private const val YEAR_LENGTH = 4
 private const val MONTH_WITH_PADDING_LENGTH = 2
@@ -27,6 +30,31 @@ private const val DD_MM_YYYY_STRING_LENGTH = DAY_WITH_PADDING_LENGTH +
 @JsonClass(generateAdapter = true)
 data class FormDate(val day: Int, val month: Int, val year: Int) : Comparable<FormDate> {
   val isExact: Boolean get() = day != 0 && month != 0
+
+  fun toGmtGregorianCalendar() = GregorianCalendar(TimeZone.getTimeZone("GMT")).apply {
+    clear()
+    if (day == 0 || month == 0) {
+      set(year, 0, 1)
+    } else {
+      set(year, month - 1, day)
+    }
+  }
+
+  /**
+   * Will be negative if this date is after [other]
+   */
+  fun getAgeInYearsFromDate(other: FormDate): Long {
+    val otherDate = other.toGmtGregorianCalendar().toZonedDateTime()
+    val thisAsDate = toGmtGregorianCalendar().toZonedDateTime()
+    return ChronoUnit.YEARS.between(thisAsDate, otherDate)
+  }
+
+  /**
+   * Will be negative if this date is after now
+   */
+  fun getAgeInYearsFromNow(): Long {
+    return getAgeInYearsFromDate(today())
+  }
 
   override fun toString(): String = buildString(DD_MM_YYYY_STRING_LENGTH) {
     padInt(day, DAY_WITH_PADDING_LENGTH)
@@ -86,8 +114,18 @@ data class FormDate(val day: Int, val month: Int, val year: Int) : Comparable<Fo
   }
 }
 
+fun String.toFormDateOrNull(): FormDate? = try {
+  toFormDateOrThrow()
+} catch (e: NumberFormatException) {
+  null
+}
+
 @Throws(NumberFormatException::class)
 fun String.toFormDateOrThrow(): FormDate {
+  if (length < DD_MM_YYYY_STRING_LENGTH) {
+    throw NumberFormatException("length too short to be a form date")
+  }
+
   // Logic from https://github.com/square/moshi/blob/master/moshi-adapters/src/main/java/com/squareup/moshi/adapters/Iso8601Utils.java,
   // which itself is derived from Jackson / FasterXML
   var offset = 0

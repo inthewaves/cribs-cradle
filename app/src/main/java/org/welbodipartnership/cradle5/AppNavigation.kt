@@ -18,7 +18,6 @@
 
 package org.welbodipartnership.cradle5
 
-import android.util.Log
 import androidx.annotation.Keep
 import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.EnterTransition
@@ -27,7 +26,6 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
@@ -43,6 +41,7 @@ import com.google.accompanist.navigation.animation.composable
 import com.google.accompanist.navigation.animation.navigation
 import org.welbodipartnership.cradle5.facilities.FacilitiesList
 import org.welbodipartnership.cradle5.patients.details.PatientDetailsScreen
+import org.welbodipartnership.cradle5.patients.form.PatientForm
 import org.welbodipartnership.cradle5.patients.list.PatientsListScreen
 
 @Keep
@@ -111,6 +110,7 @@ private fun NavGraphBuilder.addPatientsTopLevel(
   ) {
     addPatientsList(navController, Screen.Patients)
     addPatientDetails(navController, Screen.Patients)
+    addPatientCreate(navController, Screen.Patients)
   }
 }
 
@@ -119,12 +119,9 @@ private fun NavGraphBuilder.addPatientsList(
   root: Screen,
 ) {
   composable(route = LeafScreen.Patients.createRoute(root)) {
-    LaunchedEffect(null) {
-      Log.d("PatientsList", "Route is ${navController.currentBackStackEntry?.destination}")
-    }
-
     PatientsListScreen(
       onOpenNewPatientCreation = {
+        navController.navigate(LeafScreen.PatientCreate.createRoute(root))
       },
       onOpenPatientDetails = { patientPk ->
         navController.navigate(LeafScreen.PatientDetails.createRoute(root, patientPk))
@@ -145,8 +142,17 @@ private fun NavGraphBuilder.addPatientDetails(
   ) {
     PatientDetailsScreen(onBackPressed = { navController.navigateUp() })
   }
+}
 
-
+private fun NavGraphBuilder.addPatientCreate(
+  navController: NavController,
+  root: Screen,
+) {
+  composable(
+    route = LeafScreen.PatientCreate.createRoute(root),
+  ) {
+    PatientForm()
+  }
 }
 
 private fun NavGraphBuilder.addFacilitiesTopLevel(

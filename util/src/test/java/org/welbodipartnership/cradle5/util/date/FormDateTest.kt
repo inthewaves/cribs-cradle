@@ -3,6 +3,7 @@ package org.welbodipartnership.cradle5.util.date
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -80,5 +81,16 @@ internal class FormDateTest {
   fun testFormDateWithMoshiAdapter(testSpec: OrderingTestSpec) {
     val (first, expectedOrdering, second) = testSpec
     assertEquals(expectedOrdering.sign, first.compareTo(second).sign)
+  }
+
+  @Test
+  fun testFormDateAge() {
+    val today = FormDate.today()
+    val oneYearBefore = today.copy(year = today.year - 1)
+    assertEquals(1, oneYearBefore.getAgeInYearsFromNow())
+    assertEquals(1, oneYearBefore.getAgeInYearsFromDate(today))
+    val oneYearAfter = today.copy(year = today.year + 1)
+    assertEquals(-1, oneYearAfter.getAgeInYearsFromNow())
+    assertEquals(-1, oneYearAfter.getAgeInYearsFromDate(today))
   }
 }

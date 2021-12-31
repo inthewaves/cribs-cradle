@@ -43,7 +43,6 @@ class PatientDetailsViewModel @Inject constructor(
       )
     }
 
-
   override fun onCleared() {
     super.onCleared()
     Log.d("PatientDetailsViewModel", "onCleared()")
