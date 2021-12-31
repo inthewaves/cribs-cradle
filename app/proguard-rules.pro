@@ -5,6 +5,9 @@
 # For more details, see
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
+#-dontoptimize
+-dontobfuscate
+
 # If your project uses WebView with JS, uncomment the following
 # and specify the fully qualified class name to the JavaScript interface
 # class:
@@ -12,9 +15,33 @@
 #   public *;
 #}
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Native methods http://proguard.sourceforge.net/manual/examples.html#native
+-keepclasseswithmembernames class * {
+    native <methods>;
+}
+
+# We only need to keep ComposeView + FragmentContainerView
+-keep public class androidx.compose.ui.platform.ComposeView {
+    public <init>(android.content.Context, android.util.AttributeSet);
+}
+
+# For enumeration classes
+-keepclassmembers enum * {
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
+
+-keep class * implements android.os.Parcelable {
+  public static final android.os.Parcelable$Creator *;
+}
+
+# Preserve the line number information for debugging stack traces.
+-keepattributes SourceFile,
+    LineNumberTable,
+    RuntimeVisibleAnnotations,
+    RuntimeVisibleParameterAnnotations,
+    RuntimeVisibleTypeAnnotations,
+    AnnotationDefault
 
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
@@ -46,6 +73,17 @@
 
 # @Serializable and @Polymorphic are used at runtime for polymorphic serialization.
 -keepattributes RuntimeVisibleAnnotations,AnnotationDefault
+
+-keep class org.welbodipartnership.** { *; }
+
+-keep class org.sqlite.** { *; }
+-keep class org.sqlite.database.** { *; }
+-keep class net.sqlcipher.** { *; }
+-dontwarn net.sqlcipher.**
+
+# Retain annotation default values for all annotations.
+# Required until R8 version >= 3.1.12+ (in AGP 7.1.0+).
+-keep,allowobfuscation,allowshrinking @interface *
 
 # Serializer for classes with named companion objects are retrieved using `getDeclaredClasses`.
 # If you have any, uncomment and replace classes with those containing named companion objects.

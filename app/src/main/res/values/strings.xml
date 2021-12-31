@@ -1,3 +1,12 @@
 <resources>
     <string name="app_name">Cradle5TrialApp</string>
+    <string name="patients_title">Patients</string>
+    <string name="cd_patients_nav_button">Show the patients list</string>
+    <string name="sync_title">Sync</string>
+    <string name="cd_sync_nav_button">Show the sync screen</string>
+    <string name="facilities_title">Facilities</string>
+    <string name="cd_facilities_nav_button">Show the healthcare facilities screen</string>
+    <string name="patient_card_id_label">ID</string>
+    <string name="patient_card_initials_label">Initials</string>
+    <string name="patient_card_presentation_date_label">Presentation date</string>
 </resources>

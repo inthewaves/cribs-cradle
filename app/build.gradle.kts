@@ -8,13 +8,20 @@ plugins {
     id("dagger.hilt.android.plugin")
 }
 
-android {
-    compileSdk = 31
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    kotlinOptions {
+        freeCompilerArgs = freeCompilerArgs + listOf(
+            "-Xopt-in=androidx.compose.animation.ExperimentalAnimationApi"
+        )
+    }
+}
 
+android {
+    compileSdk = appconfig.versions.compileSdkVersion.get().toInt()
     defaultConfig {
         applicationId = "org.welbodipartnership.cradle5"
-        minSdk = 21
-        targetSdk = 31
+        minSdk = appconfig.versions.minSdkVersion.get().toInt()
+        targetSdk = appconfig.versions.targetSdkVersion.get().toInt()
         versionCode = 1
         versionName = "1.0"
 
@@ -22,12 +29,28 @@ android {
         vectorDrawables.useSupportLibrary = true
     }
 
+    signingConfigs {
+        // We use a bundled debug keystore, to allow debug builds from CI to be upgradable
+        named("debug") {
+            storeFile = rootProject.file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
         debug {
+            signingConfig = signingConfigs.getByName("debug")
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+
             buildConfigField("String", "SERVER_URL", "\"0\"")
         }
 
         release {
+            signingConfig = signingConfigs.getByName("debug")
+
             buildConfigField("String", "SERVER_URL", "\"0\"")
 
             isMinifyEnabled = true
@@ -64,20 +87,32 @@ dependencies {
     api(project(":api"))
     api(project(":data"))
 
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:1.1.5")
+    implementation(kotlin("reflect"))
+
+    coreLibraryDesugaring(libs.desugar)
 
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.constraintlayout.compose)
 
     implementation(libs.google.android.material)
     implementation(libs.compose.ui.ui)
-    implementation(libs.compose.material)
+    implementation(libs.compose.material.material)
+    implementation(libs.compose.material.iconsext)
     implementation(libs.compose.ui.tooling.preview)
+
+    implementation(libs.accompanist.navigation.animation)
+    implementation(libs.accompanist.permissions)
+    implementation(libs.accompanist.insets)
+    implementation(libs.accompanist.insetsui)
+
+    implementation(libs.androidx.paging.compose)
 
     implementation(libs.hilt.library)
     kapt(libs.hilt.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
 
     implementation(libs.kotlinx.coroutines.android)
 

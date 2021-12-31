@@ -10,8 +10,16 @@ dependencyResolutionManagement {
 
     enableFeaturePreview("VERSION_CATALOGS")
     versionCatalogs {
+        create("appconfig"){
+            version("minSdkVersion", "23") // Android 6.0
+            version("compileSdkVersion", "31")
+            version("targetSdkVersion", "31")
+        }
+
         create("libs") {
             alias("gradle-ktlint").toPluginId("org.jlleitschuh.gradle.ktlint").version("10.2.0")
+
+            alias("desugar").to("com.android.tools:desugar_jdk_libs:1.1.5")
 
             version("kotlin", "1.6.10")
             // Support for using version catalogs in buildscript and plugin blocks is in 7.2.0
@@ -29,7 +37,12 @@ dependencyResolutionManagement {
 
             alias("google-android-material").to("com.google.android.material:material:1.4.0")
 
-            alias("accompanist-permissions").to("com.google.accompanist:accompanist-permissions:0.21.4-beta")
+            version("accompanist", "0.21.4-beta")
+            alias("accompanist-navigation-animation").to("com.google.accompanist", "accompanist-navigation-animation").versionRef("accompanist")
+            alias("accompanist-permissions").to("com.google.accompanist", "accompanist-permissions").versionRef("accompanist")
+            alias("accompanist-insets").to("com.google.accompanist", "accompanist-insets").versionRef("accompanist")
+            alias("accompanist-insetsui").to("com.google.accompanist", "accompanist-insets-ui").versionRef("accompanist")
+
             alias("google-tink").to("com.google.crypto.tink:tink-android:1.6.1")
 
             alias("signal-argon2").to("org.signal:argon2:13.1")
@@ -42,6 +55,8 @@ dependencyResolutionManagement {
             version("androidxhilt",  "1.0.0")
             alias("androidx-hilt-work").to("androidx.hilt", "hilt-work").versionRef("androidxhilt")
             alias("androidx-hilt-compiler").to("androidx.hilt", "hilt-compiler").versionRef("androidxhilt")
+
+            alias("androidx-hilt-navigation-compose").to("androidx.hilt:hilt-navigation-compose:1.0.0-rc01")
 
             alias("dagger-compiler").to("com.google.dagger", "dagger-compiler").versionRef("hilt")
             alias("dagger-dagger").to("com.google.dagger", "dagger").versionRef("hilt")
@@ -71,11 +86,14 @@ dependencyResolutionManagement {
             alias("androidx-paging-runtime").to("androidx.paging", "paging-runtime-ktx").versionRef("paging")
             alias("androidx-paging-compose").to("androidx.paging:paging-compose:1.0.0-alpha14")
 
+            alias("androidx-constraintlayout-compose").to("androidx.constraintlayout:constraintlayout-compose:1.0.0-rc02")
+
             version("compose", "1.1.0-rc01")
             // TODO: Remove this when all other Compose deps use 1.1.0-rc02 or higher
             version("composecompiler", "1.1.0-rc02")
             alias("compose-ui-ui").to("androidx.compose.ui", "ui").versionRef("compose")
-            alias("compose-material").to("androidx.compose.material", "material").versionRef("compose")
+            alias("compose-material-material").to("androidx.compose.material", "material").versionRef("compose")
+            alias("compose-material-iconsext").to("androidx.compose.material", "material-icons-extended").versionRef("compose")
             alias("compose-ui-tooling-preview").to("androidx.compose.ui", "ui-tooling-preview").versionRef("compose")
 
             alias("ksp").toPluginId("com.google.devtools.ksp").version("1.6.10-1.0.2")

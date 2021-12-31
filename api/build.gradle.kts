@@ -8,10 +8,9 @@ plugins {
 }
 
 android {
-    compileSdk = 31
-
+    compileSdk = appconfig.versions.compileSdkVersion.get().toInt()
     defaultConfig {
-        minSdk = 21
+        minSdk = appconfig.versions.minSdkVersion.get().toInt()
         // targetSdk = 31
         // versionCode 1
         // versionName "1.0"

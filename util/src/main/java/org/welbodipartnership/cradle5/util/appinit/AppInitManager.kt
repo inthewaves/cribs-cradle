@@ -2,6 +2,7 @@ package org.welbodipartnership.cradle5.util.appinit
 
 import android.app.Application
 import android.util.Log
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.sync.Mutex
@@ -48,28 +49,27 @@ class AppInitManager @Inject constructor(
         return@withLock
       }
 
-      _appState.value = AppState.Initializing
-      withContext(coroutineDispatchers.default) {
-        // Sort tasks by their name so that there is some deterministic order.
-        val sortedTasks = initializationTasks.sortedBy { it::class.java.simpleName }
-        Log.d(
-          TAG,
-          "Tasks for app initialization: ${
-            sortedTasks.joinToString { it::class.java.canonicalName ?: it.toString() }
-          }"
-        )
+      // Sort tasks by their name so that there is some deterministic order.
+      val sortedTasks = withContext(coroutineDispatchers.default) {
+        initializationTasks.sortedBy { it::class.java.simpleName }
+      }
+      Log.d(
+        TAG,
+        "Tasks for app initialization: ${
+          sortedTasks.joinToString { it::class.java.canonicalName ?: it.toString() }
+        }"
+      )
 
-        for (task in sortedTasks) {
-          try {
-            task.init(application)
-          } catch (e: Exception) {
-            Log.e(TAG, "Failed to initialize ${task::class.java.canonicalName}", e)
-            _appState.value = AppState.FailedToInitialize(
-              classOfTaskThatFailed = task::class,
-              cause = e
-            )
-            return@withContext
-          }
+      for (task in sortedTasks) {
+        try {
+          coroutineScope { task.init(application) }
+        } catch (e: Exception) {
+          Log.e(TAG, "Failed to initialize ${task::class.java.canonicalName}", e)
+          _appState.value = AppState.FailedToInitialize(
+            classOfTaskThatFailed = task::class,
+            cause = e
+          )
+          return
         }
       }
 

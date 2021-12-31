@@ -25,10 +25,9 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach 
 }
 
 android {
-    compileSdk = 31
-
+    compileSdk = appconfig.versions.compileSdkVersion.get().toInt()
     defaultConfig {
-        minSdk = 21
+        minSdk = appconfig.versions.minSdkVersion.get().toInt()
         // targetSdk = 31
         // versionCode 1
         // versionName "1.0"
@@ -86,6 +85,7 @@ dependencies {
     api(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.room.paging)
+    implementation(libs.androidx.paging.runtime)
     ksp(libs.androidx.room.compiler)
     implementation(libs.sqlcipher)
 

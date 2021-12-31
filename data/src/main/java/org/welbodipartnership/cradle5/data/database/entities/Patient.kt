@@ -20,6 +20,7 @@ data class Patient(
   val id: Long = 0,
   @Embedded
   val serverInfo: ServerInfo? = null,
+  val initials: String,
   @get:JvmName("getPresentationDate")
   val presentationDate: FormDate,
   @get:JvmName("getDateOfBirth")

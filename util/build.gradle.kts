@@ -1,15 +1,16 @@
+@Suppress("DSL_SCOPE_VIOLATION")
 plugins {
     id("com.android.library")
     kotlin("android")
     kotlin("kapt")
+    alias(libs.plugins.ksp)
     id("de.mannodermaus.android-junit5")
 }
 
 android {
-    compileSdk = 31
-
+    compileSdk = appconfig.versions.compileSdkVersion.get().toInt()
     defaultConfig {
-        minSdk = 21
+        minSdk = appconfig.versions.minSdkVersion.get().toInt()
         // targetSdk = 31
         // versionCode 1
         // versionName "1.0"
@@ -19,13 +20,19 @@ android {
     }
 
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
+
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
 }
 
 dependencies {
+    coreLibraryDesugaring(libs.desugar)
+
     api(libs.moshi.core)
+    ksp(libs.moshi.codegen)
+    
     implementation(libs.kotlinx.coroutines.android)
 
     implementation(libs.hilt.library)
