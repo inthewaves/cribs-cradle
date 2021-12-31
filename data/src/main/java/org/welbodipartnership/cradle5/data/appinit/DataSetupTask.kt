@@ -12,7 +12,7 @@ import org.welbodipartnership.cradle5.util.appinit.AppInitTask
 import javax.inject.Inject
 import kotlin.time.measureTime
 
-class DataSetupTask @Inject constructor(
+class DataSetupTask @Inject internal constructor(
   private val unencryptedSettings: UnencryptedSettingsManager,
   private val encryptedSettings: EncryptedSettingsManager,
   private val databaseWrapper: CradleDatabaseWrapper,
@@ -52,6 +52,9 @@ class DataSetupTask @Inject constructor(
       databaseWrapper.setup(application, supportFactory)
     }
     Log.d(TAG, "Done opening database in $dbOpenTime")
+
+    // We don't actually need the unencrypted settings anymore, as it just stores the keys.
+    unencryptedSettings.closeDataStore()
   }
 
   companion object {

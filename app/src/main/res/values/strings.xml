@@ -9,4 +9,25 @@
     <string name="patient_card_id_label">ID</string>
     <string name="patient_card_initials_label">Initials</string>
     <string name="patient_card_presentation_date_label">Presentation date</string>
+    <string name="outcomes_eclampsia_label">Eclampsia</string>
+    <string name="none">None</string>
+    <string name="form_date_label">Date (dd/mm/yyyy)</string>
+    <string name="place_of_first_eclamptic_fit_label">Place of first eclamptic fit</string>
+    <string name="unknown_dropdown_value_d">Unknown (selection Id: %1$d)</string>
+    <string name="outcomes_hysterectomy_label">Hysterectomy</string>
+    <string name="hysterectomy_cause_label">Cause of hysterectomy</string>
+    <string name="hysterectomy_additional_info_label">Additional information on the cause of hysterectomy</string>
+    <string name="outcomes_admission_to_hdu_or_itu_label">Admitted to HDU / ITU</string>
+    <string name="hdu_or_idu_admission_cause_label">Cause for HDU / ITU admission</string>
+    <string name="hdu_or_idu_admission_length_stay_days_if_known_label">Length of stay in ITU / HDU in days (if known)</string>
+    <string name="unknown">Unknown</string>
+    <string name="no">No</string>
+    <string name="outcomes_surgical_management_label">Surgical management of postpartum haemorrhage requiring anaesthesia</string>
+    <string name="surgical_management_type_label">Type of surgical management</string>
+    <string name="outcomes_maternal_death_label">Maternal death</string>
+    <string name="outcomes_perinatal_death_label">Perinatal death</string>
+    <string name="perinatal_death_outcome_label">Perinatal outcome</string>
+    <string name="perinatal_death_related_maternal_factors_label">Maternal factors related to perinatal loss</string>
+    <string name="maternal_dealth_underlying_cause_label">Underlying cause of death</string>
+    <string name="maternal_dealth_place_label">Place of death</string>
 </resources>

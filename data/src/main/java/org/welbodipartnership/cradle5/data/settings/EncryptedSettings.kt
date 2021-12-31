@@ -18,14 +18,22 @@ import java.io.OutputStream
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Manages a [DataStore] that is encrypted at-rest. Obviously, when the app is active, the contents
+ * of the [DataStore] in memory is accessible.
+ *
+ * The [DataStore] at-rest encryption is handled by the [EncryptedSettingsSerializer].
+ */
 @Singleton
-class EncryptedSettingsManager @Inject constructor(
+internal class EncryptedSettingsManager @Inject constructor(
   @ApplicationContext private val context: Context,
   private val appCoroutineDispatchers: AppCoroutineDispatchers,
-  private val unencryptedSettingsManager: UnencryptedSettingsManager
 ) {
   private var dataStore: DataStore<EncryptedSettings>? = null
 
+  /**
+   * This must be called before the app can use this.
+   */
   internal fun setup(keysetHandle: KeysetHandle) {
     val serializer = EncryptedSettingsSerializer(
       keysetHandle.getPrimitive(StreamingAead::class.java),
@@ -46,6 +54,10 @@ class EncryptedSettingsManager @Inject constructor(
   }
 }
 
+/**
+ * A serializer that ensures that the [DataStore] is stored on disk encrypted using
+ * [https://developers.google.com/tink/streaming-aead].
+ */
 internal class EncryptedSettingsSerializer internal constructor(
   private val streamingAead: StreamingAead,
   fileName: String,
@@ -72,7 +84,14 @@ internal class EncryptedSettingsSerializer internal constructor(
   }
 
   companion object {
-
+    /**
+     * https://developers.google.com/tink/streaming-aead
+     *
+     * - Size of the main key: 32 bytes
+     * - HKDF algo: HMAC-SHA256
+     * - Size of AES-GCM derived keys: 32 bytes
+     * - Ciphertext segment size: 4096 bytes
+     */
     const val ENCRYPTION_SCHEME = "AES256_GCM_HKDF_4KB"
 
     fun create(keysetHandle: KeysetHandle, fileName: String): EncryptedSettingsSerializer {

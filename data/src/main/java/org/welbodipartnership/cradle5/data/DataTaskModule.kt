@@ -10,6 +10,7 @@ import org.welbodipartnership.cradle5.util.appinit.AppInitTask
 
 @Module
 @InstallIn(SingletonComponent::class)
+@Suppress("UNUSED")
 abstract class DataTaskModule {
   @Binds
   @IntoSet

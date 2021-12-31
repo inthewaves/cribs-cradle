@@ -94,6 +94,8 @@ dependencies {
 
     api(libs.google.tink)
 
+    implementation(libs.compose.runtime)
+
     implementation(libs.moshi.core)
     ksp(libs.moshi.codegen)
 

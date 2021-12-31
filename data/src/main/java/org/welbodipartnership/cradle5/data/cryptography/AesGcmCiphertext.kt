@@ -1,19 +1,17 @@
 package org.welbodipartnership.cradle5.data.cryptography
 
 import com.google.protobuf.ByteString
-import com.squareup.moshi.JsonClass
 import org.welbodipartnership.cradle5.data.settings.UnencryptedSettings
 import java.security.GeneralSecurityException
 import javax.crypto.Cipher
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
-@JsonClass(generateAdapter = true)
 class AesGcmCiphertext internal constructor(val data: ByteArray, val iv: ByteArray) {
   @Throws(GeneralSecurityException::class)
   fun decrypt(secretKey: SecretKey): Plaintext {
     val cipher = Cipher.getInstance(AES_GCM_CIPHER_TRANSFORMATION)
-    cipher.init(Cipher.DECRYPT_MODE, secretKey, GCMParameterSpec(128, iv))
+    cipher.init(Cipher.DECRYPT_MODE, secretKey, GCMParameterSpec(AES_GCM_TAG_SIZE_IN_BYTES * 8, iv))
     return Plaintext(cipher.doFinal(data))
   }
 

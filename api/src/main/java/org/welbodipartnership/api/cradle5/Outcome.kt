@@ -59,6 +59,7 @@ data class Outcome(
   val surgicalManagementType: Int? = null,
   @Json(name = "Control1927")
   val surgicalManagementOtherType: String? = null,
+
   @Json(name = "Control1931")
   val hadPerinatalDeath: Boolean = false,
   @Json(name = "Control1930")

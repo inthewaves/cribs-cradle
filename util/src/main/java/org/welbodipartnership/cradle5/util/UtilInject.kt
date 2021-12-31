@@ -10,6 +10,7 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
+@Suppress("UNUSED")
 object CoroutineModule {
   @Singleton
   @Provides

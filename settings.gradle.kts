@@ -91,6 +91,7 @@ dependencyResolutionManagement {
             version("compose", "1.1.0-rc01")
             // TODO: Remove this when all other Compose deps use 1.1.0-rc02 or higher
             version("composecompiler", "1.1.0-rc02")
+            alias("compose-runtime").to("androidx.compose.runtime", "runtime").versionRef("compose")
             alias("compose-ui-ui").to("androidx.compose.ui", "ui").versionRef("compose")
             alias("compose-material-material").to("androidx.compose.material", "material").versionRef("compose")
             alias("compose-material-iconsext").to("androidx.compose.material", "material-icons-extended").versionRef("compose")

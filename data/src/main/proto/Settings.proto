@@ -16,8 +16,33 @@ message UnencryptedSettings {
 }
 
 message EncryptedSettings {
-  /* The username of the currently logged-in user. */
-  string username = 1;
-  /* A hash of the user's login password, stored for authentication purposes. */
+  /* The authentication token from the server. */
+  AuthToken token = 1;
+  /* A hash of the user's login password, stored for lockscreen authentication purposes. */
   bytes password_hash = 2;
+
+  repeated DynamicServerEnum enums = 3;
+}
+
+message AuthToken {
+  string access_token = 1;
+  string token_type = 2;
+  string username = 3;
+  string issued = 4;
+  string expires = 5;
+}
+
+/* Represents a lookup taken from the server. */
+message DynamicServerEnum {
+  message Value {
+    int32 id = 1;
+    int32 code = 2;
+    string name = 3;
+    int32 list_order = 4;
+  }
+
+  string name = 1;
+  int32 id = 2;
+  /* All the enums stored */
+  repeated Value values = 3;
 }

@@ -13,9 +13,12 @@ import com.google.crypto.tink.KeyTemplates
 import com.google.crypto.tink.KeysetHandle
 import com.google.protobuf.InvalidProtocolBufferException
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CompletableJob
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.welbodipartnership.cradle5.data.cryptography.KeyStoreHelper
 import org.welbodipartnership.cradle5.data.cryptography.Plaintext
 import org.welbodipartnership.cradle5.data.cryptography.toAppAesGcmCiphertext
@@ -25,29 +28,45 @@ import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.io.OutputStream
 import java.security.SecureRandom
+import java.util.concurrent.CancellationException
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Manages settings in a [DataStore] that is not stored encrypted on disk. Usually this is used to
+ * store keys that are wrapped with a key stored in the Android KeyStore.
+ */
 @Singleton
-class UnencryptedSettingsManager @Inject constructor(
+internal class UnencryptedSettingsManager @Inject constructor(
   @ApplicationContext val context: Context,
-  appCoroutineDispatchers: AppCoroutineDispatchers,
+  private val appCoroutineDispatchers: AppCoroutineDispatchers,
   private val keyStoreHelper: KeyStoreHelper
 ) {
-  private val dataStore: DataStore<UnencryptedSettings> = DataStoreFactory.create(
-    serializer = UnencryptedSettingsSerializer,
-    produceFile = { context.dataStoreFile(UNENCRYPTED_SETTINGS_DATASTORE_FILE_NAME) },
-    // these are the default params
-    scope = CoroutineScope(appCoroutineDispatchers.io + SupervisorJob())
-  )
 
-  internal suspend fun getOrCreateKeysetForEncryptedSettings(): KeysetHandle {
-    val unencryptedSettings = dataStore.data.first()
+  private val dataStoreInitLock = Mutex()
+  private var dataStoreAndJobPair: Pair<DataStore<UnencryptedSettings>, CompletableJob>? = null
+
+  /**
+   * Closes the [DataStore]. The [DataStore] will reinitialize when accessor functions are
+   * called again.
+   */
+  fun closeDataStore() {
+    if (!dataStoreInitLock.tryLock()) return
+    try {
+      dataStoreAndJobPair?.second?.cancel(CancellationException("closeDataStore() was called"))
+      dataStoreAndJobPair = null
+    } finally {
+      dataStoreInitLock.unlock()
+    }
+  }
+
+  suspend fun getOrCreateKeysetForEncryptedSettings(): KeysetHandle {
+    val unencryptedSettings = getOrCreateDatastore().data.first()
     val key = unencryptedSettings.decryptWrappedSettingsKeyIfPresent()
     if (key != null) {
       return key
     } else {
-      val newSnapshot = dataStore.updateData { data ->
+      val newSnapshot = getOrCreateDatastore().updateData { data ->
         if (data.hasWrappedSettingsKey()) {
           return@updateData data
         }
@@ -69,13 +88,13 @@ class UnencryptedSettingsManager @Inject constructor(
     }
   }
 
-  internal suspend fun getOrCreateDatabaseKey(): DatabaseSecret {
-    val unencryptedSettings = dataStore.data.first()
+  suspend fun getOrCreateDatabaseKey(): DatabaseSecret {
+    val unencryptedSettings = getOrCreateDatastore().data.first()
     val key = unencryptedSettings.decryptWrappedDatabaseKeyIfPresent()
     if (key != null) {
       return key
     } else {
-      val newSnapshot = dataStore.updateData { data ->
+      val newSnapshot = getOrCreateDatastore().updateData { data ->
         if (data.hasWrappedDatabaseKey()) {
           return@updateData data
         }
@@ -87,6 +106,25 @@ class UnencryptedSettingsManager @Inject constructor(
           .build()
       }
       return newSnapshot.decryptWrappedDatabaseKeyIfPresent()!!
+    }
+  }
+
+  private suspend fun getOrCreateDatastore(): DataStore<UnencryptedSettings> {
+    return dataStoreAndJobPair?.first ?: dataStoreInitLock.withLock {
+      val dataStore = dataStoreAndJobPair?.first
+      if (dataStore != null) {
+        dataStore
+      } else {
+        val job = SupervisorJob()
+        val newStore = DataStoreFactory.create(
+          serializer = UnencryptedSettingsSerializer,
+          produceFile = { context.dataStoreFile(UNENCRYPTED_SETTINGS_DATASTORE_FILE_NAME) },
+          // these are the default params
+          scope = CoroutineScope(appCoroutineDispatchers.io + SupervisorJob())
+        )
+        dataStoreAndJobPair = newStore to job
+        newStore
+      }
     }
   }
 
