@@ -18,6 +18,7 @@ package org.welbodipartnership.cradle5.ui.composables.forms
 
 import android.content.Context
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -28,20 +29,22 @@ import androidx.compose.ui.platform.LocalContext
 open class TextFieldState(
   validator: (String) -> Boolean,
   errorFor: (Context, String) -> String,
-  initialValue: String = ""
-) : FieldState<String>(validator, errorFor, initialValue) {
+  initialValue: String = "",
+  backingState: MutableState<String> = mutableStateOf(initialValue),
+) : FieldState<String>(validator, errorFor, initialValue, backingState) {
   override val showErrorOnInput: Boolean = false
-  override var stateValue: String by mutableStateOf(initialValue)
+  override var stateValue: String by backingState
 }
 
 abstract class FieldState<T>(
   val validator: (T) -> Boolean = { true },
   private val errorFor: (Context, T) -> String = { _, _ -> "" },
   val initialValue: T,
+  val backingState: MutableState<T> = mutableStateOf(initialValue),
 ) {
   abstract val showErrorOnInput: Boolean
 
-  abstract var stateValue: T
+  open var stateValue: T by backingState
   // was the TextField ever focused
   var isFocusedDirty: Boolean by mutableStateOf(showErrorOnInput)
   var isFocused: Boolean by mutableStateOf(false)

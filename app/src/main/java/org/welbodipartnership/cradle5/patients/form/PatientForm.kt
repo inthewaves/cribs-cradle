@@ -12,11 +12,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.Button
+import androidx.compose.material.Card
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,6 +39,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.accompanist.insets.LocalWindowInsets
 import com.google.accompanist.insets.rememberInsetsPaddingValues
 import com.google.accompanist.insets.ui.TopAppBar
@@ -82,7 +86,10 @@ fun String.withRequiredStar() = buildAnnotatedString {
 }
 
 @Composable
-fun PatientForm(serverEnumCollection: ServerEnumCollection) {
+fun PatientForm(
+  serverEnumCollection: ServerEnumCollection,
+  viewModel: PatientFormViewModel = hiltViewModel()
+) {
   Scaffold(
     topBar = {
       TopAppBar(
@@ -538,6 +545,15 @@ fun PatientForm(serverEnumCollection: ServerEnumCollection) {
           serverEnumCollection = serverEnumCollection
         )
       }
+
+      Card(
+        elevation = 4.dp,
+        shape = MaterialTheme.shapes.small,
+        modifier = Modifier.padding(16.dp)
+      ) {
+        Button(onClick = { /*TODO*/ }) {
+        }
+      }
     }
   }
 }
@@ -936,14 +952,17 @@ fun PatientFormPreview() {
   }
 }
 
-class InitialsState : TextFieldState(
+class InitialsState(backingState: MutableState<String> = mutableStateOf("")) : TextFieldState(
   validator = { it.length in 1..MAX_INITIALS_LENGTH },
-  errorFor = { ctx, _, -> ctx.getString(R.string.patient_registration_initials_error) }
+  errorFor = { ctx, _, -> ctx.getString(R.string.patient_registration_initials_error) },
+  backingState = backingState
 ) {
   override val showErrorOnInput: Boolean = false
 }
 
-class NoFutureDateState : TextFieldState(
+class NoFutureDateState(
+  backingState: MutableState<String> = mutableStateOf("")
+) : TextFieldState(
   validator = { possibleDate ->
     run {
       val formDate = try {
@@ -961,10 +980,14 @@ class NoFutureDateState : TextFieldState(
     } else {
       ctx.getString(R.string.form_date_required_error)
     }
-  }
+  },
+  backingState = backingState
 )
 
-class LimitedAgeDateState(val limit: LongRange) : TextFieldState(
+class LimitedAgeDateState(
+  val limit: LongRange,
+  backingState: MutableState<String> = mutableStateOf("")
+) : TextFieldState(
   validator = { possibleDate ->
     run {
       val formDate = try {
@@ -983,20 +1006,28 @@ class LimitedAgeDateState(val limit: LongRange) : TextFieldState(
     } else {
       ctx.getString(R.string.form_date_required_error)
     }
-  }
+  },
+  backingState = backingState
 )
 
-class LimitedAgeIntState(val limit: LongRange) : TextFieldState(
+class LimitedAgeIntState(
+  val limit: LongRange,
+  backingState: MutableState<String> = mutableStateOf("")
+) : TextFieldState(
   validator = { possibleAge ->
     run {
       val age = possibleAge.toIntOrNull() ?: return@run false
       age in limit
     }
   },
-  errorFor = { ctx, _ -> ctx.getString(R.string.age_must_be_in_range_d_and_d, limit.first, limit.last) }
+  errorFor = { ctx, _ -> ctx.getString(R.string.age_must_be_in_range_d_and_d, limit.first, limit.last) },
+  backingState = backingState
 )
 
-class LimitedHduItuState(val limit: LongRange) : TextFieldState(
+class LimitedHduItuState(
+  val limit: LongRange,
+  backingState: MutableState<String> = mutableStateOf("")
+) : TextFieldState(
   validator = { stay ->
     run {
       if (stay.isBlank()) return@run true
@@ -1010,15 +1041,18 @@ class LimitedHduItuState(val limit: LongRange) : TextFieldState(
       limit.first,
       limit.last
     )
-  }
+  },
+  backingState = backingState
 )
 
 class EnumIdOnlyState(
-  private val enum: ServerEnum?
+  private val enum: ServerEnum?,
+  backingState: MutableState<EnumSelection.IdOnly?> = mutableStateOf(null)
 ) : FieldState<EnumSelection.IdOnly?>(
-  validator = { selection -> selection?.let { enum?.getValueFromId(it.selectionId) } != null  },
+  validator = { selection -> selection?.let { enum?.getValueFromId(it.selectionId) } != null },
   errorFor = { ctx, _, -> ctx.getString(R.string.server_enum_unknown_selection_error) },
-  initialValue = null
+  initialValue = null,
+  backingState = backingState
 ) {
   override val showErrorOnInput: Boolean = true
   override var stateValue: EnumSelection.IdOnly? by mutableStateOf(null)
@@ -1027,7 +1061,8 @@ class EnumIdOnlyState(
 class EnumWithOtherState(
   private val enum: ServerEnum?,
   private val isMandatory: Boolean,
-  val otherSelection: ServerEnum.Entry? = enum?.validSortedValues?.find { it.name == "Other" }
+  val otherSelection: ServerEnum.Entry? = enum?.validSortedValues?.find { it.name == "Other" },
+  backingState: MutableState<EnumSelection.WithOther?> = mutableStateOf(null)
 ) : FieldState<EnumSelection.WithOther?>(
   validator = { selection ->
     val entry = selection?.let { enum?.getValueFromId(it.selectionId) }
@@ -1035,8 +1070,6 @@ class EnumWithOtherState(
       false
     } else {
       !(entry == otherSelection && selection?.otherString.isNullOrBlank())
-    }.also {
-      Log.d("MainActivity", "Valid: $it, Selection is $selection, entry is $entry, otherSelection is $otherSelection")
     }
   },
   errorFor = { ctx, selection, ->
@@ -1050,17 +1083,15 @@ class EnumWithOtherState(
     }
   },
   initialValue = null,
+  backingState
 ) {
   override val showErrorOnInput: Boolean = true
-  private var _stateValue: EnumSelection.WithOther? by mutableStateOf(null)
   override var stateValue: EnumSelection.WithOther?
-    get() = _stateValue
+    get() = backingState.value
     set(value) {
-      _stateValue = value
+      backingState.value = value
       if (isMandatory && value != null) {
         enableShowErrors(force = true)
       }
     }
 }
-
-
