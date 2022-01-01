@@ -83,7 +83,7 @@ data class Hysterectomy(
    */
   @Embedded(prefix = "cause_")
   val cause: EnumSelection.WithOther?,
-  val additionalInfo: String? = null
+  val additionalInfo: String?
 )
 
 @Immutable

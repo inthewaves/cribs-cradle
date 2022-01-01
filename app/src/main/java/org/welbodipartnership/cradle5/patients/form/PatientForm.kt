@@ -16,7 +16,9 @@ import androidx.compose.material.Card
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Scaffold
+import androidx.compose.material.SnackbarHostState
 import androidx.compose.material.Text
+import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -29,6 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -90,7 +93,31 @@ fun PatientForm(
   onNavigateToPatient: (patientPrimaryKey: Long) -> Unit,
   viewModel: PatientFormViewModel = hiltViewModel()
 ) {
+  val formState = viewModel.formState.collectAsState()
+
+  val snackbarHostState = remember { SnackbarHostState() }
+
+  val resources = LocalContext.current.resources
+  LaunchedEffect(formState.value) {
+    when (val state = formState.value) {
+      is PatientFormViewModel.FormState.FailedValidation -> {
+        val totalErrors = state.errorsBySectionStringId.asSequence()
+          .flatMap { it.value }
+          .count()
+        snackbarHostState.showSnackbar(
+          resources.getQuantityString(
+            R.plurals.patient_form_snackbar_failed_to_save_there_are_d_errors,
+            totalErrors,
+            totalErrors,
+          )
+        )
+      }
+      else -> {}
+    }
+  }
+
   Scaffold(
+    scaffoldState = rememberScaffoldState(snackbarHostState = snackbarHostState),
     topBar = {
       TopAppBar(
         backgroundColor = MaterialTheme.colors.surface,
@@ -103,6 +130,7 @@ fun PatientForm(
         title = { Text(text = stringResource(R.string.new_patient_title)) },
       )
     },
+
   ) { padding ->
     val focusRequester = remember { FocusRequester() }
 
@@ -276,8 +304,8 @@ fun PatientForm(
           },
           dateState = hysterectomy.date,
           causeState = hysterectomy.cause,
-          additionalInfo = hysterectomy.extraInfo.value ?: "",
-          onAdditionInfoChanged = { hysterectomy.extraInfo.value = it },
+          additionalInfo = hysterectomy.additionalInfo.value ?: "",
+          onAdditionInfoChanged = { hysterectomy.additionalInfo.value = it },
           serverEnumCollection,
         )
 
@@ -349,7 +377,23 @@ fun PatientForm(
         )
       }
 
-      val formState = viewModel.formState.collectAsState()
+      formState.value.let { currentFormState ->
+        if (currentFormState is PatientFormViewModel.FormState.FailedValidation) {
+          BaseDetailsCard(
+            title = stringResource(R.string.errors_card_title),
+            modifier = Modifier.padding(16.dp),
+            backgroundColor = MaterialTheme.colors.error.copy(alpha = 0.3f)
+          ) {
+            for ((section, errors) in currentFormState.errorsBySectionStringId) {
+              CategoryHeader(stringResource(section))
+              for (error in errors) {
+                Text(error.errorMessage)
+              }
+            }
+          }
+        }
+      }
+
       SaveButtonCard(
         isEnabled = formState.value !is PatientFormViewModel.FormState.Loading &&
           formState.value !is PatientFormViewModel.FormState.Saving,
@@ -369,7 +413,6 @@ fun PatientForm(
           }
         }
       }
-
     }
   }
 }

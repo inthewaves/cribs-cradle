@@ -156,7 +156,7 @@ private fun NavGraphBuilder.addPatientCreate(
     PatientForm(
       ServerEnumCollection.defaultInstance,
       onNavigateToPatient = { patientPrimaryKey ->
-        navController.popBackStack(root.route, false)
+        navController.popBackStack()
         navController.navigate(
           LeafScreen.PatientDetails.createRoute(root, patientPrimaryKey)
         )

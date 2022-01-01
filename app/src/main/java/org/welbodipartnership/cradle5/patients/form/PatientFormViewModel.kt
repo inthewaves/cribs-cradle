@@ -2,6 +2,7 @@ package org.welbodipartnership.cradle5.patients.form
 
 import android.content.Context
 import android.util.Log
+import androidx.annotation.StringRes
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableStateOf
@@ -13,6 +14,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.actor
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -39,6 +41,8 @@ private val AGE_RANGE = 10L..60L
 
 private val VALID_LENGTH_OF_ITU_HDU_STAY = 1L..100L
 
+data class FieldError(@StringRes val fieldTitle: Int, val errorMessage: String)
+
 @HiltViewModel
 class PatientFormViewModel @Inject constructor(
   @ApplicationContext
@@ -59,7 +63,9 @@ class PatientFormViewModel @Inject constructor(
     object Saving : FormState()
     class SavedNewPatient(val primaryKeyOfPatient: Long) : FormState()
     class SavedEditsToExistingPatient(val primaryKeyOfPatient: Long) : FormState()
-    object Failed : FormState()
+    class FailedException(val exception: Exception) : FormState()
+    class FailedValidation(val errorsBySectionStringId: Map<Int, List<FieldError>>) : FormState()
+    class FailedLoading(val message: String) : FormState()
   }
 
   private val _formState: MutableStateFlow<FormState> = MutableStateFlow(FormState.Loading)
@@ -96,7 +102,7 @@ class PatientFormViewModel @Inject constructor(
         DropdownType.CauseOfHysterectomy,
         isMandatory = false
       ),
-      extraInfo = handle.createMutableState("hysterectomyExtraInfo", null)
+      additionalInfo = handle.createMutableState("hysterectomyExtraInfo", null)
     ),
     hduItuAdmission = OutcomeFields.HduItuAdmission(
       isEnabled = enabledState("hduItuAdmissionEnabled"),
@@ -155,7 +161,9 @@ class PatientFormViewModel @Inject constructor(
         val patientAndOutcomes = database.patientDao().getPatientAndOutcomes(existingPatientPrimaryKey)
         _formState.value = if (patientAndOutcomes == null) {
           Log.w(TAG, "Unable to find patient with pk $existingPatientPrimaryKey")
-          FormState.Failed
+          FormState.FailedLoading(
+            context.getString(R.string.patient_form_failed_to_load_patient_with_pk_d)
+          )
         } else {
           val (patient, outcomes) = patientAndOutcomes
 
@@ -182,7 +190,7 @@ class PatientFormViewModel @Inject constructor(
               isEnabled.value = true
               date.backingState.value = it.date.toString()
               cause.backingState.value = it.cause
-              extraInfo.value = it.additionalInfo
+              additionalInfo.value = it.additionalInfo
             }
           }
 
@@ -230,6 +238,7 @@ class PatientFormViewModel @Inject constructor(
   }
 
   fun save() {
+    Log.d(TAG, "save()")
     saveRequestChannel.trySend(Unit)
   }
 
@@ -238,101 +247,189 @@ class PatientFormViewModel @Inject constructor(
     capacity = Channel.RENDEZVOUS,
   ) {
     for (saveTick in channel) {
+      Log.d(TAG, "Handling save request")
       _formState.value = FormState.Saving
 
       formFields.forceAllErrors()
 
-      class InvalidFieldException(override val message: String) : Exception()
+
+      val fieldToErrorMap = linkedMapOf<Int, List<FieldError>>()
+      fun OutcomeFields.getCategoryStringRes() = when (this) {
+        is OutcomeFields.Eclampsia -> R.string.outcomes_eclampsia_label
+        is OutcomeFields.HduItuAdmission -> R.string.outcomes_admission_to_hdu_or_itu_label
+        is OutcomeFields.Hysterectomy -> R.string.outcomes_hysterectomy_label
+        is OutcomeFields.MaternalDeath -> R.string.outcomes_maternal_death_label
+        is OutcomeFields.PerinatalDeath -> R.string.outcomes_perinatal_death_label
+        is OutcomeFields.SurgicalManagement -> R.string.outcomes_surgical_management_label
+      }
+      fun LinkedHashMap<Int, List<FieldError>>.addFieldError(
+        @StringRes categoryTitle: Int,
+        @StringRes fieldLabel: Int,
+        errorMessage: String
+      ) {
+        (getOrPut(categoryTitle) { ArrayList() } as ArrayList<FieldError>).add(
+          FieldError(fieldLabel, errorMessage)
+        )
+      }
 
       _formState.value = try {
-        val patient: Patient = with(formFields.patientFields) {
+        val patient = with(formFields.patientFields) {
           if (!initials.isValid) {
-            throw InvalidFieldException(initials.errorFor(context, initials.stateValue))
+            fieldToErrorMap.addFieldError(
+              R.string.patient_registration_card_title,
+              R.string.patient_registration_initials_label,
+              initials.errorFor(context, initials.stateValue)
+            )
           }
           if (!presentationDate.isValid) {
-            throw InvalidFieldException(presentationDate.errorFor(context, initials.stateValue))
+
+            fieldToErrorMap.addFieldError(
+              R.string.patient_registration_card_title,
+              R.string.patient_registration_presentation_date_label,
+              presentationDate.errorFor(context, presentationDate.stateValue)
+            )
           }
           if (!age.isValid) {
-            throw InvalidFieldException(age.errorFor(context, initials.stateValue))
+            fieldToErrorMap.addFieldError(
+              R.string.patient_registration_card_title,
+              R.string.patient_registration_age_label,
+              age.errorFor(context, age.stateValue)
+            )
           }
           if (!dateOfBirth.isValid) {
-            throw InvalidFieldException(dateOfBirth.errorFor(context, initials.stateValue))
+            fieldToErrorMap.addFieldError(
+              R.string.patient_registration_card_title,
+              R.string.patient_registration_date_of_birth_label,
+              dateOfBirth.errorFor(context, dateOfBirth.stateValue)
+            )
           }
 
-          Patient(
-            initials = initials.stateValue,
-            presentationDate = presentationDate.stateValue.toFormDateOrThrow(),
-            dateOfBirth = dateOfBirth.stateValue.toFormDateOrThrow(),
-            localNotes = localNotes.value
-          )
+          runCatching {
+            Patient(
+              initials = initials.stateValue,
+              presentationDate = presentationDate.stateValue.toFormDateOrThrow(),
+              dateOfBirth = dateOfBirth.stateValue.toFormDateOrThrow(),
+              localNotes = localNotes.value
+            )
+          }
         }
 
-        val eclampsia: EclampsiaFit? = with(formFields.eclampsia) {
+        val eclampsia = with(formFields.eclampsia) {
           when (isEnabled.value) {
-            null -> throw InvalidFieldException(
-              context.getString(R.string.outcomes_eclampsia_not_selected_error)
-            )
+            null -> {
+              fieldToErrorMap.addFieldError(
+                getCategoryStringRes(),
+                R.string.outcomes_eclampsia_label,
+                context.getString(R.string.outcomes_eclampsia_not_selected_error)
+              )
+              null
+            }
             true -> {
               if (!date.isValid) {
-                throw InvalidFieldException(date.errorFor(context, date.stateValue))
+                fieldToErrorMap.addFieldError(
+                  getCategoryStringRes(),
+                  R.string.form_date_label,
+                  date.errorFor(context, date.stateValue)
+                )
               }
               if (!placeOfFirstFit.isValid) {
-                throw InvalidFieldException(placeOfFirstFit.errorFor(context, placeOfFirstFit.stateValue))
+                fieldToErrorMap.addFieldError(
+                  getCategoryStringRes(),
+                  R.string.place_of_first_eclamptic_fit_label,
+                  placeOfFirstFit.errorFor(context, placeOfFirstFit.stateValue)
+                )
               }
-              EclampsiaFit(
-                date = date.stateValue.toFormDateOrThrow(),
-                place = placeOfFirstFit.stateValue
-              )
+
+              runCatching {
+                EclampsiaFit(
+                  date = date.stateValue.toFormDateOrThrow(),
+                  place = placeOfFirstFit.stateValue
+                )
+              }
             }
             else -> null
           }
         }
 
-        val hysterectomy: Hysterectomy? = with(formFields.hysterectomy) {
+        val hysterectomy = with(formFields.hysterectomy) {
           when (isEnabled.value) {
-            null -> throw InvalidFieldException(
-              context.getString(R.string.outcomes_hysterectomy_not_selected_error)
-            )
-            true -> {
-              if (!date.isValid) {
-                throw InvalidFieldException(date.errorFor(context, date.stateValue))
-              }
-              if (!cause.isValid) {
-                throw InvalidFieldException(cause.errorFor(context, cause.stateValue))
-              }
-              Hysterectomy(
-                date = date.stateValue.toFormDateOrThrow(),
-                cause = cause.stateValue
+            null -> {
+              fieldToErrorMap.addFieldError(
+                getCategoryStringRes(),
+                R.string.outcomes_hysterectomy_label,
+                context.getString(R.string.outcomes_hysterectomy_not_selected_error)
               )
-            }
-            else -> {
               null
             }
+            true -> {
+              if (!date.isValid) {
+                fieldToErrorMap.addFieldError(
+                  getCategoryStringRes(),
+                  R.string.form_date_label,
+                  date.errorFor(context, date.stateValue)
+                )
+              }
+              if (!cause.isValid) {
+                fieldToErrorMap.addFieldError(
+                  getCategoryStringRes(),
+                  R.string.hysterectomy_cause_label,
+                  cause.errorFor(context, cause.stateValue)
+                )
+              }
+              // additional info has no checking
+
+              runCatching {
+                Hysterectomy(
+                  date = date.stateValue.toFormDateOrThrow(),
+                  cause = cause.stateValue,
+                  additionalInfo = additionalInfo.value
+                )
+              }
+            }
+            else -> null
           }
         }
 
         val hduOrItuAdmission = with(formFields.hduItuAdmission) {
           when (isEnabled.value) {
-            null -> throw InvalidFieldException(
-              context.getString(R.string.outcomes_eclampsia_not_selected_error)
-            )
+            null -> {
+              fieldToErrorMap.addFieldError(
+                getCategoryStringRes(),
+                R.string.outcomes_admission_to_hdu_or_itu_label,
+                context.getString(R.string.outcomes_eclampsia_not_selected_error)
+              )
+              null
+            }
             true -> {
               if (!date.isValid) {
-                throw InvalidFieldException(date.errorFor(context, date.stateValue))
+                fieldToErrorMap.addFieldError(
+                  getCategoryStringRes(),
+                  R.string.form_date_label,
+                  date.errorFor(context, date.stateValue)
+                )
               }
               if (!cause.isValid || cause.stateValue == null) {
-                throw InvalidFieldException(cause.errorFor(context, cause.stateValue))
+                fieldToErrorMap.addFieldError(
+                  getCategoryStringRes(),
+                  R.string.hdu_or_idu_admission_cause_label,
+                  cause.errorFor(context, cause.stateValue)
+                )
               }
               if (!hduItuStayLengthInDays.isValid) {
-                throw InvalidFieldException(
+                fieldToErrorMap.addFieldError(
+                  getCategoryStringRes(),
+                  R.string.hdu_or_idu_admission_length_stay_days_if_known_label,
                   hduItuStayLengthInDays.errorFor(context, hduItuStayLengthInDays.stateValue)
                 )
               }
-              HduOrItuAdmission(
-                date = date.stateValue.toFormDateOrThrow(),
-                cause = cause.stateValue!!,
-                stayInDays = hduItuStayLengthInDays.stateValue.toIntOrNull()
-              )
+
+              runCatching {
+                HduOrItuAdmission(
+                  date = date.stateValue.toFormDateOrThrow(),
+                  cause = cause.stateValue!!,
+                  stayInDays = hduItuStayLengthInDays.stateValue.toIntOrNull()
+                )
+              }
             }
             else -> null
           }
@@ -340,24 +437,43 @@ class PatientFormViewModel @Inject constructor(
 
         val maternalDeath = with(formFields.maternalDeath) {
           when (isEnabled.value) {
-            null -> throw InvalidFieldException(
-              context.getString(R.string.outcomes_eclampsia_not_selected_error)
-            )
+            null -> {
+              fieldToErrorMap.addFieldError(
+                getCategoryStringRes(),
+                R.string.outcomes_maternal_death_label,
+                context.getString(R.string.outcomes_maternal_death_not_selected_error)
+              )
+              null
+            }
             true -> {
               if (!date.isValid) {
-                throw InvalidFieldException(date.errorFor(context, date.stateValue))
+                fieldToErrorMap.addFieldError(
+                  getCategoryStringRes(),
+                  R.string.form_date_label,
+                  date.errorFor(context, date.stateValue)
+                )
               }
               if (!underlyingCause.isValid) {
-                throw InvalidFieldException(underlyingCause.errorFor(context, underlyingCause.stateValue))
+                fieldToErrorMap.addFieldError(
+                  getCategoryStringRes(),
+                  R.string.maternal_death_underlying_cause_label,
+                  underlyingCause.errorFor(context, underlyingCause.stateValue)
+                )
               }
               if (!placeOfDeath.isValid) {
-                throw InvalidFieldException(placeOfDeath.errorFor(context, placeOfDeath.stateValue))
+                fieldToErrorMap.addFieldError(
+                  getCategoryStringRes(),
+                  R.string.maternal_death_place_label,
+                  placeOfDeath.errorFor(context, placeOfDeath.stateValue)
+                )
               }
-              MaternalDeath(
-                date = date.stateValue.toFormDateOrThrow(),
-                underlyingCause = underlyingCause.stateValue,
-                place = placeOfDeath.stateValue
-              )
+              runCatching {
+                MaternalDeath(
+                  date = date.stateValue.toFormDateOrThrow(),
+                  underlyingCause = underlyingCause.stateValue,
+                  place = placeOfDeath.stateValue
+                )
+              }
             }
             else -> null
           }
@@ -365,20 +481,35 @@ class PatientFormViewModel @Inject constructor(
 
         val surgicalManagement = with(formFields.surgicalManagement) {
           when (isEnabled.value) {
-            null -> throw InvalidFieldException(
-              context.getString(R.string.outcomes_eclampsia_not_selected_error)
-            )
+            null -> {
+              fieldToErrorMap.addFieldError(
+                getCategoryStringRes(),
+                R.string.outcomes_surgical_management_label,
+                context.getString(R.string.outcomes_surgical_management_not_selected_error)
+              )
+              null
+            }
             true -> {
               if (!date.isValid) {
-                throw InvalidFieldException(date.errorFor(context, date.stateValue))
+                fieldToErrorMap.addFieldError(
+                  getCategoryStringRes(),
+                  R.string.form_date_label,
+                  date.errorFor(context, date.stateValue)
+                )
               }
               if (!type.isValid) {
-                throw InvalidFieldException(type.errorFor(context, type.stateValue))
+                fieldToErrorMap.addFieldError(
+                  getCategoryStringRes(),
+                  R.string.surgical_management_type_label,
+                  type.errorFor(context, type.stateValue)
+                )
               }
-              SurgicalManagementOfHaemorrhage(
-                date = date.stateValue.toFormDateOrThrow(),
-                typeOfSurgicalManagement = type.stateValue
-              )
+              runCatching {
+                SurgicalManagementOfHaemorrhage(
+                  date = date.stateValue.toFormDateOrThrow(),
+                  typeOfSurgicalManagement = type.stateValue
+                )
+              }
             }
             else -> null
           }
@@ -386,63 +517,84 @@ class PatientFormViewModel @Inject constructor(
 
         val perinatalDeath = with(formFields.perinatalDeath) {
           when (isEnabled.value) {
-            null -> throw InvalidFieldException(
-              context.getString(R.string.outcomes_eclampsia_not_selected_error)
-            )
+            null -> {
+              fieldToErrorMap.addFieldError(
+                getCategoryStringRes(),
+                R.string.outcomes_perinatal_death_label,
+                context.getString(R.string.outcomes_perinatal_death_not_selected_error)
+              )
+              null
+            }
             true -> {
               if (!date.isValid) {
-                throw InvalidFieldException(date.errorFor(context, date.stateValue))
+                fieldToErrorMap.addFieldError(
+                  getCategoryStringRes(),
+                  R.string.form_date_label,
+                  date.errorFor(context, date.stateValue)
+                )
               }
               if (!outcome.isValid) {
-                throw InvalidFieldException(outcome.errorFor(context, outcome.stateValue))
+                fieldToErrorMap.addFieldError(
+                  getCategoryStringRes(),
+                  R.string.perinatal_death_outcome_label,
+                  outcome.errorFor(context, outcome.stateValue)
+                )
               }
               if (!relatedMaternalFactors.isValid) {
-                throw InvalidFieldException(
+                fieldToErrorMap.addFieldError(
+                  getCategoryStringRes(),
+                  R.string.perinatal_death_related_maternal_factors_label,
                   relatedMaternalFactors.errorFor(context, relatedMaternalFactors.stateValue)
                 )
               }
-              PerinatalDeath(
-                date = date.stateValue.toFormDateOrThrow(),
-                outcome = outcome.stateValue,
-                relatedMaternalFactors = relatedMaternalFactors.stateValue
-              )
+              runCatching {
+                PerinatalDeath(
+                  date = date.stateValue.toFormDateOrThrow(),
+                  outcome = outcome.stateValue,
+                  relatedMaternalFactors = relatedMaternalFactors.stateValue
+                )
+              }
             }
             else -> null
           }
         }
 
-        val patientPrimaryKey = database.withTransaction {
-          val pk = database.patientDao().upsert(patient)
-          // we have a foreign key constraint here
-          database.outcomesDao().upsert(
-            Outcomes(
-              patientId = pk,
-              eclampsiaFit = eclampsia,
-              hysterectomy = hysterectomy,
-              hduOrItuAdmission = hduOrItuAdmission,
-              maternalDeath = maternalDeath,
-              surgicalManagement = surgicalManagement,
-              perinatalDeath = perinatalDeath
-            )
-          )
-          pk
-        }
-
-        if (existingPatientPrimaryKey != null) {
-          assert(existingPatientPrimaryKey == patientPrimaryKey)
-          FormState.SavedEditsToExistingPatient(patientPrimaryKey)
+        if (fieldToErrorMap.isNotEmpty()) {
+          Log.d(TAG, "Errors: $fieldToErrorMap")
+          FormState.FailedValidation(fieldToErrorMap)
         } else {
-          FormState.SavedNewPatient(patientPrimaryKey)
-        }.also {
-          channel.close()
+          Log.d(TAG, "Attempting to save new patient")
+          val patientPrimaryKey = database.withTransaction {
+            val pk = database.patientDao().upsert(patient.getOrThrow())
+            // we have a foreign key constraint here
+            database.outcomesDao().upsert(
+              Outcomes(
+                patientId = pk,
+                eclampsiaFit = eclampsia?.getOrThrow(),
+                hysterectomy = hysterectomy?.getOrThrow(),
+                hduOrItuAdmission = hduOrItuAdmission?.getOrThrow(),
+                maternalDeath = maternalDeath?.getOrThrow(),
+                surgicalManagement = surgicalManagement?.getOrThrow(),
+                perinatalDeath = perinatalDeath?.getOrThrow()
+              )
+            )
+            pk
+          }
+
+          if (existingPatientPrimaryKey != null) {
+            assert(existingPatientPrimaryKey == patientPrimaryKey)
+            FormState.SavedEditsToExistingPatient(patientPrimaryKey)
+          } else {
+            FormState.SavedNewPatient(patientPrimaryKey)
+          }.also {
+            channel.close()
+          }
         }
-      } catch (e: InvalidFieldException) {
-        Log.w(TAG, "Failed to save patient")
-        FormState.Failed
-      } catch (e: NullPointerException) {
+      } catch (e: Exception) {
         Log.w(TAG, "Failed to save patient", e)
-        FormState.Failed
+        FormState.FailedException(e)
       }
+      ensureActive()
     }
   }
 
@@ -540,13 +692,13 @@ class PatientFormViewModel @Inject constructor(
       override val isEnabled: MutableState<Boolean?>,
       override val date: NoFutureDateState,
       val cause: EnumWithOtherState,
-      val extraInfo: MutableState<String?>
+      val additionalInfo: MutableState<String?>
     ) : OutcomeFields() {
       override fun reset() {
         isEnabled.value = false
         date.reset()
         cause.reset()
-        extraInfo.value = null
+        additionalInfo.value = null
       }
 
       override fun forceShowErrors() {
