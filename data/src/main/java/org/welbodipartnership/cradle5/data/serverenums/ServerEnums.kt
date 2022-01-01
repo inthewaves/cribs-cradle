@@ -358,18 +358,21 @@ class ServerEnum constructor(
   val type: DropdownType,
   unsortedValues: List<Entry>
 ) {
-  val sortedValues: List<Entry> = unsortedValues.sortedBy { it.listOrder }
+  val validSortedValues: List<Entry> = unsortedValues.sortedBy { it.listOrder }
 
-  val otherEntry: Entry? = sortedValues.asReversed().find { it.name.trim() == "Other" }
+  val sortedValuesWithEmptyResponse: Sequence<EntryType>
+    get() = sequenceOf(EmptyResponseEntry) + validSortedValues
 
-  fun getValueFromId(id: Int): Entry? = sortedValues.find { it.id == id }
+  val otherEntry: Entry? = validSortedValues.asReversed().find { it.name.trim() == "Other" }
+
+  fun getValueFromId(id: Int): Entry? = validSortedValues.find { it.id == id }
 
   fun getValueFromId(id: EnumSelection): Entry? = getValueFromId(id.selectionId)
 
   fun toDynamicServerEnum(): DynamicServerEnum = DynamicServerEnum.newBuilder()
     .setId(type.serverLookupId)
     .addAllValues(
-      sortedValues.asSequence()
+      validSortedValues.asSequence()
         .map { entry ->
           DynamicServerEnum.Value.newBuilder().apply {
             id = entry.id
@@ -382,12 +385,14 @@ class ServerEnum constructor(
     )
     .build()
 
+  sealed class EntryType
+  object EmptyResponseEntry : EntryType()
   data class Entry(
     val id: Int,
     val code: Int?,
     val name: String,
     val listOrder: Int,
-  )
+  ) : EntryType()
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -396,19 +401,19 @@ class ServerEnum constructor(
     other as ServerEnum
 
     if (type != other.type) return false
-    if (sortedValues != other.sortedValues) return false
+    if (validSortedValues != other.validSortedValues) return false
 
     return true
   }
 
   override fun hashCode(): Int {
     var result = type.hashCode()
-    result = 31 * result + sortedValues.hashCode()
+    result = 31 * result + validSortedValues.hashCode()
     return result
   }
 
   override fun toString(): String {
-    return "ServerEnum(type=$type, values=$sortedValues)"
+    return "ServerEnum(type=$type, values=$validSortedValues)"
   }
 }
 

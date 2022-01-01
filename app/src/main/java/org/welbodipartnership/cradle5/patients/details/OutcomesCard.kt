@@ -127,13 +127,13 @@ fun OutcomesCard(
       LabelAndValueOrNone(stringResource(R.string.form_date_label), maternalDeath.date.toString())
       LabelAndValueForDropdownOrUnknown(
         dropdownType = DropdownType.UnderlyingCauseOfDeath,
-        label = stringResource(R.string.maternal_dealth_underlying_cause_label),
+        label = stringResource(R.string.maternal_death_underlying_cause_label),
         enumValue = maternalDeath.underlyingCause,
         enumCollection = enumCollection
       )
       LabelAndValueForDropdownOrUnknown(
         dropdownType = DropdownType.Place,
-        label = stringResource(R.string.maternal_dealth_place_label),
+        label = stringResource(R.string.maternal_death_place_label),
         enumValue = maternalDeath.place,
         enumCollection = enumCollection
       )

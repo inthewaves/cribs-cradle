@@ -17,20 +17,23 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import org.welbodipartnership.cradle5.R
 import org.welbodipartnership.cradle5.data.database.entities.embedded.EnumSelection
 import org.welbodipartnership.cradle5.data.serverenums.DropdownType
 import org.welbodipartnership.cradle5.data.serverenums.ServerEnum
 import org.welbodipartnership.cradle5.data.serverenums.ServerEnumCollection
+import org.welbodipartnership.cradle5.patients.form.withRequiredStar
 import org.welbodipartnership.cradle5.ui.composables.OutlinedTextFieldWithErrorHint
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
 
 @Composable
 fun EnumDropdownMenu(
   currentSelection: ServerEnum.Entry?,
-  onSelect: (ServerEnum.Entry) -> Unit,
+  onSelect: (ServerEnum.Entry?) -> Unit,
   modifier: Modifier = Modifier,
   textModifier: Modifier = Modifier,
   label: @Composable () -> Unit,
@@ -62,14 +65,22 @@ fun EnumDropdownMenu(
       expanded = enabled && expanded,
       onDismissRequest = { expanded = false }
     ) {
-      serverEnum.sortedValues.forEach { selectionOption ->
+      serverEnum.sortedValuesWithEmptyResponse.forEach { selectionOption ->
         DropdownMenuItem(
           onClick = {
             expanded = false
-            onSelect(selectionOption)
-          }
+            val selection: ServerEnum.Entry? = when (selectionOption) {
+              ServerEnum.EmptyResponseEntry -> null
+              is ServerEnum.Entry -> selectionOption
+            }
+            onSelect(selection)
+          },
         ) {
-          Text(text = selectionOption.name)
+          val text = when (selectionOption) {
+            ServerEnum.EmptyResponseEntry -> null
+            is ServerEnum.Entry -> selectionOption.name
+          }
+          Text(text = text ?: "")
         }
       }
     }
@@ -79,12 +90,13 @@ fun EnumDropdownMenu(
 @Composable
 fun EnumDropdownMenuWithOther(
   currentSelection: EnumSelection.WithOther?,
-  onSelect: (EnumSelection.WithOther) -> Unit,
+  onSelect: (EnumSelection.WithOther?) -> Unit,
   modifier: Modifier = Modifier,
   dropdownTextModifier: Modifier = Modifier,
   otherTextModifier: Modifier = Modifier,
   label: @Composable () -> Unit,
   errorHint: String?,
+  showErrorHintOnOtherField: Boolean = true,
   serverEnum: ServerEnum,
   enabled: Boolean = true,
   spacerHeight: Dp = 8.dp,
@@ -97,7 +109,7 @@ fun EnumDropdownMenuWithOther(
       expanded = enabled && expanded,
       onExpandedChange = { expanded = it }
     ) {
-      OutlinedTextField(
+      OutlinedTextFieldWithErrorHint(
         readOnly = true,
         value = currentEntry?.name ?: "",
         onValueChange = {},
@@ -109,22 +121,31 @@ fun EnumDropdownMenuWithOther(
             expanded = enabled && expanded
           )
         },
+        errorHint = if (!showErrorHintOnOtherField && errorHint != null) errorHint else null,
         colors = TextFieldDefaults.outlinedTextFieldColors(),
-        modifier = dropdownTextModifier
+        textFieldModifier = dropdownTextModifier
       )
       ExposedDropdownMenu(
         expanded = enabled && expanded,
         onDismissRequest = { expanded = false },
         modifier = dropdownTextModifier,
       ) {
-        serverEnum.sortedValues.forEach { selectionOption ->
+        serverEnum.sortedValuesWithEmptyResponse.forEach { selectionOption ->
           DropdownMenuItem(
             onClick = {
               expanded = false
-              onSelect(EnumSelection.WithOther(selectionOption.id))
+              val selection: EnumSelection.WithOther? = when (selectionOption) {
+                ServerEnum.EmptyResponseEntry -> null
+                is ServerEnum.Entry -> EnumSelection.WithOther(selectionOption.id)
+              }
+              onSelect(selection)
             },
           ) {
-            Text(text = selectionOption.name)
+            val text = when (selectionOption) {
+              ServerEnum.EmptyResponseEntry -> null
+              is ServerEnum.Entry -> selectionOption.name
+            }
+            Text(text = text ?: "")
           }
         }
       }
@@ -141,9 +162,23 @@ fun EnumDropdownMenuWithOther(
           onSelect(currentSelection.copy(otherString = it))
         }
       },
-      label = { Text("If Other, please specify") },
+      label = {
+        if (isOtherEnabled) {
+          Text(stringResource(R.string.other_enum_label).withRequiredStar())
+        } else {
+          Text(stringResource(R.string.other_enum_label))
+        }
+      },
       enabled = isOtherEnabled,
-      errorHint = errorHint,
+      errorHint = if (
+        isOtherEnabled &&
+        showErrorHintOnOtherField &&
+        errorHint != null
+      ) {
+        errorHint
+      } else {
+        null
+      },
       textFieldModifier = otherTextModifier
     )
   }
@@ -171,7 +206,7 @@ fun EnumDropdownMenuWithOtherPreview() {
   CradleTrialAppTheme {
     Surface {
       val enum = ServerEnumCollection.defaultInstance[DropdownType.CauseForHduOrItuAdmission]!!
-      var selection by remember {
+      var selection: EnumSelection.WithOther? by remember {
         mutableStateOf(
           EnumSelection.WithOther(
             enum.otherEntry!!.id,

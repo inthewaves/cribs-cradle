@@ -292,12 +292,16 @@ fun PatientForm(serverEnumCollection: ServerEnumCollection) {
           save = { it.stateValue },
           restore = { savedValue ->
             EnumWithOtherState(
-              serverEnumCollection[DropdownType.CauseOfHysterectomy]
+              serverEnumCollection[DropdownType.CauseOfHysterectomy],
+              isMandatory = false
             ).also { it.stateValue = savedValue }
           }
         )
       ) {
-        EnumWithOtherState(serverEnumCollection[DropdownType.CauseOfHysterectomy])
+        EnumWithOtherState(
+          serverEnumCollection[DropdownType.CauseOfHysterectomy],
+          isMandatory = false
+        )
       }
       var hysterectomyExtraInfo: String? by rememberSaveable { mutableStateOf("") }
 
@@ -313,12 +317,16 @@ fun PatientForm(serverEnumCollection: ServerEnumCollection) {
           save = { it.stateValue },
           restore = { savedValue ->
             EnumWithOtherState(
-              serverEnumCollection[DropdownType.CauseForHduOrItuAdmission]
+              serverEnumCollection[DropdownType.CauseForHduOrItuAdmission],
+              isMandatory = true
             ).also { it.stateValue = savedValue }
           }
         )
       ) {
-        EnumWithOtherState(serverEnumCollection[DropdownType.CauseForHduOrItuAdmission])
+        EnumWithOtherState(
+          serverEnumCollection[DropdownType.CauseForHduOrItuAdmission],
+          isMandatory = true
+        )
       }
       val hduItuLengthDays = rememberSaveable(
         saver = Saver(
@@ -331,6 +339,98 @@ fun PatientForm(serverEnumCollection: ServerEnumCollection) {
         LimitedHduItuState(VALID_LENGTH_OF_ITU_HDU_STAY)
       }
 
+      var isMaternalDeathEnabled: Boolean? by rememberSaveable { mutableStateOf(null) }
+      val maternalDeathDateState = rememberSaveable(
+        saver = Saver(
+          save = { it.stateValue },
+          restore = { savedText -> NoFutureDateState().also { it.stateValue = savedText } }
+        )
+      ) { NoFutureDateState() }
+      val maternalDeathUnderlyingCauseState = rememberSaveable(
+        saver = Saver(
+          save = { it.stateValue },
+          restore = { savedValue ->
+            EnumWithOtherState(
+              serverEnumCollection[DropdownType.UnderlyingCauseOfDeath],
+              isMandatory = false
+            ).also { it.stateValue = savedValue }
+          }
+        )
+      ) {
+        EnumWithOtherState(
+          serverEnumCollection[DropdownType.UnderlyingCauseOfDeath],
+          isMandatory = false
+        )
+      }
+      val maternalDeathPlaceState = rememberSaveable(
+        saver = Saver(
+          save = { it.stateValue },
+          restore = { savedValue ->
+            EnumIdOnlyState(serverEnumCollection[DropdownType.Place]).also { it.stateValue = savedValue }
+          }
+        )
+      ) {
+        EnumIdOnlyState(serverEnumCollection[DropdownType.Place])
+      }
+
+      var isSurgicalManagementEnabled: Boolean? by rememberSaveable { mutableStateOf(null) }
+      val surgicalManagementDateState = rememberSaveable(
+        saver = Saver(
+          save = { it.stateValue },
+          restore = { savedText -> NoFutureDateState().also { it.stateValue = savedText } }
+        )
+      ) { NoFutureDateState() }
+      val surgicalManagementTypeState = rememberSaveable(
+        saver = Saver(
+          save = { it.stateValue },
+          restore = { savedValue ->
+            EnumWithOtherState(
+              serverEnumCollection[DropdownType.TypeOfSurgicalManagement],
+              isMandatory = false
+            ).also { it.stateValue = savedValue }
+          }
+        )
+      ) {
+        EnumWithOtherState(
+          serverEnumCollection[DropdownType.TypeOfSurgicalManagement],
+          isMandatory = false
+        )
+      }
+
+      var isPerinatalFormEnabled: Boolean? by rememberSaveable { mutableStateOf(null) }
+      val perinatalDeathDateState = rememberSaveable(
+        saver = Saver(
+          save = { it.stateValue },
+          restore = { savedText -> NoFutureDateState().also { it.stateValue = savedText } }
+        )
+      ) { NoFutureDateState() }
+      val perinatalDeathOutcomeState = rememberSaveable(
+        saver = Saver(
+          save = { it.stateValue },
+          restore = { savedValue ->
+            EnumIdOnlyState(serverEnumCollection[DropdownType.PerinatalOutcome]).also { it.stateValue = savedValue }
+          }
+        )
+      ) {
+        EnumIdOnlyState(serverEnumCollection[DropdownType.PerinatalOutcome])
+      }
+      val perinatalDeathMaternalFactorsState = rememberSaveable(
+        saver = Saver(
+          save = { it.stateValue },
+          restore = { savedValue ->
+            EnumWithOtherState(
+              serverEnumCollection[DropdownType.MaternalFactorsRelatedToPerinatalLoss],
+              isMandatory = false
+            ).also { it.stateValue = savedValue }
+          }
+        )
+      ) {
+        EnumWithOtherState(
+          serverEnumCollection[DropdownType.MaternalFactorsRelatedToPerinatalLoss],
+          isMandatory = false
+        )
+      }
+
       BaseDetailsCard(
         stringResource(R.string.outcomes_card_title),
         Modifier.padding(16.dp)
@@ -338,8 +438,8 @@ fun PatientForm(serverEnumCollection: ServerEnumCollection) {
         CategoryHeader(stringResource(R.string.outcomes_eclampsia_label))
 
         EclampsiaForm(
-          isEclampsiaFitEnabled = isEclampsiaEnabled,
-          onEclampsiaFitEnabledChange = {
+          isFormEnabled = isEclampsiaEnabled,
+          onFormEnabledStateChange = {
             isEclampsiaEnabled = it
             dateState.reset()
             placeOfFirstFitState.reset()
@@ -385,6 +485,58 @@ fun PatientForm(serverEnumCollection: ServerEnumCollection) {
           lengthOfStayInDaysState = hduItuLengthDays,
           serverEnumCollection,
         )
+
+        Spacer(Modifier.height(categoryToCategorySpacerHeight))
+
+        CategoryHeader(stringResource(R.string.outcomes_maternal_death_label))
+
+        MaternalDeathForm(
+          isFormEnabled = isMaternalDeathEnabled,
+          onFormEnabledChange = {
+            isMaternalDeathEnabled = it
+            maternalDeathDateState.reset()
+            maternalDeathUnderlyingCauseState.reset()
+            maternalDeathPlaceState.reset()
+          },
+          dateState = maternalDeathDateState,
+          underlyingCauseState = maternalDeathUnderlyingCauseState,
+          placeOfDeathState = maternalDeathPlaceState,
+          serverEnumCollection = serverEnumCollection
+        )
+
+        Spacer(Modifier.height(categoryToCategorySpacerHeight))
+
+        CategoryHeader(stringResource(R.string.outcomes_surgical_management_label))
+
+        SurgicalManagementForm(
+          isFormEnabled = isSurgicalManagementEnabled,
+          onFormEnabledChange = {
+            isSurgicalManagementEnabled = it
+            surgicalManagementDateState.reset()
+            surgicalManagementTypeState.reset()
+          },
+          dateState = surgicalManagementDateState,
+          surgicalManagementTypeState = surgicalManagementTypeState,
+          serverEnumCollection = serverEnumCollection,
+        )
+
+        Spacer(Modifier.height(categoryToCategorySpacerHeight))
+
+        CategoryHeader(stringResource(R.string.outcomes_perinatal_death_label))
+
+        PerinatalDeathForm(
+          isFormEnabled = isPerinatalFormEnabled,
+          onFormEnabledChange = {
+            isPerinatalFormEnabled = it
+            perinatalDeathDateState.reset()
+            perinatalDeathOutcomeState.reset()
+            perinatalDeathMaternalFactorsState.reset()
+          },
+          dateState = perinatalDeathDateState,
+          outcomeState = perinatalDeathOutcomeState,
+          maternalFactorsState = perinatalDeathMaternalFactorsState,
+          serverEnumCollection = serverEnumCollection
+        )
       }
     }
   }
@@ -392,16 +544,16 @@ fun PatientForm(serverEnumCollection: ServerEnumCollection) {
 
 @Composable
 fun EclampsiaForm(
-  isEclampsiaFitEnabled: Boolean?,
-  onEclampsiaFitEnabledChange: (newState: Boolean) -> Unit,
+  isFormEnabled: Boolean?,
+  onFormEnabledStateChange: (newState: Boolean) -> Unit,
   dateState: NoFutureDateState,
   placeOfFirstFitState: EnumIdOnlyState,
   serverEnumCollection: ServerEnumCollection,
   modifier: Modifier = Modifier
 ) {
   BooleanRadioButtonRow(
-    isTrue = isEclampsiaFitEnabled,
-    onBooleanChange = onEclampsiaFitEnabledChange,
+    isTrue = isFormEnabled,
+    onBooleanChange = onFormEnabledStateChange,
   )
 
   val serverEnum = requireNotNull(serverEnumCollection[DropdownType.Place]) {
@@ -418,10 +570,10 @@ fun EclampsiaForm(
       onPickerClose = { },
       label = {
         Text(
-          text = stringResource(id = R.string.form_date_label),
+          text = stringResource(id = R.string.form_date_label).withRequiredStar(),
         )
       },
-      enabled = isEclampsiaFitEnabled == true,
+      enabled = isFormEnabled == true,
       modifier = Modifier.fillMaxWidth(),
       textFieldModifier = Modifier.fillMaxWidth(),
       errorHint = dateState.getError(),
@@ -430,10 +582,12 @@ fun EclampsiaForm(
 
     EnumDropdownMenu(
       currentSelection = enum,
-      onSelect = { placeOfFirstFitState.stateValue = EnumSelection.IdOnly(it.id) },
+      onSelect = {
+        placeOfFirstFitState.stateValue = it?.let { EnumSelection.IdOnly(it.id) }
+      },
       serverEnum = serverEnum,
       label = { Text(stringResource(R.string.place_of_first_eclamptic_fit_label)) },
-      enabled = isEclampsiaFitEnabled == true,
+      enabled = isFormEnabled == true,
       textModifier = Modifier.fillMaxWidth()
     )
   }
@@ -467,7 +621,7 @@ fun HysterectomyForm(
       onPickerClose = { },
       label = {
         Text(
-          text = stringResource(id = R.string.form_date_label),
+          text = stringResource(id = R.string.form_date_label).withRequiredStar(),
         )
       },
       enabled = isFormEnabled == true,
@@ -484,7 +638,9 @@ fun HysterectomyForm(
       label = { Text(stringResource(R.string.hysterectomy_cause_label)) },
       enabled = isFormEnabled == true,
       dropdownTextModifier = Modifier.fillMaxWidth(),
-      otherTextModifier = Modifier.fillMaxWidth().then(causeState.createFocusChangeModifier()),
+      otherTextModifier = Modifier
+        .fillMaxWidth()
+        .then(causeState.createFocusChangeModifier()),
       errorHint = causeState.getError()
     )
 
@@ -526,7 +682,7 @@ fun AdmittedToHduItuForm(
       onPickerClose = { },
       label = {
         Text(
-          text = stringResource(id = R.string.form_date_label),
+          text = stringResource(id = R.string.form_date_label).withRequiredStar(),
         )
       },
       enabled = isFormEnabled == true,
@@ -536,15 +692,16 @@ fun AdmittedToHduItuForm(
       keyboardOptions = KeyboardOptions.Default,
     )
 
-
     EnumDropdownMenuWithOther(
       currentSelection = causeState.stateValue,
       onSelect = { causeState.stateValue = it },
       serverEnum = serverEnum,
-      label = { Text(stringResource(R.string.hdu_or_idu_admission_cause_label)) },
+      label = { Text(stringResource(R.string.hdu_or_idu_admission_cause_label).withRequiredStar()) },
       enabled = isFormEnabled == true,
       dropdownTextModifier = Modifier.fillMaxWidth(),
-      otherTextModifier = Modifier.fillMaxWidth()
+      showErrorHintOnOtherField = causeState.stateValue != null,
+      otherTextModifier = Modifier
+        .fillMaxWidth()
         .then(causeState.createFocusChangeModifier()),
       errorHint = causeState.getError()
     )
@@ -557,13 +714,195 @@ fun AdmittedToHduItuForm(
       },
       enabled = isFormEnabled == true,
       modifier = Modifier.fillMaxWidth(),
-      textFieldModifier = lengthOfStayInDaysState.createFocusChangeModifier()
+      textFieldModifier = lengthOfStayInDaysState
+        .createFocusChangeModifier()
         .fillMaxWidth(),
       errorHint = lengthOfStayInDaysState.getError(),
       keyboardOptions = KeyboardOptions.Default.copy(
         imeAction = ImeAction.Next,
         keyboardType = KeyboardType.Number
       ),
+    )
+  }
+}
+
+@Composable
+fun MaternalDeathForm(
+  isFormEnabled: Boolean?,
+  onFormEnabledChange: (newState: Boolean) -> Unit,
+  dateState: NoFutureDateState,
+  underlyingCauseState: EnumWithOtherState,
+  placeOfDeathState: EnumIdOnlyState,
+  serverEnumCollection: ServerEnumCollection,
+  modifier: Modifier = Modifier,
+  textFieldModifier: Modifier = Modifier,
+) {
+  BooleanRadioButtonRow(
+    isTrue = isFormEnabled,
+    onBooleanChange = onFormEnabledChange,
+  )
+
+  val placeOfDeathEnum = requireNotNull(serverEnumCollection[DropdownType.Place]) {
+    "missing Maternal Death Underlying Cause lookup values from the server"
+  }
+  val placeOfDeathEntry: ServerEnum.Entry? = placeOfDeathState.stateValue?.let {
+    placeOfDeathEnum.getValueFromId(it.selectionId)
+  }
+
+  val underlyingCauseEnum = requireNotNull(serverEnumCollection[DropdownType.UnderlyingCauseOfDeath]) {
+    "missing Maternal Death Place of Death lookup values from the server"
+  }
+
+  Column(modifier) {
+    DateOutlinedTextField(
+      date = dateState.stateValue.toFormDateOrNull(),
+      onDatePicked = { dateState.stateValue = it.toString() },
+      onPickerClose = { },
+      label = { Text(stringResource(R.string.form_date_label).withRequiredStar()) },
+      enabled = isFormEnabled == true,
+      modifier = Modifier.fillMaxWidth(),
+      textFieldModifier = Modifier.fillMaxWidth(),
+      errorHint = dateState.getError(),
+      keyboardOptions = KeyboardOptions.Default,
+    )
+
+    EnumDropdownMenuWithOther(
+      currentSelection = underlyingCauseState.stateValue,
+      onSelect = { underlyingCauseState.stateValue = it },
+      serverEnum = underlyingCauseEnum,
+      label = { Text(stringResource(R.string.maternal_death_underlying_cause_label)) },
+      enabled = isFormEnabled == true,
+      dropdownTextModifier = Modifier.fillMaxWidth(),
+      showErrorHintOnOtherField = underlyingCauseState.stateValue != null,
+      otherTextModifier = Modifier
+        .fillMaxWidth()
+        .then(underlyingCauseState.createFocusChangeModifier()),
+      errorHint = underlyingCauseState.getError()
+    )
+
+    EnumDropdownMenu(
+      currentSelection = placeOfDeathEntry,
+      onSelect = {
+        placeOfDeathState.stateValue = it?.let { EnumSelection.IdOnly(it.id) }
+      },
+      serverEnum = placeOfDeathEnum,
+      label = { Text(stringResource(R.string.maternal_death_place_label)) },
+      enabled = isFormEnabled == true,
+      textModifier = Modifier.fillMaxWidth()
+    )
+  }
+}
+
+@Composable
+fun SurgicalManagementForm(
+  isFormEnabled: Boolean?,
+  onFormEnabledChange: (newState: Boolean) -> Unit,
+  dateState: NoFutureDateState,
+  surgicalManagementTypeState: EnumWithOtherState,
+  serverEnumCollection: ServerEnumCollection,
+  modifier: Modifier = Modifier,
+  textFieldModifier: Modifier = Modifier,
+) {
+  BooleanRadioButtonRow(
+    isTrue = isFormEnabled,
+    onBooleanChange = onFormEnabledChange,
+  )
+
+  val serverEnum = requireNotNull(serverEnumCollection[DropdownType.TypeOfSurgicalManagement]) {
+    "missing Type of Surgical Management Of Postpartum ... lookup values from the server"
+  }
+
+  Column(modifier) {
+    DateOutlinedTextField(
+      date = dateState.stateValue.toFormDateOrNull(),
+      onDatePicked = { dateState.stateValue = it.toString() },
+      onPickerClose = { },
+      label = { Text(stringResource(R.string.form_date_label).withRequiredStar()) },
+      enabled = isFormEnabled == true,
+      modifier = Modifier.fillMaxWidth(),
+      textFieldModifier = Modifier.fillMaxWidth(),
+      errorHint = dateState.getError(),
+      keyboardOptions = KeyboardOptions.Default,
+    )
+
+    EnumDropdownMenuWithOther(
+      currentSelection = surgicalManagementTypeState.stateValue,
+      onSelect = { surgicalManagementTypeState.stateValue = it },
+      serverEnum = serverEnum,
+      label = { Text(stringResource(R.string.surgical_management_type_label)) },
+      enabled = isFormEnabled == true,
+      dropdownTextModifier = Modifier.fillMaxWidth(),
+      showErrorHintOnOtherField = surgicalManagementTypeState.stateValue != null,
+      otherTextModifier = Modifier
+        .fillMaxWidth()
+        .then(surgicalManagementTypeState.createFocusChangeModifier()),
+      errorHint = surgicalManagementTypeState.getError()
+    )
+  }
+}
+
+@Composable
+fun PerinatalDeathForm(
+  isFormEnabled: Boolean?,
+  onFormEnabledChange: (newState: Boolean) -> Unit,
+  dateState: NoFutureDateState,
+  outcomeState: EnumIdOnlyState,
+  maternalFactorsState: EnumWithOtherState,
+  serverEnumCollection: ServerEnumCollection,
+  modifier: Modifier = Modifier,
+  textFieldModifier: Modifier = Modifier,
+) {
+  BooleanRadioButtonRow(
+    isTrue = isFormEnabled,
+    onBooleanChange = onFormEnabledChange,
+  )
+
+  val perinatalOutcomeEnum = requireNotNull(serverEnumCollection[DropdownType.PerinatalOutcome]) {
+    "missing Perinatal Death Outcome lookup values from the server"
+  }
+  val perinatalOutcomeEntry: ServerEnum.Entry? = outcomeState.stateValue?.let {
+    perinatalOutcomeEnum.getValueFromId(it.selectionId)
+  }
+  val perinatalRelatedMaternalFactorsEnum = requireNotNull(serverEnumCollection[DropdownType.MaternalFactorsRelatedToPerinatalLoss]) {
+    "missing Perinatal Related Maternal factors lookup values from the server"
+  }
+
+  Column(modifier) {
+    DateOutlinedTextField(
+      date = dateState.stateValue.toFormDateOrNull(),
+      onDatePicked = { dateState.stateValue = it.toString() },
+      onPickerClose = { },
+      label = { Text(stringResource(R.string.form_date_label).withRequiredStar()) },
+      enabled = isFormEnabled == true,
+      modifier = Modifier.fillMaxWidth(),
+      textFieldModifier = Modifier.fillMaxWidth(),
+      errorHint = dateState.getError(),
+      keyboardOptions = KeyboardOptions.Default,
+    )
+
+    EnumDropdownMenu(
+      currentSelection = perinatalOutcomeEntry,
+      onSelect = {
+        outcomeState.stateValue = it?.let { EnumSelection.IdOnly(it.id) }
+      },
+      serverEnum = perinatalOutcomeEnum,
+      label = { Text(stringResource(R.string.perinatal_death_outcome_label)) },
+      enabled = isFormEnabled == true,
+      textModifier = Modifier.fillMaxWidth()
+    )
+
+    EnumDropdownMenuWithOther(
+      currentSelection = maternalFactorsState.stateValue,
+      onSelect = { maternalFactorsState.stateValue = it },
+      serverEnum = perinatalRelatedMaternalFactorsEnum,
+      label = { Text(stringResource(R.string.perinatal_death_related_maternal_factors_label)) },
+      enabled = isFormEnabled == true,
+      dropdownTextModifier = Modifier.fillMaxWidth(),
+      showErrorHintOnOtherField = maternalFactorsState.stateValue != null,
+      otherTextModifier = Modifier
+        .fillMaxWidth()
+        .then(maternalFactorsState.createFocusChangeModifier()),
+      errorHint = maternalFactorsState.getError()
     )
   }
 }
@@ -575,8 +914,8 @@ fun EclampsiaFormPreview() {
     Scaffold {
       val defaultEnums = ServerEnumCollection.defaultInstance
       EclampsiaForm(
-        isEclampsiaFitEnabled = false,
-        onEclampsiaFitEnabledChange = {},
+        isFormEnabled = false,
+        onFormEnabledStateChange = {},
         dateState = NoFutureDateState(),
         placeOfFirstFitState = EnumIdOnlyState(
           defaultEnums[DropdownType.Place]
@@ -687,14 +1026,15 @@ class EnumIdOnlyState(
 
 class EnumWithOtherState(
   private val enum: ServerEnum?,
-  val otherSelection: ServerEnum.Entry? = enum?.sortedValues?.find { it.name == "Other" }
+  private val isMandatory: Boolean,
+  val otherSelection: ServerEnum.Entry? = enum?.validSortedValues?.find { it.name == "Other" }
 ) : FieldState<EnumSelection.WithOther?>(
   validator = { selection ->
     val entry = selection?.let { enum?.getValueFromId(it.selectionId) }
-    if (entry == null) {
+    if (entry == null && isMandatory) {
       false
     } else {
-      !(entry == otherSelection && selection.otherString.isNullOrBlank())
+      !(entry == otherSelection && selection?.otherString.isNullOrBlank())
     }.also {
       Log.d("MainActivity", "Valid: $it, Selection is $selection, entry is $entry, otherSelection is $otherSelection")
     }
@@ -703,6 +1043,8 @@ class EnumWithOtherState(
     val entry = selection?.let { enum?.getValueFromId(it.selectionId) }
     if (entry == otherSelection && selection?.otherString.isNullOrBlank()) {
       ctx.getString(R.string.server_enum_other_selection_missing_error)
+    } else if (entry == null && isMandatory) {
+      ctx.getString(R.string.server_enum_selection_required_error)
     } else {
       ctx.getString(R.string.server_enum_unknown_selection_error)
     }
@@ -715,6 +1057,9 @@ class EnumWithOtherState(
     get() = _stateValue
     set(value) {
       _stateValue = value
+      if (isMandatory && value != null) {
+        enableShowErrors(force = true)
+      }
     }
 }
 
