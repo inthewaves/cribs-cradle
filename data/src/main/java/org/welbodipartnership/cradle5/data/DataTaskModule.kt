@@ -5,7 +5,7 @@ import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import dagger.multibindings.IntoSet
-import org.welbodipartnership.cradle5.data.appinit.DataSetupTask
+import org.welbodipartnership.cradle5.data.appinit.DataAndEncryptionSetupTask
 import org.welbodipartnership.cradle5.util.appinit.AppInitTask
 
 @Module
@@ -14,5 +14,5 @@ import org.welbodipartnership.cradle5.util.appinit.AppInitTask
 abstract class DataTaskModule {
   @Binds
   @IntoSet
-  abstract fun bindDataSetupTask(bind: DataSetupTask): AppInitTask
+  abstract fun bindDataSetupTask(bind: DataAndEncryptionSetupTask): AppInitTask
 }

@@ -23,7 +23,8 @@ import kotlin.reflect.KProperty1
       entity = Patient::class,
       parentColumns = ["id"],
       childColumns = ["patientId"],
-      onDelete = ForeignKey.CASCADE
+      onDelete = ForeignKey.CASCADE,
+      onUpdate = ForeignKey.CASCADE
     )
   ]
 )

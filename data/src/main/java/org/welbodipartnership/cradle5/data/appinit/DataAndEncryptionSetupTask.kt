@@ -12,7 +12,7 @@ import org.welbodipartnership.cradle5.util.appinit.AppInitTask
 import javax.inject.Inject
 import kotlin.time.measureTime
 
-class DataSetupTask @Inject internal constructor(
+class DataAndEncryptionSetupTask @Inject internal constructor(
   private val unencryptedSettings: UnencryptedSettingsManager,
   private val encryptedSettings: EncryptedSettingsManager,
   private val databaseWrapper: CradleDatabaseWrapper,

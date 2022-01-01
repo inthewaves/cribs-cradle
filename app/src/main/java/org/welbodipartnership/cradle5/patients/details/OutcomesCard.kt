@@ -220,7 +220,8 @@ val testOutcomes = Outcomes(
   ),
   hysterectomy = Hysterectomy(
     date = FormDate.today(),
-    cause = EnumSelection.WithOther(4, "The other string")
+    cause = EnumSelection.WithOther(4, "The other string"),
+    additionalInfo = "Additional info here"
   ),
   hduOrItuAdmission = HduOrItuAdmission(
     date = FormDate.today(),

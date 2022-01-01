@@ -61,6 +61,10 @@ android {
     }
 }
 
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 protobuf {
     protoc {
         println(libs.protobuf.compiler.get().toString())

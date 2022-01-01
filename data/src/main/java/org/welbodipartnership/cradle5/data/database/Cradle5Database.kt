@@ -8,6 +8,7 @@ import androidx.room.TypeConverters
 import net.sqlcipher.database.SupportFactory
 import org.welbodipartnership.cradle5.data.database.daos.OutcomesDao
 import org.welbodipartnership.cradle5.data.database.daos.PatientDao
+import org.welbodipartnership.cradle5.data.database.entities.Facility
 import org.welbodipartnership.cradle5.data.database.entities.Outcomes
 import org.welbodipartnership.cradle5.data.database.entities.Patient
 import javax.inject.Inject
@@ -22,7 +23,13 @@ class CradleDatabaseWrapper @Inject constructor() {
     private set
 
   internal fun setup(context: Context, supportFactory: SupportFactory) {
-    if (database == null) {
+    if (database != null) {
+      return
+    }
+    synchronized(CradleDatabaseWrapper::class.java) {
+      if (database != null) {
+        return
+      }
       database = Room.databaseBuilder(context, Cradle5Database::class.java, DATABASE_NAME)
         .openHelperFactory(supportFactory)
         .build()
@@ -32,9 +39,11 @@ class CradleDatabaseWrapper @Inject constructor() {
 
 @Database(
   version = DATABASE_VERSION,
+  exportSchema = true,
   entities = [
     Patient::class,
-    Outcomes::class
+    Outcomes::class,
+    Facility::class
   ]
 )
 @TypeConverters(DbTypeConverters::class)
