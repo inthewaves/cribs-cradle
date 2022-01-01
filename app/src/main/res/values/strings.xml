@@ -54,4 +54,7 @@
     <string name="length_of_stay_in_itu_hdu_must_be_in_range_d_and_d_days">Length of stay in ITU / HDU in days must be in range %1$d to %2$d days</string>
     <string name="other_enum_label">If Other, please specify</string>
     <string name="server_enum_selection_required_error">A selection is required</string>
+    <string name="patient_form_save_new_patient_button">Save new patient</string>
+    <string name="outcomes_eclampsia_not_selected_error">Missing eclampsia</string>
+    <string name="outcomes_hysterectomy_not_selected_error">Missing hysterectomy</string>
 </resources>

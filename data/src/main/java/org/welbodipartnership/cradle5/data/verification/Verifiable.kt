@@ -271,8 +271,8 @@ interface Verifiable<T : Any> {
           // dependency
           dependentProperties.map { it.name to it.getter.call(instance) }.toMap()
         } ?: throw IllegalArgumentException(
-          "null instance requires non-null dependentPropertiesMap"
-        )
+        "null instance requires non-null dependentPropertiesMap"
+      )
   }
 
   /**

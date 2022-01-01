@@ -24,6 +24,6 @@ class PatientsListViewModel @Inject constructor(
   suspend fun addPatient(patient: Patient) {
     val dao = dbWrapper.database!!.patientDao()
 
-    dao.insert(patient)
+    dao.upsert(patient)
   }
 }

@@ -1,6 +1,7 @@
 package org.welbodipartnership.cradle5.data.database.entities
 
 import android.content.Context
+import androidx.compose.runtime.Immutable
 import androidx.core.text.isDigitsOnly
 import androidx.room.ColumnInfo
 import androidx.room.Embedded
@@ -19,6 +20,7 @@ import kotlin.reflect.KProperty1
  * information)
  */
 @Entity
+@Immutable
 data class Patient(
   @PrimaryKey(autoGenerate = true)
   @ColumnInfo(name = "id")
@@ -31,13 +33,9 @@ data class Patient(
   @get:JvmName("getDateOfBirth")
   val dateOfBirth: FormDate,
   /**
-   * Represents whether [dateOfBirth] is exact or provided from an age.
-   */
-  val isExactDateOfBirth: Boolean,
-  /**
    * A Unix timestamp of when this was last updated
    */
-  val lastUpdatedTimestamp: Long,
+  val lastUpdatedTimestamp: Long = System.currentTimeMillis() / 1000L,
   /**
    * Local notes the user may have saved for the patient. This is not uploaded to the server.
    */

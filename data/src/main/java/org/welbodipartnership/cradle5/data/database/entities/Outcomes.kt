@@ -1,6 +1,7 @@
 package org.welbodipartnership.cradle5.data.database.entities
 
 import android.content.Context
+import androidx.compose.runtime.Immutable
 import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Entity
@@ -26,6 +27,7 @@ import kotlin.reflect.KProperty1
     )
   ]
 )
+@Immutable
 data class Outcomes(
   @PrimaryKey(autoGenerate = true)
   @ColumnInfo(name = "id")
@@ -55,24 +57,25 @@ data class Outcomes(
   ): Verifiable.Result {
     TODO("Not yet implemented")
   }
-
 }
 
 /**
  * Represents the first eclampsia fit
  */
+@Immutable
 data class EclampsiaFit(
   val date: FormDate,
   /**
    * The server provides enums for location starting at 1
    */
   @get:JvmName("getPlace")
-  val place: EnumSelection.IdOnly,
+  val place: EnumSelection.IdOnly?,
 )
 
 /**
  * Represents the first eclampsia fit
  */
+@Immutable
 data class Hysterectomy(
   val date: FormDate,
   /**
@@ -83,6 +86,7 @@ data class Hysterectomy(
   val additionalInfo: String? = null
 )
 
+@Immutable
 data class HduOrItuAdmission(
   val date: FormDate,
   /**
@@ -93,6 +97,7 @@ data class HduOrItuAdmission(
   val stayInDays: Int?,
 )
 
+@Immutable
 data class MaternalDeath(
   val date: FormDate,
   /**
@@ -110,6 +115,7 @@ data class MaternalDeath(
 /**
  * Surgical management of postpartum haemorrhage requiring anaesthesia
  */
+@Immutable
 data class SurgicalManagementOfHaemorrhage(
   val date: FormDate,
   @Embedded(prefix = "type_")
@@ -119,10 +125,11 @@ data class SurgicalManagementOfHaemorrhage(
 /**
  * Surgical management of postpartum haemorrhage requiring anaesthesia
  */
+@Immutable
 data class PerinatalDeath(
   val date: FormDate,
   @get:JvmName("getOutcome")
-  val outcome: EnumSelection.IdOnly,
+  val outcome: EnumSelection.IdOnly?,
   @Embedded(prefix = "maternalfactors_")
   val relatedMaternalFactors: EnumSelection.WithOther?
 )

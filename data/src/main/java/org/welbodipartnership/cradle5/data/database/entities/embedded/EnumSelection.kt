@@ -8,6 +8,7 @@ import org.welbodipartnership.cradle5.data.serverenums.ServerEnum
 /**
  * Represents a selection for a server enum.
  */
+@Immutable
 sealed class EnumSelection : Parcelable {
   abstract val selectionId: Int
 

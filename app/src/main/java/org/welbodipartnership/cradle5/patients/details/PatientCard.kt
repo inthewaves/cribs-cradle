@@ -55,7 +55,6 @@ fun PatientCardPreview() {
         initials = "AA",
         presentationDate = FormDate(day = 10, month = 2, year = 1995),
         dateOfBirth = FormDate(day = 19, month = 8, year = 1989),
-        isExactDateOfBirth = false,
         lastUpdatedTimestamp = 162224953
       ),
       modifier = Modifier.verticalScroll(scrollState)

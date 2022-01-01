@@ -5,8 +5,8 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class AppKeyValueStore @Inject constructor(
-  private val encryptedSettings: EncryptedSettings
+class AppKeyValueStore @Inject internal constructor(
+  private val encryptedSettings: EncryptedSettingsManager
 ) {
   fun getServerEnumCollection() = ServerEnumCollection.defaultInstance
 }

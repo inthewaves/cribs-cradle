@@ -36,9 +36,12 @@ open class TextFieldState(
   override var stateValue: String by backingState
 }
 
+/**
+ * Derived from official Compose samples (Jetsurvey). There's likely a better way to handle this.
+ */
 abstract class FieldState<T>(
   val validator: (T) -> Boolean = { true },
-  private val errorFor: (Context, T) -> String = { _, _ -> "" },
+  val errorFor: (Context, T) -> String = { _, _ -> "" },
   val initialValue: T,
   val backingState: MutableState<T> = mutableStateOf(initialValue),
 ) {

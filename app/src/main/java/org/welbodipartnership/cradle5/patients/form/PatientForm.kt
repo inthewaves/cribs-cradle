@@ -21,6 +21,7 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -116,40 +117,16 @@ fun PatientForm(
         .padding(padding)
         .verticalScroll(scrollState)
     ) {
-      val initials = rememberSaveable(
-        saver = Saver(
-          save = { it.stateValue },
-          restore = { savedText -> InitialsState().also { it.stateValue = savedText } }
-        )
-      ) { InitialsState() }
-      val presentationDate = rememberSaveable(
-        saver = Saver(
-          save = { it.stateValue },
-          restore = { savedText -> NoFutureDateState().also { it.stateValue = savedText } }
-        )
-      ) { NoFutureDateState() }
-      val dateOfBirth = rememberSaveable(
-        saver = Saver(
-          save = { it.stateValue },
-          restore = { savedText -> LimitedAgeDateState(DOB_RANGE).also { it.stateValue = savedText } }
-        )
-      ) { LimitedAgeDateState(DOB_RANGE) }
-      val age = rememberSaveable(
-        saver = Saver(
-          save = { it.stateValue },
-          restore = { savedText -> LimitedAgeIntState(DOB_RANGE).also { it.stateValue = savedText } }
-        )
-      ) { LimitedAgeIntState(DOB_RANGE) }
-
       BaseDetailsCard(
         stringResource(R.string.patient_registration_card_title),
         Modifier.padding(16.dp)
       ) {
+        val patientFields = viewModel.formFields.patientFields
         OutlinedTextFieldWithErrorHint(
-          value = initials.stateValue.uppercase(),
+          value = patientFields.initials.stateValue.uppercase(),
           onValueChange = {
             // TODO: Hard limit text
-            initials.stateValue = it.uppercase()
+            patientFields.initials.stateValue = it.uppercase()
           },
           label = {
             Text(
@@ -158,10 +135,10 @@ fun PatientForm(
             )
           },
           textFieldModifier = Modifier
-            .then(initials.createFocusChangeModifier())
+            .then(patientFields.initials.createFocusChangeModifier())
             .fillMaxWidth(),
           // textStyle = MaterialTheme.typography.body2,
-          errorHint = initials.getError(),
+          errorHint = patientFields.initials.getError(),
           keyboardOptions = KeyboardOptions.Default.copy(
             imeAction = ImeAction.Next,
             capitalization = KeyboardCapitalization.Characters,
@@ -178,11 +155,11 @@ fun PatientForm(
         Spacer(Modifier.height(textFieldToTextFieldHeight))
 
         DateOutlinedTextField(
-          date = presentationDate.stateValue.toFormDateOrNull(),
+          date =  patientFields.presentationDate.stateValue.toFormDateOrNull(),
           onDatePicked = {
-            presentationDate.stateValue = it.toString()
+            patientFields.presentationDate.stateValue = it.toString()
           },
-          onPickerClose = { presentationDate.enableShowErrors(force = true) },
+          onPickerClose = {  patientFields.presentationDate.enableShowErrors(force = true) },
           label = {
             Text(
               text = stringResource(id = R.string.patient_registration_presentation_date_label)
@@ -190,11 +167,11 @@ fun PatientForm(
             )
           },
           modifier = Modifier.fillMaxWidth(),
-          textFieldModifier = presentationDate
+          textFieldModifier = patientFields.presentationDate
             .createFocusChangeModifier()
             .fillMaxWidth(),
           // textStyle = MaterialTheme.typography.body2,
-          errorHint = presentationDate.getError(),
+          errorHint = patientFields.presentationDate.getError(),
           keyboardOptions = KeyboardOptions.Default,
           keyboardActions = KeyboardActions(
             onDone = {
@@ -206,14 +183,14 @@ fun PatientForm(
         Spacer(Modifier.height(textFieldToTextFieldHeight))
 
         DateOutlinedTextField(
-          date = dateOfBirth.stateValue.toFormDateOrNull(),
+          date = patientFields.dateOfBirth.stateValue.toFormDateOrNull(),
           onDatePicked = {
-            dateOfBirth.stateValue = it.toString()
-            age.stateValue = it.getAgeInYearsFromNow().toString()
+            patientFields.dateOfBirth.stateValue = it.toString()
+            patientFields.age.stateValue = it.getAgeInYearsFromNow().toString()
           },
           onPickerClose = {
-            dateOfBirth.enableShowErrors(force = true)
-            age.enableShowErrors(force = true)
+            patientFields.dateOfBirth.enableShowErrors(force = true)
+            patientFields.age.enableShowErrors(force = true)
           },
           label = {
             Text(
@@ -222,7 +199,7 @@ fun PatientForm(
             )
           },
           modifier = Modifier.fillMaxWidth(),
-          textFieldModifier = dateOfBirth
+          textFieldModifier = patientFields.dateOfBirth
             .createFocusChangeModifier()
             .fillMaxWidth(),
           // textStyle = MaterialTheme.typography.body2,
@@ -238,11 +215,11 @@ fun PatientForm(
         Spacer(Modifier.height(textFieldToTextFieldHeight))
 
         OutlinedTextFieldWithErrorHint(
-          value = age.stateValue,
+          value = patientFields.age.stateValue,
           onValueChange = { newAge ->
-            age.stateValue = newAge
+            patientFields.age.stateValue = newAge
             newAge.toIntOrNull()?.let {
-              dateOfBirth.stateValue = FormDate.fromAge(it).toString()
+              patientFields.dateOfBirth.stateValue = FormDate.fromAge(it).toString()
             }
           },
           label = {
@@ -251,12 +228,12 @@ fun PatientForm(
             )
           },
           modifier = Modifier.fillMaxWidth(),
-          textFieldModifier = age
+          textFieldModifier = patientFields.age
             .createFocusChangeModifier()
-            .then(dateOfBirth.createFocusChangeModifier())
+            .then(patientFields.dateOfBirth.createFocusChangeModifier())
             .fillMaxWidth(),
           // textStyle = MaterialTheme.typography.body2,
-          errorHint = age.getError(),
+          errorHint = patientFields.age.getError(),
           keyboardOptions = KeyboardOptions.Default.copy(
             imeAction = ImeAction.Next,
             keyboardType = KeyboardType.Number
@@ -269,190 +246,21 @@ fun PatientForm(
         )
       }
 
-      var isEclampsiaEnabled: Boolean? by rememberSaveable { mutableStateOf(null) }
-      val dateState = rememberSaveable(
-        saver = Saver(
-          save = { it.stateValue },
-          restore = { savedText -> NoFutureDateState().also { it.stateValue = savedText } }
-        )
-      ) { NoFutureDateState() }
-      val placeOfFirstFitState = rememberSaveable(
-        saver = Saver(
-          save = { it.stateValue },
-          restore = { savedValue ->
-            EnumIdOnlyState(serverEnumCollection[DropdownType.Place]).also { it.stateValue = savedValue }
-          }
-        )
-      ) {
-        EnumIdOnlyState(serverEnumCollection[DropdownType.Place])
-      }
-
-      var isHysterectomyEnabled: Boolean? by rememberSaveable { mutableStateOf(null) }
-      val hysterectomyDateState = rememberSaveable(
-        saver = Saver(
-          save = { it.stateValue },
-          restore = { savedText -> NoFutureDateState().also { it.stateValue = savedText } }
-        )
-      ) { NoFutureDateState() }
-      val hysterectomyCauseState = rememberSaveable(
-        saver = Saver(
-          save = { it.stateValue },
-          restore = { savedValue ->
-            EnumWithOtherState(
-              serverEnumCollection[DropdownType.CauseOfHysterectomy],
-              isMandatory = false
-            ).also { it.stateValue = savedValue }
-          }
-        )
-      ) {
-        EnumWithOtherState(
-          serverEnumCollection[DropdownType.CauseOfHysterectomy],
-          isMandatory = false
-        )
-      }
-      var hysterectomyExtraInfo: String? by rememberSaveable { mutableStateOf("") }
-
-      var isHduItuAdmissionEnabled: Boolean? by rememberSaveable { mutableStateOf(null) }
-      val hduItuAdmissionDateState = rememberSaveable(
-        saver = Saver(
-          save = { it.stateValue },
-          restore = { savedText -> NoFutureDateState().also { it.stateValue = savedText } }
-        )
-      ) { NoFutureDateState() }
-      val hduItuCauseState = rememberSaveable(
-        saver = Saver(
-          save = { it.stateValue },
-          restore = { savedValue ->
-            EnumWithOtherState(
-              serverEnumCollection[DropdownType.CauseForHduOrItuAdmission],
-              isMandatory = true
-            ).also { it.stateValue = savedValue }
-          }
-        )
-      ) {
-        EnumWithOtherState(
-          serverEnumCollection[DropdownType.CauseForHduOrItuAdmission],
-          isMandatory = true
-        )
-      }
-      val hduItuLengthDays = rememberSaveable(
-        saver = Saver(
-          save = { it.stateValue },
-          restore = { savedValue ->
-            LimitedHduItuState(VALID_LENGTH_OF_ITU_HDU_STAY).also { it.stateValue = savedValue }
-          }
-        )
-      ) {
-        LimitedHduItuState(VALID_LENGTH_OF_ITU_HDU_STAY)
-      }
-
-      var isMaternalDeathEnabled: Boolean? by rememberSaveable { mutableStateOf(null) }
-      val maternalDeathDateState = rememberSaveable(
-        saver = Saver(
-          save = { it.stateValue },
-          restore = { savedText -> NoFutureDateState().also { it.stateValue = savedText } }
-        )
-      ) { NoFutureDateState() }
-      val maternalDeathUnderlyingCauseState = rememberSaveable(
-        saver = Saver(
-          save = { it.stateValue },
-          restore = { savedValue ->
-            EnumWithOtherState(
-              serverEnumCollection[DropdownType.UnderlyingCauseOfDeath],
-              isMandatory = false
-            ).also { it.stateValue = savedValue }
-          }
-        )
-      ) {
-        EnumWithOtherState(
-          serverEnumCollection[DropdownType.UnderlyingCauseOfDeath],
-          isMandatory = false
-        )
-      }
-      val maternalDeathPlaceState = rememberSaveable(
-        saver = Saver(
-          save = { it.stateValue },
-          restore = { savedValue ->
-            EnumIdOnlyState(serverEnumCollection[DropdownType.Place]).also { it.stateValue = savedValue }
-          }
-        )
-      ) {
-        EnumIdOnlyState(serverEnumCollection[DropdownType.Place])
-      }
-
-      var isSurgicalManagementEnabled: Boolean? by rememberSaveable { mutableStateOf(null) }
-      val surgicalManagementDateState = rememberSaveable(
-        saver = Saver(
-          save = { it.stateValue },
-          restore = { savedText -> NoFutureDateState().also { it.stateValue = savedText } }
-        )
-      ) { NoFutureDateState() }
-      val surgicalManagementTypeState = rememberSaveable(
-        saver = Saver(
-          save = { it.stateValue },
-          restore = { savedValue ->
-            EnumWithOtherState(
-              serverEnumCollection[DropdownType.TypeOfSurgicalManagement],
-              isMandatory = false
-            ).also { it.stateValue = savedValue }
-          }
-        )
-      ) {
-        EnumWithOtherState(
-          serverEnumCollection[DropdownType.TypeOfSurgicalManagement],
-          isMandatory = false
-        )
-      }
-
-      var isPerinatalFormEnabled: Boolean? by rememberSaveable { mutableStateOf(null) }
-      val perinatalDeathDateState = rememberSaveable(
-        saver = Saver(
-          save = { it.stateValue },
-          restore = { savedText -> NoFutureDateState().also { it.stateValue = savedText } }
-        )
-      ) { NoFutureDateState() }
-      val perinatalDeathOutcomeState = rememberSaveable(
-        saver = Saver(
-          save = { it.stateValue },
-          restore = { savedValue ->
-            EnumIdOnlyState(serverEnumCollection[DropdownType.PerinatalOutcome]).also { it.stateValue = savedValue }
-          }
-        )
-      ) {
-        EnumIdOnlyState(serverEnumCollection[DropdownType.PerinatalOutcome])
-      }
-      val perinatalDeathMaternalFactorsState = rememberSaveable(
-        saver = Saver(
-          save = { it.stateValue },
-          restore = { savedValue ->
-            EnumWithOtherState(
-              serverEnumCollection[DropdownType.MaternalFactorsRelatedToPerinatalLoss],
-              isMandatory = false
-            ).also { it.stateValue = savedValue }
-          }
-        )
-      ) {
-        EnumWithOtherState(
-          serverEnumCollection[DropdownType.MaternalFactorsRelatedToPerinatalLoss],
-          isMandatory = false
-        )
-      }
-
       BaseDetailsCard(
         stringResource(R.string.outcomes_card_title),
         Modifier.padding(16.dp)
       ) {
         CategoryHeader(stringResource(R.string.outcomes_eclampsia_label))
 
+        val eclampsia = viewModel.formFields.eclampsia
         EclampsiaForm(
-          isFormEnabled = isEclampsiaEnabled,
+          isFormEnabled = eclampsia.isEnabled.value,
           onFormEnabledStateChange = {
-            isEclampsiaEnabled = it
-            dateState.reset()
-            placeOfFirstFitState.reset()
+            eclampsia.isEnabled.value = it
+            if (!it) eclampsia.reset()
           },
-          dateState = dateState,
-          placeOfFirstFitState = placeOfFirstFitState,
+          dateState = eclampsia.date,
+          placeOfFirstFitState = eclampsia.placeOfFirstFit,
           serverEnumCollection = serverEnumCollection
         )
 
@@ -460,18 +268,17 @@ fun PatientForm(
 
         CategoryHeader(stringResource(R.string.outcomes_hysterectomy_label))
 
+        val hysterectomy = viewModel.formFields.hysterectomy
         HysterectomyForm(
-          isFormEnabled = isHysterectomyEnabled,
+          isFormEnabled = hysterectomy.isEnabled.value,
           onFormEnabledChange = {
-            isHysterectomyEnabled = it
-            hysterectomyDateState.reset()
-            hysterectomyCauseState.reset()
-            hysterectomyExtraInfo = null
+            hysterectomy.isEnabled.value = it
+            if (!it) hysterectomy.reset()
           },
-          dateState = hysterectomyDateState,
-          causeState = hysterectomyCauseState,
-          additionalInfo = hysterectomyExtraInfo ?: "",
-          onAdditionInfoChanged = { hysterectomyExtraInfo = it },
+          dateState = hysterectomy.date,
+          causeState = hysterectomy.cause,
+          additionalInfo = hysterectomy.extraInfo.value ?: "",
+          onAdditionInfoChanged = { hysterectomy.extraInfo.value = it },
           serverEnumCollection,
         )
 
@@ -479,17 +286,16 @@ fun PatientForm(
 
         CategoryHeader(stringResource(R.string.outcomes_admission_to_hdu_or_itu_label))
 
+        val hduItuAdmission = viewModel.formFields.hduItuAdmission
         AdmittedToHduItuForm(
-          isFormEnabled = isHduItuAdmissionEnabled,
+          isFormEnabled = hduItuAdmission.isEnabled.value,
           onFormEnabledChange = {
-            isHduItuAdmissionEnabled = it
-            hduItuAdmissionDateState.reset()
-            hduItuCauseState.reset()
-            hduItuLengthDays.reset()
+            hduItuAdmission.isEnabled.value = it
+            if (!it) hduItuAdmission.reset()
           },
-          dateState = hduItuAdmissionDateState,
-          causeState = hduItuCauseState,
-          lengthOfStayInDaysState = hduItuLengthDays,
+          dateState = hduItuAdmission.date,
+          causeState = hduItuAdmission.cause,
+          lengthOfStayInDaysState = hduItuAdmission.hduItuStayLengthInDays,
           serverEnumCollection,
         )
 
@@ -497,17 +303,16 @@ fun PatientForm(
 
         CategoryHeader(stringResource(R.string.outcomes_maternal_death_label))
 
+        val maternalDeath = viewModel.formFields.maternalDeath
         MaternalDeathForm(
-          isFormEnabled = isMaternalDeathEnabled,
+          isFormEnabled = maternalDeath.isEnabled.value,
           onFormEnabledChange = {
-            isMaternalDeathEnabled = it
-            maternalDeathDateState.reset()
-            maternalDeathUnderlyingCauseState.reset()
-            maternalDeathPlaceState.reset()
+            maternalDeath.isEnabled.value = it
+            if (!it) maternalDeath.reset()
           },
-          dateState = maternalDeathDateState,
-          underlyingCauseState = maternalDeathUnderlyingCauseState,
-          placeOfDeathState = maternalDeathPlaceState,
+          dateState = maternalDeath.date,
+          underlyingCauseState = maternalDeath.underlyingCause,
+          placeOfDeathState = maternalDeath.placeOfDeath,
           serverEnumCollection = serverEnumCollection
         )
 
@@ -515,15 +320,15 @@ fun PatientForm(
 
         CategoryHeader(stringResource(R.string.outcomes_surgical_management_label))
 
+        val surgicalManagement = viewModel.formFields.surgicalManagement
         SurgicalManagementForm(
-          isFormEnabled = isSurgicalManagementEnabled,
+          isFormEnabled = surgicalManagement.isEnabled.value,
           onFormEnabledChange = {
-            isSurgicalManagementEnabled = it
-            surgicalManagementDateState.reset()
-            surgicalManagementTypeState.reset()
+            surgicalManagement.isEnabled.value = it
+            if (!it) surgicalManagement.reset()
           },
-          dateState = surgicalManagementDateState,
-          surgicalManagementTypeState = surgicalManagementTypeState,
+          dateState = surgicalManagement.date,
+          surgicalManagementTypeState = surgicalManagement.type,
           serverEnumCollection = serverEnumCollection,
         )
 
@@ -531,29 +336,59 @@ fun PatientForm(
 
         CategoryHeader(stringResource(R.string.outcomes_perinatal_death_label))
 
+        val perinatalDeath = viewModel.formFields.perinatalDeath
         PerinatalDeathForm(
-          isFormEnabled = isPerinatalFormEnabled,
+          isFormEnabled = perinatalDeath.isEnabled.value,
           onFormEnabledChange = {
-            isPerinatalFormEnabled = it
-            perinatalDeathDateState.reset()
-            perinatalDeathOutcomeState.reset()
-            perinatalDeathMaternalFactorsState.reset()
+            perinatalDeath.isEnabled.value = it
+            if (!it) perinatalDeath.reset()
           },
-          dateState = perinatalDeathDateState,
-          outcomeState = perinatalDeathOutcomeState,
-          maternalFactorsState = perinatalDeathMaternalFactorsState,
+          dateState = perinatalDeath.date,
+          outcomeState = perinatalDeath.outcome,
+          maternalFactorsState = perinatalDeath.relatedMaternalFactors,
           serverEnumCollection = serverEnumCollection
         )
       }
 
-      Card(
-        elevation = 4.dp,
-        shape = MaterialTheme.shapes.small,
-        modifier = Modifier.padding(16.dp)
-      ) {
-        Button(onClick = { /*TODO*/ }) {
-        }
-      }
+      val formState = viewModel.formState.collectAsState()
+      SaveButtonCard(
+        isEnabled = formState.value !is PatientFormViewModel.FormState.Loading &&
+          formState.value !is PatientFormViewModel.FormState.Saving,
+        onSaveButtonClick = { viewModel.save() }
+      )
+    }
+  }
+}
+
+@Composable
+fun SaveButtonCard(
+  onSaveButtonClick: () -> Unit,
+  modifier: Modifier = Modifier,
+  isEnabled: Boolean = true,
+) {
+  Card(
+    elevation = 4.dp,
+    shape = MaterialTheme.shapes.small,
+    modifier = modifier.padding(36.dp)
+  ) {
+    Button(
+      modifier = Modifier
+        .fillMaxWidth()
+        .padding(horizontal = 12.dp),
+      onClick = onSaveButtonClick,
+      enabled = isEnabled,
+    ) {
+      Text(stringResource(R.string.patient_form_save_new_patient_button))
+    }
+  }
+}
+
+@Preview
+@Composable
+fun SaveButtonCardPreview() {
+  CradleTrialAppTheme {
+    Scaffold {
+      SaveButtonCard(onSaveButtonClick = { /*TODO*/ })
     }
   }
 }
@@ -995,7 +830,6 @@ class LimitedAgeDateState(
       } catch (e: NumberFormatException) {
         return@run false
       }
-      Log.d("MainActivity", "patient form DOB validation: age = ${formDate.getAgeInYearsFromNow()}")
 
       formDate.getAgeInYearsFromNow() in limit
     }
