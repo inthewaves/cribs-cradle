@@ -153,7 +153,15 @@ private fun NavGraphBuilder.addPatientCreate(
     route = LeafScreen.PatientCreate.createRoute(root),
   ) {
     // TODO: Use an ambient?
-    PatientForm(ServerEnumCollection.defaultInstance)
+    PatientForm(
+      ServerEnumCollection.defaultInstance,
+      onNavigateToPatient = { patientPrimaryKey ->
+        navController.popBackStack(root.route, false)
+        navController.navigate(
+          LeafScreen.PatientDetails.createRoute(root, patientPrimaryKey)
+        )
+      }
+    )
   }
 }
 

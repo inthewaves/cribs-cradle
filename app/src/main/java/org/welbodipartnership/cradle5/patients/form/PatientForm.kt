@@ -1,6 +1,5 @@
 package org.welbodipartnership.cradle5.patients.form
 
-import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,14 +18,13 @@ import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.Saver
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -89,6 +87,7 @@ fun String.withRequiredStar() = buildAnnotatedString {
 @Composable
 fun PatientForm(
   serverEnumCollection: ServerEnumCollection,
+  onNavigateToPatient: (patientPrimaryKey: Long) -> Unit,
   viewModel: PatientFormViewModel = hiltViewModel()
 ) {
   Scaffold(
@@ -155,11 +154,11 @@ fun PatientForm(
         Spacer(Modifier.height(textFieldToTextFieldHeight))
 
         DateOutlinedTextField(
-          date =  patientFields.presentationDate.stateValue.toFormDateOrNull(),
+          date = patientFields.presentationDate.stateValue.toFormDateOrNull(),
           onDatePicked = {
             patientFields.presentationDate.stateValue = it.toString()
           },
-          onPickerClose = {  patientFields.presentationDate.enableShowErrors(force = true) },
+          onPickerClose = { patientFields.presentationDate.enableShowErrors(force = true) },
           label = {
             Text(
               text = stringResource(id = R.string.patient_registration_presentation_date_label)
@@ -356,6 +355,21 @@ fun PatientForm(
           formState.value !is PatientFormViewModel.FormState.Saving,
         onSaveButtonClick = { viewModel.save() }
       )
+      formState.value.let { currentFormState ->
+        when (currentFormState) {
+          is PatientFormViewModel.FormState.SavedEditsToExistingPatient -> {
+            LaunchedEffect(null) {
+              onNavigateToPatient(currentFormState.primaryKeyOfPatient)
+            }
+          }
+          is PatientFormViewModel.FormState.SavedNewPatient -> {
+            LaunchedEffect(null) {
+              onNavigateToPatient(currentFormState.primaryKeyOfPatient)
+            }
+          }
+        }
+      }
+
     }
   }
 }
@@ -782,7 +796,7 @@ fun EclampsiaFormPreview() {
 fun PatientFormPreview() {
   CradleTrialAppTheme {
     Scaffold {
-      PatientForm(ServerEnumCollection.defaultInstance)
+      PatientForm(ServerEnumCollection.defaultInstance, {})
     }
   }
 }

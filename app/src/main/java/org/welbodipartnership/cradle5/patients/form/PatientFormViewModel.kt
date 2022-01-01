@@ -5,15 +5,12 @@ import android.util.Log
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableStateOf
-import androidx.constraintlayout.compose.parseKeyAttribute
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.room.withTransaction
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,8 +31,6 @@ import org.welbodipartnership.cradle5.data.serverenums.DropdownType
 import org.welbodipartnership.cradle5.data.settings.AppKeyValueStore
 import org.welbodipartnership.cradle5.util.coroutines.AppCoroutineDispatchers
 import org.welbodipartnership.cradle5.util.date.toFormDateOrThrow
-import java.lang.Exception
-import java.lang.NullPointerException
 import javax.inject.Inject
 
 private const val PATIENT_MAX_INITIALS_LENGTH = 5
@@ -43,7 +38,6 @@ private const val PATIENT_MAX_INITIALS_LENGTH = 5
 private val AGE_RANGE = 10L..60L
 
 private val VALID_LENGTH_OF_ITU_HDU_STAY = 1L..100L
-
 
 @HiltViewModel
 class PatientFormViewModel @Inject constructor(
