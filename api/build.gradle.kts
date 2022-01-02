@@ -28,7 +28,7 @@ android {
 dependencies {
     api(project(":util"))
 
-    implementation(kotlin("reflect"))
+    // implementation(kotlin("reflect"))
 
     api(libs.moshi.core)
     implementation(libs.moshi.adapters)

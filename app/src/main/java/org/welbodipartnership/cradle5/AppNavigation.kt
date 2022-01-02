@@ -47,10 +47,10 @@ import org.welbodipartnership.cradle5.patients.form.PatientForm
 import org.welbodipartnership.cradle5.patients.list.PatientsListScreen
 
 @Keep
-internal enum class Screen(val route: String) {
-  Patients("patients"),
-  Sync("sync"),
-  Facilities("facilities");
+internal enum class Screen(val route: String, val startLeaf: LeafScreen) {
+  Patients("patients", LeafScreen.Patients),
+  Sync("sync", LeafScreen.Sync),
+  Facilities("facilities", LeafScreen.Facilities);
 
   // The lazy is needed to prevent nulls (https://youtrack.jetbrains.com/issue/KT-25957)
   companion object {
@@ -58,29 +58,77 @@ internal enum class Screen(val route: String) {
   }
 }
 
-internal sealed class LeafScreen(private val route: String,) {
+internal sealed class LeafScreen(private val route: String, val hideBottomBar: Boolean) {
+  protected abstract val matchRegex: Regex
+
+  fun doesRouteMatch(route: String): Boolean = matchRegex.matches(route)
+
+  fun createRouteMatcherWithNoArgs() = Regex("^.*$route$")
+
+  fun createRouteMatcherWithOneNumericalArg() = "^.*$route$"
+    .replace(Regex("""\{[^}]+\}"""), "[0-9]+")
+    .let { Regex(it) }
 
   fun createRoute(root: Screen) = "${root.route}/$route"
 
-  object Patients : LeafScreen("patients")
-  object PatientDetails : LeafScreen("patients/view/{patientPk}") {
+  object Patients : LeafScreen("patients", hideBottomBar = false) {
+    override val matchRegex = createRouteMatcherWithNoArgs()
+  }
+
+  object PatientDetails : LeafScreen("patients/view/{patientPk}", hideBottomBar = false) {
     const val ARG_PATIENT_PRIMARY_KEY = "patientPk"
+    override val matchRegex = createRouteMatcherWithOneNumericalArg()
     fun createRoute(root: Screen, patientPrimaryKey: Long): String {
       return "${root.route}/patients/view/$patientPrimaryKey"
     }
   }
-  object PatientCreate : LeafScreen("patients/create")
-  object PatientEdit : LeafScreen("patients/edit/{patientEditPk}") {
+  object PatientCreate : LeafScreen("patients/create", hideBottomBar = true) {
+    override val matchRegex = createRouteMatcherWithNoArgs()
+  }
+  object PatientEdit : LeafScreen("patients/edit/{patientEditPk}", hideBottomBar = true) {
     const val ARG_PATIENT_PRIMARY_KEY = "patientEditPk"
+    override val matchRegex = createRouteMatcherWithOneNumericalArg()
     fun createRoute(root: Screen, existingPatientPrimaryKey: Long): String {
       return "${root.route}/patients/edit/$existingPatientPrimaryKey"
     }
   }
 
-  object Facilities : LeafScreen("facilities")
+  object Sync : LeafScreen("sync", hideBottomBar = false) {
+    override val matchRegex = createRouteMatcherWithNoArgs()
+  }
+
+  object Facilities : LeafScreen("facilities", hideBottomBar = false) {
+    override val matchRegex = createRouteMatcherWithNoArgs()
+  }
 
   companion object {
-    // val bottomBarRoutes = setOf()
+    private val allLeaves by lazy {
+      // A really hacky way to get all the sealed classes without needing to use reflection.
+      // This will cause a compiler error if a new subtype is added without updating this.
+      @Suppress("USELESS_CAST")
+      when (Patients as LeafScreen) {
+        Facilities -> {}
+        PatientCreate -> {}
+        PatientDetails -> {}
+        PatientEdit -> {}
+        Patients -> {}
+        Sync -> {}
+      }
+
+      listOf(
+        Facilities,
+        PatientCreate,
+        PatientDetails,
+        PatientEdit,
+        Patients,
+        Sync,
+      )
+    }
+
+    @Throws(IllegalArgumentException::class)
+    fun matchRouteOrThrow(route: String): LeafScreen =
+      allLeaves.find { it.doesRouteMatch(route) }
+        ?: throw IllegalArgumentException("route $route doesn't match any knonw LeafScreen!")
   }
 }
 

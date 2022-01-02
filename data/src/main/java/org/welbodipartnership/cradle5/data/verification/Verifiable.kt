@@ -3,12 +3,11 @@ package org.welbodipartnership.cradle5.data.verification
 import android.content.Context
 import androidx.lifecycle.LiveData
 import org.welbodipartnership.cradle5.data.verification.Verifiable.Verifier
-import java.lang.reflect.InvocationTargetException
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
-import kotlin.reflect.full.IllegalCallableAccessException
-import kotlin.reflect.full.memberProperties
-import kotlin.reflect.jvm.isAccessible
+
+// TODO: Figure out if we need reflection. kotlin.reflect is huge and adds about 7 MB to the
+//  installed app size
 
 /**
  * Describes classes that can validate its properties according to its criteria. The type parameter
@@ -23,136 +22,7 @@ import kotlin.reflect.jvm.isAccessible
  * [Verifier]'s [Verifier.isValueValid] function.
  */
 interface Verifiable<T : Any> {
-  /**
-   * Determines if a [value] for a [property] is valid. What is valid is defined by the class
-   * implementing this. [context] is needed to get a localized error message.
-   *
-   * It's recommended that the actual validator function for a class be put in a Companion object
-   * for that class (have the Companion implement the [Verifier] interface) so that other classes
-   * can access it without needing to create an instance first. Then, the member function can just
-   * invoke the function inside of the Companion object. See the sample (CTRL + Q in Android
-   * Studio) for an example.
-   *
-   * @sample com.cradleplatform.neptune.model.TestClass.isValueForPropertyValid
-   * @sample com.cradleplatform.neptune.model.TestClass.Companion.isValueValid
-   *
-   * @param property The property to check [value] for. You **must** use `ClassName::PropertyName`,
-   * not `::PropertyName`, not `this::PropertyName`, etc.
-   * @param value The value to test. This should be the same type the type in [property].
-   * @param context A Context required to get localized error messages.
-   * @return A [Pair], where the left value is whether the value is valid for the given property,
-   * and the right value is a localized error message. The error message should be ignored if the
-   * value is valid.
-   */
-  fun isValueForPropertyValid(
-    property: KProperty1<out T, *>,
-    value: Any?,
-    context: Context?
-  ): Result
 
-  /**
-   * Determines validity of value for [property] for this object. [context] is needed to get a
-   * localized error message.
-   *
-   * For the [property], you **must** use `ClassName::PropertyName`, not `::PropertyName`, not
-   * `this::PropertyName`, etc.
-   *
-   * @throws UninitializedPropertyAccessException if checking a lateinit property
-   * @return whether the value in the class's [property] is valid.
-   */
-  @Suppress("ThrowsCount")
-  fun isPropertyValid(property: KProperty1<T, *>, context: Context?): Result {
-    try {
-      return isValueForPropertyValid(property, property.getter.call(this), context)
-    } catch (e: InvocationTargetException) {
-      if (e.cause is UninitializedPropertyAccessException) {
-        // Propagate any attempts to access uninitialized lateinit vars as an
-        // UninitializedPropertyAccessException
-        throw UninitializedPropertyAccessException(
-          (e.cause as UninitializedPropertyAccessException).message
-        )
-      }
-      // Otherwise, something else went wrong here, and we should propagate that too.
-      throw e
-    }
-  }
-
-  /**
-   * @param [shouldIgnoreAccessibility] If true, checks all member properties regardless of
-   * the accessibility modifiers (e.g. private variables will be checked if calling from outside
-   * of the class). Otherwise, such members are ignored when checking for validity. Defaults to
-   * true.
-   * @return A List of [Pair] where each pair is of the form:
-   *     <Property name with invalid value, Error message for property name>.
-   * The List is empty if all values are valid.
-   * @throws UninitializedPropertyAccessException if there are uninitialized lateinit properties
-   */
-  @Suppress("NestedBlockDepth")
-  fun getAllMembersWithInvalidValues(
-    context: Context?,
-    shouldIgnoreAccessibility: Boolean = true,
-    shouldStopAtFirstError: Boolean = false
-  ): List<Pair<String, String>> {
-    @Suppress("UNCHECKED_CAST")
-    val thisTypedAsT = this as T
-    val listOfInvalidProperties: MutableList<Pair<String, String>>? =
-      if (shouldStopAtFirstError) {
-        null
-      } else {
-        mutableListOf()
-      }
-
-    for (property in thisTypedAsT::class.memberProperties) {
-      val oldIsAccessible = property.isAccessible
-      try {
-        if (shouldIgnoreAccessibility) {
-          // Suppress JVM access checks
-          property.isAccessible = true
-        }
-
-        // First value in the pair is false; second value is the error message.
-        val result = isValueForPropertyValid(
-          property = property,
-          value = property.getter.call(thisTypedAsT),
-          context = context
-        )
-        if (result is Invalid) {
-          val pair = Pair(property.name, result.errorMessage)
-          if (shouldStopAtFirstError) {
-            return listOf(pair)
-          } else {
-            listOfInvalidProperties!!.add(pair)
-          }
-        }
-      } catch (ignored: IllegalCallableAccessException) {
-        // We ignore any exceptions caused by non-accessibility of the member (e.g., this
-        // would happen if shouldIgnoreAccessibility is false and the class has private
-        // members and the caller of this function is not in the class). In this case, such
-        // members are not checked for validity.
-        // We just use this way of ignoring exceptions in order to not have to deal with
-        // other visibilities explicitly such as internal
-      } finally {
-        if (shouldIgnoreAccessibility) {
-          // We need to reset the flag, or else subsequent calls can still use the true
-          // flag.
-          property.isAccessible = oldIsAccessible
-        }
-      }
-    }
-    return if (listOfInvalidProperties == null || listOfInvalidProperties.isEmpty()) {
-      // Statically-allocated empty list as an optimization
-      emptyList()
-    } else {
-      listOfInvalidProperties
-    }
-  }
-
-  /**
-   * Determine if this is a valid instance as determined by [getAllMembersWithInvalidValues]
-   * (which is dependent on [isValueForPropertyValid]
-   */
-  fun isValidInstance() =
-    getAllMembersWithInvalidValues(null, shouldStopAtFirstError = true).isEmpty()
 
   /**
    * A class / object that can verify values for properties of [Verifiable] type [T].

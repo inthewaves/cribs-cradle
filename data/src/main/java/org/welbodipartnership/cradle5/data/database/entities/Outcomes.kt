@@ -51,7 +51,7 @@ data class Outcomes(
   @Embedded(prefix = "perinatal_death_")
   val perinatalDeath: PerinatalDeath? = null
 ) : Verifiable<Outcomes> {
-  override fun isValueForPropertyValid(
+  fun isValueForPropertyValid(
     property: KProperty1<out Outcomes, *>,
     value: Any?,
     context: Context?

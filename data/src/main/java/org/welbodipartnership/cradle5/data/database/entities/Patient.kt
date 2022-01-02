@@ -43,7 +43,7 @@ data class Patient(
 ) : Verifiable<Patient> {
   val serverPatientId: Long? get() = serverInfo?.objectId
 
-  override fun isValueForPropertyValid(
+  fun isValueForPropertyValid(
     property: KProperty1<out Patient, *>,
     value: Any?,
     context: Context?

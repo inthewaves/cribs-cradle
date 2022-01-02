@@ -18,6 +18,7 @@
 
 package org.welbodipartnership.cradle5.home
 
+import android.util.Log
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.animation.Crossfade
@@ -39,6 +40,7 @@ import androidx.compose.material.icons.outlined.LocationCity
 import androidx.compose.material.icons.outlined.Sync
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
@@ -56,6 +58,7 @@ import com.google.accompanist.insets.LocalWindowInsets
 import com.google.accompanist.insets.rememberInsetsPaddingValues
 import com.google.accompanist.insets.ui.BottomNavigation
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
+import org.welbodipartnership.cradle5.LeafScreen
 import org.welbodipartnership.cradle5.LoggedInNavigation
 import org.welbodipartnership.cradle5.R
 import org.welbodipartnership.cradle5.Screen
@@ -73,48 +76,62 @@ fun Home() {
 
        */
 
-      val currentSelectedItem by navController.currentScreenAsState()
-      HomeBottomNavigation(
-        selectedNavigation = currentSelectedItem,
-        onNavigationSelected = { selected ->
-          navController.navigate(selected.route) {
-            // https://developer.android.com/jetpack/compose/navigation#bottom-nav
-            // Avoid multiple copies of the same destination when reselecting the same item
-            launchSingleTop = true
-            // Restore state when reselecting a previously selected item
-            restoreState = true
-            // Pop up to the start destination of the graph to avoid building up a large stack of
-            // destinations on the back stack as users select items
-            popUpTo(navController.graph.findStartDestination().id) {
-              saveState = true
+      val currentSelectedItemPair by navController.currentScreenAndLeafAsState()
+      val (screen, leaf) = currentSelectedItemPair
+      if (leaf?.hideBottomBar == null || !leaf.hideBottomBar) {
+        HomeBottomNavigation(
+          selectedNavigation = screen,
+          onNavigationSelected = { selected ->
+            navController.navigate(selected.route) {
+              // https://developer.android.com/jetpack/compose/navigation#bottom-nav
+              // Avoid multiple copies of the same destination when reselecting the same item
+              launchSingleTop = true
+              // Restore state when reselecting a previously selected item
+              restoreState = true
+              // Pop up to the start destination of the graph to avoid building up a large stack of
+              // destinations on the back stack as users select items
+              popUpTo(navController.graph.findStartDestination().id) {
+                saveState = true
+              }
             }
-          }
-        },
-        modifier = Modifier.fillMaxWidth()
-      )
+          },
+          modifier = Modifier.fillMaxWidth()
+        )
+      }
     }
   ) {
     LoggedInNavigation(
       navController,
-      modifier = Modifier.padding(it).fillMaxHeight()
+      modifier = Modifier
+        .padding(it)
+        .fillMaxHeight()
     )
   }
 }
 
 @Stable
 @Composable
-private fun NavController.currentScreenAsState(): State<Screen> {
-  val selectedItem = remember { mutableStateOf(Screen.defaultStartRoute) }
+private fun NavController.currentScreenAndLeafAsState(): State<Pair<Screen, LeafScreen?>> {
+  val selectedItem: MutableState<Pair<Screen, LeafScreen?>> =
+    remember { mutableStateOf(Screen.defaultStartRoute to Screen.defaultStartRoute.startLeaf) }
 
   DisposableEffect(this) {
     val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
-
-      destination.hierarchy
+      val screen: Screen = destination.hierarchy
         .mapNotNull { dest ->
           Screen.values().find { it.route == dest.route }
         }
         .firstOrNull()
-        ?.let { selectedItem.value = it }
+        ?: return@OnDestinationChangedListener
+
+      val leaf: LeafScreen? = try {
+        destination.route?.let { LeafScreen.matchRouteOrThrow(it) }
+      } catch (e: IllegalArgumentException) {
+        Log.e("Home", "Failed to match route ${destination.route}", e)
+        null
+      }
+
+      selectedItem.value = Pair(screen, leaf)
     }
     addOnDestinationChangedListener(listener)
 
