@@ -2,7 +2,6 @@ package org.welbodipartnership.cradle5.ui.composables.forms
 
 import android.content.Context
 import android.content.ContextWrapper
-import android.util.Log
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Column
@@ -39,7 +38,6 @@ import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.welbodipartnership.cradle5.R
-import org.welbodipartnership.cradle5.ui.composables.OutlinedTextFieldWithErrorHint
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
 import org.welbodipartnership.cradle5.util.date.FormDate
 import java.time.LocalDate
@@ -55,8 +53,8 @@ import java.util.TimeZone
 fun DateOutlinedTextField(
   date: FormDate?,
   onDatePicked: (FormDate) -> Unit,
-  onPickerClose: () -> Unit = {},
   modifier: Modifier = Modifier,
+  onPickerClose: () -> Unit = {},
   textFieldModifier: Modifier = Modifier,
   enabled: Boolean = true,
   textStyle: TextStyle = LocalTextStyle.current,
@@ -105,9 +103,8 @@ fun DateOutlinedTextField(
           try {
             val finalDate: FormDate? = suspendCancellableCoroutine { cont ->
               datePicker.addOnPositiveButtonClickListener {
-                Log.d("MainActivity", "addOnPosListener")
-                val calendar =
-                  GregorianCalendar(TimeZone.getTimeZone("GMT")).apply { time = Date(it) }
+                val calendar = GregorianCalendar(TimeZone.getTimeZone("GMT"))
+                  .apply { time = Date(it) }
                 cont.resume(
                   FormDate(
                     day = calendar[Calendar.DAY_OF_MONTH],

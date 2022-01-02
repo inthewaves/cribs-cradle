@@ -17,7 +17,6 @@
 
 package org.welbodipartnership.cradle5.ui.composables.carousel
 
-
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.SpringSpec
 import androidx.compose.foundation.MutatePriority

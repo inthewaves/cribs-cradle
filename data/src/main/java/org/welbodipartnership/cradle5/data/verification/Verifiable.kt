@@ -23,7 +23,6 @@ import kotlin.reflect.KProperty1
  */
 interface Verifiable<T : Any> {
 
-
   /**
    * A class / object that can verify values for properties of [Verifiable] type [T].
    * Verification is done by the [isValueValid] function, which verifies a value for

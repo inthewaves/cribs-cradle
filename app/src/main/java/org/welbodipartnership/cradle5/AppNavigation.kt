@@ -127,8 +127,8 @@ internal sealed class LeafScreen(private val route: String, val hideBottomBar: B
 
     @Throws(IllegalArgumentException::class)
     fun matchRouteOrThrow(route: String): LeafScreen =
-      allLeaves.find { it.doesRouteMatch(route) }
-        ?: throw IllegalArgumentException("route $route doesn't match any knonw LeafScreen!")
+      allLeaves.find { route.endsWith(it.route) || it.doesRouteMatch(route) }
+        ?: throw IllegalArgumentException("route $route doesn't match any known LeafScreen!")
   }
 }
 
@@ -229,6 +229,7 @@ private fun NavGraphBuilder.addPatientCreate(
     // TODO: Use an ambient?
     PatientForm(
       ServerEnumCollection.defaultInstance,
+      onNavigateBack = { navController.navigateUp() },
       onNavigateToPatient = { patientPrimaryKey ->
         navController.withDebouncedAction {
           popBackStack()
@@ -236,7 +237,6 @@ private fun NavGraphBuilder.addPatientCreate(
             LeafScreen.PatientDetails.createRoute(root, patientPrimaryKey)
           )
         }
-
       }
     )
   }
@@ -255,6 +255,7 @@ private fun NavGraphBuilder.addPatientEdit(
     // TODO: Use an ambient?
     PatientForm(
       ServerEnumCollection.defaultInstance,
+      onNavigateBack = { navController.navigateUp() },
       onNavigateToPatient = { navController.navigateUp() }
     )
   }

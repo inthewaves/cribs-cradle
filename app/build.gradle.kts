@@ -101,7 +101,7 @@ dependencies {
     api(project(":api"))
     api(project(":data"))
 
-    //implementation(kotlin("reflect"))
+    // implementation(kotlin("reflect"))
 
     coreLibraryDesugaring(libs.desugar)
 
@@ -114,6 +114,7 @@ dependencies {
 
     implementation(libs.google.android.material)
     implementation(libs.compose.ui.ui)
+    implementation(libs.compose.ui.util)
     implementation(libs.compose.material.material)
     implementation(libs.compose.material.iconsext)
     implementation(libs.compose.ui.tooling.preview)
@@ -135,7 +136,6 @@ dependencies {
 
     implementation(libs.google.tink)
     implementation(libs.signal.argon2)
-
 
     testImplementation(libs.junit.android)
     androidTestImplementation(libs.androidx.test.ext.junit)

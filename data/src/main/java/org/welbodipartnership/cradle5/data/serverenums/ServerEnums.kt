@@ -386,6 +386,10 @@ class ServerEnum constructor(
     .build()
 
   sealed class EntryType
+
+  /**
+   * Models the web app having an empty entry
+   */
   object EmptyResponseEntry : EntryType()
   data class Entry(
     val id: Int,

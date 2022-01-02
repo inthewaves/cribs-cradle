@@ -33,7 +33,6 @@ open class TextFieldState(
   backingState: MutableState<String> = mutableStateOf(initialValue),
 ) : FieldState<String>(validator, errorFor, initialValue, backingState) {
   override val showErrorOnInput: Boolean = false
-  override var stateValue: String by backingState
 }
 
 /**
@@ -47,14 +46,24 @@ abstract class FieldState<T>(
 ) {
   abstract val showErrorOnInput: Boolean
 
-  open var stateValue: T by backingState
+  var stateValue: T
+    get() = backingState.value
+    set(value) {
+      backingState.value = value
+      onNewStateValue(value)
+    }
+
+  open fun onNewStateValue(newValue: T) {}
+
   // was the TextField ever focused
-  var isFocusedDirty: Boolean by mutableStateOf(showErrorOnInput)
+  val isFocusedDirty: MutableState<Boolean> by lazy {
+    mutableStateOf(showErrorOnInput)
+  }
   var isFocused: Boolean by mutableStateOf(false)
   private var displayErrors: Boolean by mutableStateOf(false)
 
   fun reset() {
-    isFocusedDirty = showErrorOnInput
+    isFocusedDirty.value = showErrorOnInput
     isFocused = false
     displayErrors = false
     stateValue = initialValue
@@ -73,12 +82,12 @@ abstract class FieldState<T>(
 
   private fun onFocusChange(focused: Boolean) {
     isFocused = focused
-    if (focused) isFocusedDirty = true
+    if (focused) isFocusedDirty.value = true
   }
 
   fun enableShowErrors(force: Boolean = false) {
     // only show errors if the text was at least once focused
-    if (isFocusedDirty || force) {
+    if (isFocusedDirty.value || force) {
       displayErrors = true
     }
   }

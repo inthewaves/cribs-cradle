@@ -26,7 +26,7 @@ fun BaseDetailsCard(
     shape = MaterialTheme.shapes.small,
     modifier = modifier
   ) {
-    Column(Modifier.fillMaxWidth().padding(8.dp)) {
+    Column(Modifier.fillMaxWidth().padding(16.dp)) {
       title?.let {
         Text(title, style = MaterialTheme.typography.h4)
         Spacer(modifier = Modifier.height(4.dp))

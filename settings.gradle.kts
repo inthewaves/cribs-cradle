@@ -94,6 +94,7 @@ dependencyResolutionManagement {
             version("composecompiler", "1.1.0-rc02")
             alias("compose-runtime").to("androidx.compose.runtime", "runtime").versionRef("compose")
             alias("compose-ui-ui").to("androidx.compose.ui", "ui").versionRef("compose")
+            alias("compose-ui-util").to("androidx.compose.ui", "ui-util").versionRef("compose")
             alias("compose-material-material").to("androidx.compose.material", "material").versionRef("compose")
             alias("compose-material-iconsext").to("androidx.compose.material", "material-icons-extended").versionRef("compose")
             alias("compose-ui-tooling-preview").to("androidx.compose.ui", "ui-tooling-preview").versionRef("compose")

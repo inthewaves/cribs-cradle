@@ -15,8 +15,11 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import org.welbodipartnership.cradle5.LeafScreen
 import org.welbodipartnership.cradle5.R
@@ -60,7 +63,13 @@ class PatientFormViewModel @Inject constructor(
 
   val isExistingPatientEdit = existingPatientPrimaryKey != null
 
+  val existingParentAndOutcomes: Flow<PatientAndOutcomes?> = existingPatientPrimaryKey?.let { pk ->
+    database.patientDao().getPatientAndOutcomesFlow(pk)
+  } ?: flowOf(null)
+
   sealed class FormState {
+    val isForPatientEdit get() = (this as? Ready)?.existingInfo != null
+
     object Loading : FormState()
     class Ready(val existingInfo: PatientAndOutcomes?) : FormState()
     object Saving : FormState()
@@ -158,7 +167,7 @@ class PatientFormViewModel @Inject constructor(
   )
 
   init {
-    Log.d(TAG, "initializing eith pk = $existingPatientPrimaryKey")
+    Log.d(TAG, "initializing with pk = $existingPatientPrimaryKey")
     if (existingPatientPrimaryKey != null) {
       viewModelScope.launch(appCoroutineDispatchers.main) {
         val patientAndOutcomes = database.patientDao()
@@ -170,6 +179,10 @@ class PatientFormViewModel @Inject constructor(
           )
         } else {
           val (patient, outcomes) = patientAndOutcomes
+          Log.d(
+            TAG,
+            "Setting up form for edit (outcomes == $outcomes)"
+          )
 
           with(formFields.patientFields) {
             initials.backingState.value = patient.initials
@@ -186,7 +199,7 @@ class PatientFormViewModel @Inject constructor(
               isEnabled.value = true
               date.backingState.value = it.date.toString()
               placeOfFirstFit.backingState.value = it.place
-            } ?: run { isEnabled.value = false }
+            } ?: reset()
           }
 
           with(formFields.hysterectomy) {
@@ -195,7 +208,7 @@ class PatientFormViewModel @Inject constructor(
               date.backingState.value = it.date.toString()
               cause.backingState.value = it.cause
               additionalInfo.value = it.additionalInfo
-            } ?: run { isEnabled.value = false }
+            } ?: reset()
           }
 
           with(formFields.hduItuAdmission) {
@@ -204,7 +217,7 @@ class PatientFormViewModel @Inject constructor(
               date.backingState.value = it.date.toString()
               cause.backingState.value = it.cause
               hduItuStayLengthInDays.backingState.value = it.stayInDays?.toString() ?: ""
-            } ?: run { isEnabled.value = false }
+            } ?: reset()
           }
 
           with(formFields.maternalDeath) {
@@ -213,7 +226,7 @@ class PatientFormViewModel @Inject constructor(
               date.backingState.value = it.date.toString()
               underlyingCause.backingState.value = it.underlyingCause
               placeOfDeath.backingState.value = it.place
-            } ?: run { isEnabled.value = false }
+            } ?: reset()
           }
 
           with(formFields.surgicalManagement) {
@@ -221,7 +234,7 @@ class PatientFormViewModel @Inject constructor(
               isEnabled.value = true
               date.backingState.value = it.date.toString()
               type.backingState.value = it.typeOfSurgicalManagement
-            } ?: run { isEnabled.value = false }
+            } ?: reset()
           }
 
           with(formFields.perinatalDeath) {
@@ -230,7 +243,7 @@ class PatientFormViewModel @Inject constructor(
               date.backingState.value = it.date.toString()
               outcome.backingState.value = it.outcome
               relatedMaternalFactors.backingState.value = it.relatedMaternalFactors
-            } ?: run { isEnabled.value = false }
+            } ?: reset()
           }
 
           FormState.Ready(patientAndOutcomes)
@@ -256,7 +269,6 @@ class PatientFormViewModel @Inject constructor(
 
       formFields.forceAllErrors()
 
-
       val fieldToErrorMap = linkedMapOf<Int, List<FieldError>>()
       fun OutcomeFields.getCategoryStringRes() = when (this) {
         is OutcomeFields.Eclampsia -> R.string.outcomes_eclampsia_label
@@ -277,6 +289,14 @@ class PatientFormViewModel @Inject constructor(
       }
 
       _formState.value = try {
+        val patientAndOutcomes = existingParentAndOutcomes.first()
+        require(
+          existingPatientPrimaryKey == null ||
+            patientAndOutcomes?.patient?.id == existingPatientPrimaryKey
+        ) {
+          "Existing patient doesn't match primary key"
+        }
+
         val patient = with(formFields.patientFields) {
           if (!initials.isValid) {
             fieldToErrorMap.addFieldError(
@@ -310,6 +330,7 @@ class PatientFormViewModel @Inject constructor(
 
           runCatching {
             Patient(
+              id = patientAndOutcomes?.patient?.id ?: 0L,
               initials = initials.stateValue,
               presentationDate = presentationDate.stateValue.toFormDateOrThrow(),
               dateOfBirth = dateOfBirth.stateValue.toFormDateOrThrow(),
@@ -573,6 +594,7 @@ class PatientFormViewModel @Inject constructor(
             // we have a foreign key constraint here
             database.outcomesDao().upsert(
               Outcomes(
+                id = patientAndOutcomes?.outcomes?.id ?: 0,
                 patientId = pk,
                 eclampsiaFit = eclampsia?.getOrThrow(),
                 hysterectomy = hysterectomy?.getOrThrow(),
@@ -818,26 +840,23 @@ class SavedStateMutableState<T>(
 
   init {
     val savedValue = handle.get<T>(key)
-    mutableState = mutableStateOf(
-      savedValue ?: defaultValue
-    )
+    mutableState = mutableStateOf(savedValue ?: defaultValue)
   }
 
   override var value: T
     get() = mutableState.value
     set(value) {
-      mutableState.value = value
-      handle[key] = value
+      set(value)
     }
+
+  private fun set(new: T) {
+    mutableState.value = new
+    handle[key] = new
+  }
 
   override fun component1(): T = value
 
-  override fun component2(): (T) -> Unit {
-    return {
-      mutableState.value = it
-      handle[key] = it
-    }
-  }
+  override fun component2(): (T) -> Unit = ::set
 }
 
 fun <T> SavedStateHandle.createMutableState(key: String, defaultValue: T) =

@@ -110,7 +110,7 @@ fun OutcomesCard(
       )
       LabelAndValueOrUnknown(
         stringResource(R.string.hdu_or_idu_admission_length_stay_days_if_known_label),
-        hduOrItuAdmission.stayInDays.toString()
+        hduOrItuAdmission.stayInDays?.toString()
       )
     } else {
       Text(

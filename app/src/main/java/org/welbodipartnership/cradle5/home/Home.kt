@@ -78,21 +78,34 @@ fun Home() {
 
       val currentSelectedItemPair by navController.currentScreenAndLeafAsState()
       val (screen, leaf) = currentSelectedItemPair
-      if (leaf?.hideBottomBar == null || !leaf.hideBottomBar) {
+      val isVisible = leaf?.hideBottomBar == null || !leaf.hideBottomBar
+      /*
+      AnimatedVisibility(
+        visible = isVisible,
+        enter = fadeIn() + expandIn(animationSpec = tween(), expandFrom = Alignment.BottomCenter),
+        exit = shrinkOut(animationSpec = tween(), shrinkTowards = Alignment.BottomCenter) + fadeOut(),
+      ) {
+
+       */
+      if (isVisible) {
         HomeBottomNavigation(
           selectedNavigation = screen,
           onNavigationSelected = { selected ->
-            navController.navigate(selected.route) {
-              // https://developer.android.com/jetpack/compose/navigation#bottom-nav
-              // Avoid multiple copies of the same destination when reselecting the same item
-              launchSingleTop = true
-              // Restore state when reselecting a previously selected item
-              restoreState = true
-              // Pop up to the start destination of the graph to avoid building up a large stack of
-              // destinations on the back stack as users select items
-              popUpTo(navController.graph.findStartDestination().id) {
-                saveState = true
+            if (isVisible) {
+              navController.navigate(selected.route) {
+                // https://developer.android.com/jetpack/compose/navigation#bottom-nav
+                // Avoid multiple copies of the same destination when reselecting the same item
+                launchSingleTop = true
+                // Restore state when reselecting a previously selected item
+                restoreState = true
+                // Pop up to the start destination of the graph to avoid building up a large stack of
+                // destinations on the back stack as users select items
+                popUpTo(navController.graph.findStartDestination().id) {
+                  saveState = true
+                }
               }
+            } else {
+              Log.w("Home", "trying to navigate to $selected but not visible")
             }
           },
           modifier = Modifier.fillMaxWidth()
@@ -116,7 +129,7 @@ private fun NavController.currentScreenAndLeafAsState(): State<Pair<Screen, Leaf
     remember { mutableStateOf(Screen.defaultStartRoute to Screen.defaultStartRoute.startLeaf) }
 
   DisposableEffect(this) {
-    val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
+    val listener = NavController.OnDestinationChangedListener { controller, destination, _ ->
       val screen: Screen = destination.hierarchy
         .mapNotNull { dest ->
           Screen.values().find { it.route == dest.route }

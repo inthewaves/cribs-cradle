@@ -1,5 +1,7 @@
 package org.welbodipartnership.cradle5.patients.form
 
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,13 +13,19 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
 import androidx.compose.material.Card
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Scaffold
 import androidx.compose.material.SnackbarHostState
 import androidx.compose.material.Text
+import androidx.compose.material.TextButton
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -52,12 +60,12 @@ import org.welbodipartnership.cradle5.data.serverenums.ServerEnum
 import org.welbodipartnership.cradle5.data.serverenums.ServerEnumCollection
 import org.welbodipartnership.cradle5.patients.details.BaseDetailsCard
 import org.welbodipartnership.cradle5.patients.details.CategoryHeader
-import org.welbodipartnership.cradle5.ui.composables.OutlinedTextFieldWithErrorHint
 import org.welbodipartnership.cradle5.ui.composables.forms.BooleanRadioButtonRow
 import org.welbodipartnership.cradle5.ui.composables.forms.DateOutlinedTextField
-import org.welbodipartnership.cradle5.ui.composables.forms.EnumDropdownMenu
+import org.welbodipartnership.cradle5.ui.composables.forms.EnumDropdownMenuIdOnly
 import org.welbodipartnership.cradle5.ui.composables.forms.EnumDropdownMenuWithOther
 import org.welbodipartnership.cradle5.ui.composables.forms.FieldState
+import org.welbodipartnership.cradle5.ui.composables.forms.OutlinedTextFieldWithErrorHint
 import org.welbodipartnership.cradle5.ui.composables.forms.TextFieldState
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
 import org.welbodipartnership.cradle5.util.date.FormDate
@@ -92,6 +100,7 @@ enum class PatientFormEditReason
 @Composable
 fun PatientForm(
   serverEnumCollection: ServerEnumCollection,
+  onNavigateBack: () -> Unit,
   onNavigateToPatient: (patientPrimaryKey: Long) -> Unit,
   viewModel: PatientFormViewModel = hiltViewModel()
 ) {
@@ -118,6 +127,32 @@ fun PatientForm(
     }
   }
 
+  var showUnsavedChangesDialog by remember { mutableStateOf(false) }
+  BackHandler { showUnsavedChangesDialog = true }
+  if (showUnsavedChangesDialog) {
+    AlertDialog(
+      onDismissRequest = { showUnsavedChangesDialog = false },
+      title = {
+        if (formState.value.isForPatientEdit) {
+          Text(stringResource(id = R.string.discard_unsaved_changes_dialog_title))
+        } else {
+          Text(stringResource(id = R.string.discard_unsaved_changes_dialog_title_new_entry))
+        }
+      },
+      confirmButton = {
+        TextButton(onClick = {
+          showUnsavedChangesDialog = false
+          onNavigateBack()
+        }) { Text(stringResource(id = R.string.discard)) }
+      },
+      dismissButton = {
+        TextButton(onClick = { showUnsavedChangesDialog = false }) {
+          Text(stringResource(id = R.string.cancel))
+        }
+      }
+    )
+  }
+
   Scaffold(
     scaffoldState = rememberScaffoldState(snackbarHostState = snackbarHostState),
     topBar = {
@@ -130,21 +165,35 @@ fun PatientForm(
         ),
         modifier = Modifier.fillMaxWidth(),
         title = {
-          formState.value.let { state ->
-            if (
-              state is PatientFormViewModel.FormState.Ready &&
-                state.existingInfo != null
-            ) {
-              Column {
-                Text(stringResource(R.string.edit_patient_title))
-                Text(
-                  state.existingInfo.patient.initials,
-                  style = MaterialTheme.typography.subtitle2
-                )
-              }
-            } else {
+          if (viewModel.isExistingPatientEdit) {
+            Column {
               Text(stringResource(R.string.edit_patient_title))
+              formState.value.let { state ->
+                if (
+                  state is PatientFormViewModel.FormState.Ready &&
+                  state.existingInfo != null
+                ) {
+                  Text(
+                    state.existingInfo.patient.initials,
+                    style = MaterialTheme.typography.subtitle2
+                  )
+                }
+              }
             }
+          } else {
+            Text(stringResource(R.string.new_patient_title))
+          }
+        },
+        navigationIcon = {
+          val backPressedDispatcher = requireNotNull(
+            LocalOnBackPressedDispatcherOwner.current!!, { "failed to get a back pressed dispatcher" }
+          )
+            .onBackPressedDispatcher
+          IconButton(onClick = backPressedDispatcher::onBackPressed) {
+            Icon(
+              imageVector = Icons.Filled.ArrowBack,
+              contentDescription = stringResource(R.string.back_button)
+            )
           }
         },
       )
@@ -494,9 +543,6 @@ fun EclampsiaForm(
   val serverEnum = requireNotNull(serverEnumCollection[DropdownType.Place]) {
     "missing Place lookup values from the server"
   }
-  val enum: ServerEnum.Entry? = placeOfFirstFitState.stateValue?.let {
-    serverEnum.getValueFromId(it.selectionId)
-  }
 
   Column(modifier) {
     DateOutlinedTextField(
@@ -515,10 +561,10 @@ fun EclampsiaForm(
       keyboardOptions = KeyboardOptions.Default,
     )
 
-    EnumDropdownMenu(
-      currentSelection = enum,
+    EnumDropdownMenuIdOnly(
+      currentSelection = placeOfFirstFitState.stateValue,
       onSelect = {
-        placeOfFirstFitState.stateValue = it?.let { EnumSelection.IdOnly(it.id) }
+        placeOfFirstFitState.stateValue = it
       },
       serverEnum = serverEnum,
       label = { Text(stringResource(R.string.place_of_first_eclamptic_fit_label)) },
@@ -680,9 +726,6 @@ fun MaternalDeathForm(
   val placeOfDeathEnum = requireNotNull(serverEnumCollection[DropdownType.Place]) {
     "missing Maternal Death Underlying Cause lookup values from the server"
   }
-  val placeOfDeathEntry: ServerEnum.Entry? = placeOfDeathState.stateValue?.let {
-    placeOfDeathEnum.getValueFromId(it.selectionId)
-  }
 
   val underlyingCauseEnum = requireNotNull(serverEnumCollection[DropdownType.UnderlyingCauseOfDeath]) {
     "missing Maternal Death Place of Death lookup values from the server"
@@ -715,11 +758,9 @@ fun MaternalDeathForm(
       errorHint = underlyingCauseState.getError()
     )
 
-    EnumDropdownMenu(
-      currentSelection = placeOfDeathEntry,
-      onSelect = {
-        placeOfDeathState.stateValue = it?.let { EnumSelection.IdOnly(it.id) }
-      },
+    EnumDropdownMenuIdOnly(
+      currentSelection = placeOfDeathState.stateValue,
+      onSelect = { placeOfDeathState.stateValue = it },
       serverEnum = placeOfDeathEnum,
       label = { Text(stringResource(R.string.maternal_death_place_label)) },
       enabled = isFormEnabled == true,
@@ -795,9 +836,6 @@ fun PerinatalDeathForm(
   val perinatalOutcomeEnum = requireNotNull(serverEnumCollection[DropdownType.PerinatalOutcome]) {
     "missing Perinatal Death Outcome lookup values from the server"
   }
-  val perinatalOutcomeEntry: ServerEnum.Entry? = outcomeState.stateValue?.let {
-    perinatalOutcomeEnum.getValueFromId(it.selectionId)
-  }
   val perinatalRelatedMaternalFactorsEnum = requireNotNull(serverEnumCollection[DropdownType.MaternalFactorsRelatedToPerinatalLoss]) {
     "missing Perinatal Related Maternal factors lookup values from the server"
   }
@@ -815,11 +853,9 @@ fun PerinatalDeathForm(
       keyboardOptions = KeyboardOptions.Default,
     )
 
-    EnumDropdownMenu(
-      currentSelection = perinatalOutcomeEntry,
-      onSelect = {
-        outcomeState.stateValue = it?.let { EnumSelection.IdOnly(it.id) }
-      },
+    EnumDropdownMenuIdOnly(
+      currentSelection = outcomeState.stateValue,
+      onSelect = { outcomeState.stateValue = it },
       serverEnum = perinatalOutcomeEnum,
       label = { Text(stringResource(R.string.perinatal_death_outcome_label)) },
       enabled = isFormEnabled == true,
@@ -866,7 +902,7 @@ fun EclampsiaFormPreview() {
 fun PatientFormPreview() {
   CradleTrialAppTheme {
     Scaffold {
-      PatientForm(ServerEnumCollection.defaultInstance, {})
+      PatientForm(ServerEnumCollection.defaultInstance, onNavigateBack = {}, onNavigateToPatient = {})
     }
   }
 }
@@ -973,13 +1009,12 @@ class EnumIdOnlyState(
   backingState = backingState
 ) {
   override val showErrorOnInput: Boolean = true
-  override var stateValue: EnumSelection.IdOnly? by mutableStateOf(null)
 }
 
 class EnumWithOtherState(
   private val enum: ServerEnum?,
   private val isMandatory: Boolean,
-  val otherSelection: ServerEnum.Entry? = enum?.validSortedValues?.find { it.name == "Other" },
+  private val otherSelection: ServerEnum.Entry? = enum?.validSortedValues?.find { it.name == "Other" },
   backingState: MutableState<EnumSelection.WithOther?> = mutableStateOf(null)
 ) : FieldState<EnumSelection.WithOther?>(
   validator = { selection ->
@@ -1001,15 +1036,33 @@ class EnumWithOtherState(
     }
   },
   initialValue = null,
-  backingState
+  backingState,
 ) {
   override val showErrorOnInput: Boolean = true
-  override var stateValue: EnumSelection.WithOther?
-    get() = backingState.value
-    set(value) {
-      backingState.value = value
-      if (isMandatory && value != null) {
-        enableShowErrors(force = true)
-      }
+  override fun onNewStateValue(newValue: EnumSelection.WithOther?) {
+    if (isMandatory && newValue != null) {
+      enableShowErrors(force = true)
     }
+  }
+}
+
+class MutableStateWithCallback<T>(
+  private val delegate: MutableState<T>,
+  val newValueCallback: (newValue: T) -> Unit
+) : MutableState<T> {
+  override var value: T
+    get() = delegate.value
+    set(value) {
+      delegate.value = value
+      newValueCallback(value)
+    }
+
+  override fun component1(): T = delegate.component1()
+
+  override fun component2(): (T) -> Unit {
+    return { newValue ->
+      delegate.component2()(newValue)
+      newValueCallback(newValue)
+    }
+  }
 }

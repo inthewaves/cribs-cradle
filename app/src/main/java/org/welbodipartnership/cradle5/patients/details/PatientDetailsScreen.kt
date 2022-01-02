@@ -112,7 +112,7 @@ private fun PatientDetailsScreen(
     item {
       BaseDetailsCard(title = null, modifier = modifier) {
         // Don't allow editing patients already uploaded.
-        OutlinedButton(enabled = patient.serverInfo != null, onClick = { onPatientEditPress(patient.id) }) {
+        OutlinedButton(enabled = patient.serverInfo == null, onClick = { onPatientEditPress(patient.id) }) {
           Text(stringResource(R.string.patient_edit_button))
         }
       }
@@ -128,7 +128,7 @@ private fun PatientDetailsScreen(
 
     item {
       OutcomesCard(
-        outcomes = outcomes ?: testOutcomes,
+        outcomes = outcomes,
         // TODO: Get enums from server
         ServerEnumCollection.defaultInstance,
         modifier = Modifier.padding(16.dp)

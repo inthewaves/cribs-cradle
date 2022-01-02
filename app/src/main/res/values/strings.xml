@@ -65,6 +65,10 @@
     <string name="patient_edit_button">Edit</string>
     <string name="patient_form_save_edits">Save edits</string>
     <string name="edit_patient_title">Editing patient</string>
+    <string name="discard">Discard</string>
+    <string name="discard_unsaved_changes_dialog_title">Discard unsaved changes?</string>
+    <string name="discard_unsaved_changes_dialog_title_new_entry">Discard this new patient and outcomes?</string>
+    <string name="cancel">Cancel</string>
     <plurals name="patient_form_snackbar_failed_to_save_there_are_d_errors">
         <item quantity="one">Failed to save, as there is %1$d error.</item>
         <item quantity="other">Failed to save, as there are %1$d errors.</item>

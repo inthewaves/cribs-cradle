@@ -36,13 +36,13 @@ class PatientDetailsViewModel @Inject constructor(
 
           dbWrapper.database!!.patientDao().getPatientAndOutcomesFlow(pk)
             .map { patientWithOutcomes ->
+              Log.d("PatientDetailsViewModel", "New flow value: $patientWithOutcomes")
               if (patientWithOutcomes != null) {
                 State.Ready(patientWithOutcomes.patient, patientWithOutcomes.outcomes)
               } else {
                 State.Failed
               }
             }
-
         } ?: flowOf(State.Failed)
       )
     }

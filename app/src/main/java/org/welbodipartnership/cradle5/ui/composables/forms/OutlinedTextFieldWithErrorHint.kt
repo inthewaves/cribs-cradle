@@ -1,4 +1,4 @@
-package org.welbodipartnership.cradle5.ui.composables
+package org.welbodipartnership.cradle5.ui.composables.forms
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.interaction.MutableInteractionSource

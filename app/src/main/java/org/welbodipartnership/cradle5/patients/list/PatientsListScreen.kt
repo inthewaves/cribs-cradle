@@ -1,6 +1,5 @@
 package org.welbodipartnership.cradle5.patients.list
 
-import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.EnterTransition
@@ -36,7 +35,6 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,7 +52,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.itemsIndexed
+import androidx.paging.compose.items
 import com.google.accompanist.insets.LocalWindowInsets
 import com.google.accompanist.insets.rememberInsetsPaddingValues
 import com.google.accompanist.insets.ui.TopAppBar
@@ -138,8 +136,6 @@ private fun PatientsListScreen(
     }
   ) { padding ->
     Column(Modifier.padding(padding)) {
-      Text("Patients")
-
       val scope = rememberCoroutineScope()
       OutlinedButton(
         onClick = {
@@ -165,28 +161,19 @@ private fun PatientsListScreen(
         viewModel.pager.flow, minActiveState = Lifecycle.State.RESUMED
       ).collectAsLazyPagingItems()
 
-      LaunchedEffect(lazyPagingItems.loadState.refresh) {
-        Log.d("MainActivity", "Lazy paging items loadstate.refresh = ${lazyPagingItems.loadState}")
-      }
-
       PatientListHeader()
       Box(Modifier.fillMaxSize()) {
         AnimatedVisibilityWrapper(
           visible = lazyPagingItems.loadState.refresh is LoadState.Loading
-        ) {
-          CircularProgressIndicator(Modifier.align(Alignment.Center))
-        }
+        ) { CircularProgressIndicator(Modifier.align(Alignment.Center)) }
 
         AnimatedVisibilityWrapper(
           visible = lazyPagingItems.loadState.refresh !is LoadState.Loading
         ) {
           LazyColumn(state = lazyListState) {
-            itemsIndexed(lazyPagingItems) { index, listPatient ->
+            items(lazyPagingItems) { listPatient ->
               if (listPatient != null) {
-                PatientListItem(
-                  listPatient,
-                  onClick = { onOpenPatientDetails(it.id) }
-                )
+                PatientListItem(listPatient, onClick = { onOpenPatientDetails(it.id) })
               } else {
                 PatientListItemPlaceholder()
               }

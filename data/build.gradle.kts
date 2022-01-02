@@ -85,7 +85,7 @@ protobuf {
 dependencies {
     api(project(":util"))
 
-    //implementation(kotlin("reflect"))
+    // implementation(kotlin("reflect"))
 
     implementation(libs.androidx.core.ktx)
 
