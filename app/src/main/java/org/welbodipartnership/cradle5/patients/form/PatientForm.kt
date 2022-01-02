@@ -67,6 +67,7 @@ import org.welbodipartnership.cradle5.ui.composables.forms.EnumDropdownMenuWithO
 import org.welbodipartnership.cradle5.ui.composables.forms.FieldState
 import org.welbodipartnership.cradle5.ui.composables.forms.OutlinedTextFieldWithErrorHint
 import org.welbodipartnership.cradle5.ui.composables.forms.TextFieldState
+import org.welbodipartnership.cradle5.ui.composables.forms.darkerDisabledOutlinedTextFieldColors
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
 import org.welbodipartnership.cradle5.util.date.FormDate
 import org.welbodipartnership.cradle5.util.date.toFormDateOrNull
@@ -96,8 +97,12 @@ fun String.withRequiredStar() = buildAnnotatedString {
 }
 
 @Composable
-fun RequiredText(text: String, required: Boolean) {
-
+fun RequiredText(text: String, required: Boolean = true) {
+  if (required) {
+    Text(text.withRequiredStar())
+  } else {
+    Text(text)
+  }
 }
 
 @Composable
@@ -226,12 +231,7 @@ fun PatientForm(
             // TODO: Hard limit text
             patientFields.initials.stateValue = it.uppercase()
           },
-          label = {
-            Text(
-              text = stringResource(id = R.string.patient_registration_initials_label).withRequiredStar(),
-              // style = MaterialTheme.typography.body2
-            )
-          },
+          label = { RequiredText(stringResource(R.string.patient_registration_initials_label)) },
           textFieldModifier = Modifier
             .then(patientFields.initials.createFocusChangeModifier())
             .fillMaxWidth(),
@@ -259,10 +259,7 @@ fun PatientForm(
           },
           onPickerClose = { patientFields.presentationDate.enableShowErrors(force = true) },
           label = {
-            Text(
-              text = stringResource(id = R.string.patient_registration_presentation_date_label)
-                .withRequiredStar(),
-            )
+            RequiredText(stringResource(id = R.string.patient_registration_presentation_date_label))
           },
           modifier = Modifier.fillMaxWidth(),
           textFieldModifier = patientFields.presentationDate
@@ -291,10 +288,7 @@ fun PatientForm(
             patientFields.age.enableShowErrors(force = true)
           },
           label = {
-            Text(
-              text = stringResource(id = R.string.patient_registration_date_of_birth_label)
-                .withRequiredStar(),
-            )
+            RequiredText(stringResource(R.string.patient_registration_date_of_birth_label))
           },
           modifier = Modifier.fillMaxWidth(),
           textFieldModifier = patientFields.dateOfBirth
@@ -321,9 +315,7 @@ fun PatientForm(
             }
           },
           label = {
-            Text(
-              stringResource(id = R.string.patient_registration_age_label).withRequiredStar()
-            )
+            RequiredText(stringResource(id = R.string.patient_registration_age_label))
           },
           modifier = Modifier.fillMaxWidth(),
           textFieldModifier = patientFields.age
@@ -553,9 +545,7 @@ fun EclampsiaForm(
       onDatePicked = { dateState.stateValue = it.toString() },
       onPickerClose = { },
       label = {
-        Text(
-          text = stringResource(id = R.string.form_date_label).withRequiredStar(),
-        )
+        RequiredText(text = stringResource(R.string.form_date_label), isFormEnabled == true)
       },
       enabled = isFormEnabled == true,
       modifier = Modifier.fillMaxWidth(),
@@ -604,9 +594,7 @@ fun HysterectomyForm(
       onDatePicked = { dateState.stateValue = it.toString() },
       onPickerClose = { },
       label = {
-        Text(
-          text = stringResource(id = R.string.form_date_label).withRequiredStar(),
-        )
+        RequiredText(text = stringResource(R.string.form_date_label), isFormEnabled == true)
       },
       enabled = isFormEnabled == true,
       modifier = Modifier.fillMaxWidth(),
@@ -635,6 +623,7 @@ fun HysterectomyForm(
         .fillMaxWidth(),
       label = { Text(stringResource(R.string.hysterectomy_additional_info_label)) },
       enabled = isFormEnabled == true,
+      colors = darkerDisabledOutlinedTextFieldColors()
     )
   }
 }
@@ -665,9 +654,7 @@ fun AdmittedToHduItuForm(
       onDatePicked = { dateState.stateValue = it.toString() },
       onPickerClose = { },
       label = {
-        Text(
-          text = stringResource(id = R.string.form_date_label).withRequiredStar(),
-        )
+        RequiredText(stringResource(id = R.string.form_date_label), isFormEnabled == true)
       },
       enabled = isFormEnabled == true,
       modifier = Modifier.fillMaxWidth(),
@@ -682,11 +669,10 @@ fun AdmittedToHduItuForm(
       onSelect = { causeState.stateValue = it },
       serverEnum = serverEnum,
       label = {
-        if (isFormEnabled == true) {
-          Text(stringResource(R.string.hdu_or_idu_admission_cause_label).withRequiredStar())
-        } else {
-          Text(stringResource(R.string.hdu_or_idu_admission_cause_label))
-        }
+        RequiredText(
+          text = stringResource(R.string.hdu_or_idu_admission_cause_label),
+          required = isFormEnabled == true
+        )
       },
       enabled = isFormEnabled == true,
       dropdownTextModifier = Modifier.fillMaxWidth(),
@@ -746,7 +732,9 @@ fun MaternalDeathForm(
       date = dateState.stateValue.toFormDateOrNull(),
       onDatePicked = { dateState.stateValue = it.toString() },
       onPickerClose = { },
-      label = { Text(stringResource(R.string.form_date_label).withRequiredStar()) },
+      label = {
+        RequiredText(text = stringResource(R.string.form_date_label), isFormEnabled == true)
+      },
       enabled = isFormEnabled == true,
       modifier = Modifier.fillMaxWidth(),
       textFieldModifier = Modifier.fillMaxWidth(),
@@ -803,7 +791,9 @@ fun SurgicalManagementForm(
       date = dateState.stateValue.toFormDateOrNull(),
       onDatePicked = { dateState.stateValue = it.toString() },
       onPickerClose = { },
-      label = { Text(stringResource(R.string.form_date_label).withRequiredStar()) },
+      label = {
+        RequiredText(text = stringResource(R.string.form_date_label), isFormEnabled == true)
+      },
       enabled = isFormEnabled == true,
       modifier = Modifier.fillMaxWidth(),
       textFieldModifier = Modifier.fillMaxWidth(),
@@ -855,7 +845,9 @@ fun PerinatalDeathForm(
       date = dateState.stateValue.toFormDateOrNull(),
       onDatePicked = { dateState.stateValue = it.toString() },
       onPickerClose = { },
-      label = { Text(stringResource(R.string.form_date_label).withRequiredStar()) },
+      label = {
+        RequiredText(text = stringResource(R.string.form_date_label), isFormEnabled == true)
+      },
       enabled = isFormEnabled == true,
       modifier = Modifier.fillMaxWidth(),
       textFieldModifier = Modifier.fillMaxWidth(),

@@ -13,7 +13,6 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.TextFieldColors
-import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.EditCalendar
 import androidx.compose.runtime.Composable
@@ -71,7 +70,7 @@ fun DateOutlinedTextField(
   singleLine: Boolean = false,
   maxLines: Int = 1,
   shape: Shape = MaterialTheme.shapes.small,
-  colors: TextFieldColors = TextFieldDefaults.outlinedTextFieldColors()
+  colors: TextFieldColors = darkerDisabledOutlinedTextFieldColors()
 ) {
   val channelState = remember { mutableStateOf<SendChannel<Unit>?>(null) }
   if (enabled) {

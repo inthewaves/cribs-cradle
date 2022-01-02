@@ -11,7 +11,7 @@ import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.ExposedDropdownMenuDefaults
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
-import androidx.compose.material.TextFieldDefaults
+import androidx.compose.material.TextFieldColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -125,6 +125,7 @@ private fun <T : EnumSelection> BaseEnumDropdownMenu(
   errorHint: String?,
   serverEnum: ServerEnum,
   enabled: Boolean = true,
+  dropdownColors: TextFieldColors = darkerDisabledOutlinedTextFieldColors(),
   extraContent: @Composable (ColumnScope.(currentEntry: ServerEnum.Entry?) -> Unit)? = null,
 ) {
   var expanded by remember { mutableStateOf(false) }
@@ -153,7 +154,7 @@ private fun <T : EnumSelection> BaseEnumDropdownMenu(
           )
         },
         errorHint = errorHint,
-        colors = TextFieldDefaults.outlinedTextFieldColors(),
+        colors = dropdownColors,
         textFieldModifier = dropdownTextModifier,
         interactionSource = remember { MutableInteractionSource() }
           .also { interactionSource ->
