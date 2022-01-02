@@ -19,6 +19,7 @@ package org.welbodipartnership.cradle5.ui.composables.forms
 import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -49,6 +50,10 @@ abstract class FieldState<T>(
   var stateValue: T
     get() = backingState.value
     set(value) {
+      if (showErrorOnInput) {
+        isFocusedDirty = true
+      }
+
       backingState.value = value
       onNewStateValue(value)
     }
@@ -56,21 +61,18 @@ abstract class FieldState<T>(
   open fun onNewStateValue(newValue: T) {}
 
   // was the TextField ever focused
-  val isFocusedDirty: MutableState<Boolean> by lazy {
-    mutableStateOf(showErrorOnInput)
-  }
+  var isFocusedDirty by mutableStateOf(false)
   var isFocused: Boolean by mutableStateOf(false)
   private var displayErrors: Boolean by mutableStateOf(false)
 
   fun reset() {
-    isFocusedDirty.value = showErrorOnInput
+    isFocusedDirty = showErrorOnInput
     isFocused = false
     displayErrors = false
     stateValue = initialValue
   }
 
-  open val isValid: Boolean
-    get() = validator(stateValue)
+  val isValid: Boolean by derivedStateOf { validator(stateValue) }
 
   fun createFocusChangeModifier() = Modifier
     .onFocusChanged { focusState ->
@@ -82,12 +84,12 @@ abstract class FieldState<T>(
 
   private fun onFocusChange(focused: Boolean) {
     isFocused = focused
-    if (focused) isFocusedDirty.value = true
+    if (focused) isFocusedDirty = true
   }
 
   fun enableShowErrors(force: Boolean = false) {
     // only show errors if the text was at least once focused
-    if (isFocusedDirty.value || force) {
+    if (isFocusedDirty || force) {
       displayErrors = true
     }
   }
@@ -102,4 +104,27 @@ abstract class FieldState<T>(
       null
     }
   }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as FieldState<*>
+
+    if (showErrorOnInput != other.showErrorOnInput) return false
+    if (stateValue != other.stateValue) return false
+    if (isFocusedDirty != other.isFocusedDirty) return false
+    if (isFocused != other.isFocused) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = stateValue?.hashCode() ?: 0
+    result = 31 * result + isFocusedDirty.hashCode()
+    result = 31 * result + isFocused.hashCode()
+    return result
+  }
+
+
 }

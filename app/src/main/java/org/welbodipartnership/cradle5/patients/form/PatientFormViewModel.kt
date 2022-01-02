@@ -421,7 +421,7 @@ class PatientFormViewModel @Inject constructor(
               fieldToErrorMap.addFieldError(
                 getCategoryStringRes(),
                 R.string.outcomes_admission_to_hdu_or_itu_label,
-                context.getString(R.string.outcomes_eclampsia_not_selected_error)
+                context.getString(R.string.outcomes_hdu_itu_admission_not_selected_error)
               )
               null
             }

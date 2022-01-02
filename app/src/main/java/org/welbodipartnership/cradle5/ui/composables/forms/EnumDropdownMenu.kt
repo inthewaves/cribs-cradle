@@ -4,7 +4,9 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.ExposedDropdownMenuDefaults
 import androidx.compose.material.Surface
@@ -17,13 +19,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import org.welbodipartnership.cradle5.R
 import org.welbodipartnership.cradle5.data.database.entities.embedded.EnumSelection
 import org.welbodipartnership.cradle5.data.serverenums.DropdownType
 import org.welbodipartnership.cradle5.data.serverenums.ServerEnum
 import org.welbodipartnership.cradle5.data.serverenums.ServerEnumCollection
+import org.welbodipartnership.cradle5.patients.form.withRequiredStar
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
 
 @Composable
@@ -76,6 +81,37 @@ fun EnumDropdownMenuWithOther(
     serverEnum = serverEnum,
     enabled = enabled,
   ) { currentEntry ->
+    Spacer(Modifier.height(spacerHeight))
+
+    val isOtherEnabled = enabled &&
+      currentEntry?.id == serverEnum.otherEntry?.id &&
+      currentEntry?.id != null
+    OutlinedTextFieldWithErrorHint(
+      value = currentSelection?.otherString ?: "",
+      onValueChange = {
+        if (currentSelection != null) {
+          onSelect(currentSelection.copy(otherString = it))
+        }
+      },
+      label = {
+        if (isOtherEnabled) {
+          Text(stringResource(R.string.other_enum_label).withRequiredStar())
+        } else {
+          Text(stringResource(R.string.other_enum_label))
+        }
+      },
+      enabled = isOtherEnabled,
+      errorHint = if (
+        isOtherEnabled &&
+        showErrorHintOnOtherField &&
+        errorHint != null
+      ) {
+        errorHint
+      } else {
+        null
+      },
+      textFieldModifier = otherTextModifier
+    )
   }
 }
 

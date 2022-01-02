@@ -57,6 +57,7 @@
     <string name="patient_form_save_new_patient_button">Save new patient</string>
     <string name="outcomes_eclampsia_not_selected_error">Missing eclampsia radio button selection</string>
     <string name="outcomes_hysterectomy_not_selected_error">Missing hysterectomy radio button selection</string>
+    <string name="outcomes_hdu_itu_admission_not_selected_error">Missing HDU / ITU admission radio button selection</string>
     <string name="outcomes_maternal_death_not_selected_error">Missing maternal death radio button selection</string>
     <string name="outcomes_perinatal_death_not_selected_error">Missing perinatal death radio button selection</string>
     <string name="outcomes_surgical_management_not_selected_error">Missing surgical management radio button selection</string>

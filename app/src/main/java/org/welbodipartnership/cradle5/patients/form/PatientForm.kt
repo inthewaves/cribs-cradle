@@ -95,7 +95,10 @@ fun String.withRequiredStar() = buildAnnotatedString {
   }
 }
 
-enum class PatientFormEditReason
+@Composable
+fun RequiredText(text: String, required: Boolean) {
+
+}
 
 @Composable
 fun PatientForm(
@@ -673,11 +676,18 @@ fun AdmittedToHduItuForm(
       keyboardOptions = KeyboardOptions.Default,
     )
 
+    // mandatory
     EnumDropdownMenuWithOther(
       currentSelection = causeState.stateValue,
       onSelect = { causeState.stateValue = it },
       serverEnum = serverEnum,
-      label = { Text(stringResource(R.string.hdu_or_idu_admission_cause_label).withRequiredStar()) },
+      label = {
+        if (isFormEnabled == true) {
+          Text(stringResource(R.string.hdu_or_idu_admission_cause_label).withRequiredStar())
+        } else {
+          Text(stringResource(R.string.hdu_or_idu_admission_cause_label))
+        }
+      },
       enabled = isFormEnabled == true,
       dropdownTextModifier = Modifier.fillMaxWidth(),
       showErrorHintOnOtherField = causeState.stateValue != null,
