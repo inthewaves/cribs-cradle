@@ -543,7 +543,7 @@ fun EclampsiaForm(
     DateOutlinedTextField(
       date = dateState.stateValue.toFormDateOrNull(),
       onDatePicked = { dateState.stateValue = it.toString() },
-      onPickerClose = { },
+      onPickerClose = { dateState.enableShowErrors(force = true) },
       label = {
         RequiredText(text = stringResource(R.string.form_date_label), isFormEnabled == true)
       },
@@ -587,18 +587,17 @@ fun HysterectomyForm(
   val serverEnum = requireNotNull(serverEnumCollection[DropdownType.CauseOfHysterectomy]) {
     "missing Hysterectomy Cause lookup values from the server"
   }
-
   Column(modifier) {
     DateOutlinedTextField(
       date = dateState.stateValue.toFormDateOrNull(),
       onDatePicked = { dateState.stateValue = it.toString() },
-      onPickerClose = { },
+      onPickerClose = { dateState.enableShowErrors(force = true) },
       label = {
         RequiredText(text = stringResource(R.string.form_date_label), isFormEnabled == true)
       },
       enabled = isFormEnabled == true,
       modifier = Modifier.fillMaxWidth(),
-      textFieldModifier = Modifier.fillMaxWidth(),
+      textFieldModifier = Modifier.fillMaxWidth().then(dateState.createFocusChangeModifier()),
       errorHint = dateState.getError(),
       keyboardOptions = KeyboardOptions.Default,
     )
@@ -652,13 +651,13 @@ fun AdmittedToHduItuForm(
     DateOutlinedTextField(
       date = dateState.stateValue.toFormDateOrNull(),
       onDatePicked = { dateState.stateValue = it.toString() },
-      onPickerClose = { },
+      onPickerClose = { dateState.enableShowErrors(force = true) },
       label = {
         RequiredText(stringResource(id = R.string.form_date_label), isFormEnabled == true)
       },
       enabled = isFormEnabled == true,
       modifier = Modifier.fillMaxWidth(),
-      textFieldModifier = Modifier.fillMaxWidth(),
+      textFieldModifier = Modifier.fillMaxWidth().then(dateState.createFocusChangeModifier()),
       errorHint = dateState.getError(),
       keyboardOptions = KeyboardOptions.Default,
     )
@@ -731,13 +730,13 @@ fun MaternalDeathForm(
     DateOutlinedTextField(
       date = dateState.stateValue.toFormDateOrNull(),
       onDatePicked = { dateState.stateValue = it.toString() },
-      onPickerClose = { },
+      onPickerClose = { dateState.enableShowErrors(force = true) },
       label = {
         RequiredText(text = stringResource(R.string.form_date_label), isFormEnabled == true)
       },
       enabled = isFormEnabled == true,
       modifier = Modifier.fillMaxWidth(),
-      textFieldModifier = Modifier.fillMaxWidth(),
+      textFieldModifier = Modifier.fillMaxWidth().then(dateState.createFocusChangeModifier()),
       errorHint = dateState.getError(),
       keyboardOptions = KeyboardOptions.Default,
     )
@@ -790,13 +789,13 @@ fun SurgicalManagementForm(
     DateOutlinedTextField(
       date = dateState.stateValue.toFormDateOrNull(),
       onDatePicked = { dateState.stateValue = it.toString() },
-      onPickerClose = { },
+      onPickerClose = { dateState.enableShowErrors(force = true) },
       label = {
         RequiredText(text = stringResource(R.string.form_date_label), isFormEnabled == true)
       },
       enabled = isFormEnabled == true,
       modifier = Modifier.fillMaxWidth(),
-      textFieldModifier = Modifier.fillMaxWidth(),
+      textFieldModifier = Modifier.fillMaxWidth().then(dateState.createFocusChangeModifier()),
       errorHint = dateState.getError(),
       keyboardOptions = KeyboardOptions.Default,
     )
@@ -844,13 +843,13 @@ fun PerinatalDeathForm(
     DateOutlinedTextField(
       date = dateState.stateValue.toFormDateOrNull(),
       onDatePicked = { dateState.stateValue = it.toString() },
-      onPickerClose = { },
+      onPickerClose = { dateState.enableShowErrors(force = true) },
       label = {
         RequiredText(text = stringResource(R.string.form_date_label), isFormEnabled == true)
       },
       enabled = isFormEnabled == true,
       modifier = Modifier.fillMaxWidth(),
-      textFieldModifier = Modifier.fillMaxWidth(),
+      textFieldModifier = Modifier.fillMaxWidth().then(dateState.createFocusChangeModifier()),
       errorHint = dateState.getError(),
       keyboardOptions = KeyboardOptions.Default,
     )
