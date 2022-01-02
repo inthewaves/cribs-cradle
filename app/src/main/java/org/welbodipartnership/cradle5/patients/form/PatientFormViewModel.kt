@@ -29,6 +29,7 @@ import org.welbodipartnership.cradle5.data.database.entities.Outcomes
 import org.welbodipartnership.cradle5.data.database.entities.Patient
 import org.welbodipartnership.cradle5.data.database.entities.PerinatalDeath
 import org.welbodipartnership.cradle5.data.database.entities.SurgicalManagementOfHaemorrhage
+import org.welbodipartnership.cradle5.data.database.resultentities.PatientAndOutcomes
 import org.welbodipartnership.cradle5.data.serverenums.DropdownType
 import org.welbodipartnership.cradle5.data.settings.AppKeyValueStore
 import org.welbodipartnership.cradle5.util.coroutines.AppCoroutineDispatchers
@@ -57,9 +58,11 @@ class PatientFormViewModel @Inject constructor(
   private val existingPatientPrimaryKey: Long? =
     handle[LeafScreen.PatientEdit.ARG_PATIENT_PRIMARY_KEY]
 
+  val isExistingPatientEdit = existingPatientPrimaryKey != null
+
   sealed class FormState {
     object Loading : FormState()
-    object Ready : FormState()
+    class Ready(val existingInfo: PatientAndOutcomes?) : FormState()
     object Saving : FormState()
     class SavedNewPatient(val primaryKeyOfPatient: Long) : FormState()
     class SavedEditsToExistingPatient(val primaryKeyOfPatient: Long) : FormState()
@@ -155,10 +158,11 @@ class PatientFormViewModel @Inject constructor(
   )
 
   init {
-    Log.d(TAG, "I am initializing.")
+    Log.d(TAG, "initializing eith pk = $existingPatientPrimaryKey")
     if (existingPatientPrimaryKey != null) {
-      viewModelScope.launch(appCoroutineDispatchers.default) {
-        val patientAndOutcomes = database.patientDao().getPatientAndOutcomes(existingPatientPrimaryKey)
+      viewModelScope.launch(appCoroutineDispatchers.main) {
+        val patientAndOutcomes = database.patientDao()
+          .getPatientAndOutcomes(existingPatientPrimaryKey)
         _formState.value = if (patientAndOutcomes == null) {
           Log.w(TAG, "Unable to find patient with pk $existingPatientPrimaryKey")
           FormState.FailedLoading(
@@ -182,7 +186,7 @@ class PatientFormViewModel @Inject constructor(
               isEnabled.value = true
               date.backingState.value = it.date.toString()
               placeOfFirstFit.backingState.value = it.place
-            }
+            } ?: run { isEnabled.value = false }
           }
 
           with(formFields.hysterectomy) {
@@ -191,7 +195,7 @@ class PatientFormViewModel @Inject constructor(
               date.backingState.value = it.date.toString()
               cause.backingState.value = it.cause
               additionalInfo.value = it.additionalInfo
-            }
+            } ?: run { isEnabled.value = false }
           }
 
           with(formFields.hduItuAdmission) {
@@ -200,7 +204,7 @@ class PatientFormViewModel @Inject constructor(
               date.backingState.value = it.date.toString()
               cause.backingState.value = it.cause
               hduItuStayLengthInDays.backingState.value = it.stayInDays?.toString() ?: ""
-            }
+            } ?: run { isEnabled.value = false }
           }
 
           with(formFields.maternalDeath) {
@@ -209,7 +213,7 @@ class PatientFormViewModel @Inject constructor(
               date.backingState.value = it.date.toString()
               underlyingCause.backingState.value = it.underlyingCause
               placeOfDeath.backingState.value = it.place
-            }
+            } ?: run { isEnabled.value = false }
           }
 
           with(formFields.surgicalManagement) {
@@ -217,7 +221,7 @@ class PatientFormViewModel @Inject constructor(
               isEnabled.value = true
               date.backingState.value = it.date.toString()
               type.backingState.value = it.typeOfSurgicalManagement
-            }
+            } ?: run { isEnabled.value = false }
           }
 
           with(formFields.perinatalDeath) {
@@ -226,14 +230,14 @@ class PatientFormViewModel @Inject constructor(
               date.backingState.value = it.date.toString()
               outcome.backingState.value = it.outcome
               relatedMaternalFactors.backingState.value = it.relatedMaternalFactors
-            }
+            } ?: run { isEnabled.value = false }
           }
 
-          FormState.Ready
+          FormState.Ready(patientAndOutcomes)
         }
       }
     } else {
-      _formState.value = FormState.Ready
+      _formState.value = FormState.Ready(null)
     }
   }
 

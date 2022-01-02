@@ -41,6 +41,11 @@ fun PatientCard(patient: Patient, modifier: Modifier = Modifier) {
       label = stringResource(R.string.patient_registration_date_of_birth_label),
       value = patient.dateOfBirth.toString(),
     )
+    Spacer(modifier = Modifier.height(spacerHeight))
+    LabelAndValueOrNone(
+      label = stringResource(R.string.patient_registration_age_label),
+      value = patient.dateOfBirth.getAgeInYearsFromNow().toString(),
+    )
   }
 }
 

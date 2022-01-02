@@ -87,6 +87,8 @@ fun String.withRequiredStar() = buildAnnotatedString {
   }
 }
 
+enum class PatientFormEditReason
+
 @Composable
 fun PatientForm(
   serverEnumCollection: ServerEnumCollection,
@@ -127,7 +129,24 @@ fun PatientForm(
           applyBottom = false,
         ),
         modifier = Modifier.fillMaxWidth(),
-        title = { Text(text = stringResource(R.string.new_patient_title)) },
+        title = {
+          formState.value.let { state ->
+            if (
+              state is PatientFormViewModel.FormState.Ready &&
+                state.existingInfo != null
+            ) {
+              Column {
+                Text(stringResource(R.string.edit_patient_title))
+                Text(
+                  state.existingInfo.patient.initials,
+                  style = MaterialTheme.typography.subtitle2
+                )
+              }
+            } else {
+              Text(stringResource(R.string.edit_patient_title))
+            }
+          }
+        },
       )
     },
 
@@ -397,7 +416,8 @@ fun PatientForm(
       SaveButtonCard(
         isEnabled = formState.value !is PatientFormViewModel.FormState.Loading &&
           formState.value !is PatientFormViewModel.FormState.Saving,
-        onSaveButtonClick = { viewModel.save() }
+        onSaveButtonClick = { viewModel.save() },
+        isExistingPatientEdit = viewModel.isExistingPatientEdit
       )
       formState.value.let { currentFormState ->
         when (currentFormState) {
@@ -420,6 +440,7 @@ fun PatientForm(
 @Composable
 fun SaveButtonCard(
   onSaveButtonClick: () -> Unit,
+  isExistingPatientEdit: Boolean,
   modifier: Modifier = Modifier,
   isEnabled: Boolean = true,
 ) {
@@ -435,7 +456,13 @@ fun SaveButtonCard(
       onClick = onSaveButtonClick,
       enabled = isEnabled,
     ) {
-      Text(stringResource(R.string.patient_form_save_new_patient_button))
+      Text(
+        if (isExistingPatientEdit) {
+          stringResource(id = R.string.patient_form_save_edits)
+        } else {
+          stringResource(R.string.patient_form_save_new_patient_button)
+        }
+      )
     }
   }
 }
@@ -445,7 +472,7 @@ fun SaveButtonCard(
 fun SaveButtonCardPreview() {
   CradleTrialAppTheme {
     Scaffold {
-      SaveButtonCard(onSaveButtonClick = { /*TODO*/ })
+      SaveButtonCard(onSaveButtonClick = { /*TODO*/ }, isExistingPatientEdit = false)
     }
   }
 }

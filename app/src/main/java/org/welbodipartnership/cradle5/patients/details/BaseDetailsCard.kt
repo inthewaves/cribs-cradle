@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun BaseDetailsCard(
-  title: String,
+  title: String?,
   modifier: Modifier = Modifier,
   backgroundColor: Color = MaterialTheme.colors.surface,
   columnContent: @Composable () -> Unit,
@@ -27,8 +27,10 @@ fun BaseDetailsCard(
     modifier = modifier
   ) {
     Column(Modifier.fillMaxWidth().padding(8.dp)) {
-      Text(title, style = MaterialTheme.typography.h4)
-      Spacer(modifier = Modifier.height(4.dp))
+      title?.let {
+        Text(title, style = MaterialTheme.typography.h4)
+        Spacer(modifier = Modifier.height(4.dp))
+      }
       columnContent()
     }
   }

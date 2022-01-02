@@ -27,6 +27,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.Lifecycle
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
@@ -69,8 +70,8 @@ internal sealed class LeafScreen(private val route: String,) {
     }
   }
   object PatientCreate : LeafScreen("patients/create")
-  object PatientEdit : LeafScreen("patients/edit/{patientPk}") {
-    const val ARG_PATIENT_PRIMARY_KEY = "patientPk"
+  object PatientEdit : LeafScreen("patients/edit/{patientEditPk}") {
+    const val ARG_PATIENT_PRIMARY_KEY = "patientEditPk"
     fun createRoute(root: Screen, existingPatientPrimaryKey: Long): String {
       return "${root.route}/patients/edit/$existingPatientPrimaryKey"
     }
@@ -83,6 +84,23 @@ internal sealed class LeafScreen(private val route: String,) {
   }
 }
 
+/**
+ * If the lifecycle is not resumed it means this NavBackStackEntry already processed a nav event.
+ *
+ * This is used to de-duplicate navigation events.
+ */
+private fun NavBackStackEntry.lifecycleIsResumed() =
+  this.lifecycle.currentState == Lifecycle.State.RESUMED
+
+private inline fun NavController.withDebouncedAction(
+  action: NavController.() -> Unit
+) {
+  val lifecycleResumed = currentBackStackEntry?.lifecycleIsResumed()
+  if (lifecycleResumed == null || lifecycleResumed == true) {
+    action()
+  }
+}
+
 @Composable
 internal fun LoggedInNavigation(
   navController: NavHostController,
@@ -91,8 +109,8 @@ internal fun LoggedInNavigation(
   AnimatedNavHost(
     navController = navController,
     startDestination = Screen.defaultStartRoute.route,
-    enterTransition = { defaultEnterTransition(initialState, targetState) },
-    exitTransition = { defaultExitTransition(initialState, targetState) },
+    enterTransition = { defaultEnterTransition() },
+    exitTransition = { defaultExitTransition() },
     popEnterTransition = { defaultPopEnterTransition() },
     popExitTransition = { defaultPopExitTransition() },
     modifier = modifier,
@@ -112,6 +130,7 @@ private fun NavGraphBuilder.addPatientsTopLevel(
     addPatientsList(navController, Screen.Patients)
     addPatientDetails(navController, Screen.Patients)
     addPatientCreate(navController, Screen.Patients)
+    addPatientEdit(navController, Screen.Patients)
   }
 }
 
@@ -125,7 +144,9 @@ private fun NavGraphBuilder.addPatientsList(
         navController.navigate(LeafScreen.PatientCreate.createRoute(root))
       },
       onOpenPatientDetails = { patientPk ->
-        navController.navigate(LeafScreen.PatientDetails.createRoute(root, patientPk))
+        navController.withDebouncedAction {
+          navigate(LeafScreen.PatientDetails.createRoute(root, patientPk))
+        }
       }
     )
   }
@@ -141,7 +162,12 @@ private fun NavGraphBuilder.addPatientDetails(
       navArgument(LeafScreen.PatientDetails.ARG_PATIENT_PRIMARY_KEY) { type = NavType.LongType }
     )
   ) {
-    PatientDetailsScreen(onBackPressed = { navController.navigateUp() })
+    PatientDetailsScreen(
+      onBackPressed = { navController.navigateUp() },
+      onPatientEdit = { patientPrimaryKey ->
+        navController.navigate(LeafScreen.PatientEdit.createRoute(root, patientPrimaryKey))
+      }
+    )
   }
 }
 
@@ -156,11 +182,32 @@ private fun NavGraphBuilder.addPatientCreate(
     PatientForm(
       ServerEnumCollection.defaultInstance,
       onNavigateToPatient = { patientPrimaryKey ->
-        navController.popBackStack()
-        navController.navigate(
-          LeafScreen.PatientDetails.createRoute(root, patientPrimaryKey)
-        )
+        navController.withDebouncedAction {
+          popBackStack()
+          navigate(
+            LeafScreen.PatientDetails.createRoute(root, patientPrimaryKey)
+          )
+        }
+
       }
+    )
+  }
+}
+
+private fun NavGraphBuilder.addPatientEdit(
+  navController: NavController,
+  root: Screen,
+) {
+  composable(
+    route = LeafScreen.PatientEdit.createRoute(root),
+    arguments = listOf(
+      navArgument(LeafScreen.PatientEdit.ARG_PATIENT_PRIMARY_KEY) { type = NavType.LongType }
+    )
+  ) {
+    // TODO: Use an ambient?
+    PatientForm(
+      ServerEnumCollection.defaultInstance,
+      onNavigateToPatient = { navController.navigateUp() }
     )
   }
 }
@@ -186,12 +233,9 @@ private fun NavGraphBuilder.addFacilitiesList(
 }
 
 @ExperimentalAnimationApi
-private fun AnimatedContentScope<*>.defaultEnterTransition(
-  initial: NavBackStackEntry,
-  target: NavBackStackEntry,
-): EnterTransition {
-  val initialNavGraph = initial.destination.hostNavGraph
-  val targetNavGraph = target.destination.hostNavGraph
+private fun AnimatedContentScope<NavBackStackEntry>.defaultEnterTransition(): EnterTransition {
+  val initialNavGraph = initialState.destination.hostNavGraph
+  val targetNavGraph = targetState.destination.hostNavGraph
   // If we're crossing nav graphs (bottom navigation graphs), we crossfade
   if (initialNavGraph.id != targetNavGraph.id) {
     return fadeIn()
@@ -201,12 +245,9 @@ private fun AnimatedContentScope<*>.defaultEnterTransition(
 }
 
 @ExperimentalAnimationApi
-private fun AnimatedContentScope<*>.defaultExitTransition(
-  initial: NavBackStackEntry,
-  target: NavBackStackEntry,
-): ExitTransition {
-  val initialNavGraph = initial.destination.hostNavGraph
-  val targetNavGraph = target.destination.hostNavGraph
+private fun AnimatedContentScope<NavBackStackEntry>.defaultExitTransition(): ExitTransition {
+  val initialNavGraph = initialState.destination.hostNavGraph
+  val targetNavGraph = targetState.destination.hostNavGraph
   // If we're crossing nav graphs (bottom navigation graphs), we crossfade
   if (initialNavGraph.id != targetNavGraph.id) {
     return fadeOut()
@@ -219,11 +260,23 @@ private val NavDestination.hostNavGraph: NavGraph
   get() = hierarchy.first { it is NavGraph } as NavGraph
 
 @ExperimentalAnimationApi
-private fun AnimatedContentScope<*>.defaultPopEnterTransition(): EnterTransition {
+private fun AnimatedContentScope<NavBackStackEntry>.defaultPopEnterTransition(): EnterTransition {
+  val initialNavGraph = initialState.destination.hostNavGraph
+  val targetNavGraph = targetState.destination.hostNavGraph
+  // If we're crossing nav graphs (bottom navigation graphs), we crossfade
+  if (initialNavGraph.id != targetNavGraph.id) {
+    return fadeIn()
+  }
   return fadeIn() + slideIntoContainer(AnimatedContentScope.SlideDirection.End)
 }
 
 @ExperimentalAnimationApi
-private fun AnimatedContentScope<*>.defaultPopExitTransition(): ExitTransition {
+private fun AnimatedContentScope<NavBackStackEntry>.defaultPopExitTransition(): ExitTransition {
+  val initialNavGraph = initialState.destination.hostNavGraph
+  val targetNavGraph = targetState.destination.hostNavGraph
+  // If we're crossing nav graphs (bottom navigation graphs), we crossfade
+  if (initialNavGraph.id != targetNavGraph.id) {
+    return fadeOut()
+  }
   return fadeOut() + slideOutOfContainer(AnimatedContentScope.SlideDirection.End)
 }

@@ -13,6 +13,7 @@ import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
@@ -37,6 +38,7 @@ import org.welbodipartnership.cradle5.data.serverenums.ServerEnumCollection
 @Composable
 fun PatientDetailsScreen(
   onBackPressed: () -> Unit,
+  onPatientEdit: (patientPrimaryKey: Long) -> Unit,
   viewModel: PatientDetailsViewModel = hiltViewModel()
 ) {
   Scaffold(
@@ -73,6 +75,7 @@ fun PatientDetailsScreen(
           PatientDetailsScreen(
             patientState.patient,
             patientState.outcomes,
+            onPatientEditPress = onPatientEdit,
             contentPadding = padding
           )
         }
@@ -101,13 +104,26 @@ fun PatientDetailsScreen(
 private fun PatientDetailsScreen(
   patient: Patient,
   outcomes: Outcomes?,
+  onPatientEditPress: (patientPrimaryKey: Long) -> Unit,
   modifier: Modifier = Modifier,
   contentPadding: PaddingValues = PaddingValues()
 ) {
   LazyColumn(modifier = modifier, contentPadding = contentPadding) {
     item {
+      BaseDetailsCard(title = null, modifier = modifier) {
+        // Don't allow editing patients already uploaded.
+        OutlinedButton(enabled = patient.serverInfo != null, onClick = { onPatientEditPress(patient.id) }) {
+          Text(stringResource(R.string.patient_edit_button))
+        }
+      }
+    }
+
+    item { Spacer(Modifier.height(8.dp)) }
+
+    item {
       PatientCard(patient = patient, modifier = Modifier.padding(16.dp))
     }
+
     item { Spacer(Modifier.height(8.dp)) }
 
     item {

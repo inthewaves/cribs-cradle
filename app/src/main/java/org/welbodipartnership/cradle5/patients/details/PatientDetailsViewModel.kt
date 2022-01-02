@@ -32,14 +32,18 @@ class PatientDetailsViewModel @Inject constructor(
   val patientOutcomesStateFlow: Flow<State> = flowOf<State>(State.Loading)
     .onCompletion {
       emitAll(
-        flowOf(patientPrimaryKey)
-          .map { pk ->
-            pk?.let {
-              dbWrapper.database?.patientDao()?.getPatientAndOutcomes(pk)?.let {
-                State.Ready(it.patient, it.outcomes)
+        patientPrimaryKey?.let { pk ->
+
+          dbWrapper.database!!.patientDao().getPatientAndOutcomesFlow(pk)
+            .map { patientWithOutcomes ->
+              if (patientWithOutcomes != null) {
+                State.Ready(patientWithOutcomes.patient, patientWithOutcomes.outcomes)
+              } else {
+                State.Failed
               }
-            } ?: State.Failed
-          }
+            }
+
+        } ?: flowOf(State.Failed)
       )
     }
 

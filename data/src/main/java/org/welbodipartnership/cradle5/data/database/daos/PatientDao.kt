@@ -7,6 +7,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
+import kotlinx.coroutines.flow.Flow
 import org.welbodipartnership.cradle5.data.database.entities.Outcomes
 import org.welbodipartnership.cradle5.data.database.entities.Patient
 import org.welbodipartnership.cradle5.data.database.resultentities.ListPatient
@@ -52,6 +53,10 @@ abstract class PatientDao {
   @Transaction
   @Query("SELECT id, initials, dateOfBirth FROM Patient ORDER BY id ASC")
   abstract fun patientsPagingSource(): PagingSource<Int, ListPatient>
+
+  @Transaction
+  @Query("SELECT * FROM Patient WHERE id = :patientPk")
+  abstract fun getPatientAndOutcomesFlow(patientPk: Long): Flow<PatientAndOutcomes?>
 
   @Transaction
   @Query("SELECT * FROM Patient WHERE id = :patientPk")

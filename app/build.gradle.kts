@@ -48,21 +48,32 @@ android {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
 
-            buildConfigField("String", "SERVER_URL", "\"0\"")
+            buildConfigField("String", "SERVER_URL", "\"https://www.medscinet.com/Cradle5Test/api\"")
         }
 
         release {
             signingConfig = signingConfigs.getByName("debug")
-
-            buildConfigField("String", "SERVER_URL", "\"0\"")
-
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+
+            // TODO: Use main server when available
+            buildConfigField("String", "SERVER_URL", "\"https://www.medscinet.com/Cradle5Test/api\"")
         }
 
+        create("staging") {
+            initWith(getByName("release"))
+            applicationIdSuffix = ".releaseStaging"
+            isDebuggable = false
+            isMinifyEnabled = false
+            isShrinkResources = false
+            matchingFallbacks += listOf("release", "debug")
+
+            buildConfigField("String", "SERVER_URL", "\"https://www.medscinet.com/Cradle5Test/api\"")
+        }
         // getByName("...")
     }
+
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
 
@@ -117,6 +128,7 @@ dependencies {
 
     implementation(libs.hilt.library)
     kapt(libs.hilt.compiler)
+
     implementation(libs.androidx.hilt.navigation.compose)
 
     implementation(libs.kotlinx.coroutines.android)
