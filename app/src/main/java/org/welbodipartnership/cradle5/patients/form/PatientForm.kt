@@ -562,6 +562,7 @@ fun EclampsiaForm(
       serverEnum = serverEnum,
       label = { Text(stringResource(R.string.place_of_first_eclamptic_fit_label)) },
       enabled = isFormEnabled == true,
+      errorHint = placeOfFirstFitState.getError(),
       textModifier = Modifier.fillMaxWidth()
     )
   }
@@ -597,7 +598,9 @@ fun HysterectomyForm(
       },
       enabled = isFormEnabled == true,
       modifier = Modifier.fillMaxWidth(),
-      textFieldModifier = Modifier.fillMaxWidth().then(dateState.createFocusChangeModifier()),
+      textFieldModifier = Modifier
+        .fillMaxWidth()
+        .then(dateState.createFocusChangeModifier()),
       errorHint = dateState.getError(),
       keyboardOptions = KeyboardOptions.Default,
     )
@@ -657,7 +660,9 @@ fun AdmittedToHduItuForm(
       },
       enabled = isFormEnabled == true,
       modifier = Modifier.fillMaxWidth(),
-      textFieldModifier = Modifier.fillMaxWidth().then(dateState.createFocusChangeModifier()),
+      textFieldModifier = Modifier
+        .fillMaxWidth()
+        .then(dateState.createFocusChangeModifier()),
       errorHint = dateState.getError(),
       keyboardOptions = KeyboardOptions.Default,
     )
@@ -670,7 +675,7 @@ fun AdmittedToHduItuForm(
       label = {
         RequiredText(
           text = stringResource(R.string.hdu_or_idu_admission_cause_label),
-          required = isFormEnabled == true
+          required = isFormEnabled == true && causeState.isMandatory
         )
       },
       enabled = isFormEnabled == true,
@@ -736,7 +741,9 @@ fun MaternalDeathForm(
       },
       enabled = isFormEnabled == true,
       modifier = Modifier.fillMaxWidth(),
-      textFieldModifier = Modifier.fillMaxWidth().then(dateState.createFocusChangeModifier()),
+      textFieldModifier = Modifier
+        .fillMaxWidth()
+        .then(dateState.createFocusChangeModifier()),
       errorHint = dateState.getError(),
       keyboardOptions = KeyboardOptions.Default,
     )
@@ -761,6 +768,7 @@ fun MaternalDeathForm(
       serverEnum = placeOfDeathEnum,
       label = { Text(stringResource(R.string.maternal_death_place_label)) },
       enabled = isFormEnabled == true,
+      errorHint = placeOfDeathState.getError(),
       textModifier = Modifier.fillMaxWidth()
     )
   }
@@ -795,7 +803,9 @@ fun SurgicalManagementForm(
       },
       enabled = isFormEnabled == true,
       modifier = Modifier.fillMaxWidth(),
-      textFieldModifier = Modifier.fillMaxWidth().then(dateState.createFocusChangeModifier()),
+      textFieldModifier = Modifier
+        .fillMaxWidth()
+        .then(dateState.createFocusChangeModifier()),
       errorHint = dateState.getError(),
       keyboardOptions = KeyboardOptions.Default,
     )
@@ -849,7 +859,9 @@ fun PerinatalDeathForm(
       },
       enabled = isFormEnabled == true,
       modifier = Modifier.fillMaxWidth(),
-      textFieldModifier = Modifier.fillMaxWidth().then(dateState.createFocusChangeModifier()),
+      textFieldModifier = Modifier
+        .fillMaxWidth()
+        .then(dateState.createFocusChangeModifier()),
       errorHint = dateState.getError(),
       keyboardOptions = KeyboardOptions.Default,
     )
@@ -860,6 +872,7 @@ fun PerinatalDeathForm(
       serverEnum = perinatalOutcomeEnum,
       label = { Text(stringResource(R.string.perinatal_death_outcome_label)) },
       enabled = isFormEnabled == true,
+      errorHint = outcomeState.getError(),
       textModifier = Modifier.fillMaxWidth()
     )
 
@@ -890,7 +903,8 @@ fun EclampsiaFormPreview() {
         onFormEnabledStateChange = {},
         dateState = NoFutureDateState(),
         placeOfFirstFitState = EnumIdOnlyState(
-          defaultEnums[DropdownType.Place]
+          defaultEnums[DropdownType.Place],
+          isMandatory = false
         ),
         serverEnumCollection = defaultEnums,
       )
@@ -1002,9 +1016,16 @@ class LimitedHduItuState(
 
 class EnumIdOnlyState(
   private val enum: ServerEnum?,
+  private val isMandatory: Boolean,
   backingState: MutableState<EnumSelection.IdOnly?> = mutableStateOf(null)
 ) : FieldState<EnumSelection.IdOnly?>(
-  validator = { selection -> selection?.let { enum?.getValueFromId(it.selectionId) } != null },
+  validator = { selection ->
+    when {
+      selection == null -> !isMandatory
+      enum == null -> true
+      else -> enum.getValueFromId(selection.selectionId) != null
+    }
+  },
   errorFor = { ctx, _, -> ctx.getString(R.string.server_enum_unknown_selection_error) },
   initialValue = null,
   backingState = backingState
@@ -1014,16 +1035,22 @@ class EnumIdOnlyState(
 
 class EnumWithOtherState(
   private val enum: ServerEnum?,
-  private val isMandatory: Boolean,
+  val isMandatory: Boolean,
   private val otherSelection: ServerEnum.Entry? = enum?.validSortedValues?.find { it.name == "Other" },
   backingState: MutableState<EnumSelection.WithOther?> = mutableStateOf(null)
 ) : FieldState<EnumSelection.WithOther?>(
   validator = { selection ->
-    val entry = selection?.let { enum?.getValueFromId(it.selectionId) }
-    if (entry == null && isMandatory) {
-      false
-    } else {
-      !(entry == otherSelection && selection?.otherString.isNullOrBlank())
+    when {
+      selection == null -> !isMandatory
+      enum == null -> true
+      else -> {
+        val entry = selection.let { enum.getValueFromId(it.selectionId) }
+        if (entry == null) {
+          false
+        } else {
+          !(entry == otherSelection && selection.otherString.isNullOrBlank())
+        }
+      }
     }
   },
   errorFor = { ctx, selection, ->

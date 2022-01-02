@@ -39,6 +39,7 @@ fun EnumDropdownMenuIdOnly(
   textModifier: Modifier = Modifier,
   label: @Composable () -> Unit,
   serverEnum: ServerEnum,
+  errorHint: String? = null,
   enabled: Boolean = true,
 ) {
   BaseEnumDropdownMenu(
@@ -49,7 +50,7 @@ fun EnumDropdownMenuIdOnly(
     modifier = modifier,
     dropdownTextModifier = textModifier,
     label = label,
-    errorHint = null,
+    errorHint = errorHint,
     serverEnum = serverEnum,
     enabled = enabled,
   )

@@ -104,7 +104,11 @@ class PatientFormViewModel @Inject constructor(
     eclampsia = OutcomeFields.Eclampsia(
       isEnabled = enabledState("eclampsiaEnabled"),
       date = dateState("eclampsiaDate"),
-      placeOfFirstFit = enumIdOnlyState("eclampsiaPlace", DropdownType.Place),
+      placeOfFirstFit = enumIdOnlyState(
+        "eclampsiaPlace",
+        DropdownType.Place,
+        isMandatory = false
+      ),
     ),
     hysterectomy = OutcomeFields.Hysterectomy(
       isEnabled = enabledState("hysterectomyEnabled"),
@@ -140,6 +144,7 @@ class PatientFormViewModel @Inject constructor(
       placeOfDeath = enumIdOnlyState(
         "maternalDeathPlace",
         DropdownType.Place,
+        isMandatory = false
       )
     ),
     surgicalManagement = OutcomeFields.SurgicalManagement(
@@ -157,6 +162,7 @@ class PatientFormViewModel @Inject constructor(
       outcome = enumIdOnlyState(
         "perinatalDeathOutcome",
         DropdownType.PerinatalOutcome,
+        isMandatory = false
       ),
       relatedMaternalFactors = enumWithOtherState(
         "perinatalDeathRelatedMaternalFactors",
@@ -632,9 +638,11 @@ class PatientFormViewModel @Inject constructor(
   private fun enumIdOnlyState(
     key: String,
     dropdownType: DropdownType,
+    isMandatory: Boolean,
   ) = EnumIdOnlyState(
     keyValueStore.getServerEnumCollection()[dropdownType]!!,
-    handle.createMutableState(key, null)
+    isMandatory = isMandatory,
+    handle.createMutableState(key, null),
   )
 
   private fun enumWithOtherState(
