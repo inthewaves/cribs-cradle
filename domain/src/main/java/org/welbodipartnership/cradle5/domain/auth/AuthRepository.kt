@@ -131,7 +131,6 @@ class AuthRepository @Inject internal constructor(
     }
 
     return correctHash
-
   }
 
   /**
@@ -190,13 +189,12 @@ class AuthRepository @Inject internal constructor(
       }
     }
 
-    Log.d(TAG,"refreshAuthToken(): successful refresh; inserting fresh token into store")
+    Log.d(TAG, "refreshAuthToken(): successful refresh; inserting fresh token into store")
     appValuesStore.insertFreshAuthToken(freshAuthToken)
     return true
   }
 
   suspend fun logout() {
-
   }
 
   companion object {

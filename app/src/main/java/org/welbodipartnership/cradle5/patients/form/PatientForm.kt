@@ -9,10 +9,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
 import androidx.compose.material.Card
@@ -35,6 +36,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,6 +53,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.accompanist.insets.LocalWindowInsets
+import com.google.accompanist.insets.navigationBarsWithImePadding
 import com.google.accompanist.insets.rememberInsetsPaddingValues
 import com.google.accompanist.insets.ui.TopAppBar
 import org.welbodipartnership.cradle5.R
@@ -210,267 +213,291 @@ fun PatientForm(
   ) { padding ->
     val focusRequester = remember { FocusRequester() }
 
-    val scrollState = rememberScrollState()
-
     val textFieldToTextFieldHeight = 8.dp
     val categoryToCategorySpacerHeight = 16.dp
 
-    Column(
-      Modifier
-        .padding(padding)
-        .verticalScroll(scrollState)
+    val bringIntoViewRequester = remember { BringIntoViewRequester() }
+
+    LazyColumn(
+      contentPadding = padding,
+      modifier = Modifier.navigationBarsWithImePadding()
     ) {
-      BaseDetailsCard(
-        stringResource(R.string.patient_registration_card_title),
-        Modifier.padding(16.dp)
-      ) {
-        val patientFields = viewModel.formFields.patientFields
-        OutlinedTextFieldWithErrorHint(
-          value = patientFields.initials.stateValue.uppercase(),
-          onValueChange = {
-            // TODO: Hard limit text
-            patientFields.initials.stateValue = it.uppercase()
-          },
-          label = { RequiredText(stringResource(R.string.patient_registration_initials_label)) },
-          textFieldModifier = Modifier
-            .then(patientFields.initials.createFocusChangeModifier())
-            .fillMaxWidth(),
-          // textStyle = MaterialTheme.typography.body2,
-          errorHint = patientFields.initials.getError(),
-          keyboardOptions = KeyboardOptions.Default.copy(
-            imeAction = ImeAction.Next,
-            capitalization = KeyboardCapitalization.Characters,
-            keyboardType = KeyboardType.Text
-          ),
-          singleLine = true,
-          keyboardActions = KeyboardActions(
-            onDone = {
-              focusRequester.requestFocus()
-            }
+      item {
+        BaseDetailsCard(
+          stringResource(R.string.patient_registration_card_title),
+          Modifier.padding(16.dp)
+        ) {
+          val patientFields = viewModel.formFields.patientFields
+          OutlinedTextFieldWithErrorHint(
+            value = patientFields.initials.stateValue.uppercase(),
+            onValueChange = {
+              // TODO: Hard limit text
+              patientFields.initials.stateValue = it.uppercase()
+            },
+            label = { RequiredText(stringResource(R.string.patient_registration_initials_label)) },
+            textFieldModifier = Modifier
+              .then(patientFields.initials.createFocusChangeModifier())
+              .bringIntoViewRequester(bringIntoViewRequester)
+              .fillMaxWidth(),
+            // textStyle = MaterialTheme.typography.body2,
+            errorHint = patientFields.initials.getError(),
+            keyboardOptions = KeyboardOptions.Default.copy(
+              imeAction = ImeAction.Next,
+              capitalization = KeyboardCapitalization.Characters,
+              keyboardType = KeyboardType.Text
+            ),
+            singleLine = true,
+            keyboardActions = KeyboardActions(
+              onDone = {
+                focusRequester.requestFocus()
+              }
+            )
           )
-        )
 
-        Spacer(Modifier.height(textFieldToTextFieldHeight))
+          Spacer(Modifier.height(textFieldToTextFieldHeight))
 
-        DateOutlinedTextField(
-          date = patientFields.presentationDate.stateValue.toFormDateOrNull(),
-          onDatePicked = {
-            patientFields.presentationDate.stateValue = it.toString()
-          },
-          onPickerClose = { patientFields.presentationDate.enableShowErrors(force = true) },
-          label = {
-            RequiredText(stringResource(id = R.string.patient_registration_presentation_date_label))
-          },
-          modifier = Modifier.fillMaxWidth(),
-          textFieldModifier = patientFields.presentationDate
-            .createFocusChangeModifier()
-            .fillMaxWidth(),
-          // textStyle = MaterialTheme.typography.body2,
-          errorHint = patientFields.presentationDate.getError(),
-          keyboardOptions = KeyboardOptions.Default,
-          keyboardActions = KeyboardActions(
-            onDone = {
-              // onImeAction()
-            }
+          DateOutlinedTextField(
+            date = patientFields.presentationDate.stateValue.toFormDateOrNull(),
+            onDatePicked = {
+              patientFields.presentationDate.stateValue = it.toString()
+            },
+            onPickerClose = { patientFields.presentationDate.enableShowErrors(force = true) },
+            label = {
+              RequiredText(stringResource(id = R.string.patient_registration_presentation_date_label))
+            },
+            modifier = Modifier.fillMaxWidth(),
+            textFieldModifier = patientFields.presentationDate
+              .createFocusChangeModifier()
+              .fillMaxWidth(),
+            // textStyle = MaterialTheme.typography.body2,
+            errorHint = patientFields.presentationDate.getError(),
+            keyboardOptions = KeyboardOptions.Default,
+            keyboardActions = KeyboardActions(
+              onDone = {
+                // onImeAction()
+              }
+            )
           )
-        )
 
-        Spacer(Modifier.height(textFieldToTextFieldHeight))
+          Spacer(Modifier.height(textFieldToTextFieldHeight))
 
-        DateOutlinedTextField(
-          date = patientFields.dateOfBirth.stateValue.toFormDateOrNull(),
-          onDatePicked = {
-            patientFields.dateOfBirth.stateValue = it.toString()
-            patientFields.age.stateValue = it.getAgeInYearsFromNow().toString()
-          },
-          onPickerClose = {
-            patientFields.dateOfBirth.enableShowErrors(force = true)
-            patientFields.age.enableShowErrors(force = true)
-          },
-          label = {
-            RequiredText(stringResource(R.string.patient_registration_date_of_birth_label))
-          },
-          modifier = Modifier.fillMaxWidth(),
-          textFieldModifier = patientFields.dateOfBirth
-            .createFocusChangeModifier()
-            .fillMaxWidth(),
-          // textStyle = MaterialTheme.typography.body2,
-          errorHint = null, // dateOfBirth.getError(),
-          keyboardOptions = KeyboardOptions.Default,
-          keyboardActions = KeyboardActions(
-            onDone = {
-              // onImeAction()
-            }
+          DateOutlinedTextField(
+            date = patientFields.dateOfBirth.stateValue.toFormDateOrNull(),
+            onDatePicked = {
+              patientFields.dateOfBirth.stateValue = it.toString()
+              patientFields.age.stateValue = it.getAgeInYearsFromNow().toString()
+            },
+            onPickerClose = {
+              patientFields.dateOfBirth.enableShowErrors(force = true)
+              patientFields.age.enableShowErrors(force = true)
+            },
+            label = {
+              RequiredText(stringResource(R.string.patient_registration_date_of_birth_label))
+            },
+            modifier = Modifier.fillMaxWidth(),
+            textFieldModifier = patientFields.dateOfBirth
+              .createFocusChangeModifier()
+              .fillMaxWidth(),
+            // textStyle = MaterialTheme.typography.body2,
+            errorHint = null, // dateOfBirth.getError(),
+            keyboardOptions = KeyboardOptions.Default,
+            keyboardActions = KeyboardActions(
+              onDone = {
+                // onImeAction()
+              }
+            )
           )
-        )
 
-        Spacer(Modifier.height(textFieldToTextFieldHeight))
+          Spacer(Modifier.height(textFieldToTextFieldHeight))
 
-        OutlinedTextFieldWithErrorHint(
-          value = patientFields.age.stateValue,
-          onValueChange = { newAge ->
-            patientFields.age.stateValue = newAge
-            newAge.toIntOrNull()?.let {
-              patientFields.dateOfBirth.stateValue = FormDate.fromAge(it).toString()
-            }
-          },
-          label = {
-            RequiredText(stringResource(id = R.string.patient_registration_age_label))
-          },
-          modifier = Modifier.fillMaxWidth(),
-          textFieldModifier = patientFields.age
-            .createFocusChangeModifier()
-            .then(patientFields.dateOfBirth.createFocusChangeModifier())
-            .fillMaxWidth(),
-          // textStyle = MaterialTheme.typography.body2,
-          errorHint = patientFields.age.getError(),
-          keyboardOptions = KeyboardOptions.Default.copy(
-            imeAction = ImeAction.Next,
-            keyboardType = KeyboardType.Number
-          ),
-          keyboardActions = KeyboardActions(
-            onDone = {
-              focusRequester.requestFocus()
-            }
+          OutlinedTextFieldWithErrorHint(
+            value = patientFields.age.stateValue,
+            onValueChange = { newAge ->
+              patientFields.age.stateValue = newAge
+              newAge.toIntOrNull()?.let {
+                patientFields.dateOfBirth.stateValue = FormDate.fromAge(it).toString()
+              }
+            },
+            label = {
+              RequiredText(stringResource(id = R.string.patient_registration_age_label))
+            },
+            modifier = Modifier.fillMaxWidth(),
+            textFieldModifier = patientFields.age
+              .createFocusChangeModifier()
+              .then(patientFields.dateOfBirth.createFocusChangeModifier())
+              .fillMaxWidth(),
+            // textStyle = MaterialTheme.typography.body2,
+            errorHint = patientFields.age.getError(),
+            keyboardOptions = KeyboardOptions.Default.copy(
+              imeAction = ImeAction.Next,
+              keyboardType = KeyboardType.Number
+            ),
+            keyboardActions = KeyboardActions(
+              onDone = {
+                focusRequester.requestFocus()
+              }
+            )
           )
-        )
+        }
       }
 
-      BaseDetailsCard(
-        stringResource(R.string.outcomes_card_title),
-        Modifier.padding(16.dp)
-      ) {
-        CategoryHeader(stringResource(R.string.outcomes_eclampsia_label))
+      item {
+        BaseDetailsCard(
+          stringResource(R.string.outcomes_card_title),
+          Modifier.padding(16.dp)
+        ) {
+          CategoryHeader(stringResource(R.string.outcomes_eclampsia_label))
 
-        val eclampsia = viewModel.formFields.eclampsia
-        EclampsiaForm(
-          isFormEnabled = eclampsia.isEnabled.value,
-          onFormEnabledStateChange = {
-            eclampsia.isEnabled.value = it
-            if (!it) eclampsia.reset()
-          },
-          dateState = eclampsia.date,
-          placeOfFirstFitState = eclampsia.placeOfFirstFit,
-          serverEnumCollection = serverEnumCollection
-        )
+          val eclampsia = viewModel.formFields.eclampsia
+          EclampsiaForm(
+            isFormEnabled = eclampsia.isEnabled.value,
+            onFormEnabledStateChange = {
+              eclampsia.isEnabled.value = it
+              if (!it) eclampsia.reset()
+            },
+            dateState = eclampsia.date,
+            placeOfFirstFitState = eclampsia.placeOfFirstFit,
+            serverEnumCollection = serverEnumCollection,
+            textFieldModifier = Modifier.bringIntoViewRequester(bringIntoViewRequester)
+          )
 
-        Spacer(Modifier.height(categoryToCategorySpacerHeight))
+          Spacer(Modifier.height(categoryToCategorySpacerHeight))
 
-        CategoryHeader(stringResource(R.string.outcomes_hysterectomy_label))
+          CategoryHeader(stringResource(R.string.outcomes_hysterectomy_label))
 
-        val hysterectomy = viewModel.formFields.hysterectomy
-        HysterectomyForm(
-          isFormEnabled = hysterectomy.isEnabled.value,
-          onFormEnabledChange = {
-            hysterectomy.isEnabled.value = it
-            if (!it) hysterectomy.reset()
-          },
-          dateState = hysterectomy.date,
-          causeState = hysterectomy.cause,
-          additionalInfo = hysterectomy.additionalInfo.value ?: "",
-          onAdditionInfoChanged = { hysterectomy.additionalInfo.value = it },
-        )
+          val hysterectomy = viewModel.formFields.hysterectomy
+          val scope = rememberCoroutineScope()
+          HysterectomyForm(
+            isFormEnabled = hysterectomy.isEnabled.value,
+            onFormEnabledChange = {
+              hysterectomy.isEnabled.value = it
+              if (!it) hysterectomy.reset()
+            },
+            dateState = hysterectomy.date,
+            causeState = hysterectomy.cause,
+            additionalInfo = hysterectomy.additionalInfo.value ?: "",
+            onAdditionInfoChanged = { hysterectomy.additionalInfo.value = it },
+            textFieldModifier = Modifier
+              .bringIntoViewRequester(bringIntoViewRequester)
+              /*
+              .onFocusEvent {
+                if (it.isFocused) {
+                  scope.launch {
+                    delay(150L)
+                    bringIntoViewRequester.bringIntoView()
+                  }
+                }
+              }
 
-        Spacer(Modifier.height(categoryToCategorySpacerHeight))
+               */
+          )
 
-        CategoryHeader(stringResource(R.string.outcomes_admission_to_hdu_or_itu_label))
+          Spacer(Modifier.height(categoryToCategorySpacerHeight))
 
-        val hduItuAdmission = viewModel.formFields.hduItuAdmission
-        AdmittedToHduItuForm(
-          isFormEnabled = hduItuAdmission.isEnabled.value,
-          onFormEnabledChange = {
-            hduItuAdmission.isEnabled.value = it
-            if (!it) hduItuAdmission.reset()
-          },
-          dateState = hduItuAdmission.date,
-          causeState = hduItuAdmission.cause,
-          lengthOfStayInDaysState = hduItuAdmission.hduItuStayLengthInDays,
-        )
+          CategoryHeader(stringResource(R.string.outcomes_admission_to_hdu_or_itu_label))
 
-        Spacer(Modifier.height(categoryToCategorySpacerHeight))
+          val hduItuAdmission = viewModel.formFields.hduItuAdmission
+          AdmittedToHduItuForm(
+            isFormEnabled = hduItuAdmission.isEnabled.value,
+            onFormEnabledChange = {
+              hduItuAdmission.isEnabled.value = it
+              if (!it) hduItuAdmission.reset()
+            },
+            dateState = hduItuAdmission.date,
+            causeState = hduItuAdmission.cause,
+            lengthOfStayInDaysState = hduItuAdmission.hduItuStayLengthInDays,
+          )
 
-        CategoryHeader(stringResource(R.string.outcomes_maternal_death_label))
+          Spacer(Modifier.height(categoryToCategorySpacerHeight))
 
-        val maternalDeath = viewModel.formFields.maternalDeath
-        MaternalDeathForm(
-          isFormEnabled = maternalDeath.isEnabled.value,
-          onFormEnabledChange = {
-            maternalDeath.isEnabled.value = it
-            if (!it) maternalDeath.reset()
-          },
-          dateState = maternalDeath.date,
-          underlyingCauseState = maternalDeath.underlyingCause,
-          placeOfDeathState = maternalDeath.placeOfDeath,
-        )
+          CategoryHeader(stringResource(R.string.outcomes_maternal_death_label))
 
-        Spacer(Modifier.height(categoryToCategorySpacerHeight))
+          val maternalDeath = viewModel.formFields.maternalDeath
+          MaternalDeathForm(
+            isFormEnabled = maternalDeath.isEnabled.value,
+            onFormEnabledChange = {
+              maternalDeath.isEnabled.value = it
+              if (!it) maternalDeath.reset()
+            },
+            dateState = maternalDeath.date,
+            underlyingCauseState = maternalDeath.underlyingCause,
+            placeOfDeathState = maternalDeath.placeOfDeath,
+          )
 
-        CategoryHeader(stringResource(R.string.outcomes_surgical_management_label))
+          Spacer(Modifier.height(categoryToCategorySpacerHeight))
 
-        val surgicalManagement = viewModel.formFields.surgicalManagement
-        SurgicalManagementForm(
-          isFormEnabled = surgicalManagement.isEnabled.value,
-          onFormEnabledChange = {
-            surgicalManagement.isEnabled.value = it
-            if (!it) surgicalManagement.reset()
-          },
-          dateState = surgicalManagement.date,
-          surgicalManagementTypeState = surgicalManagement.type,
-          serverEnumCollection = serverEnumCollection,
-        )
+          CategoryHeader(stringResource(R.string.outcomes_surgical_management_label))
 
-        Spacer(Modifier.height(categoryToCategorySpacerHeight))
+          val surgicalManagement = viewModel.formFields.surgicalManagement
+          SurgicalManagementForm(
+            isFormEnabled = surgicalManagement.isEnabled.value,
+            onFormEnabledChange = {
+              surgicalManagement.isEnabled.value = it
+              if (!it) surgicalManagement.reset()
+            },
+            dateState = surgicalManagement.date,
+            surgicalManagementTypeState = surgicalManagement.type,
+            serverEnumCollection = serverEnumCollection,
+          )
 
-        CategoryHeader(stringResource(R.string.outcomes_perinatal_death_label))
+          Spacer(Modifier.height(categoryToCategorySpacerHeight))
 
-        val perinatalDeath = viewModel.formFields.perinatalDeath
-        PerinatalDeathForm(
-          isFormEnabled = perinatalDeath.isEnabled.value,
-          onFormEnabledChange = {
-            perinatalDeath.isEnabled.value = it
-            if (!it) perinatalDeath.reset()
-          },
-          dateState = perinatalDeath.date,
-          outcomeState = perinatalDeath.outcome,
-          maternalFactorsState = perinatalDeath.relatedMaternalFactors,
-          serverEnumCollection = serverEnumCollection
-        )
+          CategoryHeader(stringResource(R.string.outcomes_perinatal_death_label))
+
+          val perinatalDeath = viewModel.formFields.perinatalDeath
+          PerinatalDeathForm(
+            isFormEnabled = perinatalDeath.isEnabled.value,
+            onFormEnabledChange = {
+              perinatalDeath.isEnabled.value = it
+              if (!it) perinatalDeath.reset()
+            },
+            dateState = perinatalDeath.date,
+            outcomeState = perinatalDeath.outcome,
+            maternalFactorsState = perinatalDeath.relatedMaternalFactors,
+            serverEnumCollection = serverEnumCollection
+          )
+        }
       }
 
-      formState.value.let { currentFormState ->
-        if (currentFormState is PatientFormViewModel.FormState.FailedValidation) {
-          BaseDetailsCard(
-            title = stringResource(R.string.errors_card_title),
-            modifier = Modifier.padding(16.dp),
-            backgroundColor = MaterialTheme.colors.error.copy(alpha = 0.3f)
-          ) {
-            for ((section, errors) in currentFormState.errorsBySectionStringId) {
-              CategoryHeader(stringResource(section))
-              for (error in errors) {
-                Text(error.errorMessage)
+      item {
+        formState.value.let { currentFormState ->
+          if (currentFormState is PatientFormViewModel.FormState.FailedValidation) {
+            BaseDetailsCard(
+              title = stringResource(R.string.errors_card_title),
+              modifier = Modifier.padding(16.dp),
+              backgroundColor = MaterialTheme.colors.error.copy(alpha = 0.3f)
+            ) {
+              for ((section, errors) in currentFormState.errorsBySectionStringId) {
+                CategoryHeader(stringResource(section))
+                for (error in errors) {
+                  Text(error.errorMessage)
+                }
               }
             }
           }
         }
       }
 
-      SaveButtonCard(
-        isEnabled = formState.value !is PatientFormViewModel.FormState.Loading &&
-          formState.value !is PatientFormViewModel.FormState.Saving,
-        onSaveButtonClick = { viewModel.save() },
-        isExistingPatientEdit = viewModel.isExistingPatientEdit
-      )
-      formState.value.let { currentFormState ->
-        when (currentFormState) {
-          is PatientFormViewModel.FormState.SavedEditsToExistingPatient -> {
-            LaunchedEffect(null) {
-              onNavigateToPatient(currentFormState.primaryKeyOfPatient)
-            }
+      item {
+        SaveButtonCard(
+          isEnabled = formState.value !is PatientFormViewModel.FormState.Loading &&
+            formState.value !is PatientFormViewModel.FormState.Saving,
+          onSaveButtonClick = { viewModel.save() },
+          isExistingPatientEdit = viewModel.isExistingPatientEdit
+        )
+      }
+    }
+
+    formState.value.let { currentFormState ->
+      when (currentFormState) {
+        is PatientFormViewModel.FormState.SavedEditsToExistingPatient -> {
+          LaunchedEffect(null) {
+            onNavigateToPatient(currentFormState.primaryKeyOfPatient)
           }
-          is PatientFormViewModel.FormState.SavedNewPatient -> {
-            LaunchedEffect(null) {
-              onNavigateToPatient(currentFormState.primaryKeyOfPatient)
-            }
+        }
+        is PatientFormViewModel.FormState.SavedNewPatient -> {
+          LaunchedEffect(null) {
+            onNavigateToPatient(currentFormState.primaryKeyOfPatient)
           }
         }
       }
@@ -525,7 +552,8 @@ fun EclampsiaForm(
   dateState: NoFutureDateState,
   placeOfFirstFitState: EnumIdOnlyState,
   serverEnumCollection: ServerEnumCollection,
-  modifier: Modifier = Modifier
+  modifier: Modifier = Modifier,
+  textFieldModifier: Modifier = Modifier,
 ) {
   Column(modifier) {
     BooleanRadioButtonRow(
@@ -545,7 +573,7 @@ fun EclampsiaForm(
       },
       enabled = isFormEnabled == true,
       modifier = Modifier.fillMaxWidth(),
-      textFieldModifier = Modifier.fillMaxWidth(),
+      textFieldModifier = textFieldModifier.fillMaxWidth(),
       errorHint = dateState.getError(),
       keyboardOptions = KeyboardOptions.Default,
     )
@@ -559,7 +587,7 @@ fun EclampsiaForm(
       label = { Text(stringResource(R.string.place_of_first_eclamptic_fit_label)) },
       enabled = isFormEnabled == true,
       errorHint = placeOfFirstFitState.getError(),
-      textModifier = Modifier.fillMaxWidth()
+      textModifier = textFieldModifier.fillMaxWidth()
     )
   }
 }
@@ -590,7 +618,7 @@ fun HysterectomyForm(
       },
       enabled = isFormEnabled == true,
       modifier = Modifier.fillMaxWidth(),
-      textFieldModifier = Modifier
+      textFieldModifier = textFieldModifier
         .fillMaxWidth()
         .then(dateState.createFocusChangeModifier()),
       errorHint = dateState.getError(),
@@ -604,7 +632,7 @@ fun HysterectomyForm(
       label = { Text(stringResource(R.string.hysterectomy_cause_label)) },
       enabled = isFormEnabled == true,
       dropdownTextModifier = Modifier.fillMaxWidth(),
-      otherTextModifier = Modifier
+      otherTextModifier = textFieldModifier
         .fillMaxWidth()
         .then(causeState.createFocusChangeModifier()),
       errorHint = causeState.getError()

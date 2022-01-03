@@ -42,7 +42,7 @@ class AuthViewModel @Inject constructor(
   private val _screenState: Flow<ScreenState> = combine(
     submissionState,
     authRepository.authStateFlow
-  ){ submissionState, authState ->
+  ) { submissionState, authState ->
     when (submissionState) {
       SubmissionState.Submitting -> ScreenState.Submitting
       is SubmissionState.Waiting -> {
@@ -95,10 +95,8 @@ class AuthViewModel @Inject constructor(
               }
           }
           is ChannelAction.Reauthenticate -> {
-
           }
           ChannelAction.Logout -> {
-
           }
         }
       } finally {

@@ -57,7 +57,7 @@ internal class EncryptedSettingsManager @Inject constructor(
         Log.wtf(TAG, "cannot read encrypted settings", ex)
         // FIXME: do something sane
         throw ex
-        //EncryptedSettings.getDefaultInstance()
+        // EncryptedSettings.getDefaultInstance()
       },
       produceFile = { context.dataStoreFile(FILENAME) },
       // these are the default params

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
@@ -34,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.accompanist.insets.ProvideWindowInsets
+import com.google.accompanist.insets.navigationBarsWithImePadding
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import dagger.hilt.android.AndroidEntryPoint
@@ -46,7 +48,6 @@ import org.welbodipartnership.cradle5.util.appinit.AppInitManager
 class MainActivity : AppCompatActivity() {
 
   private val viewModel by viewModels<MainActivityViewModel>()
-
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -141,8 +142,6 @@ fun LoginOrLockscreen() {
           AuthViewModel.ScreenState.Initializing,
           AuthViewModel.ScreenState.Submitting -> CircularProgressIndicator()
           is AuthViewModel.ScreenState.WaitingForLogin -> {
-            Text("AuthViewModel.ScreenState.WaitingForLogin")
-
             var username by remember {
               mutableStateOf("")
             }
@@ -150,21 +149,41 @@ fun LoginOrLockscreen() {
               mutableStateOf("")
             }
 
-            OutlinedTextField(value = username, onValueChange = { username = it })
+            LazyColumn(
+              verticalArrangement = Arrangement.Center,
+              horizontalAlignment = Alignment.CenterHorizontally,
+              modifier = Modifier.navigationBarsWithImePadding()
+            ) {
+              item { Text("AuthViewModel.ScreenState.WaitingForLogin") }
 
-            OutlinedTextField(value = password, onValueChange = { password = it })
-
-            Button(
-              onClick = {
-                authViewModel.submitAction(
-                  AuthViewModel.ChannelAction.Login(
-                    username,
-                    password
-                  )
+              item {
+                OutlinedTextField(
+                  value = username,
+                  onValueChange = { username = it },
                 )
               }
-            ) {
-              Text("Login")
+
+              item {
+                OutlinedTextField(
+                  value = password,
+                  onValueChange = { password = it },
+                )
+              }
+
+              item {
+                Button(
+                  onClick = {
+                    authViewModel.submitAction(
+                      AuthViewModel.ChannelAction.Login(
+                        username,
+                        password
+                      )
+                    )
+                  }
+                ) {
+                  Text("Login")
+                }
+              }
             }
           }
           is AuthViewModel.ScreenState.WaitingForReauth -> {

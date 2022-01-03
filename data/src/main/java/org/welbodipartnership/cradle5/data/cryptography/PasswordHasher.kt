@@ -41,5 +41,4 @@ class PasswordHasher internal constructor(
 
   private fun normalizePassword(password: String) =
     Normalizer.normalize(password, Normalizer.Form.NFKD)
-
 }
