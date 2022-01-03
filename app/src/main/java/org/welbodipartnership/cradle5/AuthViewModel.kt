@@ -118,6 +118,6 @@ class AuthViewModel @Inject constructor(
   }
 
   companion object {
-    private const val TAG = "MainActivityViewModel"
+    private const val TAG = "AuthViewModel"
   }
 }

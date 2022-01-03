@@ -116,56 +116,68 @@ private fun MainApp(viewModel: MainActivityViewModel) {
         if (authState is AuthState.LoggedInUnlocked) {
           LoggedInHome(navController)
         } else {
-          val authViewModel: AuthViewModel = hiltViewModel()
-          val authScreenState by authViewModel.screenState
-            .collectAsState(AuthViewModel.ScreenState.Initializing)
+          LoginOrLockscreen()
+        }
+      }
+    }
+  }
+}
 
-          Surface {
-            Column(
-              modifier = Modifier.fillMaxSize(),
-              verticalArrangement = Arrangement.Center,
-              horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-              authScreenState.let { state ->
-                when (state) {
-                  AuthViewModel.ScreenState.Done -> {
-                    CircularProgressIndicator()
-                  }
-                  AuthViewModel.ScreenState.Initializing -> {
-                    CircularProgressIndicator()
-                  }
-                  AuthViewModel.ScreenState.Submitting -> {
-                    CircularProgressIndicator()
-                  }
-                  is AuthViewModel.ScreenState.WaitingForLogin -> {
-                    Text("AuthViewModel.ScreenState.WaitingForLogin")
+@Composable
+fun LoginOrLockscreen() {
+  val authViewModel: AuthViewModel = hiltViewModel()
+  val authScreenState by authViewModel.screenState
+    .collectAsState(AuthViewModel.ScreenState.Initializing)
 
-                    var username by remember {
-                      mutableStateOf("")
-                    }
-                    var password by remember {
-                      mutableStateOf("")
-                    }
+  Surface {
+    Column(
+      modifier = Modifier.fillMaxSize(),
+      verticalArrangement = Arrangement.Center,
+      horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+      authScreenState.let { state ->
+        when (state) {
+          AuthViewModel.ScreenState.Done -> {
+            CircularProgressIndicator()
+          }
+          AuthViewModel.ScreenState.Initializing -> {
+            CircularProgressIndicator()
+          }
+          AuthViewModel.ScreenState.Submitting -> {
+            CircularProgressIndicator()
+          }
+          is AuthViewModel.ScreenState.WaitingForLogin -> {
+            Text("AuthViewModel.ScreenState.WaitingForLogin")
 
-                    OutlinedTextField(value = username, onValueChange = { username = it })
-
-                    OutlinedTextField(value = password, onValueChange = { password = it })
-
-                    Button(
-                      onClick = { authViewModel.submitAction(AuthViewModel.ChannelAction.Login(username, password)) }
-                    ) {
-                      Text("Login")
-                    }
-                  }
-                  is AuthViewModel.ScreenState.WaitingForReauth -> {
-                    Text("AuthViewModel.ScreenState.WaitingForReauth")
-                  }
-                  is AuthViewModel.ScreenState.WaitingForTokenRefreshLogin -> {
-                    Text("AuthViewModel.ScreenState.WaitingForTokenRefreshLogin")
-                  }
-                }
-              }
+            var username by remember {
+              mutableStateOf("")
             }
+            var password by remember {
+              mutableStateOf("")
+            }
+
+            OutlinedTextField(value = username, onValueChange = { username = it })
+
+            OutlinedTextField(value = password, onValueChange = { password = it })
+
+            Button(
+              onClick = {
+                authViewModel.submitAction(
+                  AuthViewModel.ChannelAction.Login(
+                    username,
+                    password
+                  )
+                )
+              }
+            ) {
+              Text("Login")
+            }
+          }
+          is AuthViewModel.ScreenState.WaitingForReauth -> {
+            Text("AuthViewModel.ScreenState.WaitingForReauth")
+          }
+          is AuthViewModel.ScreenState.WaitingForTokenRefreshLogin -> {
+            Text("AuthViewModel.ScreenState.WaitingForTokenRefreshLogin")
           }
         }
       }
