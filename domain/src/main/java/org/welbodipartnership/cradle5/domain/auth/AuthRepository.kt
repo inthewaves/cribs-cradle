@@ -9,10 +9,12 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.yield
 import org.welbodipartnership.api.ApiAuthToken
 import org.welbodipartnership.cradle5.data.cryptography.PasswordHasher
+import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
 import org.welbodipartnership.cradle5.data.settings.AppValuesStore
 import org.welbodipartnership.cradle5.data.settings.AuthToken
 import org.welbodipartnership.cradle5.data.settings.PasswordHash
@@ -20,6 +22,7 @@ import org.welbodipartnership.cradle5.domain.NetworkResult
 import org.welbodipartnership.cradle5.domain.R
 import org.welbodipartnership.cradle5.domain.RestApi
 import org.welbodipartnership.cradle5.util.ApplicationCoroutineScope
+import org.welbodipartnership.cradle5.util.coroutines.AppCoroutineDispatchers
 import org.welbodipartnership.cradle5.util.datetime.UnixTimestamp
 import org.welbodipartnership.cradle5.util.foreground.AppForegroundedObserver
 import org.welbodipartnership.cradle5.util.net.NetworkObserver
@@ -42,6 +45,8 @@ class AuthRepository @Inject internal constructor(
   private val appValuesStore: AppValuesStore,
   private val passwordHasher: PasswordHasher,
   private val networkObserver: NetworkObserver,
+  private val dbWrapper: CradleDatabaseWrapper,
+  private val dispatchers: AppCoroutineDispatchers,
   @ApplicationContext private val context: Context,
   @ApplicationCoroutineScope applicationCoroutineScope: CoroutineScope,
   appForegroundedObserver: AppForegroundedObserver
@@ -195,6 +200,10 @@ class AuthRepository @Inject internal constructor(
   }
 
   suspend fun logout() {
+    withContext(dispatchers.io) {
+      appValuesStore.clearAllDataExceptEnums()
+      dbWrapper.database?.clearAllTables()
+    }
   }
 
   companion object {

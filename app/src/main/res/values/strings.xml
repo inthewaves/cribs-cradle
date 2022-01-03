@@ -71,6 +71,8 @@
     <string name="discard_unsaved_changes_dialog_title_new_entry">Discard this new patient and outcomes?</string>
     <string name="cancel">Cancel</string>
     <string name="login_error_error_code_format_s_d">$1%s (Error code $2%d)</string>
+    <string name="bottom_drawer_logged_in_as_s">Logged in as %1$s</string>
+    <string name="home_nav_bar_account_info_button_cd">Open account information sheet</string>
     <plurals name="patient_form_snackbar_failed_to_save_there_are_d_errors">
         <item quantity="one">Failed to save, as there is %1$d error.</item>
         <item quantity="other">Failed to save, as there are %1$d errors.</item>

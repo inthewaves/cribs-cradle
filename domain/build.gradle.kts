@@ -39,6 +39,8 @@ dependencies {
     api(libs.moshi.core)
     implementation(libs.moshi.adapters)
 
+    implementation(libs.compose.runtime)
+
     implementation(libs.okhttp.okhttp)
     implementation(libs.okio)
 

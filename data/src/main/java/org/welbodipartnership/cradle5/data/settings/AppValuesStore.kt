@@ -66,5 +66,14 @@ class AppValuesStore @Inject internal constructor(
     }
   }
 
+  suspend fun clearAllDataExceptEnums() {
+    encryptedSettings.updateData { settings ->
+      val preservedEnums = settings.enumsList
+      encryptedSettings {
+        enums.addAll(preservedEnums)
+      }
+    }
+  }
+
   fun getServerEnumCollection() = ServerEnumCollection.defaultInstance
 }

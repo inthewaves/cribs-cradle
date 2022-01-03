@@ -22,11 +22,17 @@ import android.util.Log
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.animation.Crossfade
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.BottomDrawer
+import androidx.compose.material.BottomDrawerValue
 import androidx.compose.material.BottomNavigationItem
+import androidx.compose.material.Divider
 import androidx.compose.material.Icon
+import androidx.compose.material.ListItem
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
@@ -34,11 +40,13 @@ import androidx.compose.material.contentColorFor
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.LocationCity
+import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material.icons.outlined.LocationCity
 import androidx.compose.material.icons.outlined.Sync
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.Stable
@@ -46,11 +54,13 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -62,62 +72,91 @@ import org.welbodipartnership.cradle5.LeafScreen
 import org.welbodipartnership.cradle5.LoggedInNavigation
 import org.welbodipartnership.cradle5.R
 import org.welbodipartnership.cradle5.Screen
+import org.welbodipartnership.cradle5.domain.auth.AuthState
 
 @Composable
-fun LoggedInHome(navController: NavHostController) {
-  Scaffold(
-    bottomBar = {
-      /*
-      TODO: Hide bottom bar on screens that don't need it
-      val showBottomBar = navController.currentBackStackEntryAsState()
-        .value
-        ?.destination?.
+fun LoggedInHome(
+  navController: NavHostController,
+  authState: AuthState.LoggedInUnlocked,
+  onLogout: () -> Unit,
+) {
+  val homeManager = rememberSaveable(saver = HomeManager.Saver()) {
+    HomeManager(BottomDrawerValue.Closed)
+  }
+  val drawerState = homeManager.bottomDrawerState
 
-       */
+  BottomDrawer(
+    drawerContent = {
+      LazyColumn {
+        item {
+          Text(
+            stringResource(R.string.bottom_drawer_logged_in_as_s, authState.username),
+            modifier = Modifier.padding(16.dp)
+          )
+        }
+        item { Divider() }
+        item {
+          ListItem(
+            text = { Text("Logout") },
+            icon = {
+              Icon(Icons.Default.Logout, contentDescription = "Localized description")
+            },
+            modifier = Modifier.clickable(onClick = onLogout)
+          )
+        }
+      }
+    },
+    drawerState = drawerState,
+    gesturesEnabled = drawerState.isOpen && !drawerState.isAnimationRunning,
+  ) {
+    CompositionLocalProvider(LocalHomeManager provides homeManager) {
+      Scaffold(
+        bottomBar = {
+          val currentSelectedItemPair by navController.currentScreenAndLeafAsState()
+          val (screen, leaf) = currentSelectedItemPair
+          val isVisible = leaf?.hideBottomBar == null || !leaf.hideBottomBar
+          /*
+          AnimatedVisibility(
+            visible = isVisible,
+            enter = fadeIn() + expandIn(animationSpec = tween(), expandFrom = Alignment.BottomCenter),
+            exit = shrinkOut(animationSpec = tween(), shrinkTowards = Alignment.BottomCenter) + fadeOut(),
+          ) {
 
-      val currentSelectedItemPair by navController.currentScreenAndLeafAsState()
-      val (screen, leaf) = currentSelectedItemPair
-      val isVisible = leaf?.hideBottomBar == null || !leaf.hideBottomBar
-      /*
-      AnimatedVisibility(
-        visible = isVisible,
-        enter = fadeIn() + expandIn(animationSpec = tween(), expandFrom = Alignment.BottomCenter),
-        exit = shrinkOut(animationSpec = tween(), shrinkTowards = Alignment.BottomCenter) + fadeOut(),
-      ) {
-
-       */
-      if (isVisible) {
-        HomeBottomNavigation(
-          selectedNavigation = screen,
-          onNavigationSelected = { selected ->
-            if (isVisible) {
-              navController.navigate(selected.route) {
-                // https://developer.android.com/jetpack/compose/navigation#bottom-nav
-                // Avoid multiple copies of the same destination when reselecting the same item
-                launchSingleTop = true
-                // Restore state when reselecting a previously selected item
-                restoreState = true
-                // Pop up to the start destination of the graph to avoid building up a large stack of
-                // destinations on the back stack as users select items
-                popUpTo(navController.graph.findStartDestination().id) {
-                  saveState = true
+           */
+          if (isVisible) {
+            HomeBottomNavigation(
+              selectedNavigation = screen,
+              onNavigationSelected = { selected ->
+                if (isVisible) {
+                  navController.navigate(selected.route) {
+                    // https://developer.android.com/jetpack/compose/navigation#bottom-nav
+                    // Avoid multiple copies of the same destination when reselecting the same item
+                    launchSingleTop = true
+                    // Restore state when reselecting a previously selected item
+                    restoreState = true
+                    // Pop up to the start destination of the graph to avoid building up a large stack of
+                    // destinations on the back stack as users select items
+                    popUpTo(navController.graph.findStartDestination().id) {
+                      saveState = true
+                    }
+                  }
+                } else {
+                  Log.w("Home", "trying to navigate to $selected but not visible")
                 }
-              }
-            } else {
-              Log.w("Home", "trying to navigate to $selected but not visible")
-            }
-          },
-          modifier = Modifier.fillMaxWidth()
+              },
+              modifier = Modifier.fillMaxWidth()
+            )
+          }
+        },
+      ) {
+        LoggedInNavigation(
+          navController,
+          modifier = Modifier
+            .padding(it)
+            .fillMaxHeight()
         )
       }
     }
-  ) {
-    LoggedInNavigation(
-      navController,
-      modifier = Modifier
-        .padding(it)
-        .fillMaxHeight()
-    )
   }
 }
 

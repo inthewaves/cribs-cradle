@@ -114,10 +114,18 @@ private fun MainApp(viewModel: MainActivityViewModel) {
         val navController = rememberAnimatedNavController()
 
         val authState by viewModel.authState.collectAsState(AuthState.Initializing)
-        if (authState is AuthState.LoggedInUnlocked) {
-          LoggedInHome(navController)
-        } else {
-          LoginOrLockscreen()
+        authState.let { currentAuthState ->
+          if (currentAuthState is AuthState.LoggedInUnlocked) {
+            LoggedInHome(
+              navController,
+              currentAuthState,
+              onLogout = {
+                viewModel.logout()
+              }
+            )
+          } else {
+            LoginOrLockscreen()
+          }
         }
       }
     }

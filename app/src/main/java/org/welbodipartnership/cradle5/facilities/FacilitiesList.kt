@@ -14,6 +14,7 @@ import com.google.accompanist.insets.LocalWindowInsets
 import com.google.accompanist.insets.rememberInsetsPaddingValues
 import com.google.accompanist.insets.ui.TopAppBar
 import org.welbodipartnership.cradle5.R
+import org.welbodipartnership.cradle5.home.AccountInfoButton
 
 @Composable
 fun FacilitiesList() {
@@ -37,6 +38,7 @@ private fun FacilitiesList(
         ),
         modifier = Modifier.fillMaxWidth(),
         title = { Text(text = stringResource(R.string.facilities_title)) },
+        actions = { AccountInfoButton() }
       )
     }
   ) { padding ->
