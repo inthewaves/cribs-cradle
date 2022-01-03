@@ -1,8 +1,10 @@
 package org.welbodipartnership.cradle5.patients.list
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
+import androidx.paging.cachedIn
 import dagger.hilt.android.lifecycle.HiltViewModel
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
 import org.welbodipartnership.cradle5.data.database.entities.Patient
@@ -15,13 +17,15 @@ class PatientsListViewModel @Inject constructor(
   private val restApi: RestApi,
 ) : ViewModel() {
 
-  val pager = Pager(
+  val patientsPagerFlow = Pager(
     PagingConfig(
       pageSize = 60,
       enablePlaceholders = true,
       maxSize = 200
     )
   ) { dbWrapper.database!!.patientDao().patientsPagingSource() }
+    .flow
+    .cachedIn(viewModelScope)
 
   suspend fun addPatient(patient: Patient) {
     val dao = dbWrapper.database!!.patientDao()

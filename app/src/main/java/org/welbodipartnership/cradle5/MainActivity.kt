@@ -137,15 +137,9 @@ fun LoginOrLockscreen() {
     ) {
       authScreenState.let { state ->
         when (state) {
-          AuthViewModel.ScreenState.Done -> {
-            CircularProgressIndicator()
-          }
-          AuthViewModel.ScreenState.Initializing -> {
-            CircularProgressIndicator()
-          }
-          AuthViewModel.ScreenState.Submitting -> {
-            CircularProgressIndicator()
-          }
+          AuthViewModel.ScreenState.Done,
+          AuthViewModel.ScreenState.Initializing,
+          AuthViewModel.ScreenState.Submitting -> CircularProgressIndicator()
           is AuthViewModel.ScreenState.WaitingForLogin -> {
             Text("AuthViewModel.ScreenState.WaitingForLogin")
 

@@ -51,7 +51,7 @@ class AppInitManager @Inject constructor(
 
       // Sort tasks by their name so that there is some deterministic order.
       val sortedTasks = withContext(coroutineDispatchers.default) {
-        initializationTasks.sortedBy { it::class.java.simpleName }
+        initializationTasks.sortedBy { it.order }
       }
       Log.d(
         TAG,

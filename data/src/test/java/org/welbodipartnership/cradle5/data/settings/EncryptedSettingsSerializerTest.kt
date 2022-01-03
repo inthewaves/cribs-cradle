@@ -45,7 +45,7 @@ internal class EncryptedSettingsSerializerTest {
       )
 
       val instance = EncryptedSettings.newBuilder()
-        .setUsername("Test user")
+        .setLastTimeAuthenticated(50L)
         .build()
       val bos = ByteArrayOutputStream()
       encryptedSettingsSerializer.writeTo(instance, bos)

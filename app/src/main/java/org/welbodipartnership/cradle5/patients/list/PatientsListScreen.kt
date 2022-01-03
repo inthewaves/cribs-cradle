@@ -160,7 +160,7 @@ private fun PatientsListScreen(
       Text("Current server (not connected to it yet): ${BuildConfig.BASE_API_URL}")
 
       val lazyPagingItems = rememberFlowWithLifecycle(
-        viewModel.pager.flow, minActiveState = Lifecycle.State.RESUMED
+        viewModel.patientsPagerFlow, minActiveState = Lifecycle.State.RESUMED
       ).collectAsLazyPagingItems()
 
       PatientListHeader()

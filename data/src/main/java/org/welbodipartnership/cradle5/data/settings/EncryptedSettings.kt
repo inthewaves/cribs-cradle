@@ -1,10 +1,12 @@
 package org.welbodipartnership.cradle5.data.settings
 
 import android.content.Context
+import android.util.Log
 import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.core.Serializer
+import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.dataStoreFile
 import com.google.crypto.tink.KeysetHandle
 import com.google.crypto.tink.StreamingAead
@@ -51,6 +53,12 @@ internal class EncryptedSettingsManager @Inject constructor(
 
     dataStore = DataStoreFactory.create(
       serializer = serializer,
+      corruptionHandler = ReplaceFileCorruptionHandler { ex ->
+        Log.wtf(TAG, "cannot read encrypted settings", ex)
+        // FIXME: do something sane
+        throw ex
+        //EncryptedSettings.getDefaultInstance()
+      },
       produceFile = { context.dataStoreFile(FILENAME) },
       // these are the default params
       scope = CoroutineScope(appCoroutineDispatchers.io + SupervisorJob())
