@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -52,6 +53,16 @@ class AuthRepository @Inject internal constructor(
   @ApplicationCoroutineScope applicationCoroutineScope: CoroutineScope,
   appForegroundedObserver: AppForegroundedObserver
 ) {
+
+  val nextExpiryTimeFlow: Flow<UnixTimestamp?> = appValuesStore.lastTimeAuthedFlow
+    .map { lastTimeAuthed ->
+      if (lastTimeAuthed != null) {
+        lastTimeAuthed + AUTH_TIMEOUT
+      } else {
+        null
+      }
+    }
+
   /**
    * Represents the authentication state of the user.
    */
@@ -61,7 +72,7 @@ class AuthRepository @Inject internal constructor(
     appValuesStore.authTokenFlow,
     appValuesStore.lastTimeAuthedFlow,
   ) { _, authToken, lastTimeAuthed ->
-    if (authToken == null) {
+    if (authToken == null || !authToken.isInitialized || authToken == AuthToken.getDefaultInstance()) {
       AuthState.LoggedOut
     } else {
       val username = authToken.username

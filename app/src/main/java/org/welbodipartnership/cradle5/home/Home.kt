@@ -52,6 +52,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -62,6 +63,7 @@ import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -81,6 +83,8 @@ fun LoggedInHome(
   authState: AuthState.LoggedInUnlocked,
   onLogout: () -> Unit,
   onLock: () -> Unit,
+  modifier: Modifier = Modifier,
+  homeViewModel: HomeViewModel = hiltViewModel(),
 ) {
   val homeManager = rememberSaveable(saver = HomeManager.Saver()) {
     HomeManager(BottomDrawerValue.Closed)
@@ -98,8 +102,17 @@ fun LoggedInHome(
         }
         item { Divider() }
         item {
+
           ListItem(
-            text = { Text(stringResource(R.string.lock_app_button)) },
+            text = {
+              if (!drawerState.isClosed || drawerState.isAnimationRunning) {
+                val lockAppButtonText by homeViewModel.lockAppButtonTextWithTimeLeftFlow
+                  .collectAsState()
+                Text(lockAppButtonText)
+              } else {
+                Text(stringResource(R.string.lock_app_button))
+              }
+            },
             icon = {
               Icon(Icons.Default.Lock, contentDescription = stringResource(R.string.lock_app_button))
             },
@@ -117,7 +130,7 @@ fun LoggedInHome(
       }
     },
     drawerState = drawerState,
-    gesturesEnabled = drawerState.isOpen && !drawerState.isAnimationRunning,
+    gesturesEnabled = drawerState.isOpen,
   ) {
     CompositionLocalProvider(LocalHomeManager provides homeManager) {
       Scaffold(

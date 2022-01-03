@@ -13,6 +13,8 @@ value class UnixTimestamp(val timestamp: Long) : Comparable<UnixTimestamp> {
   operator fun plus(duration: Duration) =
     UnixTimestamp((timestamp.seconds + duration).inWholeSeconds)
 
+  fun toDuration() = timestamp.seconds
+
   override fun compareTo(other: UnixTimestamp): Int = timestamp.compareTo(other.timestamp)
 
   operator fun minus(other: UnixTimestamp) = UnixTimestamp(this.timestamp - other.timestamp)
