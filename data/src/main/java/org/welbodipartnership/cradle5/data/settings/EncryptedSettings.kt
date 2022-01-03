@@ -32,7 +32,7 @@ internal class EncryptedSettingsManager @Inject constructor(
 ) {
   private var dataStore: DataStore<EncryptedSettings>? = null
 
-  fun dateStoreFlow(): Flow<EncryptedSettings> = requireNotNull(dataStore).data
+  fun encryptedSettingsFlow(): Flow<EncryptedSettings> = requireNotNull(dataStore).data
 
   suspend fun updateData(
     transform: suspend (t: EncryptedSettings) -> EncryptedSettings

@@ -1,13 +1,17 @@
 package org.welbodipartnership.cradle5.domain.auth
 
+import android.util.Log
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.firstOrNull
 import org.welbodipartnership.api.ApiAuthToken
 import org.welbodipartnership.cradle5.data.cryptography.PasswordHasher
 import org.welbodipartnership.cradle5.data.settings.AppValuesStore
 import org.welbodipartnership.cradle5.data.settings.AuthToken
+import org.welbodipartnership.cradle5.data.settings.PasswordHash
 import org.welbodipartnership.cradle5.domain.NetworkResult
 import org.welbodipartnership.cradle5.domain.RestApi
 import org.welbodipartnership.cradle5.util.datetime.UnixTimestamp
+import org.welbodipartnership.cradle5.util.foreground.AppForegroundedObserver
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.time.Duration
@@ -20,12 +24,14 @@ class AuthRepository @Inject internal constructor(
   private val restApi: RestApi,
   private val appValuesStore: AppValuesStore,
   private val passwordHasher: PasswordHasher,
+  appForegroundedObserver: AppForegroundedObserver
 ) {
-
   val authStateFlow = combine(
+    // Put this here so that it is
+    appForegroundedObserver.isForegrounded,
     appValuesStore.authTokenFlow,
     appValuesStore.lastTimeAuthedFlow
-  ) { authToken: AuthToken?, lastTimeAuthed: UnixTimestamp? ->
+  ) { _, authToken: AuthToken?, lastTimeAuthed: UnixTimestamp? ->
     if (authToken == null) {
       AuthState.LoggedOut
     } else {
@@ -72,7 +78,28 @@ class AuthRepository @Inject internal constructor(
     return LoginResult.Success
   }
 
+  suspend fun reauthForLockscreen(password: String): Boolean {
+    val existingHash: PasswordHash? = appValuesStore.passwordHashFlow.firstOrNull()
+    if (existingHash == null) {
+      Log.w(TAG, "trying to reauthenticate, but there is no stored hash")
+      return false
+    }
+
+    val correctHash = passwordHasher.verifyPassword(password, existingHash)
+    Log.d(TAG, "reauthForLockscreen() -> $correctHash")
+    if (correctHash) {
+      appValuesStore.
+    }
+
+    return correctHash
+
+  }
+
   suspend fun logout() {
 
+  }
+
+  companion object {
+    private const val TAG = "AuthRepository"
   }
 }

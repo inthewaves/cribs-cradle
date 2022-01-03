@@ -18,6 +18,8 @@ class DataAndEncryptionSetupTask @Inject internal constructor(
   private val databaseWrapper: CradleDatabaseWrapper,
 ) : AppInitTask {
 
+  override val order: ULong = 10u
+
   override suspend fun init(application: Application) {
     StreamingAeadConfig.register()
 

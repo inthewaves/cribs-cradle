@@ -32,7 +32,9 @@ dependencyResolutionManagement {
 
             alias("androidx-core-ktx").to("androidx.core:core-ktx:1.7.0")
             alias("androidx-appcompat").to("androidx.appcompat:appcompat:1.4.0")
-            alias("androidx-lifecycle-runtime-ktx").to("androidx.lifecycle:lifecycle-runtime-ktx:2.4.0")
+            version("lifecycle", "2.4.0")
+            alias("androidx-lifecycle-runtime-ktx").to("androidx.lifecycle", "lifecycle-runtime-ktx").versionRef("lifecycle")
+            alias("androidx-lifecycle-process").to("androidx.lifecycle", "lifecycle-process").versionRef("lifecycle")
             alias("androidx-activity-compose").to("androidx.activity:activity-compose:1.4.0")
 
             alias("google-android-material").to("com.google.android.material:material:1.4.0")

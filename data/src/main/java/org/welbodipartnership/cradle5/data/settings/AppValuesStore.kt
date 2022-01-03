@@ -11,15 +11,20 @@ import javax.inject.Singleton
 class AppValuesStore @Inject internal constructor(
   private val encryptedSettings: EncryptedSettingsManager
 ) {
-  val authTokenFlow: Flow<AuthToken?> = encryptedSettings.dateStoreFlow()
+  val encryptedSettingsFlow: Flow<EncryptedSettings> = encryptedSettings.encryptedSettingsFlow()
+
+  val authTokenFlow: Flow<AuthToken?> = encryptedSettings.encryptedSettingsFlow()
     .map { settings -> settings.token.takeIf { settings.hasToken() } }
 
-  val lastTimeAuthedFlow: Flow<UnixTimestamp?> = encryptedSettings.dateStoreFlow()
+  val lastTimeAuthedFlow: Flow<UnixTimestamp?> = encryptedSettings.encryptedSettingsFlow()
     .map { settings ->
       settings.lastTimeAuthenticated
         .takeIf { settings.hasLastTimeAuthenticated() }
         ?.let { UnixTimestamp(it) }
     }
+
+  val passwordHashFlow: Flow<PasswordHash?> = encryptedSettings.encryptedSettingsFlow()
+    .map { settings -> settings.passwordHash.takeIf { settings.hasPasswordHash() } }
 
   /**
    * When login is successful, the server returns a [authToken].
