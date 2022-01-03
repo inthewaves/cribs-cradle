@@ -26,7 +26,7 @@ import org.welbodipartnership.cradle5.ui.composables.LabelAndValueForDropdownOrU
 import org.welbodipartnership.cradle5.ui.composables.LabelAndValueOrNone
 import org.welbodipartnership.cradle5.ui.composables.LabelAndValueOrUnknown
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
-import org.welbodipartnership.cradle5.util.date.FormDate
+import org.welbodipartnership.cradle5.util.datetime.FormDate
 
 @Composable
 fun OutcomesCard(

@@ -62,9 +62,10 @@ import org.welbodipartnership.cradle5.R
 import org.welbodipartnership.cradle5.compose.rememberFlowWithLifecycle
 import org.welbodipartnership.cradle5.data.database.entities.Patient
 import org.welbodipartnership.cradle5.data.database.resultentities.ListPatient
+import org.welbodipartnership.cradle5.data.settings.AuthToken
 import org.welbodipartnership.cradle5.ui.composables.carousel.Carousel
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
-import org.welbodipartnership.cradle5.util.date.FormDate
+import org.welbodipartnership.cradle5.util.datetime.FormDate
 
 @Composable
 fun PatientsListScreen(
@@ -137,25 +138,41 @@ private fun PatientsListScreen(
   ) { padding ->
     Column(Modifier.padding(padding)) {
       val scope = rememberCoroutineScope()
-      OutlinedButton(
-        onClick = {
-          scope.launch {
-            viewModel.addPatient(
-              Patient(
-                initials = "AB",
-                presentationDate = FormDate(day = 5, month = 4, year = 2010),
-                dateOfBirth = FormDate(day = 5, month = 4, year = 2010),
-                lastUpdatedTimestamp = System.currentTimeMillis() / 1000
+      Row {
+        OutlinedButton(
+          onClick = {
+            scope.launch {
+              viewModel.addPatient(
+                Patient(
+                  initials = "AB",
+                  presentationDate = FormDate(day = 5, month = 4, year = 2010),
+                  dateOfBirth = FormDate(day = 5, month = 4, year = 2010),
+                  lastUpdatedTimestamp = System.currentTimeMillis() / 1000
+                )
               )
-            )
+            }
           }
+        ) {
+          Text("Add patient")
         }
-      ) {
-        Text("Add patient")
+
+        var loginDetails: AuthToken? by remember { mutableStateOf(null) }
+
+        Text("Token details: $loginDetails")
+
+        OutlinedButton(
+          onClick = {
+            scope.launch {
+              loginDetails = viewModel.login()
+            }
+          }
+        ) {
+          Text("Login")
+        }
       }
 
       // TODO: Remove me
-      Text("Current server (not connected to it yet): ${BuildConfig.SERVER_URL}")
+      Text("Current server (not connected to it yet): ${BuildConfig.BASE_API_URL}")
 
       val lazyPagingItems = rememberFlowWithLifecycle(
         viewModel.pager.flow, minActiveState = Lifecycle.State.RESUMED

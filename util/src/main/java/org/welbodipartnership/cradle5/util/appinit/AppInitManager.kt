@@ -33,7 +33,7 @@ class AppInitManager @Inject constructor(
   }
 
   private val _appState: MutableStateFlow<AppState> = MutableStateFlow(AppState.Initializing)
-  val appState: StateFlow<AppState> = _appState
+  val appStateFlow: StateFlow<AppState> = _appState
 
   private var initMutex: Mutex? = Mutex()
 

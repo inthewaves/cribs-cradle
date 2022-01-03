@@ -11,7 +11,7 @@ import androidx.room.PrimaryKey
 import org.welbodipartnership.cradle5.data.database.entities.embedded.EnumSelection
 import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
 import org.welbodipartnership.cradle5.data.verification.Verifiable
-import org.welbodipartnership.cradle5.util.date.FormDate
+import org.welbodipartnership.cradle5.util.datetime.FormDate
 import kotlin.reflect.KProperty1
 
 @Entity(

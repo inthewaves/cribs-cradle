@@ -69,9 +69,9 @@ import org.welbodipartnership.cradle5.ui.composables.forms.OutlinedTextFieldWith
 import org.welbodipartnership.cradle5.ui.composables.forms.TextFieldState
 import org.welbodipartnership.cradle5.ui.composables.forms.darkerDisabledOutlinedTextFieldColors
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
-import org.welbodipartnership.cradle5.util.date.FormDate
-import org.welbodipartnership.cradle5.util.date.toFormDateOrNull
-import org.welbodipartnership.cradle5.util.date.toFormDateOrThrow
+import org.welbodipartnership.cradle5.util.datetime.FormDate
+import org.welbodipartnership.cradle5.util.datetime.toFormDateOrNull
+import org.welbodipartnership.cradle5.util.datetime.toFormDateOrThrow
 
 private val MAX_INITIALS_LENGTH = 5
 

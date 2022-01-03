@@ -48,7 +48,7 @@ android {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
 
-            buildConfigField("String", "SERVER_URL", "\"https://www.medscinet.com/Cradle5Test/api\"")
+            buildConfigField("String", "BASE_API_URL", "\"https://www.medscinet.com/Cradle5Test/api\"")
         }
 
         release {
@@ -58,7 +58,7 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
 
             // TODO: Use main server when available
-            buildConfigField("String", "SERVER_URL", "\"https://www.medscinet.com/Cradle5Test/api\"")
+            buildConfigField("String", "BASE_API_URL", "\"https://www.medscinet.com/Cradle5Test/api\"")
         }
 
         create("staging") {
@@ -100,6 +100,7 @@ android {
 dependencies {
     api(project(":api"))
     api(project(":data"))
+    api(project(":domain"))
 
     // implementation(kotlin("reflect"))
 
@@ -111,6 +112,8 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.constraintlayout.compose)
+
+    implementation(libs.okhttp.okhttp)
 
     implementation(libs.google.android.material)
     implementation(libs.compose.ui.ui)

@@ -99,6 +99,12 @@ dependencyResolutionManagement {
             alias("compose-material-iconsext").to("androidx.compose.material", "material-icons-extended").versionRef("compose")
             alias("compose-ui-tooling-preview").to("androidx.compose.ui", "ui-tooling-preview").versionRef("compose")
 
+            version("okhttp", "4.9.3")
+            alias("okhttp-okhttp").to("com.squareup.okhttp3", "okhttp").versionRef("okhttp")
+            alias("okhttp-mockwebserver").to("com.squareup.okhttp3", "mockwebserver").versionRef("okhttp")
+
+            alias("okio").to("com.squareup.okio:okio:3.0.0")
+
             alias("ksp").toPluginId("com.google.devtools.ksp").version("1.6.10-1.0.2")
             version("moshi", "1.13.0")
             alias("moshi-core").to("com.squareup.moshi", "moshi").versionRef("moshi")
@@ -106,8 +112,8 @@ dependencyResolutionManagement {
             alias("moshi-adapters").to("com.squareup.moshi", "moshi-adapters").versionRef("moshi")
             // alias("valiktor").to("org.valiktor:valiktor-core:0.12.0")
 
-            version("protobuf", "4.0.0-rc-2")
-            alias("protobuf-javalite").to("com.google.protobuf", "protobuf-javalite").versionRef("protobuf")
+            version("protobuf", "3.19.1")
+            alias("protobuf-kotlin-lite").to("com.google.protobuf", "protobuf-kotlin-lite").versionRef("protobuf")
             alias("protobuf-compiler").to("com.google.protobuf", "protoc").versionRef("protobuf")
             alias("protobuf").toPluginId("com.google.protobuf").version("0.8.18")
 
@@ -139,3 +145,4 @@ include(":api")
 
 include(":data")
 include(":util")
+include(":domain")

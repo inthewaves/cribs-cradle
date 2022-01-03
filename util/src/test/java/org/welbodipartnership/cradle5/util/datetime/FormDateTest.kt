@@ -1,4 +1,4 @@
-package org.welbodipartnership.cradle5.util.date
+package org.welbodipartnership.cradle5.util.datetime
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass

@@ -9,19 +9,25 @@ message UnencryptedSettings {
     bytes iv = 2;
   }
   /* An encrypted Tink KeysetHandle for EncryptedSettings, wrapped with the Android KeyStore key. */
-  AesGcmCiphertext wrapped_settings_key = 1;
+  optional AesGcmCiphertext wrapped_settings_key = 1;
 
   /* A key for the database, wrapped with the Android KeyStore key. */
-  AesGcmCiphertext wrapped_database_key = 2;
+  optional AesGcmCiphertext wrapped_database_key = 2;
 }
 
 message EncryptedSettings {
   /* The authentication token from the server. */
-  AuthToken token = 1;
+  optional AuthToken token = 1;
   /* A hash of the user's login password, stored for lockscreen authentication purposes. */
-  bytes password_hash = 2;
+  optional PasswordHash password_hash = 2;
+  /* The last time the user input their password to login to the app */
+  optional int64 last_time_authenticated = 3;
 
-  repeated DynamicServerEnum enums = 3;
+  repeated DynamicServerEnum enums = 4;
+}
+
+message PasswordHash {
+  string encoded_hash = 1;
 }
 
 message AuthToken {

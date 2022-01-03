@@ -12,6 +12,7 @@ import com.google.protobuf.InvalidProtocolBufferException
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.Flow
 import org.welbodipartnership.cradle5.util.coroutines.AppCoroutineDispatchers
 import java.io.InputStream
 import java.io.OutputStream
@@ -30,6 +31,14 @@ internal class EncryptedSettingsManager @Inject constructor(
   private val appCoroutineDispatchers: AppCoroutineDispatchers,
 ) {
   private var dataStore: DataStore<EncryptedSettings>? = null
+
+  fun dateStoreFlow(): Flow<EncryptedSettings> = requireNotNull(dataStore).data
+
+  suspend fun updateData(
+    transform: suspend (t: EncryptedSettings) -> EncryptedSettings
+  ): EncryptedSettings {
+    return requireNotNull(dataStore).updateData(transform)
+  }
 
   /**
    * This must be called before the app can use this.

@@ -67,7 +67,6 @@ ksp {
 
 protobuf {
     protoc {
-        println(libs.protobuf.compiler.get().toString())
         artifact = libs.protobuf.compiler.get().toString()
     }
 
@@ -77,6 +76,8 @@ protobuf {
                 id("java") {
                     option("lite")
                 }
+
+                id("kotlin") {}
             }
         }
     }
@@ -106,8 +107,10 @@ dependencies {
     implementation(libs.moshi.core)
     ksp(libs.moshi.codegen)
 
-    implementation(libs.protobuf.javalite)
+    api(libs.protobuf.kotlin.lite)
     implementation(libs.datastore)
+
+    implementation(libs.signal.argon2)
 
     testImplementation(kotlin("test-junit5"))
     testImplementation(libs.junit5.api)

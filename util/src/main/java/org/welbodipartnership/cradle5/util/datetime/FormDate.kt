@@ -1,4 +1,4 @@
-package org.welbodipartnership.cradle5.util.date
+package org.welbodipartnership.cradle5.util.datetime
 
 import android.os.Parcelable
 import com.squareup.moshi.JsonAdapter

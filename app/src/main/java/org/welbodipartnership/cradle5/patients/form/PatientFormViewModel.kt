@@ -34,9 +34,9 @@ import org.welbodipartnership.cradle5.data.database.entities.PerinatalDeath
 import org.welbodipartnership.cradle5.data.database.entities.SurgicalManagementOfHaemorrhage
 import org.welbodipartnership.cradle5.data.database.resultentities.PatientAndOutcomes
 import org.welbodipartnership.cradle5.data.serverenums.DropdownType
-import org.welbodipartnership.cradle5.data.settings.AppKeyValueStore
+import org.welbodipartnership.cradle5.data.settings.AppValuesStore
 import org.welbodipartnership.cradle5.util.coroutines.AppCoroutineDispatchers
-import org.welbodipartnership.cradle5.util.date.toFormDateOrThrow
+import org.welbodipartnership.cradle5.util.datetime.toFormDateOrThrow
 import javax.inject.Inject
 
 private const val PATIENT_MAX_INITIALS_LENGTH = 5
@@ -52,7 +52,7 @@ class PatientFormViewModel @Inject constructor(
   @ApplicationContext
   private val context: Context,
   private val handle: SavedStateHandle,
-  private val keyValueStore: AppKeyValueStore,
+  private val valuesStore: AppValuesStore,
   private val appCoroutineDispatchers: AppCoroutineDispatchers,
   dbWrapper: CradleDatabaseWrapper
 ) : ViewModel() {
@@ -640,7 +640,7 @@ class PatientFormViewModel @Inject constructor(
     dropdownType: DropdownType,
     isMandatory: Boolean,
   ) = EnumIdOnlyState(
-    keyValueStore.getServerEnumCollection()[dropdownType]!!,
+    valuesStore.getServerEnumCollection()[dropdownType]!!,
     isMandatory = isMandatory,
     handle.createMutableState(key, null),
   )
@@ -650,7 +650,7 @@ class PatientFormViewModel @Inject constructor(
     dropdownType: DropdownType,
     isMandatory: Boolean,
   ) = EnumWithOtherState(
-    enum = keyValueStore.getServerEnumCollection()[dropdownType]!!,
+    enum = valuesStore.getServerEnumCollection()[dropdownType]!!,
     isMandatory = isMandatory,
     backingState = handle.createMutableState(key, null)
   )

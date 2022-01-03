@@ -1,6 +1,6 @@
 package org.welbodipartnership.cradle5.data.database.resultentities
 
-import org.welbodipartnership.cradle5.util.date.FormDate
+import org.welbodipartnership.cradle5.util.datetime.FormDate
 
 /**
  * A shortened view of the patient

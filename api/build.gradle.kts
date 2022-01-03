@@ -20,6 +20,7 @@ android {
     }
 
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
@@ -28,6 +29,7 @@ android {
 dependencies {
     api(project(":util"))
 
+    coreLibraryDesugaring(libs.desugar)
     // implementation(kotlin("reflect"))
 
     api(libs.moshi.core)

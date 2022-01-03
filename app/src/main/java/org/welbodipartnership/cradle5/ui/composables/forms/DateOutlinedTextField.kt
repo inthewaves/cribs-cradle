@@ -38,7 +38,7 @@ import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.welbodipartnership.cradle5.R
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
-import org.welbodipartnership.cradle5.util.date.FormDate
+import org.welbodipartnership.cradle5.util.datetime.FormDate
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId

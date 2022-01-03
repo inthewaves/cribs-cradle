@@ -125,6 +125,4 @@ abstract class FieldState<T>(
     result = 31 * result + isFocused.hashCode()
     return result
   }
-
-
 }

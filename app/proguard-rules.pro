@@ -90,6 +90,10 @@
 # Required until R8 version >= 3.1.12+ (in AGP 7.1.0+).
 -keep,allowobfuscation,allowshrinking @interface *
 
+# Okio
+# Animal Sniffer compileOnly dependency to ensure APIs are compatible with older versions of Java.
+-dontwarn org.codehaus.mojo.animal_sniffer.*
+
 # Serializer for classes with named companion objects are retrieved using `getDeclaredClasses`.
 # If you have any, uncomment and replace classes with those containing named companion objects.
 #-keepattributes InnerClasses # Needed for `getDeclaredClasses`.

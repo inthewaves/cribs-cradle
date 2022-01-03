@@ -2,8 +2,8 @@ package org.welbodipartnership.cradle5.data.database
 
 import androidx.room.TypeConverter
 import org.welbodipartnership.cradle5.data.database.entities.embedded.EnumSelection
-import org.welbodipartnership.cradle5.util.date.FormDate
-import org.welbodipartnership.cradle5.util.date.toFormDateOrThrow
+import org.welbodipartnership.cradle5.util.datetime.FormDate
+import org.welbodipartnership.cradle5.util.datetime.toFormDateOrThrow
 
 @Suppress("UNUSED")
 object DbTypeConverters {

@@ -54,18 +54,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavHostController
 import com.google.accompanist.insets.LocalWindowInsets
 import com.google.accompanist.insets.rememberInsetsPaddingValues
 import com.google.accompanist.insets.ui.BottomNavigation
-import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import org.welbodipartnership.cradle5.LeafScreen
 import org.welbodipartnership.cradle5.LoggedInNavigation
 import org.welbodipartnership.cradle5.R
 import org.welbodipartnership.cradle5.Screen
 
 @Composable
-fun Home() {
-  val navController = rememberAnimatedNavController()
+fun LoggedInHome(navController: NavHostController) {
   Scaffold(
     bottomBar = {
       /*
