@@ -8,10 +8,15 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
@@ -21,16 +26,22 @@ import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -114,17 +125,17 @@ private fun MainApp(viewModel: MainActivityViewModel) {
         val navController = rememberAnimatedNavController()
 
         val authState by viewModel.authState.collectAsState(AuthState.Initializing)
+
         authState.let { currentAuthState ->
           if (currentAuthState is AuthState.LoggedInUnlocked) {
             LoggedInHome(
               navController,
               currentAuthState,
-              onLogout = {
-                viewModel.logout()
-              }
+              onLogout = { viewModel.logout() },
+              onLock = { viewModel.forceLockScreen() }
             )
           } else {
-            LoginOrLockscreen()
+            LoginOrLockscreen(currentAuthState)
           }
         }
       }
@@ -133,10 +144,25 @@ private fun MainApp(viewModel: MainActivityViewModel) {
 }
 
 @Composable
-fun LoginOrLockscreen() {
+fun LoginOrLockscreen(authState: AuthState) {
   val authViewModel: AuthViewModel = hiltViewModel()
   val authScreenState by authViewModel.screenState
     .collectAsState(AuthViewModel.ScreenState.Initializing)
+
+  DisposableEffect(null) {
+    // getting around viewmodels not scoped to composables
+    onDispose {
+      authViewModel.submitAction(AuthViewModel.ChannelAction.Reset)
+    }
+  }
+
+  // use boolean as key to ensure these gets cleared if logging out from the lockscreen
+  val (username, setUsername) = rememberSaveable(authState is AuthState.LoggedOut) {
+    mutableStateOf("")
+  }
+  val (password, setPassword) = rememberSaveable(authState is AuthState.LoggedOut) {
+    mutableStateOf("")
+  }
 
   Surface {
     Column(
@@ -150,58 +176,145 @@ fun LoginOrLockscreen() {
           AuthViewModel.ScreenState.Initializing,
           AuthViewModel.ScreenState.Submitting -> CircularProgressIndicator()
           is AuthViewModel.ScreenState.WaitingForLogin -> {
-            var username by remember {
-              mutableStateOf("")
-            }
-            var password by remember {
-              mutableStateOf("")
-            }
-
-            LazyColumn(
-              verticalArrangement = Arrangement.Center,
-              horizontalAlignment = Alignment.CenterHorizontally,
-              modifier = Modifier.navigationBarsWithImePadding()
-            ) {
-              item { Text("AuthViewModel.ScreenState.WaitingForLogin") }
-
-              item {
-                OutlinedTextField(
-                  value = username,
-                  onValueChange = { username = it },
-                )
-              }
-
-              item {
-                OutlinedTextField(
-                  value = password,
-                  onValueChange = { password = it },
-                )
-              }
-
-              item {
-                Button(
-                  onClick = {
-                    authViewModel.submitAction(
-                      AuthViewModel.ChannelAction.Login(
-                        username,
-                        password
-                      )
-                    )
-                  }
-                ) {
-                  Text("Login")
-                }
-              }
-            }
+            LoginForm(
+              LoginType.NewLogin { username, password ->
+                authViewModel.submitAction(AuthViewModel.ChannelAction.Login(username, password))
+              },
+              username = username,
+              onUsernameChange = setUsername,
+              password = password,
+              onPasswordChange = setPassword,
+              errorMessage = state.errorMessage
+            )
           }
           is AuthViewModel.ScreenState.WaitingForReauth -> {
-            Text("AuthViewModel.ScreenState.WaitingForReauth")
+            LoginForm(
+              LoginType.Lockscreen { password ->
+                authViewModel.submitAction(AuthViewModel.ChannelAction.Reauthenticate(password))
+              },
+              username = username,
+              onUsernameChange = setUsername,
+              password = password,
+              onPasswordChange = setPassword,
+              errorMessage = state.errorMessage
+            )
           }
           is AuthViewModel.ScreenState.WaitingForTokenRefreshLogin -> {
             Text("AuthViewModel.ScreenState.WaitingForTokenRefreshLogin")
           }
         }
       }
+    }
+  }
+}
+
+@Stable
+private sealed class LoginType {
+  class NewLogin(
+    val onSubmit: (username: String, password: String) -> Unit
+  ) : LoginType()
+  class Lockscreen(val onSubmit: (password: String) -> Unit) : LoginType()
+}
+
+@Composable
+private fun LoginForm(
+  loginType: LoginType,
+  username: String,
+  onUsernameChange: (String) -> Unit,
+  password: String,
+  onPasswordChange: (String) -> Unit,
+  errorMessage: String?,
+  modifier: Modifier = Modifier,
+) {
+  LazyColumn(
+    verticalArrangement = Arrangement.Center,
+    horizontalAlignment = Alignment.Start,
+    modifier = modifier
+      .navigationBarsWithImePadding()
+      .widthIn(max = 600.dp)
+      .padding(horizontal = 24.dp)
+  ) {
+    if (loginType is LoginType.Lockscreen) {
+      item {
+        Text(stringResource(R.string.lockscreen_title), style = MaterialTheme.typography.h4)
+      }
+      item {
+        Spacer(Modifier.height(12.dp))
+      }
+    }
+
+    if (errorMessage != null) {
+      item {
+        Text(errorMessage, color = MaterialTheme.colors.error)
+        Spacer(Modifier.height(12.dp))
+      }
+    }
+    item {
+      if (loginType is LoginType.NewLogin) {
+          OutlinedTextField(
+            value = username,
+            onValueChange = onUsernameChange,
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text(stringResource(R.string.username_label)) },
+            keyboardOptions = KeyboardOptions(
+              autoCorrect = false,
+              imeAction = ImeAction.Next,
+            ),
+            maxLines = 1,
+          )
+      }
+    }
+
+    item {
+      OutlinedTextField(
+        value = password,
+        onValueChange = onPasswordChange,
+        modifier = Modifier.fillMaxWidth(),
+        label = { Text(stringResource(R.string.password_label)) },
+        visualTransformation = PasswordVisualTransformation(),
+        keyboardOptions = KeyboardOptions(
+          autoCorrect = false,
+          keyboardType = KeyboardType.Password,
+          imeAction = ImeAction.Done
+        ),
+        maxLines = 1,
+      )
+    }
+
+    item { Spacer(Modifier.height(12.dp)) }
+
+    item {
+      Button(
+        onClick = {
+          when (loginType) {
+            is LoginType.Lockscreen -> loginType.onSubmit(password)
+            is LoginType.NewLogin -> loginType.onSubmit(username, password)
+          }
+        },
+        modifier = Modifier.fillMaxWidth()
+      ) {
+        when (loginType) {
+          is LoginType.Lockscreen -> Text(stringResource(R.string.unlock_button))
+          is LoginType.NewLogin -> Text(stringResource(R.string.login_button))
+        }
+      }
+    }
+  }
+}
+
+@Preview
+@Composable
+fun LoginFormPreview() {
+  CradleTrialAppTheme {
+    Surface {
+      LoginForm(
+        loginType = LoginType.Lockscreen {},
+        username = "",
+        onUsernameChange = {},
+        password = "password",
+        onPasswordChange = {},
+        errorMessage = "My error message"
+      )
     }
   }
 }

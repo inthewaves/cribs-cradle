@@ -7,6 +7,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
@@ -70,6 +71,7 @@ class AuthRepository @Inject internal constructor(
         .fromDateTimeString(authToken.expires, ApiAuthToken.dateTimeFormatter)
       val now = UnixTimestamp.now()
 
+      Log.d(TAG, "duration between: ${lastTimeAuthedForComparison durationBetween now}")
       when {
         now >= expiryTime -> AuthState.TokenExpired(username)
         lastTimeAuthedForComparison durationBetween now >= AUTH_TIMEOUT -> {
@@ -197,6 +199,13 @@ class AuthRepository @Inject internal constructor(
     Log.d(TAG, "refreshAuthToken(): successful refresh; inserting fresh token into store")
     appValuesStore.insertFreshAuthToken(freshAuthToken)
     return true
+  }
+
+  suspend fun forceLockscreen() {
+    Log.d(TAG, "forceLockscreen()")
+    val currentAuthTime = appValuesStore.lastTimeAuthedFlow.first() ?: UnixTimestamp(0)
+    val expiredTime: UnixTimestamp = currentAuthTime + (AUTH_TIMEOUT * 2)
+    appValuesStore.setLastTimeAuthenticated(expiredTime)
   }
 
   suspend fun logout() {

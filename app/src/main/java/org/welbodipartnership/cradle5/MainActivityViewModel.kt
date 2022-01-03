@@ -2,20 +2,22 @@ package org.welbodipartnership.cradle5
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.welbodipartnership.cradle5.domain.auth.AuthRepository
 import org.welbodipartnership.cradle5.domain.auth.AuthState
+import org.welbodipartnership.cradle5.util.ApplicationCoroutineScope
 import org.welbodipartnership.cradle5.util.appinit.AppInitManager
 import javax.inject.Inject
 
 @HiltViewModel
 class MainActivityViewModel @Inject constructor(
   appInitManager: AppInitManager,
-  val authRepository: AuthRepository,
+  private val authRepository: AuthRepository,
+  @ApplicationCoroutineScope private val applicationCoroutineScope: CoroutineScope
 ) : ViewModel() {
 
   val appState: StateFlow<AppInitManager.AppState> = appInitManager.appStateFlow
@@ -23,8 +25,14 @@ class MainActivityViewModel @Inject constructor(
   val authState: Flow<AuthState> = authRepository.authStateFlow
 
   fun logout() {
-    viewModelScope.launch {
+    applicationCoroutineScope.launch {
       authRepository.logout()
+    }
+  }
+
+  fun forceLockScreen() {
+    applicationCoroutineScope.launch {
+      authRepository.forceLockscreen()
     }
   }
 

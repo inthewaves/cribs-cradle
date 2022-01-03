@@ -8,12 +8,12 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.actor
-import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import org.welbodipartnership.cradle5.domain.auth.AuthRepository
 import org.welbodipartnership.cradle5.domain.auth.AuthState
+import java.util.concurrent.CancellationException
 import javax.inject.Inject
 
 @HiltViewModel
@@ -34,6 +34,7 @@ class AuthViewModel @Inject constructor(
   private sealed class SubmissionState {
     object Submitting : SubmissionState()
     class Waiting(val errorMessage: String?) : SubmissionState()
+    object Done : SubmissionState()
   }
 
   private val submissionState: MutableStateFlow<SubmissionState> =
@@ -62,6 +63,7 @@ class AuthViewModel @Inject constructor(
           AuthState.Initializing -> ScreenState.Initializing
         }
       }
+      SubmissionState.Done -> ScreenState.Initializing
     }
   }
   val screenState: Flow<ScreenState> = _screenState
@@ -70,10 +72,12 @@ class AuthViewModel @Inject constructor(
     class Login(val username: String, val password: String) : ChannelAction()
     class Reauthenticate(val password: String) : ChannelAction()
     object Logout : ChannelAction()
+    object Reset : ChannelAction()
   }
 
   private val authChannel = viewModelScope.actor<ChannelAction>(capacity = Channel.RENDEZVOUS) {
-    consumeEach { action ->
+    for (action in channel) {
+      Log.d(TAG, "authChannel received an action")
       submissionState.value = SubmissionState.Submitting
       try {
         when (action) {
@@ -91,14 +95,27 @@ class AuthViewModel @Inject constructor(
                   )
                   SubmissionState.Waiting(loginResult.errorMessage)
                 }
-                AuthRepository.LoginResult.Success -> SubmissionState.Waiting(null)
+                AuthRepository.LoginResult.Success -> SubmissionState.Done
               }
           }
           is ChannelAction.Reauthenticate -> {
+            val authSuccess = authRepository.reauthForLockscreen(action.password)
+            submissionState.value = if (authSuccess) {
+              SubmissionState.Done
+            } else {
+              SubmissionState.Waiting("Wrong password")
+            }
           }
-          ChannelAction.Logout -> {
+          ChannelAction.Logout, ChannelAction.Reset -> {
+            submissionState.value = SubmissionState.Waiting(null)
           }
         }
+      } catch (e: Exception) {
+        if (e is CancellationException) throw e
+        Log.e(TAG, "failed to handle auth event", e)
+        submissionState.value = SubmissionState.Waiting(
+          "Failed to handle authentication (${e::class.java.simpleName}): ${e.localizedMessage}"
+        )
       } finally {
         if (submissionState.value is SubmissionState.Submitting) {
           submissionState.value = SubmissionState.Waiting(null)
@@ -106,8 +123,11 @@ class AuthViewModel @Inject constructor(
       }
     }
   }
+
   fun submitAction(action: ChannelAction) {
-    authChannel.trySend(action)
+    authChannel.trySend(action).also {
+      Log.d(TAG, "submitAction result: $it")
+    }
   }
 
   override fun onCleared() {

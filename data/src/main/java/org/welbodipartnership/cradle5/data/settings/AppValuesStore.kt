@@ -53,8 +53,12 @@ class AppValuesStore @Inject internal constructor(
   }
 
   suspend fun setLastTimeAuthenticatedToNow() {
+    setLastTimeAuthenticated(UnixTimestamp.now())
+  }
+
+  suspend fun setLastTimeAuthenticated(newTimestamp: UnixTimestamp) {
     encryptedSettings.updateData { settings ->
-      settings.toBuilder().setLastTimeAuthenticated(UnixTimestamp.now().timestamp).build()
+      settings.toBuilder().setLastTimeAuthenticated(newTimestamp.timestamp).build()
     }
   }
 

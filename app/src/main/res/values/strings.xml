@@ -73,6 +73,13 @@
     <string name="login_error_error_code_format_s_d">$1%s (Error code $2%d)</string>
     <string name="bottom_drawer_logged_in_as_s">Logged in as %1$s</string>
     <string name="home_nav_bar_account_info_button_cd">Open account information sheet</string>
+    <string name="logout_button">Logout</string>
+    <string name="lock_app_button">Lock</string>
+    <string name="password_label">Password</string>
+    <string name="username_label">Username</string>
+    <string name="lockscreen_title">Unlock the app</string>
+    <string name="unlock_button">Unlock</string>
+    <string name="login_button">Login</string>
     <plurals name="patient_form_snackbar_failed_to_save_there_are_d_errors">
         <item quantity="one">Failed to save, as there is %1$d error.</item>
         <item quantity="other">Failed to save, as there are %1$d errors.</item>

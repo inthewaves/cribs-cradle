@@ -40,6 +40,7 @@ import androidx.compose.material.contentColorFor
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.LocationCity
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.outlined.Groups
@@ -79,6 +80,7 @@ fun LoggedInHome(
   navController: NavHostController,
   authState: AuthState.LoggedInUnlocked,
   onLogout: () -> Unit,
+  onLock: () -> Unit,
 ) {
   val homeManager = rememberSaveable(saver = HomeManager.Saver()) {
     HomeManager(BottomDrawerValue.Closed)
@@ -97,10 +99,18 @@ fun LoggedInHome(
         item { Divider() }
         item {
           ListItem(
-            text = { Text("Logout") },
+            text = { Text(stringResource(R.string.lock_app_button)) },
             icon = {
-              Icon(Icons.Default.Logout, contentDescription = "Localized description")
+              Icon(Icons.Default.Lock, contentDescription = stringResource(R.string.lock_app_button))
             },
+            modifier = Modifier.clickable(onClick = onLock)
+          )
+          ListItem(
+            text = { Text(stringResource(R.string.logout_button)) },
+            icon = {
+              Icon(Icons.Default.Logout, contentDescription = stringResource(R.string.logout_button))
+            },
+            // TODO: add confirmation
             modifier = Modifier.clickable(onClick = onLogout)
           )
         }
