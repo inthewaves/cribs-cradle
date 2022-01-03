@@ -1,7 +1,6 @@
 package org.welbodipartnership.cradle5.home
 
 import android.content.Context
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -27,13 +26,9 @@ class HomeViewModel @Inject constructor(
   @ApplicationContext private val context: Context,
 ) : ViewModel() {
   private val tickerFLow = flow<Unit> {
-    try {
-      while (currentCoroutineContext().isActive) {
-        emit(Unit)
-        delay(1.seconds)
-      }
-    } finally {
-      Log.d("HomeViewModel", "tickerFLow stopped")
+    while (currentCoroutineContext().isActive) {
+      emit(Unit)
+      delay(1.seconds)
     }
   }
 

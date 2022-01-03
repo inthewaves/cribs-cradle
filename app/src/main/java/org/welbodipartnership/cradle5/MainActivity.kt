@@ -256,17 +256,17 @@ private fun LoginForm(
     }
     item {
       if (loginType is LoginType.NewLogin) {
-          OutlinedTextField(
-            value = username,
-            onValueChange = onUsernameChange,
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text(stringResource(R.string.username_label)) },
-            keyboardOptions = KeyboardOptions(
-              autoCorrect = false,
-              imeAction = ImeAction.Next,
-            ),
-            maxLines = 1,
-          )
+        OutlinedTextField(
+          value = username,
+          onValueChange = onUsernameChange,
+          modifier = Modifier.fillMaxWidth(),
+          label = { Text(stringResource(R.string.username_label)) },
+          keyboardOptions = KeyboardOptions(
+            autoCorrect = false,
+            imeAction = ImeAction.Next,
+          ),
+          maxLines = 1,
+        )
       }
     }
 
