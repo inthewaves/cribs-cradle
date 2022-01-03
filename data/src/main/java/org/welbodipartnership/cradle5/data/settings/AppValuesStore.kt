@@ -1,6 +1,8 @@
 package org.welbodipartnership.cradle5.data.settings
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import org.welbodipartnership.cradle5.data.serverenums.ServerEnumCollection
 import org.welbodipartnership.cradle5.util.datetime.UnixTimestamp
@@ -15,6 +17,8 @@ class AppValuesStore @Inject internal constructor(
 
   val authTokenFlow: Flow<AuthToken?> = encryptedSettings.encryptedSettingsFlow()
     .map { settings -> settings.token.takeIf { settings.hasToken() } }
+    .distinctUntilChanged()
+    .conflate()
 
   val lastTimeAuthedFlow: Flow<UnixTimestamp?> = encryptedSettings.encryptedSettingsFlow()
     .map { settings ->
@@ -22,9 +26,13 @@ class AppValuesStore @Inject internal constructor(
         .takeIf { settings.hasLastTimeAuthenticated() }
         ?.let { UnixTimestamp(it) }
     }
+    .distinctUntilChanged()
+    .conflate()
 
   val passwordHashFlow: Flow<PasswordHash?> = encryptedSettings.encryptedSettingsFlow()
     .map { settings -> settings.passwordHash.takeIf { settings.hasPasswordHash() } }
+    .distinctUntilChanged()
+    .conflate()
 
   /**
    * When login is successful, the server returns a [authToken].
@@ -41,6 +49,12 @@ class AppValuesStore @Inject internal constructor(
         .setLastTimeAuthenticated(UnixTimestamp.now().timestamp)
         .setPasswordHash(hashOfSuccessfulPassword)
         .build()
+    }
+  }
+
+  suspend fun setLastTimeAuthenticatedToNow() {
+    encryptedSettings.updateData { settings ->
+      settings.toBuilder().setLastTimeAuthenticated(UnixTimestamp.now().timestamp).build()
     }
   }
 

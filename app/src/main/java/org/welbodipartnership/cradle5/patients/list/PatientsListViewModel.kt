@@ -6,7 +6,6 @@ import androidx.paging.PagingConfig
 import dagger.hilt.android.lifecycle.HiltViewModel
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
 import org.welbodipartnership.cradle5.data.database.entities.Patient
-import org.welbodipartnership.cradle5.data.settings.AuthToken
 import org.welbodipartnership.cradle5.domain.RestApi
 import javax.inject.Inject
 
@@ -28,9 +27,5 @@ class PatientsListViewModel @Inject constructor(
     val dao = dbWrapper.database!!.patientDao()
 
     dao.upsert(patient)
-  }
-
-  suspend fun login(username: String = "test", password: String = "test1"): AuthToken? {
-    return restApi.login(username, password).valueOrNull()
   }
 }

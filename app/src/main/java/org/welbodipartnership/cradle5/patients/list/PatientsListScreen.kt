@@ -62,7 +62,6 @@ import org.welbodipartnership.cradle5.R
 import org.welbodipartnership.cradle5.compose.rememberFlowWithLifecycle
 import org.welbodipartnership.cradle5.data.database.entities.Patient
 import org.welbodipartnership.cradle5.data.database.resultentities.ListPatient
-import org.welbodipartnership.cradle5.data.settings.AuthToken
 import org.welbodipartnership.cradle5.ui.composables.carousel.Carousel
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
 import org.welbodipartnership.cradle5.util.datetime.FormDate
@@ -154,20 +153,6 @@ private fun PatientsListScreen(
           }
         ) {
           Text("Add patient")
-        }
-
-        var loginDetails: AuthToken? by remember { mutableStateOf(null) }
-
-        Text("Token details: $loginDetails")
-
-        OutlinedButton(
-          onClick = {
-            scope.launch {
-              loginDetails = viewModel.login()
-            }
-          }
-        ) {
-          Text("Login")
         }
       }
 

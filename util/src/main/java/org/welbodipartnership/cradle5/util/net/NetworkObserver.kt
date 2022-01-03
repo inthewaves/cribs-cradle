@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import org.welbodipartnership.cradle5.util.ApplicationCoroutineScope
 import javax.inject.Inject
@@ -48,7 +49,7 @@ class NetworkObserver @Inject constructor(
   private val connectivityManager: ConnectivityManager? =
     ContextCompat.getSystemService(context, ConnectivityManager::class.java)
 
-  val isNetworkAvailable: StateFlow<Boolean> = callbackFlow {
+  val networkAvailabilityFlow: StateFlow<Boolean> = callbackFlow {
     if (connectivityManager != null) {
       if (isCallbackSupported) {
         val defaultNetworkCallback = object : ConnectivityManager.NetworkCallback() {
@@ -56,10 +57,12 @@ class NetworkObserver @Inject constructor(
             network: Network,
             networkCapabilities: NetworkCapabilities
           ) {
+            Log.d(TAG, "onCapabilitiesChanged")
             trySend(isConnected())
           }
 
           override fun onLost(network: Network) {
+            Log.d(TAG, "onLost")
             trySend(isConnected())
           }
         }
@@ -73,6 +76,7 @@ class NetworkObserver @Inject constructor(
         val connectivityBroadcastReceiver = object : BroadcastReceiver() {
           override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == ConnectivityManager.CONNECTIVITY_ACTION) {
+              Log.d(TAG, "onReceive")
               trySend(isConnected())
             }
           }
@@ -99,6 +103,8 @@ class NetworkObserver @Inject constructor(
       ),
       initialValue = connectivityManager.isConnected()
     )
+
+  suspend fun isNetworkAvailable() = networkAvailabilityFlow.first()
 
   init {
     if (connectivityManager == null) {
