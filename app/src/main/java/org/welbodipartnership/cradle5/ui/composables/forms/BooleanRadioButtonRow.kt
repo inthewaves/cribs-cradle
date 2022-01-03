@@ -10,6 +10,7 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -20,21 +21,30 @@ import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
 fun BooleanRadioButtonRow(
   isTrue: Boolean?,
   onBooleanChange: (newBoolean: Boolean) -> Unit,
-  modifier: Modifier = Modifier
+  modifier: Modifier = Modifier,
 ) {
+
+  val focusManager = LocalFocusManager.current
+
   Row(
     modifier,
     verticalAlignment = Alignment.CenterVertically
   ) {
     RadioButton(
       selected = isTrue == true,
-      onClick = { onBooleanChange(true) },
+      onClick = {
+        onBooleanChange(true)
+        focusManager.clearFocus()
+      },
     )
     Text(stringResource(R.string.yes))
     Spacer(Modifier.width(8.dp))
     RadioButton(
       selected = isTrue == false,
-      onClick = { onBooleanChange(false) },
+      onClick = {
+        onBooleanChange(false)
+        focusManager.clearFocus()
+      },
     )
     Text(stringResource(R.string.no))
     // radio button radius is 10
