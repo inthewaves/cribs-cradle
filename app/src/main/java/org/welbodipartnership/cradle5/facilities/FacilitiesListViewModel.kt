@@ -22,7 +22,7 @@ class FacilitiesListViewModel @Inject constructor(
       enablePlaceholders = true,
       maxSize = 200
     )
-  ) { dbWrapper.facilitiesDao().patientsPagingSource() }
+  ) { dbWrapper.facilitiesDao().facilitiesPagingSource() }
     .flow
     .cachedIn(viewModelScope)
 }

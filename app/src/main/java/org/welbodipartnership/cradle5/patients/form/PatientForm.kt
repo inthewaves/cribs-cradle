@@ -56,6 +56,7 @@ import com.google.accompanist.insets.navigationBarsWithImePadding
 import com.google.accompanist.insets.rememberInsetsPaddingValues
 import com.google.accompanist.insets.ui.TopAppBar
 import org.welbodipartnership.cradle5.R
+import org.welbodipartnership.cradle5.data.database.entities.Facility
 import org.welbodipartnership.cradle5.data.database.entities.embedded.EnumSelection
 import org.welbodipartnership.cradle5.data.serverenums.DropdownType
 import org.welbodipartnership.cradle5.data.serverenums.ServerEnum
@@ -67,6 +68,7 @@ import org.welbodipartnership.cradle5.ui.composables.forms.DateOutlinedTextField
 import org.welbodipartnership.cradle5.ui.composables.forms.EnumDropdownMenuIdOnly
 import org.welbodipartnership.cradle5.ui.composables.forms.EnumDropdownMenuWithOther
 import org.welbodipartnership.cradle5.ui.composables.forms.FieldState
+import org.welbodipartnership.cradle5.ui.composables.forms.HealthcareFacilityDropdown
 import org.welbodipartnership.cradle5.ui.composables.forms.OutlinedTextFieldWithErrorHint
 import org.welbodipartnership.cradle5.ui.composables.forms.TextFieldState
 import org.welbodipartnership.cradle5.ui.composables.forms.darkerDisabledOutlinedTextFieldColors
@@ -350,6 +352,16 @@ fun PatientForm(
               }
             )
           )
+
+          HealthcareFacilityDropdown(
+            facility = patientFields.healthcareFacility.stateValue,
+            onFacilitySelected = { patientFields.healthcareFacility.stateValue = it },
+            facilityPagingItemsFlow = viewModel.facilitiesPagerFlow,
+            errorHint = patientFields.healthcareFacility.getError(),
+            label = {
+              RequiredText(stringResource(R.string.patient_registration_healthcare_facility_label))
+            },
+          )
         }
       }
 
@@ -511,6 +523,7 @@ fun PatientForm(
             onNavigateToPatient(currentFormState.primaryKeyOfPatient)
           }
         }
+        else -> {}
       }
     }
   }
@@ -944,6 +957,18 @@ fun PatientFormPreview() {
       PatientForm(ServerEnumCollection.defaultInstance, onNavigateBack = {}, onNavigateToPatient = {})
     }
   }
+}
+
+class HealthcareFacilityState(
+  val isRequired: Boolean,
+  backingState: MutableState<Facility?>,
+) : FieldState<Facility?>(
+  validator = { facility -> if (isRequired) facility != null else true },
+  errorFor = { ctx, _ -> ctx.getString(R.string.missing_healthcare_facility_error) },
+  backingState = backingState,
+  initialValue = null,
+) {
+  override val showErrorOnInput: Boolean = true
 }
 
 class InitialsState(backingState: MutableState<String> = mutableStateOf("")) : TextFieldState(

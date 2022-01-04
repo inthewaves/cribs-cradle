@@ -28,5 +28,5 @@ abstract class FacilityDao {
 
   @Transaction
   @Query("SELECT * FROM Facility ORDER BY id ASC")
-  abstract fun patientsPagingSource(): PagingSource<Int, Facility>
+  abstract fun facilitiesPagingSource(): PagingSource<Int, Facility>
 }

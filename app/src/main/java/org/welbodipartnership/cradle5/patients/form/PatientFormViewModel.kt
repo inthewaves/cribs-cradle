@@ -9,6 +9,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
 import androidx.room.withTransaction
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -25,6 +29,7 @@ import org.welbodipartnership.cradle5.LeafScreen
 import org.welbodipartnership.cradle5.R
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
 import org.welbodipartnership.cradle5.data.database.entities.EclampsiaFit
+import org.welbodipartnership.cradle5.data.database.entities.Facility
 import org.welbodipartnership.cradle5.data.database.entities.HduOrItuAdmission
 import org.welbodipartnership.cradle5.data.database.entities.Hysterectomy
 import org.welbodipartnership.cradle5.data.database.entities.MaternalDeath
@@ -66,6 +71,12 @@ class PatientFormViewModel @Inject constructor(
     database.patientDao().getPatientAndOutcomesFlow(pk)
   } ?: flowOf(null)
 
+  val facilitiesPagerFlow: Flow<PagingData<Facility>> = Pager(
+    PagingConfig(pageSize = 60, enablePlaceholders = true, maxSize = 200)
+  ) { dbWrapper.facilitiesDao().facilitiesPagingSource() }
+    .flow
+    .cachedIn(viewModelScope)
+
   sealed class FormState {
     val isForPatientEdit get() = (this as? Ready)?.existingInfo != null
 
@@ -95,6 +106,10 @@ class PatientFormViewModel @Inject constructor(
       age = LimitedAgeIntState(
         AGE_RANGE,
         handle.createMutableState("patientAge", "")
+      ),
+      healthcareFacility = HealthcareFacilityState(
+        isRequired = true,
+        handle.createMutableState("patientHealthFacility", null)
       ),
       localNotes = handle.createMutableState("patientLocalNotes", "")
     ),
@@ -680,6 +695,7 @@ class PatientFormViewModel @Inject constructor(
     val presentationDate: NoFutureDateState,
     val dateOfBirth: LimitedAgeDateState,
     val age: LimitedAgeIntState,
+    val healthcareFacility: HealthcareFacilityState,
     val localNotes: MutableState<String>
   ) {
     fun forceShowErrors() {
@@ -687,6 +703,7 @@ class PatientFormViewModel @Inject constructor(
       presentationDate.enableShowErrors(force = true)
       dateOfBirth.enableShowErrors(force = true)
       age.enableShowErrors(force = true)
+      healthcareFacility.enableShowErrors(force = true)
     }
   }
 
