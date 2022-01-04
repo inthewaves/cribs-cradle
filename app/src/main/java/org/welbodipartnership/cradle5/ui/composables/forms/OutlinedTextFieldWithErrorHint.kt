@@ -48,6 +48,7 @@ fun OutlinedTextFieldWithErrorHint(
   shape: Shape = MaterialTheme.shapes.small,
   colors: TextFieldColors = darkerDisabledOutlinedTextFieldColors()
 ) {
+  val showError = enabled && errorHint != null
   Column(modifier) {
     OutlinedTextField(
       value = value,
@@ -60,7 +61,7 @@ fun OutlinedTextFieldWithErrorHint(
       placeholder = placeholder,
       leadingIcon = leadingIcon,
       trailingIcon = trailingIcon,
-      isError = errorHint != null,
+      isError = showError,
       visualTransformation = visualTransformation,
       keyboardOptions = keyboardOptions,
       keyboardActions = keyboardActions,
@@ -81,7 +82,7 @@ fun OutlinedTextFieldWithErrorHint(
       }
     }
     AnimatedVisibility(
-      visible = errorHint != null,
+      visible = showError,
       enter = fadeIn() + expandVertically(),
       exit = fadeOut() + shrinkVertically(),
     ) {

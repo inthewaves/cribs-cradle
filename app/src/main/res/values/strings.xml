@@ -75,7 +75,8 @@
     <string name="home_nav_bar_account_info_button_cd">Open account information sheet</string>
     <string name="logout_button">Logout</string>
     <string name="lock_app_button">Lock</string>
-    <string name="lock_app_button_with_next_lock_time_s">Lock (next lock time: %1$s)</string>
+    <string name="lock_app_button_subtitle_with_next_lock_time_s">Next lock time: %1$s</string>
+    <string name="lock_app_button_subtitle_with_next_lock_time_on_background">Will lock when app is closed</string>
     <string name="password_label">Password</string>
     <string name="username_label">Username</string>
     <string name="lockscreen_title">Unlock the app</string>

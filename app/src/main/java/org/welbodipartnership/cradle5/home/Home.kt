@@ -105,12 +105,13 @@ fun LoggedInHome(
 
           ListItem(
             text = {
+              Text(stringResource(R.string.lock_app_button))
+            },
+            secondaryText = {
               if (!drawerState.isClosed || drawerState.isAnimationRunning) {
-                val lockAppButtonText by homeViewModel.lockAppButtonTextWithTimeLeftFlow
+                val lockAppButtonText by homeViewModel.lockAppButtonSubtitleTextWithTimeLeftFlow
                   .collectAsState()
                 Text(lockAppButtonText)
-              } else {
-                Text(stringResource(R.string.lock_app_button))
               }
             },
             icon = {

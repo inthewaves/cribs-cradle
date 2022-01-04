@@ -32,7 +32,7 @@ class HomeViewModel @Inject constructor(
     }
   }
 
-  val lockAppButtonTextWithTimeLeftFlow: StateFlow<String> = combine(
+  val lockAppButtonSubtitleTextWithTimeLeftFlow: StateFlow<String> = combine(
     authRepository.nextExpiryTimeFlow,
     tickerFLow
   ) { nextExpiryTime, _ ->
@@ -48,11 +48,15 @@ class HomeViewModel @Inject constructor(
     }
   }.map { timeUntilLock ->
     timeUntilLock?.let {
-      context.getString(R.string.lock_app_button_with_next_lock_time_s, it.toString())
+      if (it > 0.seconds) {
+        context.getString(R.string.lock_app_button_subtitle_with_next_lock_time_s, it.toString())
+      } else {
+        context.getString(R.string.lock_app_button_subtitle_with_next_lock_time_on_background)
+      }
     } ?: context.getString(R.string.lock_app_button)
   }.stateIn(
     viewModelScope,
     SharingStarted.WhileSubscribed(stopTimeoutMillis = 0L),
-    initialValue = context.getString(R.string.lock_app_button)
+    initialValue = ""
   )
 }
