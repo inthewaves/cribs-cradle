@@ -27,6 +27,6 @@ abstract class FacilityDao {
   protected abstract suspend fun insert(facility: Facility): Long
 
   @Transaction
-  @Query("SELECT * FROM Facility ORDER BY id ASC")
+  @Query("SELECT * FROM Facility ORDER BY name COLLATE NOCASE ASC")
   abstract fun facilitiesPagingSource(): PagingSource<Int, Facility>
 }

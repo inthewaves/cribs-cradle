@@ -48,61 +48,11 @@ fun HealthcareFacilityDropdown(
   textFieldModifier: Modifier = Modifier,
   enabled: Boolean = true,
   label: @Composable (() -> Unit)? = null,
-  title: @Composable (() -> Unit)? = null,
   errorHint: String?,
 ) {
   var showDialog by remember { mutableStateOf(false) }
   if (showDialog) {
     val lazyItems = facilityPagingItemsFlow.collectAsLazyPagingItems()
-
-    /*
-    AlertDialog(
-      onDismissRequest = { showDialog = false },
-      modifier = Modifier.fillMaxHeight(0.9f),
-      title = {
-        Text(stringResource(id = R.string.discard_unsaved_changes_dialog_title))
-      },
-      text = {
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
-          items(lazyItems) { fac ->
-            if (fac != null) {
-              ListItem(
-                modifier = Modifier
-                  .fillMaxWidth()
-                  .clickable {
-                    onFacilitySelected(fac)
-                    showDialog = false
-                  }
-              ) { Text(fac.name ?: stringResource(R.string.unknown)) }
-            } else {
-              ListItem {
-                Row(Modifier.fillMaxWidth()) {
-                  CircularProgressIndicator()
-                }
-              }
-            }
-          }
-        }
-      },
-      buttons = {}
-    )
-
-     */
-
-
-    /*
-    AlertDialog(
-      onDismissRequest = { showDialog = false },
-      title = {Text("what")},
-      buttons = {
-        TextButton(onClick = { showDialog = false }) {
-          Text(text = "Hi")
-        }
-      }
-    )
-
-     */
-
 
     Dialog(onDismissRequest = { showDialog = false }) {
       Surface(
@@ -111,17 +61,21 @@ fun HealthcareFacilityDropdown(
           .height((LocalConfiguration.current.screenHeightDp * 0.8).dp),
         shape = MaterialTheme.shapes.medium
       ) {
-        // val lazyItems = facilityPagingItemsFlow.collectAsLazyPagingItems()
-        Column(modifier = Modifier
-          .fillMaxWidth()
-          .padding(horizontal = 12.dp, vertical = 24.dp)) {
+        Column(
+          modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 18.dp)
+        ) {
           CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.high) {
             Box(Modifier.align(Alignment.Start)) {
-              Text("Select a health facility", style = MaterialTheme.typography.subtitle1)
+              Text(
+                stringResource(R.string.patient_registration_health_facility_dialog_title),
+                style = MaterialTheme.typography.subtitle1
+              )
             }
           }
 
-          Spacer(Modifier.height(36.dp))
+          Spacer(Modifier.height(18.dp))
 
           LazyColumn(modifier = Modifier.fillMaxWidth(),) {
             items(lazyItems) { fac ->
@@ -149,9 +103,6 @@ fun HealthcareFacilityDropdown(
         }
       }
     }
-
-
-
   }
 
   OutlinedTextFieldWithErrorHint(

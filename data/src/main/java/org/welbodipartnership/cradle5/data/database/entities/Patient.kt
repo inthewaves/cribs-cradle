@@ -6,6 +6,7 @@ import androidx.core.text.isDigitsOnly
 import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import org.welbodipartnership.cradle5.data.R
 import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
@@ -19,7 +20,11 @@ import kotlin.reflect.KProperty1
  * (because on the web app, one cannot create a patient without first entering their registration
  * information)
  */
-@Entity
+@Entity(
+  indices = [
+    Index("healthcareFacilityId")
+  ]
+)
 @Immutable
 data class Patient(
   @PrimaryKey(autoGenerate = true)
@@ -28,10 +33,9 @@ data class Patient(
   @Embedded
   val serverInfo: ServerInfo? = null,
   val initials: String,
-  @get:JvmName("getPresentationDate")
   val presentationDate: FormDate?,
-  @get:JvmName("getDateOfBirth")
   val dateOfBirth: FormDate,
+  val healthcareFacilityId: Long,
   /**
    * A Unix timestamp of when this was last updated
    */

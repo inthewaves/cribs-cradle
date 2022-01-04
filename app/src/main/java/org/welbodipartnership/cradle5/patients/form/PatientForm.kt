@@ -361,6 +361,10 @@ fun PatientForm(
             label = {
               RequiredText(stringResource(R.string.patient_registration_healthcare_facility_label))
             },
+            modifier = Modifier.fillMaxWidth(),
+            textFieldModifier = Modifier
+              .fillMaxWidth()
+              .then(patientFields.healthcareFacility.createFocusChangeModifier())
           )
         }
       }

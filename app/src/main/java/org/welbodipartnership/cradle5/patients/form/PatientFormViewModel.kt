@@ -37,7 +37,7 @@ import org.welbodipartnership.cradle5.data.database.entities.Outcomes
 import org.welbodipartnership.cradle5.data.database.entities.Patient
 import org.welbodipartnership.cradle5.data.database.entities.PerinatalDeath
 import org.welbodipartnership.cradle5.data.database.entities.SurgicalManagementOfHaemorrhage
-import org.welbodipartnership.cradle5.data.database.resultentities.PatientAndOutcomes
+import org.welbodipartnership.cradle5.data.database.resultentities.PatientFacilityOutcomes
 import org.welbodipartnership.cradle5.data.serverenums.DropdownType
 import org.welbodipartnership.cradle5.data.settings.AppValuesStore
 import org.welbodipartnership.cradle5.util.coroutines.AppCoroutineDispatchers
@@ -67,7 +67,7 @@ class PatientFormViewModel @Inject constructor(
 
   val isExistingPatientEdit = existingPatientPrimaryKey != null
 
-  val existingParentAndOutcomes: Flow<PatientAndOutcomes?> = existingPatientPrimaryKey?.let { pk ->
+  val existingParentFacilityOutcomes: Flow<PatientFacilityOutcomes?> = existingPatientPrimaryKey?.let { pk ->
     database.patientDao().getPatientAndOutcomesFlow(pk)
   } ?: flowOf(null)
 
@@ -81,7 +81,7 @@ class PatientFormViewModel @Inject constructor(
     val isForPatientEdit get() = (this as? Ready)?.existingInfo != null
 
     object Loading : FormState()
-    class Ready(val existingInfo: PatientAndOutcomes?) : FormState()
+    class Ready(val existingInfo: PatientFacilityOutcomes?) : FormState()
     object Saving : FormState()
     class SavedNewPatient(val primaryKeyOfPatient: Long) : FormState()
     class SavedEditsToExistingPatient(val primaryKeyOfPatient: Long) : FormState()
@@ -189,14 +189,14 @@ class PatientFormViewModel @Inject constructor(
     if (existingPatientPrimaryKey != null) {
       viewModelScope.launch(appCoroutineDispatchers.main) {
         val patientAndOutcomes = database.patientDao()
-          .getPatientAndOutcomes(existingPatientPrimaryKey)
+          .getPatientFacilityAndOutcomes(existingPatientPrimaryKey)
         _formState.value = if (patientAndOutcomes == null) {
           Log.w(TAG, "Unable to find patient with pk $existingPatientPrimaryKey")
           FormState.FailedLoading(
             context.getString(R.string.patient_form_failed_to_load_patient_with_pk_d)
           )
         } else {
-          val (patient, outcomes) = patientAndOutcomes
+          val (patient, facility, outcomes) = patientAndOutcomes
           Log.d(TAG, "Setting up form for edit")
 
           with(formFields.patientFields) {
@@ -210,6 +210,7 @@ class PatientFormViewModel @Inject constructor(
             }
             age.backingState.value = patient.dateOfBirth.getAgeInYearsFromNow().toString()
             dateOfBirth.setStateFromFormDate(patient.dateOfBirth)
+            healthcareFacility.stateValue = facility
           }
 
           with(formFields.eclampsia) {
@@ -307,7 +308,7 @@ class PatientFormViewModel @Inject constructor(
       }
 
       _formState.value = try {
-        val patientAndOutcomes = existingParentAndOutcomes.first()
+        val patientAndOutcomes = existingParentFacilityOutcomes.first()
         require(
           existingPatientPrimaryKey == null ||
             patientAndOutcomes?.patient?.id == existingPatientPrimaryKey
@@ -318,13 +319,12 @@ class PatientFormViewModel @Inject constructor(
         val patient = with(formFields.patientFields) {
           if (!initials.isValid) {
             fieldToErrorMap.addFieldError(
-              R.string.patient_registration_card_title,
-              R.string.patient_registration_initials_label,
-              initials.errorFor(context, initials.stateValue)
+              categoryTitle = R.string.patient_registration_card_title,
+              fieldLabel = R.string.patient_registration_initials_label,
+              errorMessage = initials.errorFor(context, initials.stateValue)
             )
           }
           if (!presentationDate.isValid) {
-
             fieldToErrorMap.addFieldError(
               R.string.patient_registration_card_title,
               R.string.patient_registration_presentation_date_label,
@@ -345,6 +345,13 @@ class PatientFormViewModel @Inject constructor(
               dateOfBirth.errorFor(context, dateOfBirth.stateValue)
             )
           }
+          if (!healthcareFacility.isValid) {
+            fieldToErrorMap.addFieldError(
+              R.string.patient_registration_card_title,
+              R.string.patient_registration_healthcare_facility_label,
+              healthcareFacility.errorFor(context, healthcareFacility.stateValue)
+            )
+          }
 
           runCatching {
             Patient(
@@ -352,6 +359,9 @@ class PatientFormViewModel @Inject constructor(
               initials = initials.stateValue,
               presentationDate = presentationDate.dateFromStateOrNull(),
               dateOfBirth = dateOfBirth.dateFromStateOrThrow(),
+              healthcareFacilityId = requireNotNull(healthcareFacility.stateValue?.id) {
+                "Missing healthcareFacilityId"
+              },
               localNotes = localNotes.value
             )
           }

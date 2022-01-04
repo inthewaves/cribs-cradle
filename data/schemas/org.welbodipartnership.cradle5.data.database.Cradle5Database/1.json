@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "930f546105acf8424b56e8669e9463e8",
+    "identityHash": "79ff92b88e72b181c22d08fa3bbd0492",
     "entities": [
       {
         "tableName": "Patient",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `initials` TEXT NOT NULL, `presentationDate` TEXT, `dateOfBirth` TEXT NOT NULL, `lastUpdatedTimestamp` INTEGER NOT NULL, `localNotes` TEXT, `nodeId` INTEGER, `objectId` INTEGER)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `initials` TEXT NOT NULL, `presentationDate` TEXT, `dateOfBirth` TEXT NOT NULL, `healthcareFacilityId` INTEGER NOT NULL, `lastUpdatedTimestamp` INTEGER NOT NULL, `localNotes` TEXT, `nodeId` INTEGER, `objectId` INTEGER)",
         "fields": [
           {
             "fieldPath": "id",
@@ -30,6 +30,12 @@
             "fieldPath": "dateOfBirth",
             "columnName": "dateOfBirth",
             "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "healthcareFacilityId",
+            "columnName": "healthcareFacilityId",
+            "affinity": "INTEGER",
             "notNull": true
           },
           {
@@ -63,7 +69,17 @@
           ],
           "autoGenerate": true
         },
-        "indices": [],
+        "indices": [
+          {
+            "name": "index_Patient_healthcareFacilityId",
+            "unique": false,
+            "columnNames": [
+              "healthcareFacilityId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_Patient_healthcareFacilityId` ON `${TABLE_NAME}` (`healthcareFacilityId`)"
+          }
+        ],
         "foreignKeys": []
       },
       {
@@ -314,7 +330,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '930f546105acf8424b56e8669e9463e8')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '79ff92b88e72b181c22d08fa3bbd0492')"
     ]
   }
 }

@@ -31,6 +31,7 @@ import com.google.accompanist.insets.LocalWindowInsets
 import com.google.accompanist.insets.rememberInsetsPaddingValues
 import com.google.accompanist.insets.ui.TopAppBar
 import org.welbodipartnership.cradle5.R
+import org.welbodipartnership.cradle5.data.database.entities.Facility
 import org.welbodipartnership.cradle5.data.database.entities.Outcomes
 import org.welbodipartnership.cradle5.data.database.entities.Patient
 import org.welbodipartnership.cradle5.data.serverenums.ServerEnumCollection
@@ -73,8 +74,9 @@ fun PatientDetailsScreen(
       when (patientState) {
         is PatientDetailsViewModel.State.Ready -> {
           PatientDetailsScreen(
-            patientState.patient,
-            patientState.outcomes,
+            patientState.patientFacilityOutcomes.patient,
+            patientState.patientFacilityOutcomes.facility,
+            patientState.patientFacilityOutcomes.outcomes,
             onPatientEditPress = onPatientEdit,
             contentPadding = padding
           )
@@ -103,6 +105,7 @@ fun PatientDetailsScreen(
 @Composable
 private fun PatientDetailsScreen(
   patient: Patient,
+  facility: Facility?,
   outcomes: Outcomes?,
   onPatientEditPress: (patientPrimaryKey: Long) -> Unit,
   modifier: Modifier = Modifier,
@@ -121,7 +124,7 @@ private fun PatientDetailsScreen(
     item { Spacer(Modifier.height(8.dp)) }
 
     item {
-      PatientCard(patient = patient, modifier = Modifier.padding(16.dp))
+      PatientCard(patient = patient, facility = facility, modifier = Modifier.padding(16.dp))
     }
 
     item { Spacer(Modifier.height(8.dp)) }

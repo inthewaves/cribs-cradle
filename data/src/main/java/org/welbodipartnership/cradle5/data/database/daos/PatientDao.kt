@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.Flow
 import org.welbodipartnership.cradle5.data.database.entities.Outcomes
 import org.welbodipartnership.cradle5.data.database.entities.Patient
 import org.welbodipartnership.cradle5.data.database.resultentities.ListPatient
-import org.welbodipartnership.cradle5.data.database.resultentities.PatientAndOutcomes
+import org.welbodipartnership.cradle5.data.database.resultentities.PatientFacilityOutcomes
 
 @Dao
 abstract class PatientDao {
@@ -56,9 +56,9 @@ abstract class PatientDao {
 
   @Transaction
   @Query("SELECT * FROM Patient WHERE id = :patientPk")
-  abstract fun getPatientAndOutcomesFlow(patientPk: Long): Flow<PatientAndOutcomes?>
+  abstract fun getPatientAndOutcomesFlow(patientPk: Long): Flow<PatientFacilityOutcomes?>
 
   @Transaction
   @Query("SELECT * FROM Patient WHERE id = :patientPk")
-  abstract suspend fun getPatientAndOutcomes(patientPk: Long): PatientAndOutcomes?
+  abstract suspend fun getPatientFacilityAndOutcomes(patientPk: Long): PatientFacilityOutcomes?
 }

@@ -11,8 +11,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onCompletion
 import org.welbodipartnership.cradle5.LeafScreen
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
-import org.welbodipartnership.cradle5.data.database.entities.Outcomes
-import org.welbodipartnership.cradle5.data.database.entities.Patient
+import org.welbodipartnership.cradle5.data.database.resultentities.PatientFacilityOutcomes
 import javax.inject.Inject
 
 @HiltViewModel
@@ -22,7 +21,7 @@ class PatientDetailsViewModel @Inject constructor(
 ) : ViewModel() {
   sealed class State {
     object Loading : State()
-    class Ready(val patient: Patient, val outcomes: Outcomes?) : State()
+    class Ready(val patientFacilityOutcomes: PatientFacilityOutcomes) : State()
     object Failed : State()
   }
 
@@ -33,12 +32,10 @@ class PatientDetailsViewModel @Inject constructor(
     .onCompletion {
       emitAll(
         patientPrimaryKey?.let { pk ->
-
           dbWrapper.database!!.patientDao().getPatientAndOutcomesFlow(pk)
-            .map { patientWithOutcomes ->
-              Log.d("PatientDetailsViewModel", "New flow value: $patientWithOutcomes")
-              if (patientWithOutcomes != null) {
-                State.Ready(patientWithOutcomes.patient, patientWithOutcomes.outcomes)
+            .map { patientWithFacilityAndOutcomes ->
+              if (patientWithFacilityAndOutcomes != null) {
+                State.Ready(patientWithFacilityAndOutcomes)
               } else {
                 State.Failed
               }
