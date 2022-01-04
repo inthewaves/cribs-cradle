@@ -37,22 +37,18 @@ data class FormDate(val day: Int, val month: Int, val year: Int) : Comparable<Fo
   @IgnoredOnParcel
   val isExact: Boolean get() = day != 0 && month != 0
 
-  @IgnoredOnParcel
-  val isValid: Boolean by lazy {
-    // Let approximate fields pass validation by assigning them an always-valid value
-    validateDate(if (day == 0) 1 else day, if (month == 0) 1 else month, year)
-  }
+  fun isValid(areNonExactDatesValid: Boolean) = isValid(day, month, year, areNonExactDatesValid)
 
   /**
    * Checks whether this date would be valid if it was in mm/dd/yyyy format.
    */
-  @IgnoredOnParcel
-  val isValidIfItWereMmDdYyyyFormat: Boolean
-    get() = validateDate(if (month == 0) 1 else month,  if (day == 0) 1 else day, year)
+  fun isValidIfItWereMmDdYyyyFormat(areNonExactDatesValid: Boolean) =
+    isValid(month, day, year, areNonExactDatesValid)
 
-  private fun validateDate(day: Int, month: Int, year: Int): Boolean {
-    val monthToUse = if (month == 0) 1 else month
-    val dayToUse = if (day == 0) 1 else day
+  private fun isValid(day: Int, month: Int, year: Int, areNonExactDatesValid: Boolean): Boolean {
+    // Let approximate fields pass validation by assigning them an always-valid value
+    val monthToUse = if (areNonExactDatesValid && month == 0) 1 else month
+    val dayToUse = if (areNonExactDatesValid && day == 0) 1 else day
 
     // the logic here is derived from LocalDate's `of` static method
     try {

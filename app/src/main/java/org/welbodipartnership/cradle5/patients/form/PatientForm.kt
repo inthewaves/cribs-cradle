@@ -943,7 +943,7 @@ fun EclampsiaFormPreview() {
       EclampsiaForm(
         isFormEnabled = false,
         onFormEnabledStateChange = {},
-        dateState = NoFutureDateState(isMandatory = true),
+        dateState = NoFutureDateState(isMandatory = true, areApproximateDatesAcceptable = true),
         placeOfFirstFitState = EnumIdOnlyState(
           defaultEnums[DropdownType.Place],
           isMandatory = false
@@ -986,6 +986,7 @@ class InitialsState(backingState: MutableState<String> = mutableStateOf("")) : T
 
 class NoFutureDateState(
   val isMandatory: Boolean,
+  val areApproximateDatesAcceptable: Boolean,
   backingState: MutableState<String> = mutableStateOf("")
 ) : TextFieldState(
   validator = { possibleDate ->
@@ -1000,7 +1001,7 @@ class NoFutureDateState(
         return@run false
       }
 
-      if (!formDate.isValid) {
+      if (!formDate.isValid(areApproximateDatesAcceptable)) {
         return@run false
       }
 
@@ -1011,8 +1012,8 @@ class NoFutureDateState(
     val formDate = date.toFormDateFromNoSlashesOrNull()
     if (formDate != null) {
       when {
-        formDate.isValid -> ctx.getString(R.string.form_date_cannot_be_in_future_error)
-        formDate.isValidIfItWereMmDdYyyyFormat -> {
+        formDate.isValid(areApproximateDatesAcceptable) -> ctx.getString(R.string.form_date_cannot_be_in_future_error)
+        formDate.isValidIfItWereMmDdYyyyFormat(areApproximateDatesAcceptable) -> {
           ctx.getString(R.string.form_date_expected_day_month_year_format_error)
         }
         else -> {
@@ -1038,6 +1039,7 @@ class NoFutureDateState(
 
 class LimitedAgeDateState(
   val limit: LongRange,
+  val areApproximateDatesAcceptable: Boolean,
   backingState: MutableState<String> = mutableStateOf("")
 ) : TextFieldState(
   validator = { possibleDate ->
@@ -1048,7 +1050,7 @@ class LimitedAgeDateState(
         return@run false
       }
 
-      if (!formDate.isValid) {
+      if (!formDate.isValid(areNonExactDatesValid = areApproximateDatesAcceptable)) {
         return@run false
       }
 
@@ -1060,10 +1062,10 @@ class LimitedAgeDateState(
     when {
       formDate != null -> {
         when {
-          formDate.isValid -> {
+          formDate.isValid(areApproximateDatesAcceptable) -> {
             ctx.getString(R.string.age_must_be_in_range_d_and_d, limit.first, limit.last)
           }
-          formDate.isValidIfItWereMmDdYyyyFormat -> {
+          formDate.isValidIfItWereMmDdYyyyFormat(areApproximateDatesAcceptable) -> {
             ctx.getString(R.string.form_date_expected_day_month_year_format_error)
           }
           else -> ctx.getString(R.string.form_date_invalid_error)

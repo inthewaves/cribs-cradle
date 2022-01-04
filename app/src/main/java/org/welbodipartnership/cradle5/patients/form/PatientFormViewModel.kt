@@ -99,9 +99,14 @@ class PatientFormViewModel @Inject constructor(
       initials = InitialsState(
         backingState = handle.createMutableState("patientInitials", "")
       ),
-      presentationDate = dateState("patientPresentationDate", isMandatory = false),
+      presentationDate = dateState(
+        "patientPresentationDate",
+        isMandatory = false,
+        areApproximateDatesAcceptable = false,
+      ),
       dateOfBirth = LimitedAgeDateState(
         AGE_RANGE,
+        areApproximateDatesAcceptable = true,
         handle.createMutableState("patientDateOfBirth", "")
       ),
       age = LimitedAgeIntState(
@@ -116,7 +121,11 @@ class PatientFormViewModel @Inject constructor(
     ),
     eclampsia = OutcomeFields.Eclampsia(
       isEnabled = enabledState("eclampsiaEnabled"),
-      date = dateState("eclampsiaDate", isMandatory = true),
+      date = dateState(
+        "eclampsiaDate",
+        isMandatory = true,
+        areApproximateDatesAcceptable = false
+      ),
       placeOfFirstFit = enumIdOnlyState(
         "eclampsiaPlace",
         DropdownType.Place,
@@ -125,7 +134,11 @@ class PatientFormViewModel @Inject constructor(
     ),
     hysterectomy = OutcomeFields.Hysterectomy(
       isEnabled = enabledState("hysterectomyEnabled"),
-      date = dateState("hysterectomyDate", isMandatory = true),
+      date = dateState(
+        "hysterectomyDate",
+        isMandatory = true,
+        areApproximateDatesAcceptable = false
+      ),
       cause = enumWithOtherState(
         "hysterectomyCause",
         DropdownType.CauseOfHysterectomy,
@@ -135,7 +148,11 @@ class PatientFormViewModel @Inject constructor(
     ),
     hduItuAdmission = OutcomeFields.HduItuAdmission(
       isEnabled = enabledState("hduItuAdmissionEnabled"),
-      date = dateState("hduItuAdmissionDate", isMandatory = true),
+      date = dateState(
+        "hduItuAdmissionDate",
+        isMandatory = true,
+        areApproximateDatesAcceptable = false
+      ),
       cause = enumWithOtherState(
         "hduItuAdmissionCause",
         DropdownType.CauseForHduOrItuAdmission,
@@ -148,7 +165,11 @@ class PatientFormViewModel @Inject constructor(
     ),
     maternalDeath = OutcomeFields.MaternalDeath(
       isEnabled = enabledState("maternalDeathEnabled"),
-      date = dateState("maternalDeathDate", isMandatory = true),
+      date = dateState(
+        "maternalDeathDate",
+        isMandatory = true,
+        areApproximateDatesAcceptable = false
+      ),
       underlyingCause = enumWithOtherState(
         "maternalDeathUnderlyingCause",
         DropdownType.UnderlyingCauseOfMaternalDeath,
@@ -162,7 +183,11 @@ class PatientFormViewModel @Inject constructor(
     ),
     surgicalManagement = OutcomeFields.SurgicalManagement(
       isEnabled = enabledState("surgicalManagementEnabled"),
-      date = dateState("surgicalManagementDate", isMandatory = true),
+      date = dateState(
+        "surgicalManagementDate",
+        isMandatory = true,
+        areApproximateDatesAcceptable = false
+      ),
       type = enumWithOtherState(
         "surgicalManagementType",
         DropdownType.TypeOfSurgicalManagement,
@@ -171,7 +196,11 @@ class PatientFormViewModel @Inject constructor(
     ),
     perinatalDeath = OutcomeFields.PerinatalDeath(
       isEnabled = enabledState("perinatalDeathEnabled"),
-      date = dateState("perinatalDeathDate", isMandatory = true),
+      date = dateState(
+        "perinatalDeathDate",
+        isMandatory = true,
+        areApproximateDatesAcceptable = false
+      ),
       outcome = enumIdOnlyState(
         "perinatalDeathOutcome",
         DropdownType.PerinatalOutcome,
@@ -663,8 +692,12 @@ class PatientFormViewModel @Inject constructor(
   private fun enabledState(key: String): SavedStateMutableState<Boolean?> =
     handle.createMutableState(key, null)
 
-  private fun dateState(key: String, isMandatory: Boolean) =
-    NoFutureDateState(isMandatory, handle.createMutableState(key, ""))
+  private fun dateState(key: String, isMandatory: Boolean, areApproximateDatesAcceptable: Boolean) =
+    NoFutureDateState(
+      isMandatory,
+      areApproximateDatesAcceptable = areApproximateDatesAcceptable,
+      handle.createMutableState(key, "")
+    )
 
   private fun enumIdOnlyState(
     key: String,
