@@ -212,7 +212,10 @@ class PatientFormViewModel @Inject constructor(
             age.backingState.value = patient.dateOfBirth.getAgeInYearsFromNow().toString()
             dateOfBirth.setStateFromFormDate(patient.dateOfBirth)
 
-            val facilityPosition = database.facilitiesDao().getFacilityIndexWhenOrderedByName(facility.id)?.toInt()
+            val facilityPosition = database.facilitiesDao()
+              .getFacilityIndexWhenOrderedByName(facility.id)
+              ?.toInt()
+              ?.coerceAtLeast(0)
             healthcareFacility.stateValue = FacilityAndPosition(facility, facilityPosition)
           }
 

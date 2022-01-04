@@ -25,11 +25,8 @@ fun PatientCard(patient: Patient, facility: Facility?, modifier: Modifier = Modi
     val spacerHeight = 4.dp
     LabelAndValueOrNone(
       label = stringResource(R.string.patient_registration_card_id_label),
-      value = if (patient.serverInfo == null) {
-        patient.id.toString()
-      } else {
-        stringResource(R.string.patient_registration_server_id_not_available)
-      },
+      value = patient.serverPatientId?.toString() ?:
+      stringResource(R.string.patient_registration_server_id_not_available),
     )
     Spacer(modifier = Modifier.height(spacerHeight))
     LabelAndValueOrNone(

@@ -990,7 +990,7 @@ class NoFutureDateState(
 ) : TextFieldState(
   validator = { possibleDate ->
     run {
-      if (isMandatory && possibleDate.isEmpty()) {
+      if (!isMandatory && possibleDate.isEmpty()) {
         return@run true
       }
 
