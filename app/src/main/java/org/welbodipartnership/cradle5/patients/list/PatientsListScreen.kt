@@ -139,6 +139,7 @@ private fun PatientsListScreen(
               viewModel.addPatient(
                 Patient(
                   initials = "AB",
+                  serverInfo = null,
                   presentationDate = FormDate(day = 5, month = 4, year = 2010),
                   dateOfBirth = FormDate(day = 5, month = 4, year = 2010),
                   healthcareFacilityId = 0L,

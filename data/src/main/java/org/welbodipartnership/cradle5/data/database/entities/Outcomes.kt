@@ -36,20 +36,20 @@ data class Outcomes(
   @ColumnInfo(name = "patientId")
   val patientId: Long,
   @Embedded
-  val serverInfo: ServerInfo? = null,
+  val serverInfo: ServerInfo?,
 
   @Embedded(prefix = "eclampsia_")
-  val eclampsiaFit: EclampsiaFit? = null,
+  val eclampsiaFit: EclampsiaFit?,
   @Embedded(prefix = "hysterectomy_")
-  val hysterectomy: Hysterectomy? = null,
+  val hysterectomy: Hysterectomy?,
   @Embedded(prefix = "hdu_itu_admission_")
-  val hduOrItuAdmission: HduOrItuAdmission? = null,
+  val hduOrItuAdmission: HduOrItuAdmission?,
   @Embedded(prefix = "maternal_death_")
-  val maternalDeath: MaternalDeath? = null,
+  val maternalDeath: MaternalDeath?,
   @Embedded(prefix = "surgical_mgmt_")
-  val surgicalManagement: SurgicalManagementOfHaemorrhage? = null,
+  val surgicalManagement: SurgicalManagementOfHaemorrhage?,
   @Embedded(prefix = "perinatal_death_")
-  val perinatalDeath: PerinatalDeath? = null
+  val perinatalDeath: PerinatalDeath?
 ) : Verifiable<Outcomes> {
   fun isValueForPropertyValid(
     property: KProperty1<out Outcomes, *>,

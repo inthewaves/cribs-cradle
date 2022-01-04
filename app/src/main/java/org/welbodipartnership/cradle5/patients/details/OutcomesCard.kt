@@ -214,6 +214,7 @@ fun OutcomesCardPreview() {
 
 val testOutcomes = Outcomes(
   patientId = 5L,
+  serverInfo = null,
   eclampsiaFit = EclampsiaFit(
     date = FormDate(20, 4, 2019),
     place = EnumSelection.IdOnly(2)

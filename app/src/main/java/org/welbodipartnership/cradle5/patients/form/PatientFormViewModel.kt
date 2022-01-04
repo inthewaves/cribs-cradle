@@ -225,6 +225,14 @@ class PatientFormViewModel @Inject constructor(
           FormState.FailedLoading(
             context.getString(R.string.patient_form_failed_to_load_patient_with_pk_d)
           )
+        } else if (
+          patientAndOutcomes.patient.serverInfo != null ||
+          patientAndOutcomes.outcomes?.serverInfo != null
+        ) {
+          Log.w(TAG, "trying to edit a patient with server info")
+          FormState.FailedLoading(
+            context.getString(R.string.patient_form_cannot_edit_patient_already_on_server)
+          )
         } else {
           val (patient, facility, outcomes) = patientAndOutcomes
           Log.d(TAG, "Setting up form for edit")
@@ -391,6 +399,7 @@ class PatientFormViewModel @Inject constructor(
           runCatching {
             Patient(
               id = patientAndOutcomes?.patient?.id ?: 0L,
+              serverInfo = patientAndOutcomes?.patient?.serverInfo,
               initials = initials.stateValue,
               presentationDate = presentationDate.dateFromStateOrNull(),
               dateOfBirth = dateOfBirth.dateFromStateOrThrow(),
@@ -661,6 +670,7 @@ class PatientFormViewModel @Inject constructor(
               Outcomes(
                 id = patientAndOutcomes?.outcomes?.id ?: 0,
                 patientId = pk,
+                serverInfo = patientAndOutcomes?.outcomes?.serverInfo,
                 eclampsiaFit = eclampsia?.getOrThrow(),
                 hysterectomy = hysterectomy?.getOrThrow(),
                 hduOrItuAdmission = hduOrItuAdmission?.getOrThrow(),

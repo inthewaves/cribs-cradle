@@ -31,7 +31,7 @@ data class Patient(
   @ColumnInfo(name = "id")
   val id: Long = 0,
   @Embedded
-  val serverInfo: ServerInfo? = null,
+  val serverInfo: ServerInfo?,
   val initials: String,
   val presentationDate: FormDate?,
   val dateOfBirth: FormDate,

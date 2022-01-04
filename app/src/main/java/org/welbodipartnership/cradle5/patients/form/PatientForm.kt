@@ -2,6 +2,7 @@ package org.welbodipartnership.cradle5.patients.form
 
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,8 +13,10 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
 import androidx.compose.material.Card
@@ -123,7 +126,8 @@ fun PatientForm(
 
   val snackbarHostState = remember { SnackbarHostState() }
 
-  val resources = LocalContext.current.resources
+  val context = LocalContext.current
+  val resources = context.resources
   LaunchedEffect(formState.value) {
     when (val state = formState.value) {
       is PatientFormViewModel.FormState.FailedValidation -> {
@@ -138,12 +142,19 @@ fun PatientForm(
           )
         )
       }
+      is PatientFormViewModel.FormState.FailedException -> {
+        snackbarHostState.showSnackbar(
+          context.getString(R.string.patient_form_snackbar_failed_to_save_exception)
+        )
+      }
       else -> {}
     }
   }
 
   var showUnsavedChangesDialog by rememberSaveable { mutableStateOf(false) }
-  BackHandler { showUnsavedChangesDialog = true }
+  BackHandler(
+    enabled = formState.value !is PatientFormViewModel.FormState.FailedLoading
+  ) { showUnsavedChangesDialog = true }
   if (showUnsavedChangesDialog) {
     AlertDialog(
       onDismissRequest = { showUnsavedChangesDialog = false },
@@ -499,6 +510,22 @@ fun PatientForm(
                 CategoryHeader(stringResource(section))
                 for (error in errors) {
                   Text(error.errorMessage)
+                }
+              }
+            }
+          } else if (currentFormState is PatientFormViewModel.FormState.FailedException) {
+            val horizontalScrollState = rememberScrollState()
+            BaseDetailsCard(
+              title = stringResource(R.string.errors_card_title),
+              modifier = Modifier.padding(16.dp),
+              backgroundColor = MaterialTheme.colors.error.copy(alpha = 0.3f)
+            ) {
+              SelectionContainer {
+                Column {
+                  Text(
+                    currentFormState.exception.stackTraceToString(),
+                    modifier = Modifier.horizontalScroll(horizontalScrollState)
+                  )
                 }
               }
             }
