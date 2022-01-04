@@ -134,6 +134,14 @@ private fun <T : EnumSelection> BaseEnumDropdownMenu(
 
   Column(modifier) {
 
+    val onClick = {
+      expanded = if (enabled) {
+        // ensure that tapping on the menu again closes it
+        !expanded
+      } else {
+        expanded
+      }
+    }
     FixLongPressExposedDropdownMenuBox(
       expanded = enabled && expanded,
       onExpandedChange = {
@@ -151,7 +159,8 @@ private fun <T : EnumSelection> BaseEnumDropdownMenu(
         enabled = enabled,
         trailingIcon = {
           ExposedDropdownMenuDefaults.TrailingIcon(
-            expanded = enabled && expanded
+            expanded = enabled && expanded,
+            onIconClick = onClick
           )
         },
         errorHint = errorHint,
@@ -163,12 +172,7 @@ private fun <T : EnumSelection> BaseEnumDropdownMenu(
               LaunchedEffect(interactionSource) {
                 interactionSource.interactions.collect {
                   if (it is PressInteraction.Release) {
-                    expanded = if (enabled) {
-                      // ensure that tapping on the menu again closes it
-                      !expanded
-                    } else {
-                      expanded
-                    }
+                    onClick()
                   }
                 }
               }

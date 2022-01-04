@@ -136,7 +136,12 @@ fun HealthcareFacilityDropdown(
     label = label,
     maxLines = 2,
     enabled = enabled,
-    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = enabled && showDialog) },
+    trailingIcon = {
+      ExposedDropdownMenuDefaults.TrailingIcon(
+        expanded = enabled && showDialog,
+        onIconClick = { showDialog = true }
+      )
+    },
     errorHint = errorHint,
     modifier = modifier,
     textFieldModifier = textFieldModifier,
