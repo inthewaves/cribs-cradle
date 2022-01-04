@@ -253,7 +253,12 @@ class PatientFormViewModel @Inject constructor(
               ?.let { database.facilitiesDao().getFacilityIndexWhenOrderedByName(it) }
               ?.toInt()
               ?.coerceAtLeast(0)
-            healthcareFacility.stateValue = FacilityAndPosition(facility, facilityPosition)
+            healthcareFacility.stateValue = facility?.let {
+              FacilityAndPosition(
+                it,
+                facilityPosition
+              )
+            }
           }
 
           with(formFields.eclampsia) {

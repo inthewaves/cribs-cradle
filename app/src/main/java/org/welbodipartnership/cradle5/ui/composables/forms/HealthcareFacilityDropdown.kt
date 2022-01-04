@@ -49,7 +49,7 @@ import org.welbodipartnership.cradle5.ui.composables.screenlists.ScreenListItem
 @Immutable
 @Parcelize
 data class FacilityAndPosition(
-  val facility: Facility?,
+  val facility: Facility,
   val position: Int?
 ) : Parcelable
 

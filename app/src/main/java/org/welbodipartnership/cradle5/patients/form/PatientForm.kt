@@ -995,7 +995,7 @@ class HealthcareFacilityState(
   val isRequired: Boolean,
   backingState: MutableState<FacilityAndPosition?>,
 ) : FieldState<FacilityAndPosition?>(
-  validator = { facility -> if (isRequired) facility != null else true },
+  validator = { facility -> if (isRequired) facility?.facility != null else true },
   errorFor = { ctx, _ -> ctx.getString(R.string.missing_healthcare_facility_error) },
   backingState = backingState,
   initialValue = null,
