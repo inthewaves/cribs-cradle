@@ -4,6 +4,8 @@ import android.content.Context
 import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -15,13 +17,18 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.yield
 import org.welbodipartnership.api.ApiAuthToken
+import org.welbodipartnership.api.cradle5.HealthcareFacilityLookupEntry
+import org.welbodipartnership.api.cradle5.HealthcareFacilitySummary
 import org.welbodipartnership.cradle5.data.cryptography.PasswordHasher
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
+import org.welbodipartnership.cradle5.data.database.entities.Facility
 import org.welbodipartnership.cradle5.data.settings.AppValuesStore
 import org.welbodipartnership.cradle5.data.settings.AuthToken
 import org.welbodipartnership.cradle5.data.settings.PasswordHash
+import org.welbodipartnership.cradle5.domain.ControlId
+import org.welbodipartnership.cradle5.domain.FormId
 import org.welbodipartnership.cradle5.domain.NetworkResult
-import org.welbodipartnership.cradle5.domain.R
+import org.welbodipartnership.cradle5.domain.ObjectId
 import org.welbodipartnership.cradle5.domain.RestApi
 import org.welbodipartnership.cradle5.util.ApplicationCoroutineScope
 import org.welbodipartnership.cradle5.util.coroutines.AppCoroutineDispatchers
@@ -106,29 +113,123 @@ class AuthRepository @Inject internal constructor(
     class Exception(val errorMessage: String?) : LoginResult()
   }
 
-  suspend fun login(username: String, password: String): LoginResult {
+  suspend fun login(
+    username: String,
+    password: String,
+    loginEventMessagesChannel: SendChannel<String>?
+  ): LoginResult {
+    /*
     if (!networkObserver.isNetworkAvailable()) {
       Log.d(TAG, "login(): network not available")
       return LoginResult.Exception(context.getString(R.string.login_error_no_network))
     }
-    val token: AuthToken = when (val loginResult = restApi.login(username, password)) {
-      is NetworkResult.Success -> loginResult.value
-      is NetworkResult.Failure -> {
-        return LoginResult.Invalid(
-          loginResult.errorValue?.errorDescription,
-          loginResult.statusCode
-        )
+     */
+
+    try {
+      loginEventMessagesChannel?.trySend("Submitting credentials to server")
+      val token: AuthToken = when (val loginResult = restApi.login(username, password)) {
+        is NetworkResult.Success -> loginResult.value
+        is NetworkResult.Failure -> {
+          return LoginResult.Invalid(
+            loginResult.errorValue?.errorDescription,
+            loginResult.statusCode
+          )
+        }
+        is NetworkResult.NetworkException -> {
+          return LoginResult.Exception(loginResult.formatErrorMessage(context))
+        }
       }
-      is NetworkResult.NetworkException -> {
-        return LoginResult.Exception(
-          "(${loginResult.cause::class.java.simpleName}) ${loginResult.cause.localizedMessage}"
-        )
+      Log.d(TAG, "login(): success")
+      loginEventMessagesChannel?.trySend("Setting up lockscreen")
+      val hash = passwordHasher.hashPassword(password)
+      appValuesStore.insertLoginDetails(authToken = token, hash)
+
+      // Try to get the userId from the index menu items
+      loginEventMessagesChannel?.trySend("Getting user id")
+      when (val indexResult = restApi.getIndexEntries()) {
+        is NetworkResult.Success -> {
+          val userDataItem = indexResult.value.asReversed().find { it.title == "User data" }
+          if (userDataItem != null) {
+            userDataItem.url.substringAfterLast('/', "")
+              .toIntOrNull()
+              ?.let { userId -> appValuesStore.insertUserId(userId) }
+              ?: loginEventMessagesChannel?.trySend(
+                "Unable to get userId: ${userDataItem.url} doesn't end in a number"
+              )
+          } else {
+            loginEventMessagesChannel?.trySend(
+              "Unable to get userId: Missing user data index tab"
+            )
+            delay(800L)
+          }
+        }
+        is NetworkResult.Failure -> {
+          val message = indexResult.errorValue.decodeToString()
+          loginEventMessagesChannel?.trySend(
+            "Unable to get userId: HTTP ${indexResult.statusCode} error (message: $message)"
+          )
+          delay(800L)
+        }
+        is NetworkResult.NetworkException -> {
+          loginEventMessagesChannel?.trySend(
+            "Unable to get userId: ${indexResult.formatErrorMessage(context)}"
+          )
+          delay(800L)
+        }
       }
+
+      // Try to get the user's district
+      loginEventMessagesChannel?.trySend("Getting user district")
+      when (
+        val result = restApi.getFormData<HealthcareFacilitySummary>(FormId(113), ObjectId.QUERIES)
+      ) {
+        is NetworkResult.Success -> appValuesStore.setDistrictName(result.value.districtName)
+        is NetworkResult.Failure -> {
+          val message = result.errorValue.decodeToString()
+          loginEventMessagesChannel?.trySend(
+            "Unable to get district: HTTP ${result.statusCode} error (message: $message)"
+          )
+        }
+        is NetworkResult.NetworkException -> {
+          loginEventMessagesChannel?.trySend(
+            "Unable to get district: ${result.formatErrorMessage(context)}"
+          )
+        }
+      }
+
+      // Try to get the user's district
+      loginEventMessagesChannel?.trySend("Getting facilities")
+      when (
+        val result = restApi
+          .getDynamicLookupData<HealthcareFacilityLookupEntry>(
+            ControlId("Control2092"),
+            FormId(63),
+            ObjectId.QUERIES
+          )
+      ) {
+        is NetworkResult.Success -> {
+          dbWrapper.withTransaction { db ->
+            loginEventMessagesChannel?.trySend("Inserting ${result.value.totalNumberOfRecords} facilities")
+            val dao = db.facilitiesDao()
+            result.value.results.forEach { dao.upsert(Facility(it.id, it.name)) }
+          }
+        }
+        is NetworkResult.Failure -> {
+          val message = result.errorValue.decodeToString()
+          return LoginResult.Invalid(
+            "Unable to get facilities: HTTP ${result.statusCode} error (message: $message)",
+            result.statusCode
+          )
+        }
+        is NetworkResult.NetworkException -> {
+          return LoginResult.Exception(result.formatErrorMessage(context))
+        }
+      }
+
+      return LoginResult.Success
+    } finally {
+      loginEventMessagesChannel?.close()
     }
-    Log.d(TAG, "login(): success")
-    val hash = passwordHasher.hashPassword(password)
-    appValuesStore.insertLoginDetails(authToken = token, hash)
-    return LoginResult.Success
   }
 
   suspend fun reauthForLockscreen(password: String): Boolean {

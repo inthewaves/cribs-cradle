@@ -5,7 +5,9 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.room.withTransaction
 import net.sqlcipher.database.SupportFactory
+import org.welbodipartnership.cradle5.data.database.daos.FacilityDao
 import org.welbodipartnership.cradle5.data.database.daos.OutcomesDao
 import org.welbodipartnership.cradle5.data.database.daos.PatientDao
 import org.welbodipartnership.cradle5.data.database.entities.Facility
@@ -22,6 +24,12 @@ const val DATABASE_NAME = "cradle5.db"
 class CradleDatabaseWrapper @Inject constructor() {
   var database: Cradle5Database? = null
     private set
+
+  public suspend fun <T> withTransaction(block: suspend (db: Cradle5Database) -> T): T {
+    return database!!.withTransaction {
+      block(database!!)
+    }
+  }
 
   internal fun setup(context: Context, supportFactory: SupportFactory) {
     if (database != null) {
@@ -52,4 +60,5 @@ class CradleDatabaseWrapper @Inject constructor() {
 abstract class Cradle5Database : RoomDatabase() {
   abstract fun patientDao(): PatientDao
   abstract fun outcomesDao(): OutcomesDao
+  abstract fun facilitiesDao(): FacilityDao
 }

@@ -1,5 +1,6 @@
 package org.welbodipartnership.cradle5.domain
 
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
@@ -8,7 +9,11 @@ import javax.inject.Singleton
 value class FormId(val id: Long)
 
 @JvmInline
-value class ObjectId(val id: Long)
+value class ObjectId(val id: Long) {
+  companion object {
+    val QUERIES = ObjectId(0)
+  }
+}
 
 @JvmInline
 value class NodeId(val id: Long)
@@ -23,6 +28,8 @@ value class ControlId(val id: String)
 class UrlProvider @Inject constructor(@Named("baseApiUrl") val baseApiUrl: String) {
   val token =
     "$baseApiUrl/v0/token"
+
+  val indexEndpoint = "$baseApiUrl/"
 
   fun forms(formId: FormId, objectId: ObjectId) =
     "$baseApiUrl/v0/forms/${formId.id}/${objectId.id}"
@@ -57,8 +64,17 @@ class UrlProvider @Inject constructor(@Named("baseApiUrl") val baseApiUrl: Strin
   /**
    * Returns the values of a dynamic lookup for forms that may not be in the patient’s
    */
-  fun dynamicLookups(controlId: ControlId, formId: FormId, objectId: ObjectId) =
-    "$baseApiUrl/v0/lookups/dynamic/${controlId.id}/${formId.id}/${objectId.id}"
+  fun dynamicLookups(controlId: ControlId, formId: FormId, objectId: ObjectId, page: Int) =
+    "$baseApiUrl/v0/lookups/dynamic/${controlId.id}/${formId.id}/${objectId.id}".let {
+      if (page > 1) {
+        it.toHttpUrl().newBuilder()
+          .addQueryParameter("page", page.toString())
+          .build()
+          .toString()
+      } else {
+        it
+      }
+    }
 
   fun dynamicLookups(controlId: ControlId, nodeId: NodeId) =
     "$baseApiUrl/v0/lookups/dynamic/${controlId.id}/${nodeId.id}"

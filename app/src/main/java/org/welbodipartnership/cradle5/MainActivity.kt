@@ -157,7 +157,8 @@ fun LoginOrLockscreen(authState: AuthState) {
   DisposableEffect(null) {
     // getting around viewmodels not scoped to composables
     onDispose {
-      authViewModel.submitAction(AuthViewModel.ChannelAction.Reset)
+      Log.d("MainActivity", "disposing and resetting login screen")
+      authViewModel.reset()
     }
   }
 
@@ -179,7 +180,12 @@ fun LoginOrLockscreen(authState: AuthState) {
         when (state) {
           AuthViewModel.ScreenState.Done,
           AuthViewModel.ScreenState.Initializing,
-          AuthViewModel.ScreenState.Submitting -> CircularProgressIndicator()
+          AuthViewModel.ScreenState.Submitting -> {
+            val loginInfo by authViewModel.loginMessagesFlow.collectAsState()
+            CircularProgressIndicator()
+            Spacer(Modifier.height(12.dp))
+            Text(loginInfo)
+          }
           is AuthViewModel.ScreenState.WaitingForLogin -> {
             LoginForm(
               LoginType.NewLogin { username, password ->

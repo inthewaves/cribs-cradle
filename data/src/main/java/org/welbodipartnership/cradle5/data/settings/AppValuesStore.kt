@@ -52,6 +52,30 @@ class AppValuesStore @Inject internal constructor(
     }
   }
 
+  suspend fun insertUserId(userId: Int) {
+    encryptedSettings.updateData { settings ->
+      settings.toBuilder()
+        .setUserInfo(
+          settings.userInfo.toBuilder()
+            .setUserId(userId)
+            .build()
+        )
+        .build()
+    }
+  }
+
+  suspend fun setDistrictName(districtName: String) {
+    encryptedSettings.updateData { settings ->
+      settings.toBuilder()
+        .setUserInfo(
+          settings.userInfo.toBuilder()
+            .setDistrictName(districtName)
+            .build()
+        )
+        .build()
+    }
+  }
+
   suspend fun setLastTimeAuthenticatedToNow() {
     setLastTimeAuthenticated(UnixTimestamp.now())
   }

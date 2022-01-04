@@ -1,9 +1,11 @@
 package org.welbodipartnership.cradle5.domain
 
+import android.content.Context
 import android.util.Log
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withContext
+import okhttp3.HttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -18,6 +20,7 @@ import javax.inject.Singleton
 val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
 
 @Singleton
+@PublishedApi
 internal class HttpClient @Inject constructor(
   val okHttpClient: OkHttpClient,
   val appCoroutineDispatchers: AppCoroutineDispatchers,
@@ -66,9 +69,42 @@ internal class HttpClient @Inject constructor(
     requestBody: RequestBody? = null,
     crossinline failureReader: suspend (BufferedSource) -> FailT,
     crossinline successReader: suspend (BufferedSource) -> SuccessT,
+  ): NetworkResult<SuccessT, FailT> = makeRequestInternal(
+    method,
+    { url(url) },
+    headers,
+    requestBody,
+    failureReader,
+    successReader
+  )
+
+  suspend inline fun <SuccessT, FailT> makeRequest(
+    method: Method,
+    url: HttpUrl,
+    headers: Map<String, String>,
+    requestBody: RequestBody? = null,
+    crossinline failureReader: suspend (BufferedSource) -> FailT,
+    crossinline successReader: suspend (BufferedSource) -> SuccessT,
+  ): NetworkResult<SuccessT, FailT> = makeRequestInternal(
+    method,
+    { url(url) },
+    headers,
+    requestBody,
+    failureReader,
+    successReader
+  )
+
+  @PublishedApi
+  internal suspend inline fun <SuccessT, FailT> makeRequestInternal(
+    method: Method,
+    crossinline urlSetup: Request.Builder.() -> Unit,
+    headers: Map<String, String>,
+    requestBody: RequestBody? = null,
+    crossinline failureReader: suspend (BufferedSource) -> FailT,
+    crossinline successReader: suspend (BufferedSource) -> SuccessT,
   ): NetworkResult<SuccessT, FailT> = withContext(appCoroutineDispatchers.io) {
     val request = Request.Builder().apply {
-      url(url)
+      urlSetup()
       // Note: OkHttp will transparently handle accepting and decoding gzip responses.
       // No need to put a Content-Encoding header here.
       headers.forEach { (name, value) -> addHeader(name, value) }
@@ -77,7 +113,7 @@ internal class HttpClient @Inject constructor(
       method(method.name, requestBody)
     }.build()
 
-    val message = "${method.name} $url"
+    val message = "${method.name} ${request.url}"
     try {
       // "Inappropriate blocking method call" should be fine if we do this in Dispatchers.IO.
       runInterruptible { okHttpClient.newCall(request).execute() }.use {
@@ -135,6 +171,8 @@ internal class HttpClient @Inject constructor(
   }
 }
 
+typealias DefaultNetworkResult<SuccessT> = NetworkResult<SuccessT, ByteArray>
+
 sealed interface NetworkResult<SuccessT, FailT> {
   fun valueOrNull(): SuccessT? = if (this is Success) value else null
 
@@ -176,5 +214,8 @@ sealed interface NetworkResult<SuccessT, FailT> {
   @JvmInline
   value class NetworkException<SuccessT, FailT>(
     val cause: Exception
-  ) : NetworkResult<SuccessT, FailT>
+  ) : NetworkResult<SuccessT, FailT> {
+    fun formatErrorMessage(context: Context) =
+      "(${cause::class.java.simpleName}) ${cause.localizedMessage}"
+  }
 }
