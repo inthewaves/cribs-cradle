@@ -139,7 +139,7 @@ value class ServerEnumCollection private constructor(
             )
           ),
           ServerEnum(
-            DropdownType.UnderlyingCauseOfDeath,
+            DropdownType.UnderlyingCauseOfMaternalDeath,
             listOf(
               ServerEnum.Entry(
                 id = 1,
@@ -342,7 +342,7 @@ enum class DropdownType(val serverLookupId: Int) {
   Place(14),
   CauseOfHysterectomy(15),
   CauseForHduOrItuAdmission(16),
-  UnderlyingCauseOfDeath(17),
+  UnderlyingCauseOfMaternalDeath(17),
   TypeOfSurgicalManagement(18),
   PerinatalOutcome(19),
   MaternalFactorsRelatedToPerinatalLoss(20);

@@ -20,10 +20,17 @@ message EncryptedSettings {
   optional AuthToken token = 1;
   /* A hash of the user's login password, stored for lockscreen authentication purposes. */
   optional PasswordHash password_hash = 2;
+  optional UserInfo user_info = 3;
   /* The last time the user input their password to login to the app */
-  optional int64 last_time_authenticated = 3;
+  optional int64 last_time_authenticated = 4;
+  /* Dropdown menu values, which can be changed at anytime by the admin. */
+  repeated DynamicServerEnum enums = 5;
+}
 
-  repeated DynamicServerEnum enums = 4;
+message UserInfo {
+  int32 user_id = 1;
+  int32 district_id = 2;
+  string district_name = 3;
 }
 
 message PasswordHash {

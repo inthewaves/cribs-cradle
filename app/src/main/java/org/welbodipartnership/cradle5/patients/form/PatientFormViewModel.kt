@@ -36,6 +36,7 @@ import org.welbodipartnership.cradle5.data.database.resultentities.PatientAndOut
 import org.welbodipartnership.cradle5.data.serverenums.DropdownType
 import org.welbodipartnership.cradle5.data.settings.AppValuesStore
 import org.welbodipartnership.cradle5.util.coroutines.AppCoroutineDispatchers
+import org.welbodipartnership.cradle5.util.datetime.toFormDateOrNull
 import org.welbodipartnership.cradle5.util.datetime.toFormDateOrThrow
 import javax.inject.Inject
 
@@ -138,7 +139,7 @@ class PatientFormViewModel @Inject constructor(
       date = dateState("maternalDeathDate"),
       underlyingCause = enumWithOtherState(
         "maternalDeathUnderlyingCause",
-        DropdownType.UnderlyingCauseOfDeath,
+        DropdownType.UnderlyingCauseOfMaternalDeath,
         isMandatory = false
       ),
       placeOfDeath = enumIdOnlyState(
@@ -338,7 +339,7 @@ class PatientFormViewModel @Inject constructor(
             Patient(
               id = patientAndOutcomes?.patient?.id ?: 0L,
               initials = initials.stateValue,
-              presentationDate = presentationDate.stateValue.toFormDateOrThrow(),
+              presentationDate = presentationDate.stateValue.toFormDateOrNull(),
               dateOfBirth = dateOfBirth.stateValue.toFormDateOrThrow(),
               localNotes = localNotes.value
             )

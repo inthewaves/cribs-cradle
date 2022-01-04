@@ -126,7 +126,7 @@ fun OutcomesCard(
     if (maternalDeath != null) {
       LabelAndValueOrNone(stringResource(R.string.form_date_label), maternalDeath.date.toString())
       LabelAndValueForDropdownOrUnknown(
-        dropdownType = DropdownType.UnderlyingCauseOfDeath,
+        dropdownType = DropdownType.UnderlyingCauseOfMaternalDeath,
         label = stringResource(R.string.maternal_death_underlying_cause_label),
         enumValue = maternalDeath.underlyingCause,
         enumCollection = enumCollection

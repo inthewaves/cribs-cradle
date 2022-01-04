@@ -29,7 +29,7 @@ data class Patient(
   val serverInfo: ServerInfo? = null,
   val initials: String,
   @get:JvmName("getPresentationDate")
-  val presentationDate: FormDate,
+  val presentationDate: FormDate?,
   @get:JvmName("getDateOfBirth")
   val dateOfBirth: FormDate,
   /**

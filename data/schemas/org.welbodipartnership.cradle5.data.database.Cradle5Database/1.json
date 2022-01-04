@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "ee80123e762bab3859f1f9e4d6137e5a",
+    "identityHash": "930f546105acf8424b56e8669e9463e8",
     "entities": [
       {
         "tableName": "Patient",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `initials` TEXT NOT NULL, `presentationDate` TEXT NOT NULL, `dateOfBirth` TEXT NOT NULL, `lastUpdatedTimestamp` INTEGER NOT NULL, `localNotes` TEXT, `nodeId` INTEGER, `objectId` INTEGER)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `initials` TEXT NOT NULL, `presentationDate` TEXT, `dateOfBirth` TEXT NOT NULL, `lastUpdatedTimestamp` INTEGER NOT NULL, `localNotes` TEXT, `nodeId` INTEGER, `objectId` INTEGER)",
         "fields": [
           {
             "fieldPath": "id",
@@ -24,7 +24,7 @@
             "fieldPath": "presentationDate",
             "columnName": "presentationDate",
             "affinity": "TEXT",
-            "notNull": true
+            "notNull": false
           },
           {
             "fieldPath": "dateOfBirth",
@@ -277,12 +277,44 @@
         },
         "indices": [],
         "foreignKeys": []
+      },
+      {
+        "tableName": "GpsLocation",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `timestamp` INTEGER NOT NULL, `gpsCoordinates` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "gpsCoordinates",
+            "columnName": "gpsCoordinates",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [],
+        "foreignKeys": []
       }
     ],
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ee80123e762bab3859f1f9e4d6137e5a')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '930f546105acf8424b56e8669e9463e8')"
     ]
   }
 }

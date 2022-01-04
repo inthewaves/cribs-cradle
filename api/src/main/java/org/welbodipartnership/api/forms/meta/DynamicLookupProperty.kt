@@ -17,5 +17,5 @@ data class DynamicLookupProperty(
   val url: String,
   /** A list of **Control IDs** if there are multiple dependent dynamic lookups */
   @Json(name = "MasterControls")
-  val masterControls: List<String>
+  val masterControls: List<String>?
 )

@@ -9,6 +9,7 @@ import net.sqlcipher.database.SupportFactory
 import org.welbodipartnership.cradle5.data.database.daos.OutcomesDao
 import org.welbodipartnership.cradle5.data.database.daos.PatientDao
 import org.welbodipartnership.cradle5.data.database.entities.Facility
+import org.welbodipartnership.cradle5.data.database.entities.GpsLocation
 import org.welbodipartnership.cradle5.data.database.entities.Outcomes
 import org.welbodipartnership.cradle5.data.database.entities.Patient
 import javax.inject.Inject
@@ -43,7 +44,8 @@ class CradleDatabaseWrapper @Inject constructor() {
   entities = [
     Patient::class,
     Outcomes::class,
-    Facility::class
+    Facility::class,
+    GpsLocation::class,
   ]
 )
 @TypeConverters(DbTypeConverters::class)
