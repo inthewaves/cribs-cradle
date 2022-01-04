@@ -182,73 +182,71 @@ class PatientFormViewModel @Inject constructor(
           )
         } else {
           val (patient, outcomes) = patientAndOutcomes
-          Log.d(
-            TAG,
-            "Setting up form for edit (outcomes == $outcomes)"
-          )
+          Log.d(TAG, "Setting up form for edit")
 
           with(formFields.patientFields) {
             initials.backingState.value = patient.initials
-            presentationDate.backingState.value = patient.presentationDate
-              ?.toString(withSlashes = false)
-              ?: ""
-            age.backingState.value = patient
-              .dateOfBirth
-              .getAgeInYearsFromNow()
-              .toString()
-            dateOfBirth.backingState.value = patient.dateOfBirth.toString()
+            if (patient.presentationDate != null) {
+              presentationDate.setStateFromFormDate(patient.presentationDate!!)
+            } else {
+              presentationDate.backingState.value = patient.presentationDate
+                ?.toString(withSlashes = false)
+                ?: ""
+            }
+            age.backingState.value = patient.dateOfBirth.getAgeInYearsFromNow().toString()
+            dateOfBirth.setStateFromFormDate(patient.dateOfBirth)
           }
 
           with(formFields.eclampsia) {
             outcomes?.eclampsiaFit?.let {
               isEnabled.value = true
-              date.backingState.value = it.date.toString(withSlashes = false)
+              date.setStateFromFormDate(it.date)
               placeOfFirstFit.backingState.value = it.place
-            } ?: reset()
+            } ?: clearFormsAndCheckNo()
           }
 
           with(formFields.hysterectomy) {
             outcomes?.hysterectomy?.let {
               isEnabled.value = true
-              date.backingState.value = it.date.toString(withSlashes = false)
+              date.setStateFromFormDate(it.date)
               cause.backingState.value = it.cause
               additionalInfo.value = it.additionalInfo
-            } ?: reset()
+            } ?: clearFormsAndCheckNo()
           }
 
           with(formFields.hduItuAdmission) {
             outcomes?.hduOrItuAdmission?.let {
               isEnabled.value = true
-              date.backingState.value = it.date.toString(withSlashes = false)
+              date.setStateFromFormDate(it.date)
               cause.backingState.value = it.cause
               hduItuStayLengthInDays.backingState.value = it.stayInDays?.toString() ?: ""
-            } ?: reset()
+            } ?: clearFormsAndCheckNo()
           }
 
           with(formFields.maternalDeath) {
             outcomes?.maternalDeath?.let {
               isEnabled.value = true
-              date.backingState.value = it.date.toString(withSlashes = false)
+              date.setStateFromFormDate(it.date)
               underlyingCause.backingState.value = it.underlyingCause
               placeOfDeath.backingState.value = it.place
-            } ?: reset()
+            } ?: clearFormsAndCheckNo()
           }
 
           with(formFields.surgicalManagement) {
             outcomes?.surgicalManagement?.let {
               isEnabled.value = true
-              date.backingState.value = it.date.toString(withSlashes = false)
+              date.setStateFromFormDate(it.date)
               type.backingState.value = it.typeOfSurgicalManagement
-            } ?: reset()
+            } ?: clearFormsAndCheckNo()
           }
 
           with(formFields.perinatalDeath) {
             outcomes?.perinatalDeath?.let {
               isEnabled.value = true
-              date.backingState.value = it.date.toString(withSlashes = false)
+              date.setStateFromFormDate(it.date)
               outcome.backingState.value = it.outcome
               relatedMaternalFactors.backingState.value = it.relatedMaternalFactors
-            } ?: reset()
+            } ?: clearFormsAndCheckNo()
           }
 
           FormState.Ready(patientAndOutcomes)
@@ -697,7 +695,10 @@ class PatientFormViewModel @Inject constructor(
     abstract val isEnabled: MutableState<Boolean?>
     abstract val date: NoFutureDateState
 
-    abstract fun reset()
+    /**
+     * Sets the entire card to use isEnabled = false
+     */
+    abstract fun clearFormsAndCheckNo()
 
     abstract fun forceShowErrors()
 
@@ -707,7 +708,7 @@ class PatientFormViewModel @Inject constructor(
       override val date: NoFutureDateState,
       val placeOfFirstFit: EnumIdOnlyState
     ) : OutcomeFields() {
-      override fun reset() {
+      override fun clearFormsAndCheckNo() {
         isEnabled.value = false
         date.reset()
         placeOfFirstFit.reset()
@@ -728,7 +729,7 @@ class PatientFormViewModel @Inject constructor(
       val cause: EnumWithOtherState,
       val additionalInfo: MutableState<String?>
     ) : OutcomeFields() {
-      override fun reset() {
+      override fun clearFormsAndCheckNo() {
         isEnabled.value = false
         date.reset()
         cause.reset()
@@ -750,7 +751,7 @@ class PatientFormViewModel @Inject constructor(
       val cause: EnumWithOtherState,
       val hduItuStayLengthInDays: LimitedHduItuState
     ) : OutcomeFields() {
-      override fun reset() {
+      override fun clearFormsAndCheckNo() {
         isEnabled.value = false
         date.reset()
         cause.reset()
@@ -773,7 +774,7 @@ class PatientFormViewModel @Inject constructor(
       val underlyingCause: EnumWithOtherState,
       val placeOfDeath: EnumIdOnlyState
     ) : OutcomeFields() {
-      override fun reset() {
+      override fun clearFormsAndCheckNo() {
         isEnabled.value = false
         date.reset()
         underlyingCause.reset()
@@ -795,7 +796,7 @@ class PatientFormViewModel @Inject constructor(
       override val date: NoFutureDateState,
       val type: EnumWithOtherState
     ) : OutcomeFields() {
-      override fun reset() {
+      override fun clearFormsAndCheckNo() {
         isEnabled.value = false
         date.reset()
         type.reset()
@@ -816,7 +817,7 @@ class PatientFormViewModel @Inject constructor(
       val outcome: EnumIdOnlyState,
       val relatedMaternalFactors: EnumWithOtherState,
     ) : OutcomeFields() {
-      override fun reset() {
+      override fun clearFormsAndCheckNo() {
         isEnabled.value = false
         date.reset()
         outcome.reset()

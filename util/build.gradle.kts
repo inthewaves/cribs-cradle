@@ -39,6 +39,8 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime)
     implementation(libs.androidx.lifecycle.process)
 
+    implementation(libs.compose.runtime)
+
     implementation(libs.hilt.library)
     kapt(libs.hilt.compiler)
 

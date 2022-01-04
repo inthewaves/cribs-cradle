@@ -307,7 +307,7 @@ fun PatientForm(
               .createFocusChangeModifier()
               .fillMaxWidth(),
             // textStyle = MaterialTheme.typography.body2,
-            errorHint = null, // dateOfBirth.getError(),
+            errorHint = patientFields.dateOfBirth.getError(),
             keyboardOptions = KeyboardOptions.Default,
             keyboardActions = KeyboardActions(
               onDone = {
@@ -321,9 +321,11 @@ fun PatientForm(
           OutlinedTextFieldWithErrorHint(
             value = patientFields.age.stateValue,
             onValueChange = { newAge ->
-              patientFields.age.stateValue = newAge
-              newAge.toIntOrNull()?.let {
-                patientFields.dateOfBirth.setStateFromFormDate(FormDate.fromAgeFromNow(it))
+              if (newAge.length <= 2) {
+                patientFields.age.stateValue = newAge
+                newAge.toIntOrNull()?.let {
+                  patientFields.dateOfBirth.setStateFromFormDate(FormDate.fromAgeFromNow(it))
+                }
               }
             },
             label = {
@@ -361,7 +363,7 @@ fun PatientForm(
             isFormEnabled = eclampsia.isEnabled.value,
             onFormEnabledStateChange = {
               eclampsia.isEnabled.value = it
-              if (!it) eclampsia.reset()
+              if (!it) eclampsia.clearFormsAndCheckNo()
             },
             dateState = eclampsia.date,
             placeOfFirstFitState = eclampsia.placeOfFirstFit,
@@ -378,7 +380,7 @@ fun PatientForm(
             isFormEnabled = hysterectomy.isEnabled.value,
             onFormEnabledChange = {
               hysterectomy.isEnabled.value = it
-              if (!it) hysterectomy.reset()
+              if (!it) hysterectomy.clearFormsAndCheckNo()
             },
             dateState = hysterectomy.date,
             causeState = hysterectomy.cause,
@@ -408,7 +410,7 @@ fun PatientForm(
             isFormEnabled = hduItuAdmission.isEnabled.value,
             onFormEnabledChange = {
               hduItuAdmission.isEnabled.value = it
-              if (!it) hduItuAdmission.reset()
+              if (!it) hduItuAdmission.clearFormsAndCheckNo()
             },
             dateState = hduItuAdmission.date,
             causeState = hduItuAdmission.cause,
@@ -424,7 +426,7 @@ fun PatientForm(
             isFormEnabled = maternalDeath.isEnabled.value,
             onFormEnabledChange = {
               maternalDeath.isEnabled.value = it
-              if (!it) maternalDeath.reset()
+              if (!it) maternalDeath.clearFormsAndCheckNo()
             },
             dateState = maternalDeath.date,
             underlyingCauseState = maternalDeath.underlyingCause,
@@ -440,7 +442,7 @@ fun PatientForm(
             isFormEnabled = surgicalManagement.isEnabled.value,
             onFormEnabledChange = {
               surgicalManagement.isEnabled.value = it
-              if (!it) surgicalManagement.reset()
+              if (!it) surgicalManagement.clearFormsAndCheckNo()
             },
             dateState = surgicalManagement.date,
             surgicalManagementTypeState = surgicalManagement.type,
@@ -456,7 +458,7 @@ fun PatientForm(
             isFormEnabled = perinatalDeath.isEnabled.value,
             onFormEnabledChange = {
               perinatalDeath.isEnabled.value = it
-              if (!it) perinatalDeath.reset()
+              if (!it) perinatalDeath.clearFormsAndCheckNo()
             },
             dateState = perinatalDeath.date,
             outcomeState = perinatalDeath.outcome,
@@ -966,12 +968,21 @@ class NoFutureDateState(
         return@run false
       }
 
+      if (!formDate.isValid) {
+        return@run false
+      }
+
       formDate <= FormDate.today()
     }
   },
   errorFor = { ctx, date ->
-    if (date.toFormDateFromNoSlashesOrNull() != null) {
-      ctx.getString(R.string.form_date_cannot_be_in_future_error)
+    val formDate = date.toFormDateFromNoSlashesOrNull()
+    if (formDate != null) {
+      if (formDate.isValid) {
+        ctx.getString(R.string.form_date_cannot_be_in_future_error)
+      } else {
+        ctx.getString(R.string.form_date_invalid_error)
+      }
     } else {
       if (isMandatory) {
         ctx.getString(R.string.form_date_required_error)
@@ -984,6 +995,9 @@ class NoFutureDateState(
 ) {
   fun dateFromStateOrNull() = stateValue.toFormDateFromNoSlashesOrNull()
   fun dateFromStateOrThrow() = stateValue.toFormDateFromNoSlashesOrThrow()
+  fun setStateFromFormDate(formDate: FormDate) {
+    stateValue = formDate.toString(withSlashes = false)
+  }
 }
 
 class LimitedAgeDateState(
@@ -998,14 +1012,29 @@ class LimitedAgeDateState(
         return@run false
       }
 
+      if (!formDate.isValid) {
+        return@run false
+      }
+
       formDate.getAgeInYearsFromNow() in limit
     }
   },
   errorFor = { ctx, date ->
-    if (date.toFormDateFromNoSlashesOrNull() != null) {
-      ctx.getString(R.string.age_must_be_in_range_d_and_d, limit.first, limit.last)
-    } else {
-      ctx.getString(R.string.form_date_required_error)
+    val formDate = date.toFormDateFromNoSlashesOrNull()
+    when {
+      formDate != null -> {
+        if (formDate.isValid) {
+          ctx.getString(R.string.age_must_be_in_range_d_and_d, limit.first, limit.last)
+        } else {
+          ctx.getString(R.string.form_date_invalid_error)
+        }
+      }
+      date.isBlank() -> {
+        ctx.getString(R.string.form_date_required_error)
+      }
+      else -> {
+        ctx.getString(R.string.form_date_invalid_error)
+      }
     }
   },
   backingState = backingState

@@ -1,5 +1,6 @@
 package org.welbodipartnership.cradle5.util.datetime
 
+import androidx.compose.runtime.Immutable
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
@@ -8,6 +9,7 @@ import kotlin.math.abs
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
+@Immutable
 @JvmInline
 value class UnixTimestamp(val timestamp: Long) : Comparable<UnixTimestamp> {
   operator fun plus(duration: Duration) =

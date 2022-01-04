@@ -1,7 +1,7 @@
 package org.welbodipartnership.cradle5.domain
 
-import org.junit.Assert.*
-import org.junit.Test
+import org.junit.jupiter.api.Test
+import kotlin.test.assertEquals
 
 /**
  * Example local unit test, which will execute on the development machine (host).

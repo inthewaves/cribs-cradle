@@ -1,13 +1,18 @@
 package org.welbodipartnership.cradle5.util.datetime
 
 import android.os.Parcelable
+import androidx.compose.runtime.Immutable
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.JsonDataException
 import com.squareup.moshi.JsonReader
 import com.squareup.moshi.JsonWriter
+import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
+import java.time.DateTimeException
 import java.time.LocalDate
+import java.time.chrono.IsoChronology
+import java.time.temporal.ChronoField
 import java.time.temporal.ChronoUnit
 import java.util.Calendar
 import java.util.Date
@@ -27,8 +32,36 @@ private const val SLASH_LENGTH = 1
  */
 @JsonClass(generateAdapter = true)
 @Parcelize
+@Immutable
 data class FormDate(val day: Int, val month: Int, val year: Int) : Comparable<FormDate>, Parcelable {
+  @IgnoredOnParcel
   val isExact: Boolean get() = day != 0 && month != 0
+
+  @IgnoredOnParcel
+  val isValid: Boolean by lazy {
+    val monthToUse = if (month == 0) 1 else month
+    val dayToUse = if (day == 0) 1 else day
+
+    // the logic here is derived from LocalDate's `of` static method
+    try {
+      ChronoField.YEAR.checkValidValue(year.toLong())
+      ChronoField.MONTH_OF_YEAR.checkValidValue(monthToUse.toLong())
+      ChronoField.DAY_OF_MONTH.checkValidValue(dayToUse.toLong())
+    } catch (e: DateTimeException) {
+      return@lazy false
+    }
+
+    if (dayToUse > 28) {
+      val lastDayOfMonth = when (monthToUse) {
+        2 -> if (IsoChronology.INSTANCE.isLeapYear(year.toLong())) 29 else 28
+        4, 6, 9, 11 -> 30
+        else -> 31
+      }
+      dayToUse <= lastDayOfMonth
+    } else {
+      true
+    }
+  }
 
   fun toGmtGregorianCalendar() = GregorianCalendar(TimeZone.getTimeZone("GMT")).apply {
     clear()
