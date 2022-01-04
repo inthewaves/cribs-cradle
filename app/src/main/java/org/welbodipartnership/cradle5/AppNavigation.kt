@@ -41,7 +41,7 @@ import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.composable
 import com.google.accompanist.navigation.animation.navigation
 import org.welbodipartnership.cradle5.data.serverenums.ServerEnumCollection
-import org.welbodipartnership.cradle5.facilities.FacilitiesList
+import org.welbodipartnership.cradle5.facilities.FacilitiesListScreen
 import org.welbodipartnership.cradle5.patients.details.PatientDetailsScreen
 import org.welbodipartnership.cradle5.patients.form.PatientForm
 import org.welbodipartnership.cradle5.patients.list.PatientsListScreen
@@ -277,7 +277,7 @@ private fun NavGraphBuilder.addFacilitiesList(
   root: Screen,
 ) {
   composable(route = LeafScreen.Facilities.createRoute(root)) {
-    FacilitiesList()
+    FacilitiesListScreen()
   }
 }
 

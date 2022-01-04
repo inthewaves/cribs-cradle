@@ -25,7 +25,10 @@ class CradleDatabaseWrapper @Inject constructor() {
   var database: Cradle5Database? = null
     private set
 
-  public suspend fun <T> withTransaction(block: suspend (db: Cradle5Database) -> T): T {
+  fun patientsDao() = requireNotNull(database).patientDao()
+  fun facilitiesDao() = requireNotNull(database).facilitiesDao()
+
+  suspend fun <T> withTransaction(block: suspend (db: Cradle5Database) -> T): T {
     return database!!.withTransaction {
       block(database!!)
     }

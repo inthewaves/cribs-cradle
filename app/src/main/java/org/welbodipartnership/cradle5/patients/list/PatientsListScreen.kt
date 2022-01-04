@@ -1,23 +1,13 @@
 package org.welbodipartnership.cradle5.patients.list
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.AnimatedVisibilityScope
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -63,7 +53,9 @@ import org.welbodipartnership.cradle5.compose.rememberFlowWithLifecycle
 import org.welbodipartnership.cradle5.data.database.entities.Patient
 import org.welbodipartnership.cradle5.data.database.resultentities.ListPatient
 import org.welbodipartnership.cradle5.home.AccountInfoButton
+import org.welbodipartnership.cradle5.ui.composables.AnimatedVisibilityWrapper
 import org.welbodipartnership.cradle5.ui.composables.carousel.Carousel
+import org.welbodipartnership.cradle5.ui.composables.screenlists.ScreenListItem
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
 import org.welbodipartnership.cradle5.util.datetime.FormDate
 
@@ -204,21 +196,6 @@ private fun PatientsListScreen(
 }
 
 @Composable
-fun AnimatedVisibilityWrapper(
-  visible: Boolean,
-  enter: EnterTransition = fadeIn(),
-  exit: ExitTransition = fadeOut(),
-  content: @Composable AnimatedVisibilityScope.() -> Unit,
-) {
-  AnimatedVisibility(
-    visible = visible,
-    enter = enter,
-    exit = exit,
-    content = content
-  )
-}
-
-@Composable
 fun PatientListHeader(modifier: Modifier = Modifier) {
   Card(elevation = 1.dp) {
     BasePatientListItem(
@@ -252,7 +229,7 @@ fun PatientListItem(
 
 @Composable
 fun PatientListItemPlaceholder(modifier: Modifier = Modifier) {
-  BasePatientListItem(
+  ScreenListItem(
     minHeight = 48.dp,
     onClick = null,
     modifier = modifier,
@@ -272,7 +249,7 @@ private fun BasePatientListItem(
   onClick: (() -> Unit)?,
   modifier: Modifier = Modifier,
 ) {
-  BasePatientListItem(
+  ScreenListItem(
     minHeight = minHeight,
     onClick = onClick,
     modifier = modifier
@@ -280,7 +257,7 @@ private fun BasePatientListItem(
     Text(
       first,
       modifier = Modifier
-        .weight(0.2f)
+        .weight(0.15f)
         .align(Alignment.CenterVertically),
       style = textStyle
     )
@@ -298,36 +275,6 @@ private fun BasePatientListItem(
         .align(Alignment.CenterVertically),
       style = textStyle
     )
-  }
-}
-
-@Composable
-private fun BasePatientListItem(
-  minHeight: Dp,
-  onClick: (() -> Unit)?,
-  modifier: Modifier = Modifier,
-  horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
-  rowContent: @Composable RowScope.() -> Unit
-) {
-  Column(modifier) {
-    val outlineModifier = Modifier
-      .fillMaxWidth()
-      .height(1.dp)
-      .background(MaterialTheme.colors.onSurface.copy(alpha = 0.1f))
-    Row(
-      modifier = Modifier
-        .then(
-          if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier
-        )
-        .padding(horizontal = 16.dp, vertical = 8.dp)
-        .fillMaxWidth()
-        .heightIn(min = minHeight),
-      verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = horizontalArrangement
-    ) {
-      rowContent()
-    }
-    Box(outlineModifier)
   }
 }
 

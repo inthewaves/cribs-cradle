@@ -8,13 +8,11 @@ import androidx.paging.cachedIn
 import dagger.hilt.android.lifecycle.HiltViewModel
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
 import org.welbodipartnership.cradle5.data.database.entities.Patient
-import org.welbodipartnership.cradle5.domain.RestApi
 import javax.inject.Inject
 
 @HiltViewModel
 class PatientsListViewModel @Inject constructor(
   private val dbWrapper: CradleDatabaseWrapper,
-  private val restApi: RestApi,
 ) : ViewModel() {
 
   val patientsPagerFlow = Pager(
@@ -23,7 +21,7 @@ class PatientsListViewModel @Inject constructor(
       enablePlaceholders = true,
       maxSize = 200
     )
-  ) { dbWrapper.database!!.patientDao().patientsPagingSource() }
+  ) { dbWrapper.patientsDao().patientsPagingSource() }
     .flow
     .cachedIn(viewModelScope)
 

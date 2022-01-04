@@ -1,7 +1,10 @@
 package org.welbodipartnership.cradle5.data.database.daos
 
+import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Insert
+import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
 import org.welbodipartnership.cradle5.data.database.entities.Facility
 
@@ -22,4 +25,8 @@ abstract class FacilityDao {
 
   @Insert
   protected abstract suspend fun insert(facility: Facility): Long
+
+  @Transaction
+  @Query("SELECT * FROM Facility ORDER BY id ASC")
+  abstract fun patientsPagingSource(): PagingSource<Int, Facility>
 }
