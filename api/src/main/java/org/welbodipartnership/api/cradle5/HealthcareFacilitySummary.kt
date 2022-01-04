@@ -8,5 +8,5 @@ import org.welbodipartnership.api.forms.FormId
 @JsonClass(generateAdapter = true)
 data class HealthcareFacilitySummary(
   @Json(name = "Control1952")
-  val districtName: String
+  val districtName: String?
 )

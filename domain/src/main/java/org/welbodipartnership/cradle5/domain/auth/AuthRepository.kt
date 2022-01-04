@@ -183,7 +183,14 @@ class AuthRepository @Inject internal constructor(
       when (
         val result = restApi.getFormData<HealthcareFacilitySummary>(objectId = ObjectId.QUERIES)
       ) {
-        is NetworkResult.Success -> appValuesStore.setDistrictName(result.value.districtName)
+        is NetworkResult.Success -> {
+          val districtName = result.value.districtName
+          if (districtName != null) {
+            appValuesStore.setDistrictName(districtName)
+          } else {
+            loginEventMessagesChannel?.trySend("User not associated with a district")
+          }
+        }
         is NetworkResult.Failure -> {
           val message = result.errorValue.decodeToString()
           loginEventMessagesChannel?.trySend(
@@ -197,7 +204,7 @@ class AuthRepository @Inject internal constructor(
         }
       }
 
-      // Try to get the user's district
+      // Try to get the facilities associated with this district
       loginEventMessagesChannel?.trySend("Getting facilities")
       when (
         val result = restApi
@@ -208,6 +215,11 @@ class AuthRepository @Inject internal constructor(
           )
       ) {
         is NetworkResult.Success -> {
+          Log.d(
+            TAG,
+            "facilities count: ${result.value.totalNumberOfRecords}," +
+              " pages: ${result.value.totalNumberOfPages}"
+          )
           dbWrapper.withTransaction { db ->
             loginEventMessagesChannel?.trySend("Inserting ${result.value.totalNumberOfRecords} facilities")
             val dao = db.facilitiesDao()

@@ -230,11 +230,33 @@ class FormTest {
     )
 
     adapter.fromJson(json)
+  }
 
-    val stuff = SampleData::class.java.declaredFields.asSequence()
+  @Test
+  fun testReflection() {
+    val controlIdFromAnnotation = SampleData::class.java.declaredFields.asSequence()
       .flatMap { it.annotations.asIterable() }
       .mapNotNull { (it as? Json)?.name }
       .toList()
-    assertEquals(listOf("Control1006"), stuff)
+    assertEquals(listOf("Control1006"), controlIdFromAnnotation)
+
+    /*
+    error(
+      SampleData::class.java.constructors.asSequence()
+        .single()
+        .parameterAnnotations
+        .asList()
+        .map { it.asList() }
+    )
+
+    error(
+      SampleData::class.java.constructors.asSequence()
+        .single()
+        .parameterAnnotations
+        .flatMap { it.asIterable() }
+        .mapNotNull { (it as? Json)?.name }
+        .toList()
+    )
+     */
   }
 }

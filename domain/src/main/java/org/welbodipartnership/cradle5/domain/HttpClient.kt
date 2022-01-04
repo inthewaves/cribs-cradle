@@ -2,6 +2,7 @@ package org.welbodipartnership.cradle5.domain
 
 import android.content.Context
 import android.util.Log
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withContext
@@ -115,7 +116,6 @@ internal class HttpClient @Inject constructor(
 
     val message = "${method.name} ${request.url}"
     try {
-      // "Inappropriate blocking method call" should be fine if we do this in Dispatchers.IO.
       runInterruptible { okHttpClient.newCall(request).execute() }.use {
         if (it.isSuccessful) {
           Log.i(TAG, "$message - Success ${it.code}")
@@ -126,8 +126,9 @@ internal class HttpClient @Inject constructor(
           NetworkResult.Failure(failureReader(it.body!!.source()), it.code)
         }
       }
-    } catch (e: IOException) {
-      Log.e(TAG, "$message - IOException", e)
+    } catch (e: Exception) {
+      Log.e(TAG, "$message - Exception", e)
+      ensureActive()
       NetworkResult.NetworkException(e)
     }
   }
