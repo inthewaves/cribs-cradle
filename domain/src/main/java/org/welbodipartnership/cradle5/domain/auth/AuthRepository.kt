@@ -181,7 +181,7 @@ class AuthRepository @Inject internal constructor(
       // Try to get the user's district
       loginEventMessagesChannel?.trySend("Getting user district")
       when (
-        val result = restApi.getFormData<HealthcareFacilitySummary>(FormId(113), ObjectId.QUERIES)
+        val result = restApi.getFormData<HealthcareFacilitySummary>(objectId = ObjectId.QUERIES)
       ) {
         is NetworkResult.Success -> appValuesStore.setDistrictName(result.value.districtName)
         is NetworkResult.Failure -> {

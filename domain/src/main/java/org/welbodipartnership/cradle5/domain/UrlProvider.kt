@@ -6,7 +6,16 @@ import javax.inject.Named
 import javax.inject.Singleton
 
 @JvmInline
-value class FormId(val id: Long)
+value class FormId(val id: Long) {
+  companion object {
+    inline fun <reified T> fromAnnotationOrThrow(): FormId {
+      val annotation = requireNotNull(
+        T::class.java.getAnnotation(org.welbodipartnership.api.forms.FormId::class.java)
+      ) { "${T::class.java} does not have a FormId annotation!" }
+      return FormId(annotation.id)
+    }
+  }
+}
 
 @JvmInline
 value class ObjectId(val id: Long) {

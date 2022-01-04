@@ -91,7 +91,7 @@ class RestApi @Inject internal constructor(
   }
 
   suspend inline fun <reified T> getFormData(
-    formId: FormId,
+    formId: FormId = FormId.fromAnnotationOrThrow<T>(),
     objectId: ObjectId
   ): DefaultNetworkResult<T> {
     return httpClient.makeRequest(

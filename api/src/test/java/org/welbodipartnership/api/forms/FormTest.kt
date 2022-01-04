@@ -6,6 +6,7 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import com.squareup.moshi.adapters.EnumJsonAdapter
 import org.junit.jupiter.api.Test
+import org.welbodipartnership.api.cradle5.Registration
 import org.welbodipartnership.api.forms.meta.ControlType
 import org.welbodipartnership.api.forms.meta.DataType
 import kotlin.test.assertEquals
@@ -47,6 +48,13 @@ class FormTest {
     @Json(name = "Control1011")
     val somethingElse: String?
   )
+
+  @Test
+  fun testFormIdAnnotation() {
+    val formIdAnnotationValue = Registration::class.java.getAnnotation(FormId::class.java)
+      ?.id
+    assertEquals(63, formIdAnnotationValue)
+  }
 
   @Test
   fun testSampleRequest() {
