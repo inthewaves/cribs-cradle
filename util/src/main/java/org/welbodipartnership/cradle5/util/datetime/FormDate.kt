@@ -39,6 +39,18 @@ data class FormDate(val day: Int, val month: Int, val year: Int) : Comparable<Fo
 
   @IgnoredOnParcel
   val isValid: Boolean by lazy {
+    // Let approximate fields pass validation by assigning them an always-valid value
+    validateDate(if (day == 0) 1 else day, if (month == 0) 1 else month, year)
+  }
+
+  /**
+   * Checks whether this date would be valid if it was in mm/dd/yyyy format.
+   */
+  @IgnoredOnParcel
+  val isValidIfItWereMmDdYyyyFormat: Boolean
+    get() = validateDate(if (month == 0) 1 else month,  if (day == 0) 1 else day, year)
+
+  private fun validateDate(day: Int, month: Int, year: Int): Boolean {
     val monthToUse = if (month == 0) 1 else month
     val dayToUse = if (day == 0) 1 else day
 
@@ -48,10 +60,10 @@ data class FormDate(val day: Int, val month: Int, val year: Int) : Comparable<Fo
       ChronoField.MONTH_OF_YEAR.checkValidValue(monthToUse.toLong())
       ChronoField.DAY_OF_MONTH.checkValidValue(dayToUse.toLong())
     } catch (e: DateTimeException) {
-      return@lazy false
+      return false
     }
 
-    if (dayToUse > 28) {
+    return if (dayToUse > 28) {
       val lastDayOfMonth = when (monthToUse) {
         2 -> if (IsoChronology.INSTANCE.isLeapYear(year.toLong())) 29 else 28
         4, 6, 9, 11 -> 30

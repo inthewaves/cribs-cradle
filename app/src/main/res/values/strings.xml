@@ -8,7 +8,7 @@
     <string name="cd_facilities_nav_button">Show the healthcare facilities screen</string>
     <string name="patient_registration_card_id_label">ID</string>
     <string name="patient_registration_initials_label">Initials</string>
-    <string name="patient_registration_presentation_date_label">Presentation date</string>
+    <string name="patient_registration_presentation_date_label">Presentation date (dd/mm/yyyy)</string>
     <string name="outcomes_eclampsia_label">Eclampsia</string>
     <string name="none">None</string>
     <string name="form_date_label">Date (dd/mm/yyyy)</string>
@@ -32,7 +32,7 @@
     <string name="maternal_death_place_label">Place of death</string>
     <string name="outcomes_card_title">Outcomes</string>
     <string name="patient_registration_card_title">Registration</string>
-    <string name="patient_registration_date_of_birth_label">Date of birth</string>
+    <string name="patient_registration_date_of_birth_label">Date of birth (dd/mm/yyyy)</string>
     <string name="patients_list_title">Patients list</string>
     <string name="patients_details_title">Patient details</string>
     <string name="outcomes_card_no_outcomes">No outcomes recorded for this patient</string>
@@ -82,6 +82,7 @@
     <string name="unlock_button">Unlock</string>
     <string name="login_button">Login</string>
     <string name="form_date_invalid_error">Invalid date</string>
+    <string name="form_date_expected_day_month_year_format_error">Invalid date (expected format: dd/mm/yyyy)</string>
     <string name="date_text_field_icon_button_cd">Button to open a date picker modal</string>
     <plurals name="patient_form_snackbar_failed_to_save_there_are_d_errors">
         <item quantity="one">Failed to save, as there is %1$d error.</item>

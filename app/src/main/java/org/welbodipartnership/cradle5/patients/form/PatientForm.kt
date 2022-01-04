@@ -289,7 +289,9 @@ fun PatientForm(
               patientFields.dateOfBirth.stateValue = input
               val formDate = patientFields.dateOfBirth.dateFromStateOrNull()
               if (formDate != null) {
-                patientFields.age.stateValue = formDate.getAgeInYearsFromNow().toString()
+                patientFields.age.stateValue = formDate.getAgeInYearsFromNow()
+                  .coerceAtLeast(0)
+                  .toString()
               }
             },
             timestampToDateStringMapper = timestampToFormDateMapper,
@@ -978,10 +980,14 @@ class NoFutureDateState(
   errorFor = { ctx, date ->
     val formDate = date.toFormDateFromNoSlashesOrNull()
     if (formDate != null) {
-      if (formDate.isValid) {
-        ctx.getString(R.string.form_date_cannot_be_in_future_error)
-      } else {
-        ctx.getString(R.string.form_date_invalid_error)
+      when {
+        formDate.isValid -> ctx.getString(R.string.form_date_cannot_be_in_future_error)
+        formDate.isValidIfItWereMmDdYyyyFormat -> {
+          ctx.getString(R.string.form_date_expected_day_month_year_format_error)
+        }
+        else -> {
+          ctx.getString(R.string.form_date_invalid_error)
+        }
       }
     } else {
       if (isMandatory) {
@@ -1023,10 +1029,14 @@ class LimitedAgeDateState(
     val formDate = date.toFormDateFromNoSlashesOrNull()
     when {
       formDate != null -> {
-        if (formDate.isValid) {
-          ctx.getString(R.string.age_must_be_in_range_d_and_d, limit.first, limit.last)
-        } else {
-          ctx.getString(R.string.form_date_invalid_error)
+        when {
+          formDate.isValid -> {
+            ctx.getString(R.string.age_must_be_in_range_d_and_d, limit.first, limit.last)
+          }
+          formDate.isValidIfItWereMmDdYyyyFormat -> {
+            ctx.getString(R.string.form_date_expected_day_month_year_format_error)
+          }
+          else -> ctx.getString(R.string.form_date_invalid_error)
         }
       }
       date.isBlank() -> {
