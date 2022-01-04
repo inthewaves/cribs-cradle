@@ -25,6 +25,52 @@ internal class FormDateTest {
     val date: FormDate,
   )
 
+  data class BirthdayTestSpec(
+    val birthday: FormDate,
+    val theTodayToUse: FormDate,
+    val expectedAge: Int,
+  )
+  internal class BirthdayArgsProvider : ArgumentsProvider {
+    override fun provideArguments(context: ExtensionContext?) = sequenceOf(
+      BirthdayTestSpec(
+        birthday = FormDate(day = 5, month = 5, year = 2000),
+        theTodayToUse = FormDate(day = 5, month = 4, year = 2020),
+        expectedAge = 19
+      ),
+      BirthdayTestSpec(
+        birthday = FormDate(day = 5, month = 5, year = 2000),
+        theTodayToUse = FormDate(day = 5, month = 6, year = 2020),
+        // one month after means it's fine
+        expectedAge = 20
+      ),
+    ).map { Arguments.of(it) }.asStream()
+  }
+  @ParameterizedTest
+  @ArgumentsSource(BirthdayArgsProvider::class)
+  fun testBirthdays(birthdayTestSpec: BirthdayTestSpec) {
+    val (birthday, theTodayToUse, expectedAge) = birthdayTestSpec
+    assertEquals(
+      expectedAge.toLong(),
+      birthday.getAgeInYearsFromDate(theTodayToUse)
+    )
+  }
+
+  internal class LenientDateArgumentsProvider : ArgumentsProvider {
+    override fun provideArguments(context: ExtensionContext?) = sequenceOf(
+      "20021990" to FormDate(20, 2, 1990),
+      "29022000" to FormDate(29, 2, 2000),
+      "28022001" to FormDate(28, 2, 2001),
+    ).map { (dateString, dateObject) -> Arguments.of(dateString, dateObject) }
+      .asStream()
+  }
+  @ParameterizedTest
+  @ArgumentsSource(LenientDateArgumentsProvider::class)
+  fun testFormDateLenientParsing(expectedDateString: String, expectedDate: FormDate) {
+    val parsedDate: FormDate = expectedDateString.toFormDateFromNoSlashesOrThrow()
+    assertEquals(expectedDate, parsedDate)
+    assertEquals(expectedDateString, parsedDate.toString(withSlashes = false))
+  }
+
   internal class DateArgumentsProvider : ArgumentsProvider {
     override fun provideArguments(context: ExtensionContext?) = sequenceOf(
       "20/02/1990" to FormDate(20, 2, 1990),
@@ -85,12 +131,10 @@ internal class FormDateTest {
 
   @Test
   fun testFormDateAge() {
-    val today = FormDate.today()
+    val today = FormDate(3,1, 2022)
     val oneYearBefore = today.copy(year = today.year - 1)
-    assertEquals(1, oneYearBefore.getAgeInYearsFromNow())
     assertEquals(1, oneYearBefore.getAgeInYearsFromDate(today))
     val oneYearAfter = today.copy(year = today.year + 1)
-    assertEquals(-1, oneYearAfter.getAgeInYearsFromNow())
     assertEquals(-1, oneYearAfter.getAgeInYearsFromDate(today))
   }
 }

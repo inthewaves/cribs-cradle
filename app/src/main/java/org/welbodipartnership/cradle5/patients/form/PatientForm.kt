@@ -36,7 +36,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -71,10 +70,12 @@ import org.welbodipartnership.cradle5.ui.composables.forms.FieldState
 import org.welbodipartnership.cradle5.ui.composables.forms.OutlinedTextFieldWithErrorHint
 import org.welbodipartnership.cradle5.ui.composables.forms.TextFieldState
 import org.welbodipartnership.cradle5.ui.composables.forms.darkerDisabledOutlinedTextFieldColors
+import org.welbodipartnership.cradle5.ui.composables.forms.formDateToTimestampMapper
+import org.welbodipartnership.cradle5.ui.composables.forms.timestampToFormDateMapper
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
 import org.welbodipartnership.cradle5.util.datetime.FormDate
-import org.welbodipartnership.cradle5.util.datetime.toFormDateOrNull
-import org.welbodipartnership.cradle5.util.datetime.toFormDateOrThrow
+import org.welbodipartnership.cradle5.util.datetime.toFormDateFromNoSlashesOrNull
+import org.welbodipartnership.cradle5.util.datetime.toFormDateFromNoSlashesOrThrow
 
 private val MAX_INITIALS_LENGTH = 5
 
@@ -257,13 +258,14 @@ fun PatientForm(
           Spacer(Modifier.height(textFieldToTextFieldHeight))
 
           DateOutlinedTextField(
-            date = patientFields.presentationDate.stateValue.toFormDateOrNull(),
-            onDatePicked = {
-              patientFields.presentationDate.stateValue = it.toString()
-            },
+            text = patientFields.presentationDate.stateValue,
+            onValueChange = { patientFields.presentationDate.stateValue = it },
+            timestampToDateStringMapper = timestampToFormDateMapper,
+            dateStringToTimestampMapper = formDateToTimestampMapper,
+            maxLength = FormDate.MAX_STRING_LEN_NO_SLASHES,
             onPickerClose = { patientFields.presentationDate.enableShowErrors(force = true) },
             label = {
-              RequiredText(stringResource(id = R.string.patient_registration_presentation_date_label))
+              Text(stringResource(id = R.string.patient_registration_presentation_date_label))
             },
             modifier = Modifier.fillMaxWidth(),
             textFieldModifier = patientFields.presentationDate
@@ -282,11 +284,17 @@ fun PatientForm(
           Spacer(Modifier.height(textFieldToTextFieldHeight))
 
           DateOutlinedTextField(
-            date = patientFields.dateOfBirth.stateValue.toFormDateOrNull(),
-            onDatePicked = {
-              patientFields.dateOfBirth.stateValue = it.toString()
-              patientFields.age.stateValue = it.getAgeInYearsFromNow().toString()
+            text = patientFields.dateOfBirth.stateValue,
+            onValueChange = { input ->
+              patientFields.dateOfBirth.stateValue = input
+              val formDate = patientFields.dateOfBirth.dateFromStateOrNull()
+              if (formDate != null) {
+                patientFields.age.stateValue = formDate.getAgeInYearsFromNow().toString()
+              }
             },
+            timestampToDateStringMapper = timestampToFormDateMapper,
+            dateStringToTimestampMapper = formDateToTimestampMapper,
+            maxLength = FormDate.MAX_STRING_LEN_NO_SLASHES,
             onPickerClose = {
               patientFields.dateOfBirth.enableShowErrors(force = true)
               patientFields.age.enableShowErrors(force = true)
@@ -315,7 +323,7 @@ fun PatientForm(
             onValueChange = { newAge ->
               patientFields.age.stateValue = newAge
               newAge.toIntOrNull()?.let {
-                patientFields.dateOfBirth.stateValue = FormDate.fromAge(it).toString()
+                patientFields.dateOfBirth.setStateFromFormDate(FormDate.fromAgeFromNow(it))
               }
             },
             label = {
@@ -366,7 +374,6 @@ fun PatientForm(
           CategoryHeader(stringResource(R.string.outcomes_hysterectomy_label))
 
           val hysterectomy = viewModel.formFields.hysterectomy
-          val scope = rememberCoroutineScope()
           HysterectomyForm(
             isFormEnabled = hysterectomy.isEnabled.value,
             onFormEnabledChange = {
@@ -565,8 +572,11 @@ fun EclampsiaForm(
       "missing Place lookup values from the server"
     }
     DateOutlinedTextField(
-      date = dateState.stateValue.toFormDateOrNull(),
-      onDatePicked = { dateState.stateValue = it.toString() },
+      text = dateState.stateValue,
+      onValueChange = { dateState.stateValue = it },
+      dateStringToTimestampMapper = formDateToTimestampMapper,
+      timestampToDateStringMapper = timestampToFormDateMapper,
+      maxLength = FormDate.MAX_STRING_LEN_NO_SLASHES,
       onPickerClose = { dateState.enableShowErrors(force = true) },
       label = {
         RequiredText(text = stringResource(R.string.form_date_label), isFormEnabled == true)
@@ -610,8 +620,11 @@ fun HysterectomyForm(
     )
 
     DateOutlinedTextField(
-      date = dateState.stateValue.toFormDateOrNull(),
-      onDatePicked = { dateState.stateValue = it.toString() },
+      text = dateState.stateValue,
+      onValueChange = { dateState.stateValue = it },
+      dateStringToTimestampMapper = formDateToTimestampMapper,
+      timestampToDateStringMapper = timestampToFormDateMapper,
+      maxLength = FormDate.MAX_STRING_LEN_NO_SLASHES,
       onPickerClose = { dateState.enableShowErrors(force = true) },
       label = {
         RequiredText(text = stringResource(R.string.form_date_label), isFormEnabled == true)
@@ -667,8 +680,11 @@ fun AdmittedToHduItuForm(
     )
 
     DateOutlinedTextField(
-      date = dateState.stateValue.toFormDateOrNull(),
-      onDatePicked = { dateState.stateValue = it.toString() },
+      text = dateState.stateValue,
+      onValueChange = { dateState.stateValue = it },
+      dateStringToTimestampMapper = formDateToTimestampMapper,
+      timestampToDateStringMapper = timestampToFormDateMapper,
+      maxLength = FormDate.MAX_STRING_LEN_NO_SLASHES,
       onPickerClose = { dateState.enableShowErrors(force = true) },
       label = {
         RequiredText(stringResource(id = R.string.form_date_label), isFormEnabled == true)
@@ -739,8 +755,11 @@ fun MaternalDeathForm(
 
   Column(modifier) {
     DateOutlinedTextField(
-      date = dateState.stateValue.toFormDateOrNull(),
-      onDatePicked = { dateState.stateValue = it.toString() },
+      text = dateState.stateValue,
+      onValueChange = { dateState.stateValue = it },
+      dateStringToTimestampMapper = formDateToTimestampMapper,
+      timestampToDateStringMapper = timestampToFormDateMapper,
+      maxLength = FormDate.MAX_STRING_LEN_NO_SLASHES,
       onPickerClose = { dateState.enableShowErrors(force = true) },
       label = {
         RequiredText(text = stringResource(R.string.form_date_label), isFormEnabled == true)
@@ -797,8 +816,11 @@ fun SurgicalManagementForm(
 
   Column(modifier) {
     DateOutlinedTextField(
-      date = dateState.stateValue.toFormDateOrNull(),
-      onDatePicked = { dateState.stateValue = it.toString() },
+      text = dateState.stateValue,
+      onValueChange = { dateState.stateValue = it },
+      dateStringToTimestampMapper = formDateToTimestampMapper,
+      timestampToDateStringMapper = timestampToFormDateMapper,
+      maxLength = FormDate.MAX_STRING_LEN_NO_SLASHES,
       onPickerClose = { dateState.enableShowErrors(force = true) },
       label = {
         RequiredText(text = stringResource(R.string.form_date_label), isFormEnabled == true)
@@ -846,8 +868,11 @@ fun PerinatalDeathForm(
 
   Column(modifier) {
     DateOutlinedTextField(
-      date = dateState.stateValue.toFormDateOrNull(),
-      onDatePicked = { dateState.stateValue = it.toString() },
+      text = dateState.stateValue,
+      onValueChange = { dateState.stateValue = it },
+      dateStringToTimestampMapper = formDateToTimestampMapper,
+      timestampToDateStringMapper = timestampToFormDateMapper,
+      maxLength = FormDate.MAX_STRING_LEN_NO_SLASHES,
       onPickerClose = { dateState.enableShowErrors(force = true) },
       label = {
         RequiredText(text = stringResource(R.string.form_date_label), isFormEnabled == true)
@@ -896,7 +921,7 @@ fun EclampsiaFormPreview() {
       EclampsiaForm(
         isFormEnabled = false,
         onFormEnabledStateChange = {},
-        dateState = NoFutureDateState(),
+        dateState = NoFutureDateState(isMandatory = true),
         placeOfFirstFitState = EnumIdOnlyState(
           defaultEnums[DropdownType.Place],
           isMandatory = false
@@ -926,12 +951,17 @@ class InitialsState(backingState: MutableState<String> = mutableStateOf("")) : T
 }
 
 class NoFutureDateState(
+  val isMandatory: Boolean,
   backingState: MutableState<String> = mutableStateOf("")
 ) : TextFieldState(
   validator = { possibleDate ->
     run {
+      if (isMandatory && possibleDate.isEmpty()) {
+        return@run true
+      }
+
       val formDate = try {
-        possibleDate.toFormDateOrThrow()
+        possibleDate.toFormDateFromNoSlashesOrThrow()
       } catch (e: NumberFormatException) {
         return@run false
       }
@@ -940,14 +970,21 @@ class NoFutureDateState(
     }
   },
   errorFor = { ctx, date ->
-    if (date.toFormDateOrNull() != null) {
+    if (date.toFormDateFromNoSlashesOrNull() != null) {
       ctx.getString(R.string.form_date_cannot_be_in_future_error)
     } else {
-      ctx.getString(R.string.form_date_required_error)
+      if (isMandatory) {
+        ctx.getString(R.string.form_date_required_error)
+      } else {
+        ctx.getString(R.string.form_date_invalid_error)
+      }
     }
   },
   backingState = backingState
-)
+) {
+  fun dateFromStateOrNull() = stateValue.toFormDateFromNoSlashesOrNull()
+  fun dateFromStateOrThrow() = stateValue.toFormDateFromNoSlashesOrThrow()
+}
 
 class LimitedAgeDateState(
   val limit: LongRange,
@@ -956,7 +993,7 @@ class LimitedAgeDateState(
   validator = { possibleDate ->
     run {
       val formDate = try {
-        possibleDate.toFormDateOrThrow()
+        possibleDate.toFormDateFromNoSlashesOrThrow()
       } catch (e: NumberFormatException) {
         return@run false
       }
@@ -965,14 +1002,20 @@ class LimitedAgeDateState(
     }
   },
   errorFor = { ctx, date ->
-    if (date.toFormDateOrNull() != null) {
+    if (date.toFormDateFromNoSlashesOrNull() != null) {
       ctx.getString(R.string.age_must_be_in_range_d_and_d, limit.first, limit.last)
     } else {
       ctx.getString(R.string.form_date_required_error)
     }
   },
   backingState = backingState
-)
+) {
+  fun dateFromStateOrNull() = stateValue.toFormDateFromNoSlashesOrNull()
+  fun dateFromStateOrThrow() = stateValue.toFormDateFromNoSlashesOrThrow()
+  fun setStateFromFormDate(formDate: FormDate) {
+    stateValue = formDate.toString(withSlashes = false)
+  }
+}
 
 class LimitedAgeIntState(
   val limit: LongRange,
@@ -1065,27 +1108,6 @@ class EnumWithOtherState(
   override fun onNewStateValue(newValue: EnumSelection.WithOther?) {
     if (isMandatory && newValue != null) {
       enableShowErrors(force = true)
-    }
-  }
-}
-
-class MutableStateWithCallback<T>(
-  private val delegate: MutableState<T>,
-  val newValueCallback: (newValue: T) -> Unit
-) : MutableState<T> {
-  override var value: T
-    get() = delegate.value
-    set(value) {
-      delegate.value = value
-      newValueCallback(value)
-    }
-
-  override fun component1(): T = delegate.component1()
-
-  override fun component2(): (T) -> Unit {
-    return { newValue ->
-      delegate.component2()(newValue)
-      newValueCallback(newValue)
     }
   }
 }

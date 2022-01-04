@@ -36,8 +36,6 @@ import org.welbodipartnership.cradle5.data.database.resultentities.PatientAndOut
 import org.welbodipartnership.cradle5.data.serverenums.DropdownType
 import org.welbodipartnership.cradle5.data.settings.AppValuesStore
 import org.welbodipartnership.cradle5.util.coroutines.AppCoroutineDispatchers
-import org.welbodipartnership.cradle5.util.datetime.toFormDateOrNull
-import org.welbodipartnership.cradle5.util.datetime.toFormDateOrThrow
 import javax.inject.Inject
 
 private const val PATIENT_MAX_INITIALS_LENGTH = 5
@@ -89,9 +87,7 @@ class PatientFormViewModel @Inject constructor(
       initials = InitialsState(
         backingState = handle.createMutableState("patientInitials", "")
       ),
-      presentationDate = NoFutureDateState(
-        handle.createMutableState("patientPresentationDate", "")
-      ),
+      presentationDate = dateState("patientPresentationDate", isMandatory = false),
       dateOfBirth = LimitedAgeDateState(
         AGE_RANGE,
         handle.createMutableState("patientDateOfBirth", "")
@@ -104,7 +100,7 @@ class PatientFormViewModel @Inject constructor(
     ),
     eclampsia = OutcomeFields.Eclampsia(
       isEnabled = enabledState("eclampsiaEnabled"),
-      date = dateState("eclampsiaDate"),
+      date = dateState("eclampsiaDate", isMandatory = true),
       placeOfFirstFit = enumIdOnlyState(
         "eclampsiaPlace",
         DropdownType.Place,
@@ -113,7 +109,7 @@ class PatientFormViewModel @Inject constructor(
     ),
     hysterectomy = OutcomeFields.Hysterectomy(
       isEnabled = enabledState("hysterectomyEnabled"),
-      date = dateState("hysterectomyDate"),
+      date = dateState("hysterectomyDate", isMandatory = true),
       cause = enumWithOtherState(
         "hysterectomyCause",
         DropdownType.CauseOfHysterectomy,
@@ -123,7 +119,7 @@ class PatientFormViewModel @Inject constructor(
     ),
     hduItuAdmission = OutcomeFields.HduItuAdmission(
       isEnabled = enabledState("hduItuAdmissionEnabled"),
-      date = dateState("hduItuAdmissionDate"),
+      date = dateState("hduItuAdmissionDate", isMandatory = true),
       cause = enumWithOtherState(
         "hduItuAdmissionCause",
         DropdownType.CauseForHduOrItuAdmission,
@@ -136,7 +132,7 @@ class PatientFormViewModel @Inject constructor(
     ),
     maternalDeath = OutcomeFields.MaternalDeath(
       isEnabled = enabledState("maternalDeathEnabled"),
-      date = dateState("maternalDeathDate"),
+      date = dateState("maternalDeathDate", isMandatory = true),
       underlyingCause = enumWithOtherState(
         "maternalDeathUnderlyingCause",
         DropdownType.UnderlyingCauseOfMaternalDeath,
@@ -150,7 +146,7 @@ class PatientFormViewModel @Inject constructor(
     ),
     surgicalManagement = OutcomeFields.SurgicalManagement(
       isEnabled = enabledState("surgicalManagementEnabled"),
-      date = dateState("surgicalManagementDate"),
+      date = dateState("surgicalManagementDate", isMandatory = true),
       type = enumWithOtherState(
         "surgicalManagementType",
         DropdownType.TypeOfSurgicalManagement,
@@ -159,7 +155,7 @@ class PatientFormViewModel @Inject constructor(
     ),
     perinatalDeath = OutcomeFields.PerinatalDeath(
       isEnabled = enabledState("perinatalDeathEnabled"),
-      date = dateState("perinatalDeathDate"),
+      date = dateState("perinatalDeathDate", isMandatory = true),
       outcome = enumIdOnlyState(
         "perinatalDeathOutcome",
         DropdownType.PerinatalOutcome,
@@ -193,7 +189,9 @@ class PatientFormViewModel @Inject constructor(
 
           with(formFields.patientFields) {
             initials.backingState.value = patient.initials
-            presentationDate.backingState.value = patient.presentationDate.toString()
+            presentationDate.backingState.value = patient.presentationDate
+              ?.toString(withSlashes = false)
+              ?: ""
             age.backingState.value = patient
               .dateOfBirth
               .getAgeInYearsFromNow()
@@ -204,7 +202,7 @@ class PatientFormViewModel @Inject constructor(
           with(formFields.eclampsia) {
             outcomes?.eclampsiaFit?.let {
               isEnabled.value = true
-              date.backingState.value = it.date.toString()
+              date.backingState.value = it.date.toString(withSlashes = false)
               placeOfFirstFit.backingState.value = it.place
             } ?: reset()
           }
@@ -212,7 +210,7 @@ class PatientFormViewModel @Inject constructor(
           with(formFields.hysterectomy) {
             outcomes?.hysterectomy?.let {
               isEnabled.value = true
-              date.backingState.value = it.date.toString()
+              date.backingState.value = it.date.toString(withSlashes = false)
               cause.backingState.value = it.cause
               additionalInfo.value = it.additionalInfo
             } ?: reset()
@@ -221,7 +219,7 @@ class PatientFormViewModel @Inject constructor(
           with(formFields.hduItuAdmission) {
             outcomes?.hduOrItuAdmission?.let {
               isEnabled.value = true
-              date.backingState.value = it.date.toString()
+              date.backingState.value = it.date.toString(withSlashes = false)
               cause.backingState.value = it.cause
               hduItuStayLengthInDays.backingState.value = it.stayInDays?.toString() ?: ""
             } ?: reset()
@@ -230,7 +228,7 @@ class PatientFormViewModel @Inject constructor(
           with(formFields.maternalDeath) {
             outcomes?.maternalDeath?.let {
               isEnabled.value = true
-              date.backingState.value = it.date.toString()
+              date.backingState.value = it.date.toString(withSlashes = false)
               underlyingCause.backingState.value = it.underlyingCause
               placeOfDeath.backingState.value = it.place
             } ?: reset()
@@ -239,7 +237,7 @@ class PatientFormViewModel @Inject constructor(
           with(formFields.surgicalManagement) {
             outcomes?.surgicalManagement?.let {
               isEnabled.value = true
-              date.backingState.value = it.date.toString()
+              date.backingState.value = it.date.toString(withSlashes = false)
               type.backingState.value = it.typeOfSurgicalManagement
             } ?: reset()
           }
@@ -247,7 +245,7 @@ class PatientFormViewModel @Inject constructor(
           with(formFields.perinatalDeath) {
             outcomes?.perinatalDeath?.let {
               isEnabled.value = true
-              date.backingState.value = it.date.toString()
+              date.backingState.value = it.date.toString(withSlashes = false)
               outcome.backingState.value = it.outcome
               relatedMaternalFactors.backingState.value = it.relatedMaternalFactors
             } ?: reset()
@@ -339,8 +337,8 @@ class PatientFormViewModel @Inject constructor(
             Patient(
               id = patientAndOutcomes?.patient?.id ?: 0L,
               initials = initials.stateValue,
-              presentationDate = presentationDate.stateValue.toFormDateOrNull(),
-              dateOfBirth = dateOfBirth.stateValue.toFormDateOrThrow(),
+              presentationDate = presentationDate.dateFromStateOrNull(),
+              dateOfBirth = dateOfBirth.dateFromStateOrThrow(),
               localNotes = localNotes.value
             )
           }
@@ -374,7 +372,7 @@ class PatientFormViewModel @Inject constructor(
 
               runCatching {
                 EclampsiaFit(
-                  date = date.stateValue.toFormDateOrThrow(),
+                  date = date.dateFromStateOrThrow(),
                   place = placeOfFirstFit.stateValue
                 )
               }
@@ -412,7 +410,7 @@ class PatientFormViewModel @Inject constructor(
 
               runCatching {
                 Hysterectomy(
-                  date = date.stateValue.toFormDateOrThrow(),
+                  date = date.dateFromStateOrThrow(),
                   cause = cause.stateValue,
                   additionalInfo = additionalInfo.value
                 )
@@ -457,7 +455,7 @@ class PatientFormViewModel @Inject constructor(
 
               runCatching {
                 HduOrItuAdmission(
-                  date = date.stateValue.toFormDateOrThrow(),
+                  date = date.dateFromStateOrThrow(),
                   cause = cause.stateValue!!,
                   stayInDays = hduItuStayLengthInDays.stateValue.toIntOrNull()
                 )
@@ -501,7 +499,7 @@ class PatientFormViewModel @Inject constructor(
               }
               runCatching {
                 MaternalDeath(
-                  date = date.stateValue.toFormDateOrThrow(),
+                  date = date.dateFromStateOrThrow(),
                   underlyingCause = underlyingCause.stateValue,
                   place = placeOfDeath.stateValue
                 )
@@ -538,7 +536,7 @@ class PatientFormViewModel @Inject constructor(
               }
               runCatching {
                 SurgicalManagementOfHaemorrhage(
-                  date = date.stateValue.toFormDateOrThrow(),
+                  date = date.dateFromStateOrThrow(),
                   typeOfSurgicalManagement = type.stateValue
                 )
               }
@@ -581,7 +579,7 @@ class PatientFormViewModel @Inject constructor(
               }
               runCatching {
                 PerinatalDeath(
-                  date = date.stateValue.toFormDateOrThrow(),
+                  date = date.dateFromStateOrThrow(),
                   outcome = outcome.stateValue,
                   relatedMaternalFactors = relatedMaternalFactors.stateValue
                 )
@@ -634,7 +632,8 @@ class PatientFormViewModel @Inject constructor(
   private fun enabledState(key: String): SavedStateMutableState<Boolean?> =
     handle.createMutableState(key, null)
 
-  private fun dateState(key: String) = NoFutureDateState(handle.createMutableState(key, ""))
+  private fun dateState(key: String, isMandatory: Boolean) =
+    NoFutureDateState(isMandatory, handle.createMutableState(key, ""))
 
   private fun enumIdOnlyState(
     key: String,

@@ -2,22 +2,20 @@ package org.welbodipartnership.cradle5.ui.composables.forms
 
 import android.content.Context
 import android.content.ContextWrapper
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.PressInteraction
+import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
-import androidx.compose.material.Text
 import androidx.compose.material.TextFieldColors
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.EditCalendar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,7 +24,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.fragment.app.FragmentActivity
@@ -39,32 +41,82 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import org.welbodipartnership.cradle5.R
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
 import org.welbodipartnership.cradle5.util.datetime.FormDate
+import org.welbodipartnership.cradle5.util.datetime.toFormDateFromNoSlashesOrNull
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZoneOffset
-import java.util.Calendar
-import java.util.Date
-import java.util.GregorianCalendar
-import java.util.TimeZone
 
+private const val TAG = "DateOutlinedTextField"
+
+val formDateToTimestampMapper: (dateString: String) -> Long? = { dateString ->
+  dateString.toFormDateFromNoSlashesOrNull()
+    ?.toGmtGregorianCalendar()
+    ?.timeInMillis
+}
+
+val timestampToFormDateMapper: (timestampMillis: Long) -> String = {
+  FormDate.fromGmtTimestampMillis(it).toString(withSlashes = false)
+}
+
+/**
+ * https://stackoverflow.com/a/68471076
+ *
+ * 00/00/0000
+ */
+class DateTransformation : VisualTransformation {
+  override fun filter(text: AnnotatedString): TransformedText {
+    val trimmed = if (text.text.length >= 8) text.text.substring(0..7) else text.text
+    val out = buildString(trimmed.length) {
+      for (i in trimmed.indices) {
+        append(trimmed[i])
+        if (i % 2 == 1 && i < 4) {
+          append('/')
+        }
+      }
+    }
+
+    val numberOffsetTranslator = object : OffsetMapping {
+      override fun originalToTransformed(offset: Int): Int {
+        if (offset <= 1) return offset
+        if (offset <= 3) return offset + 1
+        if (offset <= 8) return offset + 2
+        return 10
+      }
+
+      override fun transformedToOriginal(offset: Int): Int {
+        if (offset <= 2) return offset
+        if (offset <= 5) return offset - 1
+        if (offset <= 10) return offset - 2
+        return 8
+      }
+    }
+
+    return TransformedText(AnnotatedString(out), numberOffsetTranslator)
+  }
+}
+
+/**
+ * [dateStringToTimestampMapper] is used by the date picker to map [text] to a possible picker
+ * value to use, and [timestampToDateStringMapper] is used to convert picker-selected timestamps
+ * into strings into [onValueChange].
+ */
 @Composable
 fun DateOutlinedTextField(
-  date: FormDate?,
-  onDatePicked: (FormDate) -> Unit,
+  text: String,
+  onValueChange: (String) -> Unit,
+  dateStringToTimestampMapper: (dateString: String) -> Long?,
+  timestampToDateStringMapper: (timestampMillis: Long) -> String,
   modifier: Modifier = Modifier,
+  maxLength: Int = Int.MAX_VALUE,
   onPickerClose: () -> Unit = {},
   textFieldModifier: Modifier = Modifier,
   enabled: Boolean = true,
+  readOnly: Boolean = false,
   textStyle: TextStyle = LocalTextStyle.current,
   label: @Composable (() -> Unit)? = null,
-  placeholder: @Composable (() -> Unit)? = {
-    Text(stringResource(R.string.date_text_field_tap_to_set_date_placeholder))
-  },
-  leadingIcon: @Composable (() -> Unit)? = null,
-  trailingIcon: @Composable (() -> Unit)? = { Icon(Icons.Filled.EditCalendar, null) },
+  placeholder: @Composable (() -> Unit)? = null,
   errorHint: String? = null,
-  visualTransformation: VisualTransformation = VisualTransformation.None,
   keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
   keyboardActions: KeyboardActions = KeyboardActions.Default,
   singleLine: Boolean = false,
@@ -76,42 +128,40 @@ fun DateOutlinedTextField(
   if (enabled) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    DisposableEffect(date, scope) {
+    DisposableEffect(text, scope, dateStringToTimestampMapper) {
       val newChannel = scope.actor<Unit>(capacity = Channel.RENDEZVOUS) {
         for (unused in channel) {
           val activity = requireNotNull(context.getFragmentActivity()) { "failed to get activity" }
+          val currentMonth: Int
           val nowDate: Long = with(LocalDate.now()) {
+            currentMonth = month.value
             val dateTime = LocalDateTime.of(year, month, dayOfMonth, 0, 0)
             dateTime.atZone(ZoneId.ofOffset("UTC", ZoneOffset.UTC))
               .toInstant()
               .toEpochMilli()
           }
-          val existingDate = date?.toGmtGregorianCalendar()?.timeInMillis
+          val existingDate = dateStringToTimestampMapper(text)
           val datePicker = MaterialDatePicker.Builder.datePicker()
             .setSelection(existingDate)
             .setCalendarConstraints(
-              CalendarConstraints.Builder().apply {
-                setEnd(nowDate)
-                if (existingDate != null) {
-                  setOpenAt(existingDate)
-                }
-              }.build()
+              try {
+                CalendarConstraints.Builder().apply {
+                  setEnd(nowDate)
+                  if (existingDate != null) {
+                    setOpenAt(existingDate)
+                  }
+                }.build()
+              } catch (e: IllegalArgumentException) {
+                Log.w(TAG, "failed to create constraints", e)
+                CalendarConstraints.Builder().setEnd(nowDate).build()
+              }
             )
             .build()
 
           try {
-            val finalDate: FormDate? = suspendCancellableCoroutine { cont ->
+            val pickedTimestampMillis: Long? = suspendCancellableCoroutine { cont ->
               datePicker.addOnPositiveButtonClickListener {
-                val calendar = GregorianCalendar(TimeZone.getTimeZone("GMT"))
-                  .apply { time = Date(it) }
-                cont.resume(
-                  FormDate(
-                    day = calendar[Calendar.DAY_OF_MONTH],
-                    month = calendar[Calendar.MONTH] + 1,
-                    year = calendar[Calendar.YEAR]
-                  ),
-                  null
-                )
+                cont.resume(it, null)
               }
               datePicker.addOnCancelListener {
                 cont.resume(null, null)
@@ -121,8 +171,9 @@ fun DateOutlinedTextField(
               }
               datePicker.show(activity.supportFragmentManager, "date-picker")
             }
-            if (finalDate != null) {
-              onDatePicked(finalDate)
+            if (pickedTimestampMillis != null) {
+              val newDateString = timestampToDateStringMapper(pickedTimestampMillis)
+              onValueChange(newDateString)
             }
             onPickerClose()
           } finally {
@@ -141,35 +192,34 @@ fun DateOutlinedTextField(
   }
 
   OutlinedTextFieldWithErrorHint(
-    value = date?.toString() ?: "",
-    onValueChange = {},
+    value = text,
+    onValueChange = {
+      if (it.length <= maxLength) onValueChange(it)
+    },
     modifier = modifier,
     textFieldModifier = textFieldModifier,
     enabled = enabled,
-    readOnly = true,
+    readOnly = readOnly,
     textStyle = textStyle,
     label = label,
     placeholder = placeholder,
-    leadingIcon = leadingIcon,
-    trailingIcon = trailingIcon,
+    trailingIcon = {
+      IconButton(
+        onClick = { channelState.value?.trySend(Unit) },
+        enabled = enabled && !readOnly,
+      ) {
+        Icon(
+          imageVector = Icons.Filled.EditCalendar,
+          contentDescription = stringResource(R.string.date_text_field_icon_button_cd),
+        )
+      }
+    },
     errorHint = errorHint,
-    visualTransformation = visualTransformation,
-    keyboardOptions = keyboardOptions,
+    visualTransformation = DateTransformation(),
+    keyboardOptions = keyboardOptions.copy(keyboardType = KeyboardType.Number),
     keyboardActions = keyboardActions,
     singleLine = singleLine,
     maxLines = maxLines,
-    interactionSource = remember { MutableInteractionSource() }
-      .also { interactionSource ->
-        if (enabled) {
-          LaunchedEffect(interactionSource, channelState) {
-            interactionSource.interactions.collect {
-              if (it is PressInteraction.Release) {
-                channelState.value?.trySend(Unit)
-              }
-            }
-          }
-        }
-      },
     shape = shape,
     colors = colors
   )
@@ -181,14 +231,13 @@ fun DateOutlinedTextFieldPreview() {
   CradleTrialAppTheme {
     Scaffold {
       Column {
-        var selectedDate: MutableState<FormDate?> = remember { mutableStateOf(null) }
+        val selectedDate: MutableState<String> = remember { mutableStateOf("") }
 
-        Text("")
         DateOutlinedTextField(
-          date = selectedDate.value,
-          onDatePicked = {
-            selectedDate.value = it
-          }
+          text = selectedDate.value,
+          onValueChange = { selectedDate.value = it },
+          dateStringToTimestampMapper = formDateToTimestampMapper,
+          timestampToDateStringMapper = timestampToFormDateMapper
         )
       }
     }

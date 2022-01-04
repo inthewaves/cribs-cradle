@@ -9,6 +9,8 @@ import com.squareup.moshi.JsonWriter
 import kotlinx.parcelize.Parcelize
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
+import java.util.Calendar
+import java.util.Date
 import java.util.GregorianCalendar
 import java.util.TimeZone
 
@@ -16,12 +18,6 @@ private const val YEAR_LENGTH = 4
 private const val MONTH_WITH_PADDING_LENGTH = 2
 private const val DAY_WITH_PADDING_LENGTH = 2
 private const val SLASH_LENGTH = 1
-
-private const val DD_MM_YYYY_STRING_LENGTH = DAY_WITH_PADDING_LENGTH +
-  SLASH_LENGTH +
-  MONTH_WITH_PADDING_LENGTH +
-  SLASH_LENGTH +
-  YEAR_LENGTH
 
 /**
  * Represents the date string for form input as dd/mm/yyyy string.
@@ -43,13 +39,19 @@ data class FormDate(val day: Int, val month: Int, val year: Int) : Comparable<Fo
     }
   }
 
+  fun toLocalDate(): LocalDate = LocalDate.of(year, month, day)
+
   /**
    * Will be negative if this date is after [other]
    */
   fun getAgeInYearsFromDate(other: FormDate): Long {
     val otherDate = other.toGmtGregorianCalendar().toZonedDateTime()
     val thisAsDate = toGmtGregorianCalendar().toZonedDateTime()
-    return ChronoUnit.YEARS.between(thisAsDate, otherDate)
+    return if (compareDayAndMonth(this, other) < 0) {
+      ChronoUnit.YEARS.between(thisAsDate, otherDate)
+    } else {
+      ChronoUnit.YEARS.between(thisAsDate, otherDate)
+    }
   }
 
   /**
@@ -59,20 +61,30 @@ data class FormDate(val day: Int, val month: Int, val year: Int) : Comparable<Fo
     return getAgeInYearsFromDate(today())
   }
 
-  override fun toString(): String = buildString(DD_MM_YYYY_STRING_LENGTH) {
-    padInt(day, DAY_WITH_PADDING_LENGTH)
-    append('/')
-    padInt(month, MONTH_WITH_PADDING_LENGTH)
-    append('/')
-    padInt(year, YEAR_LENGTH)
+  override fun toString(): String = toString(withSlashes = true)
+
+  fun toString(withSlashes: Boolean = true): String {
+    return if (withSlashes) {
+      buildString(MAX_STRING_LEN_WITH_SLASHES) {
+        padInt(day, DAY_WITH_PADDING_LENGTH)
+        append('/')
+        padInt(month, MONTH_WITH_PADDING_LENGTH)
+        append('/')
+        padInt(year, YEAR_LENGTH)
+      }
+    } else {
+      buildString(MAX_STRING_LEN_NO_SLASHES) {
+        padInt(day, DAY_WITH_PADDING_LENGTH)
+        padInt(month, MONTH_WITH_PADDING_LENGTH)
+        padInt(year, YEAR_LENGTH)
+      }
+    }
   }
 
   override fun compareTo(other: FormDate): Int {
     val yearComparison = this.year.compareTo(other.year)
     if (yearComparison != 0) return yearComparison
-    val monthComparison = this.month.compareTo(other.month)
-    if (monthComparison != 0) return monthComparison
-    return this.day.compareTo(other.day)
+    return compareDayAndMonth(this, other)
   }
 
   private fun StringBuilder.padInt(value: Int, length: Int) {
@@ -106,6 +118,16 @@ data class FormDate(val day: Int, val month: Int, val year: Int) : Comparable<Fo
   }
 
   companion object {
+    const val MAX_STRING_LEN_WITH_SLASHES = DAY_WITH_PADDING_LENGTH +
+      SLASH_LENGTH +
+      MONTH_WITH_PADDING_LENGTH +
+      SLASH_LENGTH +
+      YEAR_LENGTH
+
+    const val MAX_STRING_LEN_NO_SLASHES = DAY_WITH_PADDING_LENGTH +
+      MONTH_WITH_PADDING_LENGTH +
+      YEAR_LENGTH
+
     fun today(): FormDate {
       val now = LocalDate.now()
       return FormDate(
@@ -115,15 +137,48 @@ data class FormDate(val day: Int, val month: Int, val year: Int) : Comparable<Fo
       )
     }
 
-    fun fromAge(ageInYears: Int): FormDate {
-      val now = LocalDate.now()
+    fun fromAgeFromNow(ageInYears: Int): FormDate {
+      return fromAgeFromTime(ageInYears, LocalDate.now())
+    }
+
+    fun fromAgeFromDate(ageInYears: Int, otherFormDate: FormDate): FormDate {
       return FormDate(
         day = 0,
         month = 0,
-        year = now.year - ageInYears
+        year = otherFormDate.year - ageInYears
       )
     }
+
+    fun fromAgeFromTime(ageInYears: Int, localDate: LocalDate): FormDate {
+      return FormDate(
+        day = 0,
+        month = 0,
+        year = localDate.year - ageInYears
+      )
+    }
+
+    fun fromGmtTimestampMillis(timestampMillis: Long): FormDate {
+      val calendar = GregorianCalendar(TimeZone.getTimeZone("GMT"))
+        .apply { time = Date(timestampMillis) }
+      return FormDate(
+        day = calendar[Calendar.DAY_OF_MONTH],
+        month = calendar[Calendar.MONTH] + 1,
+        year = calendar[Calendar.YEAR]
+      )
+    }
+
+    private fun compareDayAndMonth(thisFormDate: FormDate, otherFormDate: FormDate): Int {
+      val monthComparison = thisFormDate.month.compareTo(otherFormDate.month)
+      if (monthComparison != 0) return monthComparison
+      return thisFormDate.day.compareTo(otherFormDate.day)
+    }
   }
+}
+
+fun String.toFormDateFromNoSlashesOrNull(): FormDate? = try {
+  toFormDateFromNoSlashesOrThrow()
+} catch (e: NumberFormatException) {
+  null
 }
 
 fun String.toFormDateOrNull(): FormDate? = try {
@@ -134,10 +189,14 @@ fun String.toFormDateOrNull(): FormDate? = try {
 
 @Throws(NumberFormatException::class)
 fun String.toFormDateOrThrow(): FormDate {
-  if (length < DD_MM_YYYY_STRING_LENGTH) {
+  if (length < FormDate.MAX_STRING_LEN_WITH_SLASHES) {
     throw NumberFormatException("length too short to be a form date")
   }
+  return toFormDateFromNoSlashesOrThrow()
+}
 
+@Throws(NumberFormatException::class)
+fun String.toFormDateFromNoSlashesOrThrow(): FormDate {
   // Logic from https://github.com/square/moshi/blob/master/moshi-adapters/src/main/java/com/squareup/moshi/adapters/Iso8601Utils.java,
   // which itself is derived from Jackson / FasterXML
   var offset = 0

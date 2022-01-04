@@ -81,6 +81,8 @@
     <string name="lockscreen_title">Unlock the app</string>
     <string name="unlock_button">Unlock</string>
     <string name="login_button">Login</string>
+    <string name="form_date_invalid_error">Invalid date</string>
+    <string name="date_text_field_icon_button_cd">Button to open a date picker modal</string>
     <plurals name="patient_form_snackbar_failed_to_save_there_are_d_errors">
         <item quantity="one">Failed to save, as there is %1$d error.</item>
         <item quantity="other">Failed to save, as there are %1$d errors.</item>
