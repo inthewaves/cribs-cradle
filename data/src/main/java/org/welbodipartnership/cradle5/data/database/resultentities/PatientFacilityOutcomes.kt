@@ -12,7 +12,7 @@ data class PatientFacilityOutcomes(
   @Embedded
   val patient: Patient,
   @Relation(parentColumn = "healthcareFacilityId", entityColumn = "id")
-  val facility: Facility,
+  val facility: Facility?,
   @Relation(parentColumn = "id", entityColumn = "patientId")
   val outcomes: Outcomes?
 )
