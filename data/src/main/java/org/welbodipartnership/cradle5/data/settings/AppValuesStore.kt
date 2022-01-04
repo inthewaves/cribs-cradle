@@ -15,6 +15,14 @@ class AppValuesStore @Inject internal constructor(
 ) {
   val encryptedSettingsFlow: Flow<EncryptedSettings> = encryptedSettings.encryptedSettingsFlow()
 
+  val loginCompleteFlow: Flow<Boolean> = encryptedSettings.encryptedSettingsFlow()
+    .map { settings ->
+      settings.isLoginComplete.takeIf { settings.hasIsLoginComplete() }
+        ?: false
+    }
+    .distinctUntilChanged()
+    .conflate()
+
   val authTokenFlow: Flow<AuthToken?> = encryptedSettings.encryptedSettingsFlow()
     .map { settings -> settings.token.takeIf { settings.hasToken() } }
     .distinctUntilChanged()
@@ -48,6 +56,14 @@ class AppValuesStore @Inject internal constructor(
         .setToken(authToken)
         .setLastTimeAuthenticated(UnixTimestamp.now().timestamp)
         .setPasswordHash(hashOfSuccessfulPassword)
+        .build()
+    }
+  }
+
+  suspend fun markLoginComplete() {
+    encryptedSettings.updateData { settings ->
+      settings.toBuilder()
+        .setIsLoginComplete(true)
         .build()
     }
   }

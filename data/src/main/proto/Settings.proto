@@ -23,8 +23,9 @@ message EncryptedSettings {
   optional UserInfo user_info = 3;
   /* The last time the user input their password to login to the app */
   optional int64 last_time_authenticated = 4;
+  optional bool is_login_complete = 5;
   /* Dropdown menu values, which can be changed at anytime by the admin. */
-  repeated DynamicServerEnum enums = 5;
+  repeated DynamicServerEnum enums = 6;
 }
 
 message UserInfo {

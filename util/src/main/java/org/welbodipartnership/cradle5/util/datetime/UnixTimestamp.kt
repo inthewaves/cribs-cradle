@@ -12,8 +12,11 @@ import kotlin.time.Duration.Companion.seconds
 @Immutable
 @JvmInline
 value class UnixTimestamp(val timestamp: Long) : Comparable<UnixTimestamp> {
-  operator fun plus(duration: Duration) =
+  operator fun plus(duration: Duration): UnixTimestamp =
     UnixTimestamp((timestamp.seconds + duration).inWholeSeconds)
+
+  operator fun minus(duration: Duration): UnixTimestamp =
+    UnixTimestamp((timestamp.seconds - duration).inWholeSeconds)
 
   fun toDuration() = timestamp.seconds
 

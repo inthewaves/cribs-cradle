@@ -78,20 +78,25 @@ class AuthRepository @Inject internal constructor(
     appForegroundedObserver.isForegrounded,
     appValuesStore.authTokenFlow,
     appValuesStore.lastTimeAuthedFlow,
-  ) { _, authToken, lastTimeAuthed ->
-    if (authToken == null || !authToken.isInitialized || authToken == AuthToken.getDefaultInstance()) {
+    appValuesStore.loginCompleteFlow,
+  ) { _, authToken, lastTimeAuthed, loginComplete ->
+    if (
+      authToken == null ||
+      !authToken.isInitialized ||
+      authToken == AuthToken.getDefaultInstance() ||
+      !loginComplete
+    ) {
       AuthState.LoggedOut
     } else {
       val username = authToken.username
       // fall back to 0 to always force authentication if there is last authed time for some reason
       val lastTimeAuthedForComparison = lastTimeAuthed ?: UnixTimestamp(0)
-      val expiryTime: UnixTimestamp = UnixTimestamp
+      val tokenExpiryTime: UnixTimestamp = UnixTimestamp
         .fromDateTimeString(authToken.expires, ApiAuthToken.dateTimeFormatter)
       val now = UnixTimestamp.now()
 
-      Log.d(TAG, "duration between: ${lastTimeAuthedForComparison durationBetween now}")
       when {
-        now >= expiryTime -> AuthState.TokenExpired(username)
+        now >= tokenExpiryTime -> AuthState.TokenExpired(username)
         lastTimeAuthedForComparison durationBetween now >= AUTH_TIMEOUT -> {
           AuthState.LoggedInLocked(username)
         }
@@ -139,13 +144,15 @@ class AuthRepository @Inject internal constructor(
           return LoginResult.Exception(loginResult.formatErrorMessage(context))
         }
       }
-      Log.d(TAG, "login(): success")
+      Log.d(TAG, "login(): successfully obtained token")
+
       loginEventMessagesChannel?.trySend("Setting up lockscreen")
       val hash = passwordHasher.hashPassword(password)
+      // We have to insert the token here for RestApi to be able to authenticate
       appValuesStore.insertLoginDetails(authToken = token, hash)
 
       // Try to get the userId from the index menu items
-      loginEventMessagesChannel?.trySend("Getting user id")
+      loginEventMessagesChannel?.trySend("Getting user information")
       when (val indexResult = restApi.getIndexEntries()) {
         is NetworkResult.Success -> {
           val userDataItem = indexResult.value.asReversed().find { it.title == "User data" }
@@ -221,7 +228,9 @@ class AuthRepository @Inject internal constructor(
               " pages: ${result.value.totalNumberOfPages}"
           )
           dbWrapper.withTransaction { db ->
-            loginEventMessagesChannel?.trySend("Inserting ${result.value.totalNumberOfRecords} facilities")
+            loginEventMessagesChannel?.trySend(
+              "Saving ${result.value.totalNumberOfRecords} facilities"
+            )
             val dao = db.facilitiesDao()
             result.value.results.forEach { dao.upsert(Facility(it.id, it.name)) }
           }
@@ -237,6 +246,8 @@ class AuthRepository @Inject internal constructor(
           return LoginResult.Exception(result.formatErrorMessage(context))
         }
       }
+
+      appValuesStore.markLoginComplete()
 
       return LoginResult.Success
     } finally {
@@ -328,7 +339,7 @@ class AuthRepository @Inject internal constructor(
   suspend fun forceLockscreen() {
     Log.d(TAG, "forceLockscreen()")
     val currentAuthTime = appValuesStore.lastTimeAuthedFlow.first() ?: UnixTimestamp(0)
-    val expiredTime: UnixTimestamp = currentAuthTime + (AUTH_TIMEOUT * 2)
+    val expiredTime: UnixTimestamp = currentAuthTime - AUTH_TIMEOUT
     appValuesStore.setLastTimeAuthenticated(expiredTime)
   }
 
