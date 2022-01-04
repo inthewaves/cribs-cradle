@@ -36,6 +36,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,7 +57,6 @@ import com.google.accompanist.insets.navigationBarsWithImePadding
 import com.google.accompanist.insets.rememberInsetsPaddingValues
 import com.google.accompanist.insets.ui.TopAppBar
 import org.welbodipartnership.cradle5.R
-import org.welbodipartnership.cradle5.data.database.entities.Facility
 import org.welbodipartnership.cradle5.data.database.entities.embedded.EnumSelection
 import org.welbodipartnership.cradle5.data.serverenums.DropdownType
 import org.welbodipartnership.cradle5.data.serverenums.ServerEnum
@@ -67,6 +67,7 @@ import org.welbodipartnership.cradle5.ui.composables.forms.BooleanRadioButtonRow
 import org.welbodipartnership.cradle5.ui.composables.forms.DateOutlinedTextField
 import org.welbodipartnership.cradle5.ui.composables.forms.EnumDropdownMenuIdOnly
 import org.welbodipartnership.cradle5.ui.composables.forms.EnumDropdownMenuWithOther
+import org.welbodipartnership.cradle5.ui.composables.forms.FacilityAndPosition
 import org.welbodipartnership.cradle5.ui.composables.forms.FieldState
 import org.welbodipartnership.cradle5.ui.composables.forms.HealthcareFacilityDropdown
 import org.welbodipartnership.cradle5.ui.composables.forms.OutlinedTextFieldWithErrorHint
@@ -141,7 +142,7 @@ fun PatientForm(
     }
   }
 
-  var showUnsavedChangesDialog by remember { mutableStateOf(false) }
+  var showUnsavedChangesDialog by rememberSaveable { mutableStateOf(false) }
   BackHandler { showUnsavedChangesDialog = true }
   if (showUnsavedChangesDialog) {
     AlertDialog(
@@ -965,8 +966,8 @@ fun PatientFormPreview() {
 
 class HealthcareFacilityState(
   val isRequired: Boolean,
-  backingState: MutableState<Facility?>,
-) : FieldState<Facility?>(
+  backingState: MutableState<FacilityAndPosition?>,
+) : FieldState<FacilityAndPosition?>(
   validator = { facility -> if (isRequired) facility != null else true },
   errorFor = { ctx, _ -> ctx.getString(R.string.missing_healthcare_facility_error) },
   backingState = backingState,

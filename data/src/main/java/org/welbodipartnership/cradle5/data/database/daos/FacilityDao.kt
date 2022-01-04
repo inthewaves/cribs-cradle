@@ -4,8 +4,11 @@ import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.RawQuery
 import androidx.room.Transaction
 import androidx.room.Update
+import androidx.sqlite.db.SimpleSQLiteQuery
+import androidx.sqlite.db.SupportSQLiteQuery
 import org.welbodipartnership.cradle5.data.database.entities.Facility
 
 @Dao
@@ -27,6 +30,33 @@ abstract class FacilityDao {
   protected abstract suspend fun insert(facility: Facility): Long
 
   @Transaction
-  @Query("SELECT * FROM Facility ORDER BY name COLLATE NOCASE ASC")
+  @Query("SELECT * FROM Facility $NAME_ORDER")
   abstract fun facilitiesPagingSource(): PagingSource<Int, Facility>
+
+  @RawQuery
+  protected abstract suspend fun getFacilityIndexWhenOrderedByName(
+    query: SupportSQLiteQuery
+  ): Long?
+
+  /**
+   * Gets the index of the facility with the given [facilityId] when the facilities are sorted
+   * by ascending order of name.
+   */
+  suspend fun getFacilityIndexWhenOrderedByName(facilityId: Long): Long? {
+    // Room doesn't support this type of query
+    val query = SimpleSQLiteQuery(
+      """
+        SELECT rowNum FROM (
+          SELECT ROW_NUMBER () OVER ($NAME_ORDER) rowNum, id FROM Facility
+        ) WHERE id = ?;
+      """.trimIndent(),
+      arrayOf(facilityId)
+    )
+    // ROW_NUMBER is 1-based
+    return getFacilityIndexWhenOrderedByName(query)?.let { (it - 1).coerceAtLeast(0L) }
+  }
+
+  companion object {
+    private const val NAME_ORDER = "ORDER BY name COLLATE NOCASE ASC"
+  }
 }

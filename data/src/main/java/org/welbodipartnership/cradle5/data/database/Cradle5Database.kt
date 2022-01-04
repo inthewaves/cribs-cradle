@@ -34,6 +34,19 @@ class CradleDatabaseWrapper @Inject constructor() {
     }
   }
 
+  internal fun setup(context: Context) {
+    if (database != null) {
+      return
+    }
+    synchronized(CradleDatabaseWrapper::class.java) {
+      if (database != null) {
+        return
+      }
+      database = Room.databaseBuilder(context, Cradle5Database::class.java, DATABASE_NAME)
+        .build()
+    }
+  }
+
   internal fun setup(context: Context, supportFactory: SupportFactory) {
     if (database != null) {
       return

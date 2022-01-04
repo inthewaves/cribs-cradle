@@ -40,6 +40,7 @@ import org.welbodipartnership.cradle5.data.database.entities.SurgicalManagementO
 import org.welbodipartnership.cradle5.data.database.resultentities.PatientFacilityOutcomes
 import org.welbodipartnership.cradle5.data.serverenums.DropdownType
 import org.welbodipartnership.cradle5.data.settings.AppValuesStore
+import org.welbodipartnership.cradle5.ui.composables.forms.FacilityAndPosition
 import org.welbodipartnership.cradle5.util.coroutines.AppCoroutineDispatchers
 import javax.inject.Inject
 
@@ -210,7 +211,9 @@ class PatientFormViewModel @Inject constructor(
             }
             age.backingState.value = patient.dateOfBirth.getAgeInYearsFromNow().toString()
             dateOfBirth.setStateFromFormDate(patient.dateOfBirth)
-            healthcareFacility.stateValue = facility
+
+            val facilityPosition = database.facilitiesDao().getFacilityIndexWhenOrderedByName(facility.id)?.toInt()
+            healthcareFacility.stateValue = FacilityAndPosition(facility, facilityPosition)
           }
 
           with(formFields.eclampsia) {
@@ -359,7 +362,9 @@ class PatientFormViewModel @Inject constructor(
               initials = initials.stateValue,
               presentationDate = presentationDate.dateFromStateOrNull(),
               dateOfBirth = dateOfBirth.dateFromStateOrThrow(),
-              healthcareFacilityId = requireNotNull(healthcareFacility.stateValue?.id) {
+              healthcareFacilityId = requireNotNull(
+                healthcareFacility.stateValue?.facility?.id
+              ) {
                 "Missing healthcareFacilityId"
               },
               localNotes = localNotes.value

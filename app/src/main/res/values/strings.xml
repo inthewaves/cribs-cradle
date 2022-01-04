@@ -89,6 +89,7 @@
     <string name="missing_healthcare_facility_error">Missing healthcare facility</string>
     <string name="patient_registration_healthcare_facility_label">Healthcare facility</string>
     <string name="patient_registration_health_facility_dialog_title">Select a health facility</string>
+    <string name="patient_registration_server_id_not_available">N/A (not yet uploaded)</string>
     <plurals name="patient_form_snackbar_failed_to_save_there_are_d_errors">
         <item quantity="one">Failed to save, as there is %1$d error.</item>
         <item quantity="other">Failed to save, as there are %1$d errors.</item>
