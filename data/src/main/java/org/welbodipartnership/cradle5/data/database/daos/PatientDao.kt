@@ -10,7 +10,9 @@ import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 import org.welbodipartnership.cradle5.data.database.entities.Outcomes
 import org.welbodipartnership.cradle5.data.database.entities.Patient
+import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
 import org.welbodipartnership.cradle5.data.database.resultentities.ListPatient
+import org.welbodipartnership.cradle5.data.database.resultentities.PatientAndOutcomes
 import org.welbodipartnership.cradle5.data.database.resultentities.PatientFacilityOutcomes
 
 @Dao
@@ -62,6 +64,30 @@ abstract class PatientDao {
   @Query("SELECT * FROM Patient WHERE id = :patientPk")
   abstract suspend fun getPatientFacilityAndOutcomes(patientPk: Long): PatientFacilityOutcomes?
 
-  @Query("SELECT COUNT(*) FROM Patient WHERE objectId IS NULL")
-  abstract fun countPatientsForSync(): Flow<Int>
+  /**
+   * @return the number of rows that were updated. Note that WHERE is set to the primary key,
+   * so it either returns 1 or 0.
+   */
+  @Query("UPDATE Patient SET nodeId = :nodeId, objectId = :objectId WHERE id = :patientId")
+  protected abstract suspend fun updatePatientWithServerInfo(
+    patientId: Long,
+    nodeId: Long,
+    objectId: Long?
+  ): Int
+
+  /**
+   * Updates a patient with new server info. This marks a patient as uploaded.
+   *
+   * @return whether the update was successful
+   */
+  suspend fun updatePatientWithServerInfo(patientId: Long, serverInfo: ServerInfo): Boolean {
+    return updatePatientWithServerInfo(patientId, serverInfo.nodeId, serverInfo.objectId) == 1
+  }
+
+  @Query("SELECT COUNT(*) FROM Patient WHERE nodeId IS NULL")
+  abstract fun countPatientsToUpload(): Flow<Int>
+
+  @Transaction
+  @Query("SELECT * FROM Patient WHERE nodeId IS NULL")
+  abstract suspend fun getPatientsToUpload(): List<PatientAndOutcomes>
 }

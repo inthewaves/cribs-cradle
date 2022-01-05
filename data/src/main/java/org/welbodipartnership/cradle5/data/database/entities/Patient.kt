@@ -45,6 +45,7 @@ data class Patient(
    */
   val localNotes: String? = null
 ) : Verifiable<Patient> {
+  val isUploadedToServer: Boolean get() = serverInfo?.nodeId != null
   val serverPatientId: Long? get() = serverInfo?.objectId
 
   fun isValueForPropertyValid(

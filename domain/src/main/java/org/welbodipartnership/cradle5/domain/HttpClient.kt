@@ -3,9 +3,9 @@ package org.welbodipartnership.cradle5.domain
 import android.content.Context
 import android.util.Log
 import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withContext
+import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -18,7 +18,7 @@ import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
-val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
+val JSON_MEDIA_TYPE = "application/json".toMediaType()
 
 @Singleton
 @PublishedApi
@@ -68,8 +68,8 @@ internal class HttpClient @Inject constructor(
     url: String,
     headers: Map<String, String>,
     requestBody: RequestBody? = null,
-    crossinline failureReader: suspend (BufferedSource) -> FailT,
-    crossinline successReader: suspend (BufferedSource) -> SuccessT,
+    crossinline failureReader: suspend (BufferedSource, Headers) -> FailT,
+    crossinline successReader: suspend (BufferedSource, Headers) -> SuccessT,
   ): NetworkResult<SuccessT, FailT> = makeRequestInternal(
     method,
     { url(url) },
@@ -84,8 +84,8 @@ internal class HttpClient @Inject constructor(
     url: HttpUrl,
     headers: Map<String, String>,
     requestBody: RequestBody? = null,
-    crossinline failureReader: suspend (BufferedSource) -> FailT,
-    crossinline successReader: suspend (BufferedSource) -> SuccessT,
+    crossinline failureReader: suspend (BufferedSource, Headers) -> FailT,
+    crossinline successReader: suspend (BufferedSource, Headers) -> SuccessT,
   ): NetworkResult<SuccessT, FailT> = makeRequestInternal(
     method,
     { url(url) },
@@ -101,8 +101,8 @@ internal class HttpClient @Inject constructor(
     crossinline urlSetup: Request.Builder.() -> Unit,
     headers: Map<String, String>,
     requestBody: RequestBody? = null,
-    crossinline failureReader: suspend (BufferedSource) -> FailT,
-    crossinline successReader: suspend (BufferedSource) -> SuccessT,
+    crossinline failureReader: suspend (BufferedSource, Headers) -> FailT,
+    crossinline successReader: suspend (BufferedSource, Headers) -> SuccessT,
   ): NetworkResult<SuccessT, FailT> = withContext(appCoroutineDispatchers.io) {
     val request = Request.Builder().apply {
       urlSetup()
@@ -120,10 +120,10 @@ internal class HttpClient @Inject constructor(
         if (it.isSuccessful) {
           Log.i(TAG, "$message - Success ${it.code}")
           // The byte stream is closed by the `use` function above.
-          NetworkResult.Success(successReader(it.body!!.source()), it.code)
+          NetworkResult.Success(successReader(it.body!!.source(), it.headers), it.code)
         } else {
           Log.i(TAG, "$message - Failure ${it.code}")
-          NetworkResult.Failure(failureReader(it.body!!.source()), it.code)
+          NetworkResult.Failure(failureReader(it.body!!.source(), it.headers), it.code)
         }
       }
     } catch (e: Exception) {
@@ -143,12 +143,12 @@ internal class HttpClient @Inject constructor(
      * Use this if the body to send is too big to store in memory at once.
      */
     @Suppress("unused")
-    inline fun buildJsonRequestBody(crossinline outputWriter: suspend (BufferedSink) -> Unit) =
+    inline fun buildJsonRequestBody(crossinline outputWriter: (BufferedSink) -> Unit) =
       object : RequestBody() {
         override fun contentType() = JSON_MEDIA_TYPE
 
         override fun writeTo(sink: BufferedSink) {
-          runBlocking { outputWriter(sink) }
+          outputWriter(sink)
         }
       }
 

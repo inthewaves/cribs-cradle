@@ -3,7 +3,7 @@ package org.welbodipartnership.api.cradle5
 import com.squareup.moshi.JsonAdapter
 import org.junit.jupiter.api.Test
 import org.welbodipartnership.api.Json
-import org.welbodipartnership.api.forms.Form
+import org.welbodipartnership.api.forms.FormGetResponse
 import org.welbodipartnership.api.forms.FormId
 import org.welbodipartnership.api.getAdapterForFormType
 import kotlin.test.assertEquals
@@ -11,7 +11,7 @@ import kotlin.test.assertEquals
 internal class OutcomeTest {
   @Test
   fun testFormIdAnnotation() {
-    assertEquals(70L, Outcome::class.java.getAnnotation(FormId::class.java)?.id)
+    assertEquals(70, Outcome::class.java.getAnnotation(FormId::class.java)?.id)
   }
 
   @Test
@@ -619,7 +619,7 @@ internal class OutcomeTest {
       }
     """.trimIndent()
 
-    val adapter: JsonAdapter<Form<Outcome>> = Json.buildMoshiInstance().getAdapterForFormType()
+    val adapter: JsonAdapter<FormGetResponse<Outcome>> = Json.buildMoshiInstanceForApi().getAdapterForFormType()
 
     val parsed = adapter.fromJson(json)
   }

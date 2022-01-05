@@ -2,10 +2,10 @@ package org.welbodipartnership.api.forms.meta
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
-import org.welbodipartnership.api.forms.Form
+import org.welbodipartnership.api.forms.FormGetResponse
 
 /**
- * Information about one of the variables in a [Form].
+ * Information about one of the variables in a [FormGetResponse].
  */
 @JsonClass(generateAdapter = true)
 data class Control(

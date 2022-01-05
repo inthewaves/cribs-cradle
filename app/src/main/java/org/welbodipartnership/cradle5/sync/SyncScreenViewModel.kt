@@ -26,7 +26,7 @@ class SyncScreenViewModel @Inject constructor(
         SyncRepository.SyncStatus.None
       )
 
-  val patientsToUploadCountFlow: StateFlow<Int?> = dbWrapper.patientsDao().countPatientsForSync()
+  val patientsToUploadCountFlow: StateFlow<Int?> = dbWrapper.patientsDao().countPatientsToUpload()
     .stateIn(
       viewModelScope,
       SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000L),

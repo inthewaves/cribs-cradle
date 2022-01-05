@@ -21,6 +21,7 @@ value class FormId(val id: Int) {
 value class ObjectId(val id: Int) {
   companion object {
     val QUERIES = ObjectId(0)
+    val NEW_POST = ObjectId(0)
   }
 }
 
@@ -40,8 +41,20 @@ class UrlProvider @Inject constructor(@Named("baseApiUrl") val baseApiUrl: Strin
 
   val indexEndpoint = "$baseApiUrl/"
 
-  fun forms(formId: FormId, objectId: ObjectId) =
-    "$baseApiUrl/v0/forms/${formId.id}/${objectId.id}"
+  fun forms(
+    formId: FormId,
+    objectId: ObjectId,
+    basePatientId: ObjectId? = null,
+  ) = "$baseApiUrl/v0/forms/${formId.id}/${objectId.id}".let {
+    if (basePatientId != null) {
+      it.toHttpUrl().newBuilder()
+        .addQueryParameter("baseId", basePatientId.id.toString())
+        .build()
+        .toString()
+    } else {
+      it
+    }
+  }
 
   fun forms(nodeId: NodeId) =
     "$baseApiUrl/v0/forms/${nodeId.id}"

@@ -332,7 +332,7 @@ internal class UserAccountTest {
       }
     """.trimIndent()
 
-    val formAdapter = Json.buildMoshiInstance().getAdapterForFormType<UserAccount>()
+    val formAdapter = Json.buildMoshiInstanceForApi().getAdapterForFormType<UserAccount>()
 
     val parsed = formAdapter.fromJson(json)
     assertNotNull(parsed)
@@ -341,7 +341,7 @@ internal class UserAccountTest {
 
   @Test
   fun testJsonParse() {
-    val moshi = Json.buildMoshiInstance()
+    val moshi = Json.buildMoshiInstanceForApi()
     val adapter = moshi.adapter(UserAccount::class.java)
 
     val json = """

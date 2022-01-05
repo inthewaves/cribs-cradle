@@ -14,8 +14,14 @@ import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.actor
+import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
 import org.welbodipartnership.cradle5.data.settings.AppValuesStore
+import org.welbodipartnership.cradle5.domain.patients.PatientsManager
 import java.util.UUID
 import javax.annotation.concurrent.Immutable
 
@@ -24,19 +30,42 @@ class SyncWorker @AssistedInject constructor(
   @Assisted appContext: Context,
   @Assisted workerParams: WorkerParameters,
   private val appValuesStore: AppValuesStore,
+  private val patientsManager: PatientsManager,
+  private val dbWrapper: CradleDatabaseWrapper,
 ) : CoroutineWorker(appContext, workerParams) {
   override suspend fun doWork(): Result {
     Log.d(TAG, "I am supposed to do some work but I'm not going to do something")
     reportProgress(Stage.STARTING)
 
-    delay(1000L)
+    val patientsToUpload = dbWrapper.patientsDao().getPatientsToUpload()
+    reportProgress(Stage.UPLOADING_PATIENTS, doneSoFar = 0, totalToDo = patientsToUpload.size)
+    coroutineScope {
+      val updateChannel = actor<Int>(capacity = Channel.CONFLATED) {
+        consumeEach { progress ->
+          reportProgress(
+            Stage.UPLOADING_PATIENTS,
+            doneSoFar = progress.coerceAtMost(patientsToUpload.size),
+            totalToDo = patientsToUpload.size
+          )
+          delay(50L)
+        }
+      }
 
-    val times = 15
-    repeat(times) {
-      reportProgress(Stage.UPLOADING_PATIENTS, it, times)
-      delay(500L)
+      patientsToUpload.forEachIndexed { index, (patient, outcomes) ->
+        // TODO: Better progress, better error handling, prevent edits while in sync,
+        //  and run jobs to clean up loose ends like cases where we have a nodeId but no objectId
+        if (outcomes == null) {
+          Log.w(TAG, "refusing to upload patient ${patient.id} because they have no outcomes")
+        } else {
+          val result = patientsManager.uploadPatientAndOutcomes(patient, outcomes)
+          Log.d(TAG, "result: $result")
+        }
+
+        updateChannel.trySend(index + 1)
+      }
+
+      updateChannel.close()
     }
-
     appValuesStore.setLastTimeSyncCompletedToNow()
     return Result.success()
   }

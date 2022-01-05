@@ -3,10 +3,12 @@ package org.welbodipartnership.api.cradle5
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import org.welbodipartnership.api.forms.FormId
+import org.welbodipartnership.api.forms.PostOperationId
 import org.welbodipartnership.cradle5.util.datetime.FormDate
 
 @JsonClass(generateAdapter = true)
 @FormId(70)
+@PostOperationId(191)
 data class Outcome(
   @Json(name = "Control1378")
   val hadFirstEclampsiaFit: Boolean = false,
@@ -69,5 +71,5 @@ data class Outcome(
   @Json(name = "Control1933")
   val perinatalMaternalFactors: Int? = null,
   @Json(name = "Control1934")
-  val perinatalOtherMaternalFactors: Int? = null,
+  val perinatalOtherMaternalFactors: String? = null,
 )

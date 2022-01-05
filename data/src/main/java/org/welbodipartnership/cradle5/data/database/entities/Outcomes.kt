@@ -51,6 +51,8 @@ data class Outcomes(
   @Embedded(prefix = "perinatal_death_")
   val perinatalDeath: PerinatalDeath?
 ) : Verifiable<Outcomes> {
+  val isUploadedToServer: Boolean get() = serverInfo?.nodeId != null
+
   fun isValueForPropertyValid(
     property: KProperty1<out Outcomes, *>,
     value: Any?,

@@ -60,7 +60,7 @@ internal class LookupResultTest {
       url = "https://www.example.com/somewhere/api/v0/lookups/55"
     )
 
-    val moshi = Json.buildMoshiInstance()
+    val moshi = Json.buildMoshiInstanceForApi()
     val adapter = moshi.adapter(LookupResult::class.java)
     val parsed = adapter.fromJson(json)
     assertEquals(expected, parsed)
