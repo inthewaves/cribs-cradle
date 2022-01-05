@@ -17,19 +17,16 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.yield
 import org.welbodipartnership.api.ApiAuthToken
-import org.welbodipartnership.api.cradle5.HealthcareFacilityLookupEntry
 import org.welbodipartnership.api.cradle5.HealthcareFacilitySummary
 import org.welbodipartnership.cradle5.data.cryptography.PasswordHasher
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
-import org.welbodipartnership.cradle5.data.database.entities.Facility
 import org.welbodipartnership.cradle5.data.settings.AppValuesStore
 import org.welbodipartnership.cradle5.data.settings.AuthToken
 import org.welbodipartnership.cradle5.data.settings.PasswordHash
-import org.welbodipartnership.cradle5.domain.ControlId
-import org.welbodipartnership.cradle5.domain.FormId
 import org.welbodipartnership.cradle5.domain.NetworkResult
 import org.welbodipartnership.cradle5.domain.ObjectId
 import org.welbodipartnership.cradle5.domain.RestApi
+import org.welbodipartnership.cradle5.domain.facilities.FacilityRepository
 import org.welbodipartnership.cradle5.domain.sync.SyncRepository
 import org.welbodipartnership.cradle5.util.ApplicationCoroutineScope
 import org.welbodipartnership.cradle5.util.coroutines.AppCoroutineDispatchers
@@ -58,6 +55,7 @@ class AuthRepository @Inject internal constructor(
   private val dbWrapper: CradleDatabaseWrapper,
   private val dispatchers: AppCoroutineDispatchers,
   private val syncRepository: SyncRepository,
+  private val facilityRepository: FacilityRepository,
   @ApplicationContext private val context: Context,
   @ApplicationCoroutineScope private val applicationCoroutineScope: CoroutineScope,
   appForegroundedObserver: AppForegroundedObserver
@@ -218,37 +216,13 @@ class AuthRepository @Inject internal constructor(
 
       // Try to get the facilities associated with this district
       loginEventMessagesChannel?.trySend("Getting facilities")
-      when (
-        val result = restApi
-          .getDynamicLookupData<HealthcareFacilityLookupEntry>(
-            ControlId("Control2092"),
-            FormId(63),
-            ObjectId.QUERIES
-          )
-      ) {
-        is NetworkResult.Success -> {
-          Log.d(
-            TAG,
-            "facilities count: ${result.value.totalNumberOfRecords}," +
-              " pages: ${result.value.totalNumberOfPages}"
-          )
-          dbWrapper.withTransaction { db ->
-            loginEventMessagesChannel?.trySend(
-              "Saving ${result.value.totalNumberOfRecords} facilities"
-            )
-            val dao = db.facilitiesDao()
-            result.value.results.forEach { dao.upsert(Facility(it.id, it.name)) }
-          }
+      when (val result = facilityRepository.downloadAndSaveFacilities(loginEventMessagesChannel)) {
+        FacilityRepository.DownloadResult.Success -> {}
+        is FacilityRepository.DownloadResult.Exception -> {
+          return LoginResult.Exception(result.errorMessage)
         }
-        is NetworkResult.Failure -> {
-          val message = result.errorValue.decodeToString()
-          return LoginResult.Invalid(
-            "Unable to get facilities: HTTP ${result.statusCode} error (message: $message)",
-            result.statusCode
-          )
-        }
-        is NetworkResult.NetworkException -> {
-          return LoginResult.Exception(result.formatErrorMessage(context))
+        is FacilityRepository.DownloadResult.Invalid -> {
+          return LoginResult.Invalid(result.errorMessage, result.errorCode)
         }
       }
 
@@ -349,6 +323,7 @@ class AuthRepository @Inject internal constructor(
   }
 
   suspend fun logout() {
+    Log.d(TAG, "logout()")
     withContext(dispatchers.io) {
       syncRepository.cancelAllWork()
       dbWrapper.database?.clearAllTables()

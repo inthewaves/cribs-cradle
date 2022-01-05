@@ -118,7 +118,6 @@ class SyncWorker @AssistedInject constructor(
             .build()
         )
         .build()
-      workManager.getWorkInfosForUniqueWorkLiveData(UNIQUE_WORK_NAME)
       workManager.enqueueUniqueWork(
         UNIQUE_WORK_NAME,
         ExistingWorkPolicy.APPEND_OR_REPLACE,
