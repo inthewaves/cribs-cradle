@@ -67,8 +67,8 @@ android {
             initWith(getByName("release"))
             applicationIdSuffix = ".releaseStaging"
             isDebuggable = false
-            isMinifyEnabled = false
-            isShrinkResources = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             matchingFallbacks += listOf("release", "debug")
 
             buildConfigField("String", "SERVER_URL", "\"https://www.medscinet.com/Cradle5Test/api\"")

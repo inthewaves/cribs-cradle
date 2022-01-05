@@ -38,7 +38,10 @@ class PatientsManager @Inject constructor(
 
     val patientServerInfo: ServerInfo = when (val patientResult = restApi.postPatient(patient)) {
       is RestApi.PostResult.AllFailed -> return UploadResult.PatientFailure(patientResult)
-      is RestApi.PostResult.ObjectIdRetrievalFailed -> patientResult.partialServerInfo
+      is RestApi.PostResult.ObjectIdRetrievalFailed -> {
+        Log.w(TAG, "only got partial patient info")
+        patientResult.partialServerInfo
+      }
       is RestApi.PostResult.Success -> patientResult.serverInfo
     }
     dbWrapper.patientsDao().updatePatientWithServerInfo(patient.id, patientServerInfo)

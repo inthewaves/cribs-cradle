@@ -220,3 +220,19 @@ sealed interface NetworkResult<SuccessT, FailT> {
       "(${cause::class.java.simpleName}) ${cause.localizedMessage}"
   }
 }
+
+/**
+ * Gets an error message. Since the failure result is just a byte array, we just read that if it
+ * is a failure from the server.
+ */
+fun <T> DefaultNetworkResult<T>.getErrorMessageOrNull(context: Context): String? {
+  return when (this) {
+    is NetworkResult.Failure -> {
+      "HTTP $statusCode error, error message ${this.errorValue.decodeToString()}"
+    }
+    is NetworkResult.NetworkException -> {
+      formatErrorMessage(context)
+    }
+    is NetworkResult.Success -> null
+  }
+}

@@ -1,9 +1,11 @@
 package org.welbodipartnership.cradle5.domain
 
+import android.content.Context
 import android.util.Log
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -38,19 +40,11 @@ class RestApi @Inject internal constructor(
   internal val moshi: Moshi,
   @PublishedApi
   internal val httpClient: HttpClient,
-  private val appValuesStore: AppValuesStore
+  private val appValuesStore: AppValuesStore,
+  @ApplicationContext private val context: Context
 ) {
 
-  val nodeIdFromHeaderReader: suspend (BufferedSource, Headers) -> NodeId = { _, headers ->
-    val locationHeader = headers["Location"]
-      ?: throw IOException("missing expected location header")
-    val nodeIdString = locationHeader.substringAfterLast('/', "")
-      .ifEmpty { null }
-      ?: throw IOException("location header $locationHeader doesn't have a path")
-    val nodeId = nodeIdString.toIntOrNull()
-      ?: throw IOException("location header $locationHeader doesn't end in an integer")
-    NodeId(nodeId)
-  }
+  // ---- General unauthed calls
 
   suspend fun login(username: String, password: String): NetworkResult<AuthToken, LoginErrorMessage?> {
     val requestBody = FormBody.Builder(Charsets.UTF_8)
@@ -84,6 +78,8 @@ class RestApi @Inject internal constructor(
       }
     )
   }
+
+  // ---- Authorized calls
 
   @PublishedApi
   internal val defaultHeadersFlow: Flow<Map<String, String>> = appValuesStore.authTokenFlow
@@ -191,12 +187,50 @@ class RestApi @Inject internal constructor(
     )
   }
 
+  // ---- Post requests for new form entries
+
+  /**
+   * A reader to read a newly posted form entry's [NodeId] from the header. When a new form entry
+   * is made via a POST request, the API sends back the NodeId as a link in the Location header.
+   */
+  private val nodeIdFromHeaderReader: suspend (BufferedSource, Headers) -> NodeId = { _, headers ->
+    val locationHeader = headers["Location"]
+      ?: throw IOException("missing expected location header")
+    val nodeIdString = locationHeader.substringAfterLast('/', "")
+      .ifEmpty { null }
+      ?: throw IOException("location header $locationHeader doesn't have a path")
+    val nodeId = nodeIdString.toIntOrNull()
+      ?: throw IOException("location header $locationHeader doesn't end in an integer")
+    NodeId(nodeId)
+  }
+
+  /**
+   * Encapsulates the result of a sequence of POST and GET requests for uploading data to the API.
+   *
+   * When we send a POST request to the server, the API does not give us the objectId. It only
+   * gives us the nodeId in the form of a URL in the response Location header. We have to follow
+   * the nodeId in order to get the objectId. This
+   */
   sealed class PostResult {
+    /**
+     * Represents a POST request where the initial posting of the data failed somehow. This can
+     * come from either network errors or the server returning a non-successful HTTP code for the
+     * POST request.
+     *
+     * An error can also come if the Location header is missing or changes format (e.g. no longer
+     * reflects the node id). However, this is rather unexpected. Regardless, it might be prudent
+     * to try to handle this case e.g. if it returns a URL, just blindly follow the URL and try to
+     * read the data from there. This approach comes with other issues, however; the GET request
+     * on a form's data does not contain the nodeId in the Meta object.
+     */
     data class AllFailed(
       val failOrException: NetworkResult<*, ByteArray>?,
       val otherCause: Exception? = null
     ) : PostResult()
 
+    /**
+     * R
+     */
     data class ObjectIdRetrievalFailed(
       val failOrException: NetworkResult<*, ByteArray>?,
       val otherCause: Exception? = null,
@@ -207,8 +241,7 @@ class RestApi @Inject internal constructor(
   }
 
   /**
-   * Posts a patient to the database and returns the nodeId of the patient. The nodeId is given
-   * in the Location header.
+   * Performs a POST and GET request sequence as documented in [PostResult].
    */
   private suspend inline fun <reified PostType> postNewFormSubmission(
     submission: PostType,
@@ -231,7 +264,7 @@ class RestApi @Inject internal constructor(
     } catch (e: Exception) {
       Log.e(
         TAG,
-        "postNewFormSubmission: ${PostType::class.java.simpleName} does FormId annotation",
+        "postNewFormSubmission: ${PostType::class.java.simpleName} missing FormId annotation",
         e
       )
       return PostResult.AllFailed(failOrException = null, otherCause = e)
@@ -251,23 +284,24 @@ class RestApi @Inject internal constructor(
     ) {
       is NetworkResult.Success -> result.value
       else -> {
-        Log.e(TAG, "postNewFormSubmission: failed to post ${PostType::class.java.simpleName}")
-        when (result) {
-          is NetworkResult.Failure -> {
-            Log.e(TAG, "postNewFormSubmission: failure: ${result.statusCode}, ${result.errorValue.decodeToString()}")
-          }
-          is NetworkResult.NetworkException -> TODO()
-          is NetworkResult.Success -> {}
-        }
+        Log.e(
+          TAG,
+          "postNewFormSubmission: failed to post ${PostType::class.java.simpleName}: " +
+            result.getErrorMessageOrNull(context)
+        )
         return PostResult.AllFailed(result)
       }
     }
-    Log.d(TAG, "postNewFormSubmission: posted and got NodeId ${nodeId.id}. Obtaining objectId")
+    Log.d(TAG, "postNewFormSubmission: POSTed & got NodeId ${nodeId.id}. GETting ObjectId")
 
     val objectId = when (val result = getObjectId(nodeId)) {
       is NetworkResult.Success -> result.value
       else -> {
-        Log.e(TAG, "failed to get ObjectId")
+        Log.e(
+          TAG,
+          "postNewFormSubmission: failed to get objectId for node id ${nodeId.id}: " +
+            result.getErrorMessageOrNull(context)
+        )
         return PostResult.ObjectIdRetrievalFailed(
           result,
           otherCause = null,
@@ -299,14 +333,38 @@ class RestApi @Inject internal constructor(
     )
   }
 
+  /**
+   * Post a patient to the server. This will perform a POST request to send the data and grab the
+   * nodeId of the patient, and then it will send a GET request to the server's Meta info in order
+   * to get the patient's objectId.
+   *
+   * Note that posting a patient and posting a patient's outcomes are done in separate calls.
+   * Posting outcomes has to be done by calling [postOutcomes].
+   */
   suspend fun postPatient(patient: Patient): PostResult {
+    if (patient.serverInfo?.nodeId != null) {
+      Log.w(TAG, "trying to post a patient that has already been uploaded. not supported")
+      return PostResult.AllFailed(null, IOException("trying to overwrite server data"))
+    }
+
     return postNewFormSubmission(
       patient.toApiBody(),
       urlProvider = { formId -> urlProvider.forms(formId, ObjectId.NEW_POST) }
     )
   }
 
+  /**
+   * Post an outcome to the server. Performs a POST-and-GET-request sequence.
+   *
+   * The [patientObjectId] is the patient's object ID obtained from the server. It can only be done
+   * from a successful call to [postPatient]
+   */
   suspend fun postOutcomes(outcomes: Outcomes, patientObjectId: ObjectId): PostResult {
+    if (outcomes.serverInfo?.nodeId != null) {
+      Log.w(TAG, "trying to post outcomes that has already been uploaded. not supported")
+      return PostResult.AllFailed(null, IOException("trying to overwrite server data"))
+    }
+
     return postNewFormSubmission(
       outcomes.toApiBody(),
       urlProvider = { formId -> urlProvider.forms(formId, ObjectId.NEW_POST, patientObjectId) }
