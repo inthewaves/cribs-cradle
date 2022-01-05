@@ -7,6 +7,15 @@ plugins {
     id("de.mannodermaus.android-junit5")
 }
 
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    kotlinOptions {
+        freeCompilerArgs = freeCompilerArgs + listOf(
+            "-Xopt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
+            "-Xopt-in=kotlin.RequiresOptIn",
+        )
+    }
+}
+
 android {
     compileSdk = appconfig.versions.compileSdkVersion.get().toInt()
     defaultConfig {
@@ -37,12 +46,16 @@ dependencies {
     implementation(kotlin("stdlib"))
 
     api(libs.moshi.core)
-    implementation(libs.moshi.adapters)
+    api(libs.moshi.adapters)
 
-    implementation(libs.compose.runtime)
+    api(libs.compose.runtime)
 
     implementation(libs.okhttp.okhttp)
     implementation(libs.okio)
+
+    api(libs.androidx.work.runtime)
+    implementation(libs.androidx.hilt.work)
+    kapt(libs.androidx.hilt.compiler)
 
     implementation(libs.kotlinx.coroutines.android)
 

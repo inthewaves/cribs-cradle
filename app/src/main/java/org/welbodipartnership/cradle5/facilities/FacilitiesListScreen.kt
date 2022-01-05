@@ -36,7 +36,7 @@ import org.welbodipartnership.cradle5.R
 import org.welbodipartnership.cradle5.compose.rememberFlowWithLifecycle
 import org.welbodipartnership.cradle5.data.database.entities.Facility
 import org.welbodipartnership.cradle5.home.AccountInfoButton
-import org.welbodipartnership.cradle5.ui.composables.AnimatedVisibilityWrapper
+import org.welbodipartnership.cradle5.ui.composables.AnimatedVisibilityFadingWrapper
 import org.welbodipartnership.cradle5.ui.composables.carousel.Carousel
 import org.welbodipartnership.cradle5.ui.composables.screenlists.ScreenListItem
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
@@ -76,11 +76,11 @@ private fun FacilitiesListScreen(
 
       FacilityListHeader()
       Box(Modifier.fillMaxSize()) {
-        AnimatedVisibilityWrapper(
+        AnimatedVisibilityFadingWrapper(
           visible = lazyPagingItems.loadState.refresh is LoadState.Loading
         ) { CircularProgressIndicator(Modifier.align(Alignment.Center)) }
 
-        AnimatedVisibilityWrapper(
+        AnimatedVisibilityFadingWrapper(
           visible = lazyPagingItems.loadState.refresh !is LoadState.Loading
         ) {
           LazyColumn(state = lazyListState) {

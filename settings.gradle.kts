@@ -37,6 +37,8 @@ dependencyResolutionManagement {
             alias("androidx-lifecycle-process").to("androidx.lifecycle", "lifecycle-process").versionRef("lifecycle")
             alias("androidx-activity-compose").to("androidx.activity:activity-compose:1.4.0")
 
+            alias("androidx-work-runtime").to("androidx.work:work-runtime-ktx:2.7.1")
+
             alias("google-android-material").to("com.google.android.material:material:1.4.0")
 
             version("accompanist", "0.21.4-beta")

@@ -9,7 +9,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
 
 @Composable
-fun AnimatedVisibilityWrapper(
+fun AnimatedVisibilityFadingWrapper(
   visible: Boolean,
   enter: EnterTransition = fadeIn(),
   exit: ExitTransition = fadeOut(),

@@ -1,8 +1,11 @@
 package org.welbodipartnership.cradle5.util.datetime
 
 import androidx.compose.runtime.Immutable
+import java.time.Instant
 import java.time.LocalDateTime
+import java.time.ZoneId
 import java.time.ZoneOffset
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import kotlin.math.abs
@@ -26,6 +29,21 @@ value class UnixTimestamp(val timestamp: Long) : Comparable<UnixTimestamp> {
 
   infix fun durationBetween(other: UnixTimestamp): Duration {
     return abs(this.timestamp - other.timestamp).seconds
+  }
+
+  fun formatAsConciseDate(): String {
+    val thisAsZonedDateTime: ZonedDateTime = ZonedDateTime.ofInstant(
+      Instant.ofEpochSecond(timestamp),
+      ZoneId.systemDefault()
+    )
+    val now = ZonedDateTime.now()
+    val pattern = when {
+      now.toLocalDate() == thisAsZonedDateTime.toLocalDate() -> "h:mm a"
+      now.year == thisAsZonedDateTime.year -> "MMM d '@' h a"
+      else -> "MMM d, yyyy"
+    }
+    val formatter = DateTimeFormatter.ofPattern(pattern)
+    return thisAsZonedDateTime.format(formatter)
   }
 
   companion object {

@@ -30,6 +30,7 @@ import org.welbodipartnership.cradle5.domain.FormId
 import org.welbodipartnership.cradle5.domain.NetworkResult
 import org.welbodipartnership.cradle5.domain.ObjectId
 import org.welbodipartnership.cradle5.domain.RestApi
+import org.welbodipartnership.cradle5.domain.sync.SyncRepository
 import org.welbodipartnership.cradle5.util.ApplicationCoroutineScope
 import org.welbodipartnership.cradle5.util.coroutines.AppCoroutineDispatchers
 import org.welbodipartnership.cradle5.util.datetime.UnixTimestamp
@@ -56,8 +57,9 @@ class AuthRepository @Inject internal constructor(
   private val networkObserver: NetworkObserver,
   private val dbWrapper: CradleDatabaseWrapper,
   private val dispatchers: AppCoroutineDispatchers,
+  private val syncRepository: SyncRepository,
   @ApplicationContext private val context: Context,
-  @ApplicationCoroutineScope applicationCoroutineScope: CoroutineScope,
+  @ApplicationCoroutineScope private val applicationCoroutineScope: CoroutineScope,
   appForegroundedObserver: AppForegroundedObserver
 ) {
 
@@ -86,6 +88,9 @@ class AuthRepository @Inject internal constructor(
       authToken == AuthToken.getDefaultInstance() ||
       !loginComplete
     ) {
+      if (authToken != null && !loginComplete) {
+        Log.d(TAG, "authStateFlow: token present but login not complete")
+      }
       AuthState.LoggedOut
     } else {
       val username = authToken.username
@@ -345,8 +350,11 @@ class AuthRepository @Inject internal constructor(
 
   suspend fun logout() {
     withContext(dispatchers.io) {
-      appValuesStore.clearAllDataExceptEnums()
+      syncRepository.cancelAllWork()
       dbWrapper.database?.clearAllTables()
+      // This will clear the auth token, which will signal to the app state flow above that
+      // we are logged out.
+      appValuesStore.clearAllData()
     }
   }
 

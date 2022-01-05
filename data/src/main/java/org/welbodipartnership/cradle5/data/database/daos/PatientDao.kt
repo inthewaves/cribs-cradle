@@ -61,4 +61,7 @@ abstract class PatientDao {
   @Transaction
   @Query("SELECT * FROM Patient WHERE id = :patientPk")
   abstract suspend fun getPatientFacilityAndOutcomes(patientPk: Long): PatientFacilityOutcomes?
+
+  @Query("SELECT COUNT(*) FROM Patient WHERE objectId IS NULL")
+  abstract fun countPatientsForSync(): Flow<Int>
 }

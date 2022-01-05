@@ -135,6 +135,9 @@ dependencies {
     implementation(libs.hilt.library)
     kapt(libs.hilt.compiler)
 
+    implementation(libs.androidx.hilt.work)
+    implementation(libs.androidx.work.runtime)
+
     implementation(libs.androidx.hilt.navigation.compose)
 
     implementation(libs.kotlinx.coroutines.android)

@@ -93,8 +93,13 @@
     <string name="patient_registration_server_id_not_available">N/A (not yet uploaded)</string>
     <string name="patient_form_cannot_edit_patient_already_on_server">Unable to edit a patient already on the server</string>
     <string name="patient_form_snackbar_failed_to_save_exception">Failed to save due to an exception</string>
+    <string name="sync_screen_start_sync_button">Sync</string>
     <plurals name="patient_form_snackbar_failed_to_save_there_are_d_errors">
         <item quantity="one">Failed to save, as there is %1$d error.</item>
         <item quantity="other">Failed to save, as there are %1$d errors.</item>
+    </plurals>
+    <plurals name="sync_screen_there_are_currently_d_patients_to_upload">
+        <item quantity="one">There is currently %1$d patient to upload to the server</item>
+        <item quantity="other">There are currently %1$d patients to upload to the server</item>
     </plurals>
 </resources>

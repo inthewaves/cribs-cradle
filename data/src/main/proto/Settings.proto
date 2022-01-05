@@ -26,6 +26,10 @@ message EncryptedSettings {
   optional bool is_login_complete = 5;
   /* Dropdown menu values, which can be changed at anytime by the admin. */
   repeated DynamicServerEnum enums = 6;
+  /* The current id of the SyncWorker */
+  optional string current_sync_id = 7;
+  /* Last time the SyncWorker ran */
+  optional int64 last_sync_completed_timestamp = 8;
 }
 
 message UserInfo {

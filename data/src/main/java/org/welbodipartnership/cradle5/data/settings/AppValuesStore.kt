@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import org.welbodipartnership.cradle5.data.serverenums.ServerEnumCollection
 import org.welbodipartnership.cradle5.util.datetime.UnixTimestamp
+import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -39,6 +40,24 @@ class AppValuesStore @Inject internal constructor(
 
   val passwordHashFlow: Flow<PasswordHash?> = encryptedSettings.encryptedSettingsFlow()
     .map { settings -> settings.passwordHash.takeIf { settings.hasPasswordHash() } }
+    .distinctUntilChanged()
+    .conflate()
+
+  val syncIdFlow: Flow<UUID?> = encryptedSettings.encryptedSettingsFlow()
+    .map { settings ->
+      settings.currentSyncId
+        .takeIf { settings.hasCurrentSyncId() }
+        ?.let { UUID.fromString(it) }
+    }
+    .distinctUntilChanged()
+    .conflate()
+
+  val lastSyncCompletedTimestamp: Flow<UnixTimestamp?> = encryptedSettings.encryptedSettingsFlow()
+    .map { settings ->
+      settings.lastSyncCompletedTimestamp
+        .takeIf { settings.hasLastSyncCompletedTimestamp() }
+        ?.let { UnixTimestamp(it) }
+    }
     .distinctUntilChanged()
     .conflate()
 
@@ -110,14 +129,23 @@ class AppValuesStore @Inject internal constructor(
     }
   }
 
-  suspend fun clearAllDataExceptEnums() {
-    encryptedSettings.updateData { settings ->
-      val preservedEnums = settings.enumsList
-      encryptedSettings {
-        enums.addAll(preservedEnums)
-      }
+  suspend fun clearAllData() {
+    encryptedSettings.updateData {
+      EncryptedSettings.getDefaultInstance()
     }
   }
 
   fun getServerEnumCollection() = ServerEnumCollection.defaultInstance
+
+  suspend fun insertSyncUuid(workId: UUID) {
+    encryptedSettings.updateData { settings ->
+      settings.toBuilder().setCurrentSyncId(workId.toString()).build()
+    }
+  }
+
+  suspend fun setLastTimeSyncCompletedToNow() {
+    encryptedSettings.updateData { settings ->
+      settings.toBuilder().setLastSyncCompletedTimestamp(UnixTimestamp.now().timestamp).build()
+    }
+  }
 }

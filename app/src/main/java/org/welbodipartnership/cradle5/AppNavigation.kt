@@ -45,6 +45,7 @@ import org.welbodipartnership.cradle5.facilities.FacilitiesListScreen
 import org.welbodipartnership.cradle5.patients.details.PatientDetailsScreen
 import org.welbodipartnership.cradle5.patients.form.PatientForm
 import org.welbodipartnership.cradle5.patients.list.PatientsListScreen
+import org.welbodipartnership.cradle5.sync.SyncScreen
 
 @Keep
 internal enum class Screen(val route: String, val startLeaf: LeafScreen) {
@@ -164,6 +165,7 @@ internal fun LoggedInNavigation(
     modifier = modifier,
   ) {
     addPatientsTopLevel(navController)
+    addSyncTopLevel(navController)
     addFacilitiesTopLevel(navController)
   }
 }
@@ -278,6 +280,26 @@ private fun NavGraphBuilder.addFacilitiesList(
 ) {
   composable(route = LeafScreen.Facilities.createRoute(root)) {
     FacilitiesListScreen()
+  }
+}
+
+private fun NavGraphBuilder.addSyncTopLevel(
+  navController: NavController,
+) {
+  navigation(
+    route = Screen.Sync.route,
+    startDestination = LeafScreen.Sync.createRoute(Screen.Sync),
+  ) {
+    addSyncScreen(navController, Screen.Sync)
+  }
+}
+
+private fun NavGraphBuilder.addSyncScreen(
+  navController: NavController,
+  root: Screen,
+) {
+  composable(route = LeafScreen.Sync.createRoute(root)) {
+    SyncScreen()
   }
 }
 

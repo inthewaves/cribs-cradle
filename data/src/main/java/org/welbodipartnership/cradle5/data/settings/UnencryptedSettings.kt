@@ -120,7 +120,7 @@ internal class UnencryptedSettingsManager @Inject constructor(
           serializer = UnencryptedSettingsSerializer,
           produceFile = { context.dataStoreFile(UNENCRYPTED_SETTINGS_DATASTORE_FILE_NAME) },
           // these are the default params
-          scope = CoroutineScope(appCoroutineDispatchers.io + SupervisorJob())
+          scope = CoroutineScope(appCoroutineDispatchers.io + job)
         )
         dataStoreAndJobPair = newStore to job
         newStore
