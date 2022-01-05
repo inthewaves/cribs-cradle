@@ -230,7 +230,7 @@ private fun NavGraphBuilder.addPatientCreate(
   ) {
     // TODO: Use an ambient?
     PatientForm(
-      ServerEnumCollection.defaultInstance,
+      LocalServerEnumCollection.current,
       onNavigateBack = { navController.navigateUp() },
       onNavigateToPatient = { patientPrimaryKey ->
         navController.withDebouncedAction {

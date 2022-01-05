@@ -54,7 +54,7 @@ message AuthToken {
 message DynamicServerEnum {
   message Value {
     int32 id = 1;
-    int32 code = 2;
+    string code = 2;
     string name = 3;
     int32 list_order = 4;
   }

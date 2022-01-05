@@ -30,11 +30,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.accompanist.insets.LocalWindowInsets
 import com.google.accompanist.insets.rememberInsetsPaddingValues
 import com.google.accompanist.insets.ui.TopAppBar
+import org.welbodipartnership.cradle5.LocalServerEnumCollection
 import org.welbodipartnership.cradle5.R
 import org.welbodipartnership.cradle5.data.database.entities.Facility
 import org.welbodipartnership.cradle5.data.database.entities.Outcomes
 import org.welbodipartnership.cradle5.data.database.entities.Patient
-import org.welbodipartnership.cradle5.data.serverenums.ServerEnumCollection
 
 @Composable
 fun PatientDetailsScreen(
@@ -133,7 +133,7 @@ private fun PatientDetailsScreen(
       OutcomesCard(
         outcomes = outcomes,
         // TODO: Get enums from server
-        ServerEnumCollection.defaultInstance,
+        LocalServerEnumCollection.current,
         modifier = Modifier.padding(16.dp)
       )
     }

@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test
 import org.welbodipartnership.api.Json
 import org.welbodipartnership.api.forms.Form
 import org.welbodipartnership.api.forms.FormId
+import org.welbodipartnership.api.getAdapterForFormType
 import kotlin.test.assertEquals
 
 internal class OutcomeTest {
@@ -618,7 +619,7 @@ internal class OutcomeTest {
       }
     """.trimIndent()
 
-    val adapter: JsonAdapter<Form<Outcome>> = Json.getAdapterForFormType()
+    val adapter: JsonAdapter<Form<Outcome>> = Json.buildMoshiInstance().getAdapterForFormType()
 
     val parsed = adapter.fromJson(json)
   }

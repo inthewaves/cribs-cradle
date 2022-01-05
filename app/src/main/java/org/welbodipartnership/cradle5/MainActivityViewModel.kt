@@ -7,6 +7,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import org.welbodipartnership.cradle5.data.settings.AppValuesStore
 import org.welbodipartnership.cradle5.domain.auth.AuthRepository
 import org.welbodipartnership.cradle5.domain.auth.AuthState
 import org.welbodipartnership.cradle5.util.ApplicationCoroutineScope
@@ -17,12 +18,15 @@ import javax.inject.Inject
 class MainActivityViewModel @Inject constructor(
   appInitManager: AppInitManager,
   private val authRepository: AuthRepository,
+  private val appValuesStore: AppValuesStore,
   @ApplicationCoroutineScope private val applicationCoroutineScope: CoroutineScope
 ) : ViewModel() {
 
   val appState: StateFlow<AppInitManager.AppState> = appInitManager.appStateFlow
 
   val authState: Flow<AuthState> = authRepository.authStateFlow
+
+  val serverEnumCollection = appValuesStore.serverEnumCollection
 
   fun logout() {
     applicationCoroutineScope.launch {

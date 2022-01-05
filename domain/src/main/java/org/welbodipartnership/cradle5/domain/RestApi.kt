@@ -9,9 +9,11 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runInterruptible
 import okhttp3.FormBody
 import org.welbodipartnership.api.ApiAuthToken
-import org.welbodipartnership.api.DynamicLookupBody
 import org.welbodipartnership.api.IndexMenuItem
 import org.welbodipartnership.api.LoginErrorMessage
+import org.welbodipartnership.api.lookups.LookupResult
+import org.welbodipartnership.api.lookups.LookupsEnumerationEntry
+import org.welbodipartnership.api.lookups.dynamic.DynamicLookupBody
 import org.welbodipartnership.cradle5.data.settings.AppValuesStore
 import org.welbodipartnership.cradle5.data.settings.AuthToken
 import org.welbodipartnership.cradle5.data.settings.authToken
@@ -129,6 +131,42 @@ class RestApi @Inject internal constructor(
             Types.newParameterizedType(DynamicLookupBody::class.java, T::class.java)
           ).fromJson(src)
             ?: throw IOException("missing item ${T::class.java.simpleName}")
+        }
+      }
+    )
+  }
+
+  suspend fun getAllPossibleLookups(): DefaultNetworkResult<List<LookupsEnumerationEntry>> {
+    return httpClient.makeRequest(
+      method = HttpClient.Method.GET,
+      url = urlProvider.lookupsList(),
+      headers = defaultHeadersFlow.first(),
+      failureReader = { src ->
+        runInterruptible { src.readByteArray() }
+      },
+      successReader = { src ->
+        runInterruptible {
+          moshi.adapter<List<LookupsEnumerationEntry>>(
+            Types.newParameterizedType(List::class.java, LookupsEnumerationEntry::class.java)
+          ).fromJson(src)
+            ?: throw IOException("missing lookups list")
+        }
+      }
+    )
+  }
+
+  suspend fun getLookupValues(lookupId: LookupId): DefaultNetworkResult<LookupResult> {
+    return httpClient.makeRequest(
+      method = HttpClient.Method.GET,
+      url = urlProvider.lookups(lookupId),
+      headers = defaultHeadersFlow.first(),
+      failureReader = { src ->
+        runInterruptible { src.readByteArray() }
+      },
+      successReader = { src ->
+        runInterruptible {
+          moshi.adapter(LookupResult::class.java).fromJson(src)
+            ?: throw IOException("missing lookups result")
         }
       }
     )

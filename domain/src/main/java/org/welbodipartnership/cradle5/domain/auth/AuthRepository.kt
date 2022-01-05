@@ -26,6 +26,7 @@ import org.welbodipartnership.cradle5.data.settings.PasswordHash
 import org.welbodipartnership.cradle5.domain.NetworkResult
 import org.welbodipartnership.cradle5.domain.ObjectId
 import org.welbodipartnership.cradle5.domain.RestApi
+import org.welbodipartnership.cradle5.domain.enums.EnumRepository
 import org.welbodipartnership.cradle5.domain.facilities.FacilityRepository
 import org.welbodipartnership.cradle5.domain.sync.SyncRepository
 import org.welbodipartnership.cradle5.util.ApplicationCoroutineScope
@@ -56,6 +57,7 @@ class AuthRepository @Inject internal constructor(
   private val dispatchers: AppCoroutineDispatchers,
   private val syncRepository: SyncRepository,
   private val facilityRepository: FacilityRepository,
+  private val enumRepository: EnumRepository,
   @ApplicationContext private val context: Context,
   @ApplicationCoroutineScope private val applicationCoroutineScope: CoroutineScope,
   appForegroundedObserver: AppForegroundedObserver
@@ -222,6 +224,17 @@ class AuthRepository @Inject internal constructor(
           return LoginResult.Exception(result.errorMessage)
         }
         is FacilityRepository.DownloadResult.Invalid -> {
+          return LoginResult.Invalid(result.errorMessage, result.errorCode)
+        }
+      }
+
+      loginEventMessagesChannel?.trySend("Getting dropdown values")
+      when (val result = enumRepository.downloadAndSaveEnumsFromServer(loginEventMessagesChannel)) {
+        EnumRepository.DownloadResult.Success -> {}
+        is EnumRepository.DownloadResult.Exception -> {
+          return LoginResult.Exception(result.errorMessage)
+        }
+        is EnumRepository.DownloadResult.Invalid -> {
           return LoginResult.Invalid(result.errorMessage, result.errorCode)
         }
       }

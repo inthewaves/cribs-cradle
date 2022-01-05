@@ -26,6 +26,7 @@ import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
@@ -133,12 +134,15 @@ private fun MainApp(viewModel: MainActivityViewModel) {
 
         authState.let { currentAuthState ->
           if (currentAuthState is AuthState.LoggedInUnlocked) {
-            LoggedInHome(
-              navController,
-              currentAuthState,
-              onLogout = { viewModel.logout() },
-              onLock = { viewModel.forceLockScreen() }
-            )
+            val serverEnums by viewModel.serverEnumCollection.collectAsState()
+            CompositionLocalProvider(LocalServerEnumCollection provides serverEnums) {
+              LoggedInHome(
+                navController,
+                currentAuthState,
+                onLogout = { viewModel.logout() },
+                onLock = { viewModel.forceLockScreen() }
+              )
+            }
           } else {
             LoginOrLockscreen(currentAuthState)
           }

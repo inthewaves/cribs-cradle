@@ -4,7 +4,7 @@ import android.content.Context
 import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.SendChannel
-import org.welbodipartnership.api.cradle5.HealthcareFacilityLookupEntry
+import org.welbodipartnership.api.cradle5.HealthcareFacilityDynamicLookupEntry
 import org.welbodipartnership.api.cradle5.Registration
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
 import org.welbodipartnership.cradle5.data.database.entities.Facility
@@ -35,7 +35,7 @@ class FacilityRepository @Inject constructor(
   ): DownloadResult {
     when (
       val result = restApi
-        .getDynamicLookupData<HealthcareFacilityLookupEntry>(
+        .getDynamicLookupData<HealthcareFacilityDynamicLookupEntry>(
           ControlId("Control2092"),
           FormId.fromAnnotationOrThrow<Registration>(),
           ObjectId.QUERIES
@@ -57,12 +57,14 @@ class FacilityRepository @Inject constructor(
       }
       is NetworkResult.Failure -> {
         val message = result.errorValue.decodeToString()
+        eventMessagesChannel?.trySend("Unable to get facilities")
         return DownloadResult.Invalid(
           "Unable to get facilities: HTTP ${result.statusCode} error (message: $message)",
           result.statusCode
         )
       }
       is NetworkResult.NetworkException -> {
+        eventMessagesChannel?.trySend("Unable to get facilities")
         return DownloadResult.Exception(result.cause, result.formatErrorMessage(context))
       }
     }

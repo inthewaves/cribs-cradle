@@ -8,7 +8,7 @@ import com.squareup.moshi.JsonClass
  * objectId = 0 for these items.
  */
 @JsonClass(generateAdapter = true)
-data class HealthcareFacilityLookupEntry(
+data class HealthcareFacilityDynamicLookupEntry(
   @Json(name = "Id")
   val id: Long,
   @Json(name = "Name")

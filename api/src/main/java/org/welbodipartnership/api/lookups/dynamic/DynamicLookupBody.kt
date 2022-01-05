@@ -1,4 +1,4 @@
-package org.welbodipartnership.api
+package org.welbodipartnership.api.lookups.dynamic
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass

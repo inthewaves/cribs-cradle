@@ -6,4 +6,4 @@ package org.welbodipartnership.api.forms
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
 @Target(AnnotationTarget.CLASS)
-annotation class FormId(val id: Long)
+annotation class FormId(val id: Int)

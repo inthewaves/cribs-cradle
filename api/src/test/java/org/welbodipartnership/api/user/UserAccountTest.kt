@@ -1,6 +1,7 @@
 package org.welbodipartnership.api.user
 
 import org.welbodipartnership.api.Json
+import org.welbodipartnership.api.getAdapterForFormType
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -331,7 +332,7 @@ internal class UserAccountTest {
       }
     """.trimIndent()
 
-    val formAdapter = Json.getAdapterForFormType<UserAccount>()
+    val formAdapter = Json.buildMoshiInstance().getAdapterForFormType<UserAccount>()
 
     val parsed = formAdapter.fromJson(json)
     assertNotNull(parsed)

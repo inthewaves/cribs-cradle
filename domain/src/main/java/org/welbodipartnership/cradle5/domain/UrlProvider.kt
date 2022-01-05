@@ -6,7 +6,7 @@ import javax.inject.Named
 import javax.inject.Singleton
 
 @JvmInline
-value class FormId(val id: Long) {
+value class FormId(val id: Int) {
   companion object {
     inline fun <reified T> fromAnnotationOrThrow(): FormId {
       val annotation = requireNotNull(
@@ -18,17 +18,17 @@ value class FormId(val id: Long) {
 }
 
 @JvmInline
-value class ObjectId(val id: Long) {
+value class ObjectId(val id: Int) {
   companion object {
     val QUERIES = ObjectId(0)
   }
 }
 
 @JvmInline
-value class NodeId(val id: Long)
+value class NodeId(val id: Int)
 
 @JvmInline
-value class LookupId(val id: Long)
+value class LookupId(val id: Int)
 
 @JvmInline
 value class ControlId(val id: String)

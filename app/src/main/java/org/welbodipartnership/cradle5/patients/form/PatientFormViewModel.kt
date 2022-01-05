@@ -719,7 +719,7 @@ class PatientFormViewModel @Inject constructor(
     dropdownType: DropdownType,
     isMandatory: Boolean,
   ) = EnumIdOnlyState(
-    valuesStore.getServerEnumCollection()[dropdownType]!!,
+    valuesStore.serverEnumCollection.value[dropdownType],
     isMandatory = isMandatory,
     handle.createMutableState(key, null),
   )
@@ -729,7 +729,7 @@ class PatientFormViewModel @Inject constructor(
     dropdownType: DropdownType,
     isMandatory: Boolean,
   ) = EnumWithOtherState(
-    enum = valuesStore.getServerEnumCollection()[dropdownType]!!,
+    enum = valuesStore.serverEnumCollection.value[dropdownType],
     isMandatory = isMandatory,
     backingState = handle.createMutableState(key, null)
   )

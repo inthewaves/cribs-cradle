@@ -1,10 +1,16 @@
 package org.welbodipartnership.cradle5.data.settings
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import org.welbodipartnership.cradle5.data.serverenums.ServerEnumCollection
+import org.welbodipartnership.cradle5.util.ApplicationCoroutineScope
+import org.welbodipartnership.cradle5.util.coroutines.AppCoroutineDispatchers
 import org.welbodipartnership.cradle5.util.datetime.UnixTimestamp
 import java.util.UUID
 import javax.inject.Inject
@@ -12,9 +18,10 @@ import javax.inject.Singleton
 
 @Singleton
 class AppValuesStore @Inject internal constructor(
-  private val encryptedSettings: EncryptedSettingsManager
+  private val encryptedSettings: EncryptedSettingsManager,
+  private val appCoroutineDispatchers: AppCoroutineDispatchers,
+  @ApplicationCoroutineScope private val applicationCoroutineScope: CoroutineScope,
 ) {
-  val encryptedSettingsFlow: Flow<EncryptedSettings> = encryptedSettings.encryptedSettingsFlow()
 
   val loginCompleteFlow: Flow<Boolean> = encryptedSettings.encryptedSettingsFlow()
     .map { settings ->
@@ -135,7 +142,19 @@ class AppValuesStore @Inject internal constructor(
     }
   }
 
-  fun getServerEnumCollection() = ServerEnumCollection.defaultInstance
+  val serverEnumCollection: StateFlow<ServerEnumCollection> = encryptedSettings
+    .encryptedSettingsFlow()
+    .map { settings ->
+      settings.enumsList
+        .ifEmpty { null }
+        ?.let { ServerEnumCollection(it) }
+        ?: ServerEnumCollection.defaultInstance
+    }
+    .stateIn(
+      applicationCoroutineScope,
+      SharingStarted.WhileSubscribed(),
+      ServerEnumCollection.defaultInstance
+    )
 
   suspend fun insertSyncUuid(workId: UUID) {
     encryptedSettings.updateData { settings ->
@@ -146,6 +165,15 @@ class AppValuesStore @Inject internal constructor(
   suspend fun setLastTimeSyncCompletedToNow() {
     encryptedSettings.updateData { settings ->
       settings.toBuilder().setLastSyncCompletedTimestamp(UnixTimestamp.now().timestamp).build()
+    }
+  }
+
+  suspend fun replaceEnums(enums: Iterable<DynamicServerEnum>) {
+    encryptedSettings.updateData { settings ->
+      settings.toBuilder()
+        .clearEnums()
+        .addAllEnums(enums)
+        .build()
     }
   }
 }
