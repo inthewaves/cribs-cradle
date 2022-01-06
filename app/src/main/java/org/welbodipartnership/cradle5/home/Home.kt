@@ -23,6 +23,7 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -93,7 +94,8 @@ fun LoggedInHome(
 
   BottomDrawer(
     drawerContent = {
-      LazyColumn {
+      val padding = PaddingValues(bottom = LocalWindowInsets.current.navigationBars.bottom.dp)
+      LazyColumn(contentPadding = padding) {
         item {
           Text(
             stringResource(R.string.bottom_drawer_logged_in_as_s, authState.username),
@@ -102,7 +104,6 @@ fun LoggedInHome(
         }
         item { Divider() }
         item {
-
           ListItem(
             text = {
               Text(stringResource(R.string.lock_app_button))
