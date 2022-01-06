@@ -13,6 +13,7 @@ import org.welbodipartnership.cradle5.R
 import org.welbodipartnership.cradle5.data.database.entities.Facility
 import org.welbodipartnership.cradle5.data.database.entities.Patient
 import org.welbodipartnership.cradle5.ui.composables.LabelAndValueOrNone
+import org.welbodipartnership.cradle5.ui.composables.LabelAndValueOrUnknown
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
 import org.welbodipartnership.cradle5.util.datetime.FormDate
 
@@ -34,9 +35,9 @@ fun PatientCard(patient: Patient, facility: Facility?, modifier: Modifier = Modi
       value = patient.initials,
     )
     Spacer(modifier = Modifier.height(spacerHeight))
-    LabelAndValueOrNone(
+    LabelAndValueOrUnknown(
       label = stringResource(R.string.patient_registration_presentation_date_label),
-      value = patient.presentationDate.toString(),
+      value = patient.presentationDate?.toString(),
     )
     Spacer(modifier = Modifier.height(spacerHeight))
     LabelAndValueOrNone(
@@ -49,9 +50,9 @@ fun PatientCard(patient: Patient, facility: Facility?, modifier: Modifier = Modi
       value = patient.dateOfBirth.getAgeInYearsFromNow().toString(),
     )
     Spacer(modifier = Modifier.height(spacerHeight))
-    LabelAndValueOrNone(
+    LabelAndValueOrUnknown(
       label = stringResource(R.string.patient_registration_healthcare_facility_label),
-      value = facility?.name ?: stringResource(R.string.unknown),
+      value = facility?.name,
     )
   }
 }

@@ -34,6 +34,9 @@ data class Patient(
   val serverInfo: ServerInfo?,
   val initials: String,
   val presentationDate: FormDate?,
+  /**
+   * This also represents an approximate date if only the age was known at the time of entry.
+   */
   val dateOfBirth: FormDate,
   val healthcareFacilityId: Long,
   /**
