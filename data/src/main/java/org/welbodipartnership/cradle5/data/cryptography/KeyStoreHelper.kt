@@ -94,12 +94,13 @@ class KeyStoreHelper @Inject constructor(
       }
       ?: throw GeneralSecurityException("failed to get $ANDROID_KEY_STORE")
 
-    if (forceReload) {
-      return keystoreChangeMutex.withLock { reloadKeystoreOrThrow() }
-    }
-
-    return keyStore ?: keystoreChangeMutex.withLock {
-      keyStore ?: reloadKeystoreOrThrow()
+    return keystoreChangeMutex.withLock {
+      if (forceReload) {
+        Log.w(TAG, "force reloading keystore; stacktrace below" , Throwable())
+        reloadKeystoreOrThrow()
+      } else {
+        keyStore ?: reloadKeystoreOrThrow()
+      }
     }
   }
 
