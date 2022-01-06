@@ -146,10 +146,16 @@ private fun PatientsListScreen(
           visible = lazyPagingItems.loadState.refresh !is LoadState.Loading &&
             patientsCount == 0
         ) {
-          Text(
-            stringResource(R.string.patient_list_no_patients_available),
-            textAlign = TextAlign.Center
-          )
+          Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+              stringResource(R.string.patient_list_no_patients_available),
+              textAlign = TextAlign.Center
+            )
+            Text(
+              stringResource(R.string.patient_list_no_patients_app_doesnt_download_from_medscinet),
+              textAlign = TextAlign.Center
+            )
+          }
         }
 
         AnimatedVisibilityFadingWrapper(
