@@ -15,6 +15,9 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import org.welbodipartnership.cradle5.util.coroutines.AppCoroutineDispatchers
 import java.io.InputStream
 import java.io.OutputStream
@@ -32,14 +35,22 @@ internal class EncryptedSettingsManager @Inject constructor(
   @ApplicationContext private val context: Context,
   private val appCoroutineDispatchers: AppCoroutineDispatchers,
 ) {
-  private var dataStore: DataStore<EncryptedSettings>? = null
+  private var dataStore: MutableStateFlow<DataStore<EncryptedSettings>?> =
+    MutableStateFlow(null)
 
-  fun encryptedSettingsFlow(): Flow<EncryptedSettings> = requireNotNull(dataStore).data
+  /**
+   * Null means not ready yet. Consumers should not be using .first() or methods that throw
+   * inside of subscriptions
+   */
+  private val downstreamDataStore: Flow<EncryptedSettings> =
+    dataStore.flatMapLatest { it?.data ?: emptyFlow() }
+
+  fun encryptedSettingsFlow(): Flow<EncryptedSettings> = downstreamDataStore
 
   suspend fun updateData(
     transform: suspend (t: EncryptedSettings) -> EncryptedSettings
   ): EncryptedSettings {
-    return requireNotNull(dataStore).updateData(transform)
+    return requireNotNull(dataStore.value).updateData(transform)
   }
 
   /**
@@ -51,7 +62,7 @@ internal class EncryptedSettingsManager @Inject constructor(
       FILENAME
     )
 
-    dataStore = DataStoreFactory.create(
+    dataStore.value = DataStoreFactory.create(
       serializer = serializer,
       corruptionHandler = ReplaceFileCorruptionHandler { ex ->
         Log.wtf(TAG, "cannot read encrypted settings", ex)
