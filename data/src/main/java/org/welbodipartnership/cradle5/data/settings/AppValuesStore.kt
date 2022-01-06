@@ -68,6 +68,11 @@ class AppValuesStore @Inject internal constructor(
     .distinctUntilChanged()
     .conflate()
 
+  val districtNameFlow = encryptedSettings.encryptedSettingsFlow()
+    .map { settings -> settings.userInfo.districtName.takeIf { settings.hasUserInfo() } }
+    .distinctUntilChanged()
+    .conflate()
+
   /**
    * When login is successful, the server returns a [authToken].
    *

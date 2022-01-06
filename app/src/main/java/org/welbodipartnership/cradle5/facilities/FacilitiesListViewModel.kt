@@ -25,4 +25,6 @@ class FacilitiesListViewModel @Inject constructor(
   ) { dbWrapper.facilitiesDao().facilitiesPagingSource() }
     .flow
     .cachedIn(viewModelScope)
+
+  val facilitiesCountFlow = dbWrapper.facilitiesDao().countTotalFacilities()
 }

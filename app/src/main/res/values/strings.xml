@@ -73,7 +73,7 @@
     <string name="login_error_error_code_format_s_d">$1%s (Error code $2%d)</string>
     <string name="bottom_drawer_logged_in_as_s">Logged in as %1$s</string>
     <string name="home_nav_bar_account_info_button_cd">Open account information sheet</string>
-    <string name="logout_button">Logout</string>
+    <string name="bottom_sheet_logout_button">Delete local data and logout</string>
     <string name="lock_app_button">Lock</string>
     <string name="lock_app_button_subtitle_with_next_lock_time_s">Next lock time: %1$s</string>
     <string name="lock_app_button_subtitle_with_next_lock_time_on_background">Will lock when app is closed</string>
@@ -94,6 +94,13 @@
     <string name="patient_form_cannot_edit_patient_already_on_server">Unable to edit a patient already on the server</string>
     <string name="patient_form_snackbar_failed_to_save_exception">Failed to save due to an exception</string>
     <string name="sync_screen_start_sync_button">Sync</string>
+    <string name="unknown_district">Unknown district</string>
+    <string name="district_label_s">District: %1$s</string>
+    <string name="logout_dialog_title">Do you want to logout?</string>
+    <string name="logout_dialog_body">Logging out will delete all local data on this device. Any data that hasn\'t been uploaded will be lost.</string>
+    <string name="logout_dialog_delete_and_logout_button">Delete and logout</string>
+    <string name="patient_list_no_patients_available">No patients available</string>
+    <string name="facility_list_no_facilities_available">No facilities available (an error?)</string>
     <plurals name="patient_form_snackbar_failed_to_save_there_are_d_errors">
         <item quantity="one">Failed to save, as there is %1$d error.</item>
         <item quantity="other">Failed to save, as there are %1$d errors.</item>

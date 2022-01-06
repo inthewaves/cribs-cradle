@@ -84,6 +84,9 @@ abstract class PatientDao {
     return updatePatientWithServerInfo(patientId, serverInfo.nodeId, serverInfo.objectId) == 1
   }
 
+  @Query("SELECT COUNT(*) FROM Patient")
+  abstract fun countTotalPatients(): Flow<Int>
+
   @Query("SELECT COUNT(*) FROM Patient WHERE nodeId IS NULL")
   abstract fun countPatientsToUpload(): Flow<Int>
 

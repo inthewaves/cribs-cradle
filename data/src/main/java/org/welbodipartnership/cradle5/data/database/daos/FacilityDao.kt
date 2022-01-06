@@ -9,6 +9,7 @@ import androidx.room.Transaction
 import androidx.room.Update
 import androidx.sqlite.db.SimpleSQLiteQuery
 import androidx.sqlite.db.SupportSQLiteQuery
+import kotlinx.coroutines.flow.Flow
 import org.welbodipartnership.cradle5.data.database.entities.Facility
 
 @Dao
@@ -55,6 +56,9 @@ abstract class FacilityDao {
     // ROW_NUMBER is 1-based
     return getFacilityIndexWhenOrderedByName(query)?.let { (it - 1).coerceAtLeast(0L) }
   }
+
+  @Query("SELECT COUNT(*) FROM Facility")
+  abstract fun countTotalFacilities(): Flow<Int>
 
   companion object {
     private const val NAME_ORDER = "ORDER BY name COLLATE NOCASE ASC"

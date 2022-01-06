@@ -25,6 +25,8 @@ class PatientsListViewModel @Inject constructor(
     .flow
     .cachedIn(viewModelScope)
 
+  val patientsCountFlow = dbWrapper.patientsDao().countTotalPatients()
+
   suspend fun addPatient(patient: Patient) {
     val dao = dbWrapper.database!!.patientDao()
 

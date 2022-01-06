@@ -17,10 +17,13 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -71,6 +74,9 @@ private fun FacilitiesListScreen(
       val lazyPagingItems = rememberFlowWithLifecycle(
         viewModel.facilitiesPagerFlow, minActiveState = Lifecycle.State.RESUMED
       ).collectAsLazyPagingItems()
+      val facilitiesCount by rememberFlowWithLifecycle(
+        viewModel.facilitiesCountFlow, minActiveState = Lifecycle.State.RESUMED
+      ).collectAsState(initial = null)
 
       val lazyListState = rememberLazyListState()
 
@@ -79,6 +85,17 @@ private fun FacilitiesListScreen(
         AnimatedVisibilityFadingWrapper(
           visible = lazyPagingItems.loadState.refresh is LoadState.Loading
         ) { CircularProgressIndicator(Modifier.align(Alignment.Center)) }
+
+        AnimatedVisibilityFadingWrapper(
+          modifier = Modifier.align(Alignment.Center),
+          visible = lazyPagingItems.loadState.refresh !is LoadState.Loading &&
+            facilitiesCount == 0
+        ) {
+          Text(
+            stringResource(R.string.facility_list_no_facilities_available),
+            textAlign = TextAlign.Center
+          )
+        }
 
         AnimatedVisibilityFadingWrapper(
           visible = lazyPagingItems.loadState.refresh !is LoadState.Loading

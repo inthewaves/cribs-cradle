@@ -18,23 +18,23 @@ import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.FloatingActionButton
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -46,11 +46,8 @@ import androidx.paging.compose.items
 import com.google.accompanist.insets.LocalWindowInsets
 import com.google.accompanist.insets.rememberInsetsPaddingValues
 import com.google.accompanist.insets.ui.TopAppBar
-import kotlinx.coroutines.launch
-import org.welbodipartnership.cradle5.BuildConfig
 import org.welbodipartnership.cradle5.R
 import org.welbodipartnership.cradle5.compose.rememberFlowWithLifecycle
-import org.welbodipartnership.cradle5.data.database.entities.Patient
 import org.welbodipartnership.cradle5.data.database.resultentities.ListPatient
 import org.welbodipartnership.cradle5.home.AccountInfoButton
 import org.welbodipartnership.cradle5.ui.composables.AnimatedVisibilityFadingWrapper
@@ -131,40 +128,29 @@ private fun PatientsListScreen(
     }
   ) { padding ->
     Column(Modifier.padding(padding)) {
-      val scope = rememberCoroutineScope()
-      Row {
-        OutlinedButton(
-          onClick = {
-            scope.launch {
-              viewModel.addPatient(
-                Patient(
-                  initials = "AB",
-                  serverInfo = null,
-                  presentationDate = FormDate(day = 5, month = 4, year = 2010),
-                  dateOfBirth = FormDate(day = 5, month = 4, year = 2010),
-                  healthcareFacilityId = 0L,
-                  lastUpdatedTimestamp = System.currentTimeMillis() / 1000
-                )
-              )
-            }
-          }
-        ) {
-          Text("Add patient")
-        }
-      }
-
-      // TODO: Remove me
-      Text("Current server (not connected to it yet): ${BuildConfig.BASE_API_URL}")
-
       val lazyPagingItems = rememberFlowWithLifecycle(
         viewModel.patientsPagerFlow, minActiveState = Lifecycle.State.RESUMED
       ).collectAsLazyPagingItems()
+      val patientsCount by rememberFlowWithLifecycle(
+        viewModel.patientsCountFlow, minActiveState = Lifecycle.State.RESUMED
+      ).collectAsState(initial = null)
 
       PatientListHeader()
       Box(Modifier.fillMaxSize()) {
         AnimatedVisibilityFadingWrapper(
           visible = lazyPagingItems.loadState.refresh is LoadState.Loading
         ) { CircularProgressIndicator(Modifier.align(Alignment.Center)) }
+
+        AnimatedVisibilityFadingWrapper(
+          modifier = Modifier.align(Alignment.Center),
+          visible = lazyPagingItems.loadState.refresh !is LoadState.Loading &&
+            patientsCount == 0
+        ) {
+          Text(
+            stringResource(R.string.patient_list_no_patients_available),
+            textAlign = TextAlign.Center
+          )
+        }
 
         AnimatedVisibilityFadingWrapper(
           visible = lazyPagingItems.loadState.refresh !is LoadState.Loading

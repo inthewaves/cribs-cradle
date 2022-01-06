@@ -28,15 +28,19 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.AlertDialog
 import androidx.compose.material.BottomDrawer
 import androidx.compose.material.BottomDrawerValue
 import androidx.compose.material.BottomNavigationItem
+import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Divider
 import androidx.compose.material.Icon
 import androidx.compose.material.ListItem
+import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
+import androidx.compose.material.TextButton
 import androidx.compose.material.contentColorFor
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Groups
@@ -58,6 +62,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
@@ -82,6 +87,7 @@ import org.welbodipartnership.cradle5.domain.auth.AuthState
 fun LoggedInHome(
   navController: NavHostController,
   authState: AuthState.LoggedInUnlocked,
+  districtName: String?,
   onLogout: () -> Unit,
   onLock: () -> Unit,
   modifier: Modifier = Modifier,
@@ -91,15 +97,56 @@ fun LoggedInHome(
     HomeManager(BottomDrawerValue.Closed)
   }
   val drawerState = homeManager.bottomDrawerState
+  var showLogoutConfirmDialog by rememberSaveable { mutableStateOf(false) }
+  if (showLogoutConfirmDialog) {
+    AlertDialog(
+      onDismissRequest = { showLogoutConfirmDialog = false },
+      title = { Text(stringResource(id = R.string.logout_dialog_title)) },
+      text = { Text(stringResource(id = R.string.logout_dialog_body)) },
+      confirmButton = {
+        TextButton(
+          onClick = onLogout,
+          colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colors.error)
+        ) {
+          Text(stringResource(id = R.string.logout_dialog_delete_and_logout_button))
+        }
+
+      },
+      dismissButton = {
+        TextButton(onClick = { showLogoutConfirmDialog = false }) {
+          Text(stringResource(id = R.string.cancel))
+        }
+      }
+    )
+  }
 
   BottomDrawer(
     drawerContent = {
       val padding = PaddingValues(bottom = LocalWindowInsets.current.navigationBars.bottom.dp)
+      val textPadding = 16.dp
+      val interTextPadding = 8.dp
       LazyColumn(contentPadding = padding) {
         item {
           Text(
             stringResource(R.string.bottom_drawer_logged_in_as_s, authState.username),
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(
+              start = textPadding,
+              top = textPadding,
+              end = textPadding,
+              bottom = interTextPadding
+            )
+          )
+        }
+        item {
+          Text(
+            districtName?.let { stringResource(R.string.district_label_s, districtName) }
+              ?: stringResource(R.string.unknown_district),
+            modifier = Modifier.padding(
+              start = textPadding,
+              top = 0.dp,
+              end = textPadding,
+              bottom = textPadding
+            )
           )
         }
         item { Divider() }
@@ -116,18 +163,29 @@ fun LoggedInHome(
               }
             },
             icon = {
-              Icon(Icons.Default.Lock, contentDescription = stringResource(R.string.lock_app_button))
+              Icon(
+                Icons.Default.Lock,
+                contentDescription = stringResource(R.string.lock_app_button)
+              )
             },
             modifier = Modifier.clickable(onClick = onLock)
           )
-          ListItem(
-            text = { Text(stringResource(R.string.logout_button)) },
-            icon = {
-              Icon(Icons.Default.Logout, contentDescription = stringResource(R.string.logout_button))
-            },
-            // TODO: add confirmation
-            modifier = Modifier.clickable(onClick = onLogout)
-          )
+        }
+
+        item {
+          CompositionLocalProvider(LocalContentColor provides MaterialTheme.colors.error) {
+            ListItem(
+              text = { Text(stringResource(R.string.bottom_sheet_logout_button)) },
+              icon = {
+                Icon(
+                  Icons.Default.Logout,
+                  contentDescription = stringResource(R.string.bottom_sheet_logout_button)
+                )
+              },
+              // TODO: add confirmation
+              modifier = Modifier.clickable(onClick = { showLogoutConfirmDialog = true })
+            )
+          }
         }
       }
     },
