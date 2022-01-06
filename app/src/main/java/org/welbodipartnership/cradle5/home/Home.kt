@@ -110,7 +110,6 @@ fun LoggedInHome(
         ) {
           Text(stringResource(id = R.string.logout_dialog_delete_and_logout_button))
         }
-
       },
       dismissButton = {
         TextButton(onClick = { showLogoutConfirmDialog = false }) {

@@ -1,10 +1,13 @@
 package org.welbodipartnership.cradle5.data.cryptography
 
+import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
+import android.security.keystore.StrongBoxUnavailableException
 import android.util.Log
-import androidx.annotation.RequiresApi
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.sync.Mutex
@@ -22,7 +25,10 @@ import javax.inject.Singleton
 import kotlin.reflect.KClass
 
 @Singleton
-class KeyStoreHelper @Inject constructor(private val dispatchers: AppCoroutineDispatchers) {
+class KeyStoreHelper @Inject constructor(
+  private val dispatchers: AppCoroutineDispatchers,
+  @ApplicationContext private val context: Context
+) {
   private val keystoreChangeMutex = Mutex()
   private var keyStore: KeyStore? = null
 
@@ -42,7 +48,6 @@ class KeyStoreHelper @Inject constructor(private val dispatchers: AppCoroutineDi
       )
   }
 
-  @RequiresApi(Build.VERSION_CODES.M)
   suspend fun encrypt(plaintext: Plaintext): AesGcmCiphertext {
     val secretKey = getOrCreateKeyStoreEntry()
     return withKeyStoreDelayedRetry({ encryptDecryptRetrySpec }) {
@@ -50,7 +55,6 @@ class KeyStoreHelper @Inject constructor(private val dispatchers: AppCoroutineDi
     }
   }
 
-  @RequiresApi(Build.VERSION_CODES.M)
   suspend fun decrypt(ciphertext: AesGcmCiphertext): Plaintext {
     val secretKey = getOrCreateKeyStoreEntry()
     return withKeyStoreDelayedRetry({ encryptDecryptRetrySpec }) {
@@ -58,12 +62,24 @@ class KeyStoreHelper @Inject constructor(private val dispatchers: AppCoroutineDi
     }
   }
 
-  @RequiresApi(Build.VERSION_CODES.M)
   private suspend fun getOrCreateKeyStoreEntry(): SecretKey =
     if (hasKeyStoreEntry()) {
       getKeyStoreEntry()
     } else {
-      createKeyStoreEntry()
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        try {
+          createKeyStoreEntry(useStrongBox = true)
+        } catch (e: StrongBoxUnavailableException) {
+          Log.e(
+            TAG,
+            "failed to create KeyStore entry with StrongBox; trying to create one without",
+            e
+          )
+          createKeyStoreEntry(useStrongBox = false)
+        }
+      } else {
+        createKeyStoreEntry(useStrongBox = false)
+      }
     }
 
   @Throws(GeneralSecurityException::class)
@@ -116,9 +132,8 @@ class KeyStoreHelper @Inject constructor(private val dispatchers: AppCoroutineDi
     }
   }
 
-  @RequiresApi(Build.VERSION_CODES.M)
   @Throws(GeneralSecurityException::class)
-  private fun createKeyStoreEntry(): SecretKey {
+  private fun createKeyStoreEntry(useStrongBox: Boolean): SecretKey {
     val keyGenerator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEY_STORE)
     val keyGenParameterSpec = KeyGenParameterSpec.Builder(
       KEY_ALIAS,
@@ -127,8 +142,29 @@ class KeyStoreHelper @Inject constructor(private val dispatchers: AppCoroutineDi
       setKeySize(256)
       setBlockModes(KeyProperties.BLOCK_MODE_GCM)
       setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-        setIsStrongBoxBacked(true)
+
+      if (
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.P &&
+        useStrongBox
+      ) {
+        val pm = context.packageManager
+        if (pm.hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE)) {
+          when {
+            pm.hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE, 100) -> {
+              Log.d(TAG, "StrongBox has at least version 100")
+            }
+            pm.hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE, 41) -> {
+              Log.d(TAG, "StrongBox has at least version 41")
+            }
+            pm.hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE, 40) -> {
+              Log.d(TAG, "StrongBox has at least version 40")
+            }
+            else -> Log.w(TAG, "StrongBox has no known version?")
+          }
+          setIsStrongBoxBacked(true)
+        } else {
+          Log.d(TAG, "device does not have StrongBox")
+        }
       }
     }.build()
 
