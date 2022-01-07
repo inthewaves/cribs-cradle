@@ -96,7 +96,7 @@ class KeyStoreHelper @Inject constructor(
 
     return keystoreChangeMutex.withLock {
       if (forceReload) {
-        Log.w(TAG, "force reloading keystore; stacktrace below" , Throwable())
+        Log.w(TAG, "force reloading keystore; stacktrace below", Throwable())
         reloadKeystoreOrThrow()
       } else {
         keyStore ?: reloadKeystoreOrThrow()
