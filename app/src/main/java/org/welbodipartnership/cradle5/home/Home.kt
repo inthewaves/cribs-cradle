@@ -197,33 +197,36 @@ fun LoggedInHome(
           val currentSelectedItemPair by navController.currentScreenAndLeafAsState()
           val (screen, leaf) = currentSelectedItemPair
           val isVisible = leaf?.hideBottomBar == null || !leaf.hideBottomBar
-          /*
-          AnimatedVisibility(
-            visible = isVisible,
-            enter = fadeIn() + expandIn(animationSpec = tween(), expandFrom = Alignment.BottomCenter),
-            exit = shrinkOut(animationSpec = tween(), shrinkTowards = Alignment.BottomCenter) + fadeOut(),
-          ) {
 
-           */
           if (isVisible) {
             HomeBottomNavigation(
               selectedNavigation = screen,
-              onNavigationSelected = { selected ->
+              onNavigationSelected = { selectedScreen ->
                 if (isVisible) {
-                  navController.navigate(selected.route) {
-                    // https://developer.android.com/jetpack/compose/navigation#bottom-nav
-                    // Avoid multiple copies of the same destination when reselecting the same item
-                    launchSingleTop = true
-                    // Restore state when reselecting a previously selected item
-                    restoreState = true
-                    // Pop up to the start destination of the graph to avoid building up a large stack of
-                    // destinations on the back stack as users select items
-                    popUpTo(navController.graph.findStartDestination().id) {
-                      saveState = true
+                  if (screen != selectedScreen) {
+                    navController.navigate(selectedScreen.route) {
+                      // https://developer.android.com/jetpack/compose/navigation#bottom-nav
+                      // Avoid multiple copies of the same destination when reselecting the same item
+                      launchSingleTop = true
+                      // Restore state when reselecting a previously selected item
+                      restoreState = true
+                      // Pop up to the start destination of the graph to avoid building up a large stack of
+                      // destinations on the back stack as users select items
+                      popUpTo(navController.graph.findStartDestination().id) {
+                        saveState = true
+                      }
                     }
+                  } else {
+                    // Go back to start leaf if in a nested leaf inside of a current tab.
+                    // Important that in screens where the back button is hindered that we hide
+                    // the bottom nav icons!
+                    navController.popBackStack(
+                      screen.startLeaf.createRoute(selectedScreen),
+                      inclusive = false
+                    )
                   }
                 } else {
-                  Log.w("Home", "trying to navigate to $selected but not visible")
+                  Log.w("Home", "trying to navigate to $selectedScreen but not visible")
                 }
               },
               modifier = Modifier.fillMaxWidth()
