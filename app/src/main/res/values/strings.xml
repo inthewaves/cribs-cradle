@@ -108,7 +108,15 @@
         <item quantity="other">Failed to save, as there are %1$d errors.</item>
     </plurals>
     <plurals name="sync_screen_there_are_currently_d_patients_to_upload">
-        <item quantity="one">There is currently %1$d patient to upload to the server</item>
-        <item quantity="other">There are currently %1$d patients to upload to the server</item>
+        <item quantity="one">There is %1$d patient to upload to the server</item>
+        <item quantity="other">There are %1$d patients to upload to the server</item>
+    </plurals>
+    <plurals name="sync_screen_there_are_currently_d_incomplete_patients_to_upload">
+        <item quantity="one">There is %1$d partially uploaded patient who needs an upload retry</item>
+        <item quantity="other">There are %1$d partially uploaded patients who need an upload retry</item>
+    </plurals>
+    <plurals name="sync_screen_d_patients_failed_to_upload">
+        <item quantity="one">%1$d patient failed to upload</item>
+        <item quantity="other">%1$d patients failed to upload</item>
     </plurals>
 </resources>

@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
+import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
@@ -20,6 +21,7 @@ import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
+import org.welbodipartnership.cradle5.data.database.resultentities.PatientAndOutcomes
 import org.welbodipartnership.cradle5.data.settings.AppValuesStore
 import org.welbodipartnership.cradle5.domain.patients.PatientsManager
 import java.util.UUID
@@ -34,49 +36,85 @@ class SyncWorker @AssistedInject constructor(
   private val dbWrapper: CradleDatabaseWrapper,
 ) : CoroutineWorker(appContext, workerParams) {
   override suspend fun doWork(): Result {
-    Log.d(TAG, "I am supposed to do some work but I'm not going to do something")
+    Log.d(TAG, "starting SyncWorker")
     reportProgress(Stage.STARTING)
 
-    val patientsToUpload = dbWrapper.patientsDao().getPatientsToUpload()
-    reportProgress(Stage.UPLOADING_PATIENTS, doneSoFar = 0, totalToDo = patientsToUpload.size)
-    coroutineScope {
-      val updateChannel = actor<Int>(capacity = Channel.CONFLATED) {
-        consumeEach { progress ->
-          reportProgress(
-            Stage.UPLOADING_PATIENTS,
-            doneSoFar = progress.coerceAtMost(patientsToUpload.size),
-            totalToDo = patientsToUpload.size
-          )
-          delay(50L)
-        }
-      }
+    val newPatientsUploadResult = runUploadForPatientsAndOutcomes(
+      Stage.UPLOADING_NEW_PATIENTS,
+      dbWrapper
+        .patientsDao()
+        .getNewPatientsToUploadOrderedById()
+    )
 
-      patientsToUpload.forEachIndexed { index, (patient, outcomes) ->
-        // TODO: Better progress, better error handling, prevent edits while in sync,
-        //  and run jobs to clean up loose ends like cases where we have a nodeId but no objectId
-        if (outcomes == null) {
-          Log.w(TAG, "refusing to upload patient ${patient.id} because they have no outcomes")
-        } else {
-          val result = patientsManager.uploadPatientAndOutcomes(patient, outcomes)
-          Log.d(TAG, "result: $result")
-        }
+    val failedPatientsUploadResult = runUploadForPatientsAndOutcomes(
+      Stage.UPLOADING_INCOMPLETE_PATIENTS,
+      dbWrapper
+        .patientsDao()
+        .getPatientsWithPartialServerInfoOrderedById()
+    )
 
-        updateChannel.trySend(index + 1)
-      }
-
-      updateChannel.close()
-    }
     appValuesStore.setLastTimeSyncCompletedToNow()
     return Result.success()
   }
 
-  private suspend fun reportProgress(stage: Stage, doneSoFar: Int, totalToDo: Int) {
+  private data class PatientUploadResult(
+    val successfulPatientIds: Set<Long>,
+    val failedPatientIds: Set<Long>
+  )
+
+  private suspend fun runUploadForPatientsAndOutcomes(
+    stage: Stage,
+    patientsAndOutcomes: List<PatientAndOutcomes>
+  ): PatientUploadResult = coroutineScope {
+    val successfulPatientIds = linkedSetOf<Long>()
+    val failedPatientIds = linkedSetOf<Long>()
+    reportProgress(stage, doneSoFar = 0, totalToDo = patientsAndOutcomes.size)
+    val updateChannel = actor<Int>(capacity = Channel.CONFLATED) {
+      consumeEach { progress ->
+        reportProgress(
+          stage,
+          doneSoFar = progress.coerceAtMost(patientsAndOutcomes.size),
+          totalToDo = patientsAndOutcomes.size,
+          // don't really care about thread-safety here
+          numFailed = failedPatientIds.size
+        )
+        // prevent contention with WorkManager's database
+        delay(75L)
+      }
+    }
+
+    patientsAndOutcomes.forEachIndexed { index, (patient, outcomes) ->
+      if (outcomes == null) {
+        Log.w(TAG, "refusing to upload patient ${patient.id} because they have no outcomes")
+      } else {
+        val result = patientsManager.uploadPatientAndOutcomes(patient, outcomes)
+        Log.d(TAG, "result: $result")
+        if (result is PatientsManager.UploadResult.Success) {
+          successfulPatientIds.add(patient.id)
+        } else {
+          failedPatientIds.add(patient.id)
+        }
+      }
+      updateChannel.trySend(index + 1)
+    }
+    updateChannel.close()
+
+    PatientUploadResult(successfulPatientIds, failedPatientIds)
+  }
+
+  private suspend fun reportProgress(
+    stage: Stage,
+    doneSoFar: Int,
+    totalToDo: Int,
+    numFailed: Int = 0
+  ) {
     setProgress(
-      workDataOf(
-        PROGRESS_DATA_STAGE_KEY to stage.name,
-        PROGRESS_DATA_PROGRESS_KEY to doneSoFar,
-        PROGRESS_DATA_TOTAL_KEY to totalToDo
-      )
+      Data.Builder()
+        .putString(PROGRESS_DATA_STAGE_KEY, stage.name)
+        .putInt(PROGRESS_DATA_PROGRESS_KEY, doneSoFar)
+        .putInt(PROGRESS_DATA_TOTAL_KEY, totalToDo)
+        .putInt(PROGRESS_DATA_FAILED_KEY, numFailed)
+        .build()
     )
   }
 
@@ -91,7 +129,8 @@ class SyncWorker @AssistedInject constructor(
     data class WithFiniteProgress(
       override val stage: Stage,
       val doneSoFar: Int,
-      val totalToDo: Int
+      val totalToDo: Int,
+      val numFailed: Int,
     ) : Progress() {
       val progressPercent = if (totalToDo == 0) 0f else doneSoFar.toFloat() / totalToDo.toFloat()
     }
@@ -102,7 +141,12 @@ class SyncWorker @AssistedInject constructor(
   @Immutable
   enum class Stage {
     STARTING,
-    UPLOADING_PATIENTS,
+    UPLOADING_NEW_PATIENTS,
+    /**
+     * The stage when we are uploading patients for which we have stored a NodeId but not an
+     * ObjectId. An ObjectId is strictly required for posting an outcome for a patient.
+     */
+    UPLOADING_INCOMPLETE_PATIENTS,
     DOWNLOADING_FACILITIES,
     DOWNLOADING_DROPDOWN_VALUES,
   }
@@ -111,6 +155,7 @@ class SyncWorker @AssistedInject constructor(
     private const val PROGRESS_DATA_STAGE_KEY = "stage"
     private const val PROGRESS_DATA_PROGRESS_KEY = "numCompleted"
     private const val PROGRESS_DATA_TOTAL_KEY = "numTotal"
+    private const val PROGRESS_DATA_FAILED_KEY = "numFailed"
 
     private const val TAG = "SyncWorker"
     const val UNIQUE_WORK_NAME = "SyncWorker-unique-work"
@@ -132,8 +177,11 @@ class SyncWorker @AssistedInject constructor(
       if (doneSoFar == Int.MIN_VALUE) {
         return Progress.WithIndeterminateProgress(stage)
       }
+      val numFailed = progress.getInt(PROGRESS_DATA_FAILED_KEY, Int.MIN_VALUE)
+        .takeUnless { it == Int.MIN_VALUE }
+        ?: 0
 
-      return Progress.WithFiniteProgress(stage, doneSoFar, totalToDo)
+      return Progress.WithFiniteProgress(stage, doneSoFar, totalToDo, numFailed)
     }
 
     /**
@@ -149,7 +197,7 @@ class SyncWorker @AssistedInject constructor(
         .build()
       workManager.enqueueUniqueWork(
         UNIQUE_WORK_NAME,
-        ExistingWorkPolicy.APPEND_OR_REPLACE,
+        ExistingWorkPolicy.KEEP,
         request
       )
       return request.id

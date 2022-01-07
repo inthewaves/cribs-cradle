@@ -32,11 +32,11 @@ import kotlin.reflect.KProperty1
 data class Outcomes(
   @PrimaryKey(autoGenerate = true)
   @ColumnInfo(name = "id")
-  val id: Long = 0,
+  override val id: Long = 0,
   @ColumnInfo(name = "patientId")
   val patientId: Long,
   @Embedded
-  val serverInfo: ServerInfo?,
+  override val serverInfo: ServerInfo?,
 
   @Embedded(prefix = "eclampsia_")
   val eclampsiaFit: EclampsiaFit?,
@@ -50,7 +50,7 @@ data class Outcomes(
   val surgicalManagement: SurgicalManagementOfHaemorrhage?,
   @Embedded(prefix = "perinatal_death_")
   val perinatalDeath: PerinatalDeath?
-) : Verifiable<Outcomes> {
+) : FormEntity, Verifiable<Outcomes> {
   val isUploadedToServer: Boolean get() = serverInfo?.nodeId != null
 
   fun isValueForPropertyValid(

@@ -63,7 +63,7 @@ private fun SyncScreen(viewModel: SyncScreenViewModel) {
       )
     }
   ) { padding ->
-    val syncStatus by viewModel.currentSyncJobFlow.collectAsState()
+    val syncStatus by viewModel.currentSyncStatusFlow.collectAsState()
     val scrollState = rememberScrollState()
     Column(
       Modifier
@@ -80,13 +80,15 @@ private fun SyncScreen(viewModel: SyncScreenViewModel) {
           }
           is SyncRepository.SyncStatus.Inactive, null -> {
             val patientsToUpload by viewModel.patientsToUploadCountFlow.collectAsState()
+            val partialPatientsToUpload by viewModel.incompletePatientsToUploadCountFlow.collectAsState()
             val lastTimeSyncCompleted by viewModel.lastSyncCompletedTimestamp.collectAsState()
             InactiveOrNoSyncCard(
               onSyncButtonClicked = { viewModel.enqueueSync() },
               onCancelButtonClicked = { viewModel.cancelSync() },
               syncStatus = status as SyncRepository.SyncStatus.Inactive?,
               lastTimeSyncCompleted = lastTimeSyncCompleted,
-              numPatientsToUpload = patientsToUpload
+              numPatientsToUpload = patientsToUpload,
+              numIncompletePatientsToUpload = partialPatientsToUpload
             )
           }
         }
@@ -109,8 +111,11 @@ private fun ActiveSyncCard(
       SyncWorker.Stage.STARTING -> {
         Text("Starting")
       }
-      SyncWorker.Stage.UPLOADING_PATIENTS -> {
-        Text("Uploading patients")
+      SyncWorker.Stage.UPLOADING_NEW_PATIENTS -> {
+        Text("Uploading new patients")
+      }
+      SyncWorker.Stage.UPLOADING_INCOMPLETE_PATIENTS -> {
+        Text("Uploading patients that failed to upload before")
       }
       SyncWorker.Stage.DOWNLOADING_FACILITIES -> {
         Text("Downloading facilities")
@@ -131,6 +136,18 @@ private fun ActiveSyncCard(
           LinearProgressIndicator(progress.progressPercent)
           Spacer(Modifier.height(8.dp))
           Text("${progress.doneSoFar} out of ${progress.totalToDo}")
+          Spacer(Modifier.height(8.dp))
+          val resources = LocalContext.current.resources
+          AnimatedVisibilityFadingWrapper(visible = progress.numFailed > 0) {
+            Text(
+              resources.getQuantityString(
+                R.plurals.sync_screen_d_patients_failed_to_upload,
+                progress.numFailed,
+                progress.numFailed
+              ),
+              color = MaterialTheme.colors.error
+            )
+          }
         }
       }
       else -> LinearProgressIndicator()
@@ -144,6 +161,7 @@ fun InactiveOrNoSyncCard(
   onCancelButtonClicked: () -> Unit,
   syncStatus: SyncRepository.SyncStatus.Inactive?,
   numPatientsToUpload: Int?,
+  numIncompletePatientsToUpload: Int?,
   lastTimeSyncCompleted: UnixTimestamp?,
   modifier: Modifier = Modifier,
 ) {
@@ -173,13 +191,25 @@ fun InactiveOrNoSyncCard(
     }
     Spacer(Modifier.height(24.dp))
 
+    val resources = LocalContext.current.resources
     if (numPatientsToUpload != null) {
-      val resources = LocalContext.current.resources
       Text(
         resources.getQuantityString(
           R.plurals.sync_screen_there_are_currently_d_patients_to_upload,
           numPatientsToUpload,
           numPatientsToUpload
+        ),
+        textAlign = TextAlign.Center
+      )
+      Spacer(Modifier.height(24.dp))
+    }
+
+    if (numIncompletePatientsToUpload != null) {
+      Text(
+        resources.getQuantityString(
+          R.plurals.sync_screen_there_are_currently_d_incomplete_patients_to_upload,
+          numIncompletePatientsToUpload,
+          numIncompletePatientsToUpload
         ),
         textAlign = TextAlign.Center
       )
@@ -212,9 +242,21 @@ fun SyncPagePreview() {
         ActiveSyncCard(
           syncStatus = SyncRepository.SyncStatus.Active(
             progress = SyncWorker.Progress.WithFiniteProgress(
-              stage = SyncWorker.Stage.UPLOADING_PATIENTS,
+              stage = SyncWorker.Stage.UPLOADING_NEW_PATIENTS,
               doneSoFar = 5,
               totalToDo = 10,
+              numFailed = 0,
+            )
+          )
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        ActiveSyncCard(
+          syncStatus = SyncRepository.SyncStatus.Active(
+            progress = SyncWorker.Progress.WithFiniteProgress(
+              stage = SyncWorker.Stage.UPLOADING_NEW_PATIENTS,
+              doneSoFar = 5,
+              totalToDo = 10,
+              numFailed = 5,
             )
           )
         )
@@ -224,7 +266,8 @@ fun SyncPagePreview() {
           onCancelButtonClicked = {},
           syncStatus = SyncRepository.SyncStatus.Inactive(WorkInfo.State.SUCCEEDED),
           lastTimeSyncCompleted = UnixTimestamp.now(),
-          numPatientsToUpload = 5
+          numPatientsToUpload = 5,
+          numIncompletePatientsToUpload = 1
         )
       }
     }

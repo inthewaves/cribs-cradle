@@ -21,6 +21,7 @@ import org.welbodipartnership.api.forms.FormPostBody
 import org.welbodipartnership.api.lookups.LookupResult
 import org.welbodipartnership.api.lookups.LookupsEnumerationEntry
 import org.welbodipartnership.api.lookups.dynamic.DynamicLookupBody
+import org.welbodipartnership.cradle5.data.database.entities.FormEntity
 import org.welbodipartnership.cradle5.data.database.entities.Outcomes
 import org.welbodipartnership.cradle5.data.database.entities.Patient
 import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
@@ -284,7 +285,18 @@ class RestApi @Inject internal constructor(
    * gives us the nodeId in the form of a URL in the response Location header. We have to follow
    * the nodeId in order to get the objectId. This
    */
-  sealed class PostResult {
+  sealed interface PostResult {
+    /**
+     * If the entity happens to have been uploaded fully (not expected to happen),
+     * the
+     */
+    data class AlreadyUploaded(val serverInfo: ServerInfo) : PostResult {
+      init {
+        requireNotNull(serverInfo.nodeId) { "missing nodeId for AlreadyUploaded" }
+        requireNotNull(serverInfo.objectId) { "missing objectId for AlreadyUploaded" }
+      }
+    }
+
     /**
      * Represents a POST request where the initial posting of the data failed somehow. This can
      * come from either network errors or the server returning a non-successful HTTP code for the
@@ -299,7 +311,7 @@ class RestApi @Inject internal constructor(
     data class AllFailed(
       val failOrException: NetworkResult<*, ByteArray>?,
       val otherCause: Exception? = null
-    ) : PostResult()
+    ) : PostResult
 
     /**
      * R
@@ -308,71 +320,114 @@ class RestApi @Inject internal constructor(
       val failOrException: NetworkResult<*, ByteArray>?,
       val otherCause: Exception? = null,
       val partialServerInfo: ServerInfo,
-    ) : PostResult()
+    ) : PostResult
 
-    class Success(val serverInfo: ServerInfo) : PostResult()
+    /**
+     * Guaranteed to have objectId and nodeId non-null
+     */
+    @JvmInline
+    value class Success(val serverInfo: ServerInfo) : PostResult {
+      init {
+        requireNotNull(serverInfo.nodeId) { "missing nodeId for Success" }
+        requireNotNull(serverInfo.objectId) { "missing objectId for Success" }
+      }
+    }
   }
 
   /**
    * Performs a POST and GET request sequence as documented in [PostResult].
    */
-  private suspend inline fun <reified PostType> postNewFormSubmission(
-    submission: PostType,
+  private suspend inline fun <
+    reified DbEntity : FormEntity,
+    reified PostType
+    > multiStageNewFormSubmission(
+    entityToUpload: DbEntity,
+    transform: (DbEntity) -> PostType,
     urlProvider: (FormId) -> String,
   ): PostResult {
-    val postBody: FormPostBody<PostType>
-    val adapter: JsonAdapter<FormPostBody<PostType>> = try {
-      postBody = FormPostBody.create(submission)
-      moshi.adapter(Types.newParameterizedType(FormPostBody::class.java, PostType::class.java))
-    } catch (e: Exception) {
-      Log.e(
-        TAG,
-        "postNewFormSubmission: ${PostType::class.java.simpleName} does not have an adapter",
-        e
-      )
-      return PostResult.AllFailed(failOrException = null, otherCause = e)
-    }
-    val formId = try {
-      FormId.fromAnnotationOrThrow<PostType>()
-    } catch (e: Exception) {
-      Log.e(
-        TAG,
-        "postNewFormSubmission: ${PostType::class.java.simpleName} missing FormId annotation",
-        e
-      )
-      return PostResult.AllFailed(failOrException = null, otherCause = e)
-    }
+    val serverInfo = entityToUpload.serverInfo
 
-    val body = HttpClient.buildJsonRequestBody { sink -> adapter.toJson(sink, postBody) }
-
-    val nodeId: NodeId = when (
-      val result = httpClient.makeRequest(
-        method = HttpClient.Method.POST,
-        url = urlProvider(formId),
-        headers = defaultHeadersFlow.first(),
-        requestBody = body,
-        failureReader = { src, _ -> src.readByteArray() },
-        successReader = nodeIdFromHeaderReader
+    val nodeId: NodeId = if (serverInfo?.nodeId != null) {
+      if (serverInfo.objectId != null) {
+        Log.w(
+          TAG,
+          "multiStageNewFormSubmission: " +
+            "trying to post ${PostType::class.java.simpleName} that has already been uploaded"
+        )
+        return PostResult.AlreadyUploaded(serverInfo)
+      }
+      Log.d(
+        TAG,
+        "multiStageNewFormSubmission" +
+          "entity ${PostType::class.java.simpleName} with id ${entityToUpload.id} has been " +
+          "partially uploaded"
       )
-    ) {
-      is NetworkResult.Success -> result.value
-      else -> {
+      NodeId(serverInfo.nodeId.toInt())
+    } else {
+      val submission: PostType = transform(entityToUpload)
+      val postBody: FormPostBody<PostType>
+      val adapter: JsonAdapter<FormPostBody<PostType>> = try {
+        postBody = FormPostBody.create(submission)
+        moshi.adapter(Types.newParameterizedType(FormPostBody::class.java, PostType::class.java))
+      } catch (e: Exception) {
         Log.e(
           TAG,
-          "postNewFormSubmission: failed to post ${PostType::class.java.simpleName}: " +
-            result.getErrorMessageOrNull(context)
+          "multiStageNewFormSubmission: " +
+            "${PostType::class.java.simpleName} does not have an adapter",
+          e
         )
-        return PostResult.AllFailed(result)
+        return PostResult.AllFailed(failOrException = null, otherCause = e)
+      }
+      val formId = try {
+        FormId.fromAnnotationOrThrow<PostType>()
+      } catch (e: Exception) {
+        Log.e(
+          TAG,
+          "multiStageNewFormSubmission: " +
+            "${PostType::class.java.simpleName} missing FormId annotation",
+          e
+        )
+        return PostResult.AllFailed(failOrException = null, otherCause = e)
+      }
+
+      val body = HttpClient.buildJsonRequestBody { sink -> adapter.toJson(sink, postBody) }
+
+      when (
+        val result = httpClient.makeRequest(
+          method = HttpClient.Method.POST,
+          url = urlProvider(formId),
+          headers = defaultHeadersFlow.first(),
+          requestBody = body,
+          failureReader = { src, _ -> src.readByteArray() },
+          successReader = nodeIdFromHeaderReader
+        )
+      ) {
+        is NetworkResult.Success -> result.value
+        else -> {
+          Log.e(
+            TAG,
+            "multiStageNewFormSubmission: " +
+              "failed to POST ${PostType::class.java.simpleName}: " +
+              result.getErrorMessageOrNull(context)
+          )
+          return PostResult.AllFailed(result)
+        }
+      }.also {
+        Log.d(
+          TAG,
+          "multiStageNewFormSubmission: " +
+            "POSTed ${PostType::class.java.simpleName} & got NodeId ${it.id}. " +
+            "Now getting ObjectId"
+        )
       }
     }
-    Log.d(TAG, "postNewFormSubmission: POSTed & got NodeId ${nodeId.id}. GETting ObjectId")
 
     val objectId = when (val result = getObjectId(nodeId)) {
       is NetworkResult.Success -> result.value
       else -> {
         Log.e(
           TAG,
-          "postNewFormSubmission: failed to get objectId for node id ${nodeId.id}: " +
+          "multiStageNewFormSubmission: failed to get ObjectId for NodeId ${nodeId.id}: " +
             result.getErrorMessageOrNull(context)
         )
         return PostResult.ObjectIdRetrievalFailed(
@@ -411,36 +466,39 @@ class RestApi @Inject internal constructor(
    * nodeId of the patient, and then it will send a GET request to the server's Meta info in order
    * to get the patient's objectId.
    *
+   * If the [patient] has non-null server info, then it will fail if it has both a nodeId and
+   * objectId. Otherwise, we interpret it as a partial upload
+   *
    * Note that posting a patient and posting a patient's outcomes are done in separate calls.
-   * Posting outcomes has to be done by calling [postOutcomes].
+   * Posting outcomes has to be done by calling [multiStagePostOutcomes].
    */
-  suspend fun postPatient(patient: Patient): PostResult {
-    if (patient.serverInfo?.nodeId != null) {
-      Log.w(TAG, "trying to post a patient that has already been uploaded. not supported")
-      return PostResult.AllFailed(null, IOException("trying to overwrite server data"))
-    }
-
-    return postNewFormSubmission(
-      patient.toApiBody(),
+  suspend fun multiStagePostPatient(patient: Patient): PostResult {
+    return multiStageNewFormSubmission(
+      patient,
+      { it.toApiBody() },
       urlProvider = { formId -> urlProvider.forms(formId, ObjectId.NEW_POST) }
     )
   }
 
   /**
-   * Post an outcome to the server. Performs a POST-and-GET-request sequence.
+   * Post an outcome for the patient with the given [patientObjectId] to the server. Performs a
+   * POST-and-GET-request sequence.
    *
    * The [patientObjectId] is the patient's object ID obtained from the server. It can only be done
-   * from a successful call to [postPatient]
+   * from a successful call to [multiStagePostPatient]
    */
-  suspend fun postOutcomes(outcomes: Outcomes, patientObjectId: ObjectId): PostResult {
-    if (outcomes.serverInfo?.nodeId != null) {
-      Log.w(TAG, "trying to post outcomes that has already been uploaded. not supported")
-      return PostResult.AllFailed(null, IOException("trying to overwrite server data"))
-    }
-
-    return postNewFormSubmission(
-      outcomes.toApiBody(),
-      urlProvider = { formId -> urlProvider.forms(formId, ObjectId.NEW_POST, patientObjectId) }
+  suspend fun multiStagePostOutcomes(outcomes: Outcomes, patientObjectId: ObjectId): PostResult {
+    return multiStageNewFormSubmission(
+      outcomes,
+      { it.toApiBody() },
+      urlProvider = {
+        formId ->
+        urlProvider.forms(
+          formId = formId,
+          objectId = ObjectId.NEW_POST,
+          basePatientId = patientObjectId
+        )
+      }
     )
   }
 

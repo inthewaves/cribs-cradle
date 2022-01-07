@@ -29,9 +29,10 @@ import kotlin.reflect.KProperty1
 data class Patient(
   @PrimaryKey(autoGenerate = true)
   @ColumnInfo(name = "id")
-  val id: Long = 0,
+  override val id: Long = 0,
   @Embedded
-  val serverInfo: ServerInfo?,
+  override val serverInfo: ServerInfo?,
+
   val initials: String,
   val presentationDate: FormDate?,
   /**
@@ -47,7 +48,7 @@ data class Patient(
    * Local notes the user may have saved for the patient. This is not uploaded to the server.
    */
   val localNotes: String? = null
-) : Verifiable<Patient> {
+) : FormEntity, Verifiable<Patient> {
   val isUploadedToServer: Boolean get() = serverInfo?.nodeId != null
   val serverPatientId: Long? get() = serverInfo?.objectId
 

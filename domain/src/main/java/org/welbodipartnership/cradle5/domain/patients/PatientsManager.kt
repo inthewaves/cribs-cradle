@@ -20,6 +20,7 @@ class PatientsManager @Inject constructor(
     data class PatientFailure(val error: RestApi.PostResult) : UploadResult()
     object NoPatientObjectIdFailure : UploadResult()
     data class OutcomesFailure(val error: RestApi.PostResult) : UploadResult()
+    object NoOutcomesObjectIdFailure : UploadResult()
     object Success : UploadResult()
   }
 
@@ -36,13 +37,16 @@ class PatientsManager @Inject constructor(
       "outcomes patientId doesn't match patient's id"
     }
 
-    val patientServerInfo: ServerInfo = when (val patientResult = restApi.postPatient(patient)) {
+    val patientServerInfo: ServerInfo = when (
+      val patientResult = restApi.multiStagePostPatient(patient)
+    ) {
       is RestApi.PostResult.AllFailed -> return UploadResult.PatientFailure(patientResult)
       is RestApi.PostResult.ObjectIdRetrievalFailed -> {
         Log.w(TAG, "only got partial patient info")
         patientResult.partialServerInfo
       }
       is RestApi.PostResult.Success -> patientResult.serverInfo
+      is RestApi.PostResult.AlreadyUploaded -> patientResult.serverInfo
     }
     dbWrapper.patientsDao().updatePatientWithServerInfo(patient.id, patientServerInfo)
     val patientObjectId = patientServerInfo.objectId
@@ -51,14 +55,20 @@ class PatientsManager @Inject constructor(
       return UploadResult.NoPatientObjectIdFailure
     }
     val outcomesServerInfo: ServerInfo = when (
-      val outcomesResult = restApi.postOutcomes(outcomes, ObjectId(patientObjectId.toInt()))
+      val outcomesResult = restApi.multiStagePostOutcomes(outcomes, ObjectId(patientObjectId.toInt()))
     ) {
       is RestApi.PostResult.AllFailed -> return UploadResult.OutcomesFailure(outcomesResult)
       is RestApi.PostResult.ObjectIdRetrievalFailed -> outcomesResult.partialServerInfo
       is RestApi.PostResult.Success -> outcomesResult.serverInfo
+      is RestApi.PostResult.AlreadyUploaded -> outcomesResult.serverInfo
     }
     dbWrapper.outcomesDao().updateWithServerInfo(outcomes.id, outcomesServerInfo)
-    return UploadResult.Success
+    return if (outcomesServerInfo.objectId == null) {
+      Log.e(TAG, "missing outcomes objectId")
+      UploadResult.NoOutcomesObjectIdFailure
+    } else {
+      UploadResult.Success
+    }
   }
 
   companion object {

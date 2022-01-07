@@ -91,6 +91,17 @@ abstract class PatientDao {
   abstract fun countPatientsToUpload(): Flow<Int>
 
   @Transaction
-  @Query("SELECT * FROM Patient WHERE nodeId IS NULL")
-  abstract suspend fun getPatientsToUpload(): List<PatientAndOutcomes>
+  @Query("SELECT * FROM Patient WHERE nodeId IS NULL ORDER BY id")
+  abstract suspend fun getNewPatientsToUploadOrderedById(): List<PatientAndOutcomes>
+
+  @Query("SELECT COUNT(*) FROM Patient WHERE nodeId IS NOT NULL AND objectId IS NULL")
+  abstract fun countPartialPatientsToUpload(): Flow<Int>
+
+  @Transaction
+  @Query(
+    """
+    SELECT * FROM Patient WHERE nodeId IS NOT NULL AND objectId IS NULL ORDER BY id
+    """
+  )
+  abstract suspend fun getPatientsWithPartialServerInfoOrderedById(): List<PatientAndOutcomes>
 }
