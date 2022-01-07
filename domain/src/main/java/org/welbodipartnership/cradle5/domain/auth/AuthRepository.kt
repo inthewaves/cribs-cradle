@@ -338,7 +338,11 @@ class AuthRepository @Inject internal constructor(
   suspend fun logout() {
     Log.d(TAG, "logout()")
     withContext(dispatchers.io) {
-      syncRepository.cancelAllWork()
+      syncRepository.apply {
+        cancelAllSyncWork()
+        pruneAllWork()
+      }
+
       dbWrapper.database?.clearAllTables()
       // This will clear the auth token, which will signal to the app state flow above that
       // we are logged out.

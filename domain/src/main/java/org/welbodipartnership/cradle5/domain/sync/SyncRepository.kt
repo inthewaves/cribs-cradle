@@ -4,8 +4,7 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.await
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import org.welbodipartnership.cradle5.data.settings.AppValuesStore
@@ -25,25 +24,21 @@ class SyncRepository @Inject constructor(
   @Immutable
   sealed class SyncStatus {
     @Immutable
-    object None : SyncStatus()
-    @Immutable
     data class Active(val progress: SyncWorker.Progress?) : SyncStatus()
     @Immutable
-    data class Inactive(val workState: WorkInfo.State) : SyncStatus()
+    data class Inactive(val workState: WorkInfo.State?) : SyncStatus()
   }
 
   val lastTimeSyncCompletedFlow = appValuesStore.lastSyncCompletedTimestamp
 
-  val currentSyncStatusFlow: Flow<SyncStatus> = appValuesStore.syncIdFlow
-    .flatMapLatest { syncWorkerId ->
-      syncWorkerId?.let {
-        workManager.getWorkInfoByIdLiveData(syncWorkerId).asFlow(appCoroutineDispatchers)
-      } ?: flowOf(null)
+  val currentSyncStatusFlow: Flow<SyncStatus> = workManager
+    .getWorkInfosForUniqueWorkLiveData(SyncWorker.UNIQUE_WORK_NAME)
+    .asFlow(appCoroutineDispatchers)
+    .map { workInfoList ->
+      workInfoList.find { it.state == WorkInfo.State.RUNNING } ?: workInfoList.firstOrNull()
     }
     .map { workInfo ->
-      workInfo ?: return@map SyncStatus.None
-
-      when (workInfo.state) {
+      when (workInfo?.state) {
         WorkInfo.State.RUNNING -> {
           SyncStatus.Active(SyncWorker.getProgressFromWorkInfo(workInfo))
         }
@@ -54,18 +49,29 @@ class SyncRepository @Inject constructor(
         WorkInfo.State.CANCELLED -> {
           SyncStatus.Inactive(workInfo.state)
         }
+        null -> SyncStatus.Inactive(null)
       }
     }
+    .flowOn(appCoroutineDispatchers.default)
 
   suspend fun enqueueSyncJob() {
     val workId = SyncWorker.enqueue(workManager)
     appValuesStore.insertSyncUuid(workId)
   }
 
-  suspend fun cancelAllWork() {
+  suspend fun cancelAllSyncWork() {
     withContext(appCoroutineDispatchers.io) {
       workManager.cancelUniqueWork(SyncWorker.UNIQUE_WORK_NAME).await()
+    }
+  }
+
+  suspend fun pruneAllWork() {
+    withContext(appCoroutineDispatchers.io) {
       workManager.pruneWork().await()
     }
+  }
+
+  companion object {
+    private const val TAG = "SyncRepository"
   }
 }

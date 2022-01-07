@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
+import androidx.compose.material.ButtonDefaults
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.LinearProgressIndicator
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
@@ -61,7 +63,7 @@ private fun SyncScreen(viewModel: SyncScreenViewModel) {
       )
     }
   ) { padding ->
-    val status by viewModel.currentSyncJobFlow.collectAsState()
+    val syncStatus by viewModel.currentSyncJobFlow.collectAsState()
     val scrollState = rememberScrollState()
     Column(
       Modifier
@@ -71,19 +73,22 @@ private fun SyncScreen(viewModel: SyncScreenViewModel) {
         .verticalScroll(scrollState),
       horizontalAlignment = Alignment.CenterHorizontally
     ) {
-      when (status) {
-        is SyncRepository.SyncStatus.Active -> {
-          ActiveSyncCard(status as SyncRepository.SyncStatus.Active)
-        }
-        is SyncRepository.SyncStatus.Inactive, is SyncRepository.SyncStatus.None -> {
-          val patientsToUpload by viewModel.patientsToUploadCountFlow.collectAsState()
-          val lastTimeSyncCompleted by viewModel.lastSyncCompletedTimestamp.collectAsState()
-          InactiveOrNoSyncCard(
-            onSyncButtonClicked = { viewModel.enqueueSync() },
-            syncStatus = status,
-            lastTimeSyncCompleted = lastTimeSyncCompleted,
-            numPatientsToUpload = patientsToUpload
-          )
+      syncStatus.let { status ->
+        when (status) {
+          is SyncRepository.SyncStatus.Active -> {
+            ActiveSyncCard(status)
+          }
+          is SyncRepository.SyncStatus.Inactive, null -> {
+            val patientsToUpload by viewModel.patientsToUploadCountFlow.collectAsState()
+            val lastTimeSyncCompleted by viewModel.lastSyncCompletedTimestamp.collectAsState()
+            InactiveOrNoSyncCard(
+              onSyncButtonClicked = { viewModel.enqueueSync() },
+              onCancelButtonClicked = { viewModel.cancelSync() },
+              syncStatus = status as SyncRepository.SyncStatus.Inactive?,
+              lastTimeSyncCompleted = lastTimeSyncCompleted,
+              numPatientsToUpload = patientsToUpload
+            )
+          }
         }
       }
     }
@@ -136,7 +141,8 @@ private fun ActiveSyncCard(
 @Composable
 fun InactiveOrNoSyncCard(
   onSyncButtonClicked: () -> Unit,
-  syncStatus: SyncRepository.SyncStatus,
+  onCancelButtonClicked: () -> Unit,
+  syncStatus: SyncRepository.SyncStatus.Inactive?,
   numPatientsToUpload: Int?,
   lastTimeSyncCompleted: UnixTimestamp?,
   modifier: Modifier = Modifier,
@@ -146,18 +152,18 @@ fun InactiveOrNoSyncCard(
     modifier = modifier,
     horizontalAlignment = Alignment.CenterHorizontally
   ) {
-    if (syncStatus is SyncRepository.SyncStatus.Inactive) {
-      when (syncStatus.workState) {
-        WorkInfo.State.ENQUEUED -> Text("Waiting to start sync")
-        WorkInfo.State.RUNNING -> Text("Running sync")
-        WorkInfo.State.SUCCEEDED -> Text("Last sync successful")
-        WorkInfo.State.FAILED -> Text("Last sync failed")
-        WorkInfo.State.BLOCKED -> Text("Last sync blocked")
-        WorkInfo.State.CANCELLED -> Text("Sync cancelled")
+    when (syncStatus?.workState) {
+      WorkInfo.State.ENQUEUED -> {
+        Text("Waiting to start sync (internet not available)")
       }
-    } else {
-      Text("Waiting to start sync")
+      WorkInfo.State.RUNNING -> Text("Running sync")
+      WorkInfo.State.SUCCEEDED -> Text("Last sync successful")
+      WorkInfo.State.FAILED -> Text("Last sync failed")
+      WorkInfo.State.BLOCKED -> Text("Last sync blocked")
+      WorkInfo.State.CANCELLED -> Text("Last sync cancelled")
+      null -> CircularProgressIndicator()
     }
+
     AnimatedVisibilityFadingWrapper(visible = lastTimeSyncCompleted != null) {
       Spacer(Modifier.height(12.dp))
       val localDateString = remember(lastTimeSyncCompleted) {
@@ -180,8 +186,19 @@ fun InactiveOrNoSyncCard(
       Spacer(Modifier.height(24.dp))
     }
 
-    Button(onClick = onSyncButtonClicked) {
-      Text(stringResource(R.string.sync_screen_start_sync_button))
+    val showSyncButton = syncStatus != null && syncStatus.workState != WorkInfo.State.ENQUEUED
+    val showCancelButton = syncStatus?.workState == WorkInfo.State.ENQUEUED
+    if (showSyncButton) {
+      Button(onClick = onSyncButtonClicked) {
+        Text(stringResource(R.string.sync_screen_start_sync_button))
+      }
+    } else if (showCancelButton) {
+      Button(
+        onClick = onCancelButtonClicked,
+        colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colors.error)
+      ) {
+        Text(stringResource(R.string.sync_screen_cancel_sync_button))
+      }
     }
   }
 }
@@ -204,6 +221,7 @@ fun SyncPagePreview() {
         Spacer(modifier = Modifier.height(24.dp))
         InactiveOrNoSyncCard(
           onSyncButtonClicked = {},
+          onCancelButtonClicked = {},
           syncStatus = SyncRepository.SyncStatus.Inactive(WorkInfo.State.SUCCEEDED),
           lastTimeSyncCompleted = UnixTimestamp.now(),
           numPatientsToUpload = 5

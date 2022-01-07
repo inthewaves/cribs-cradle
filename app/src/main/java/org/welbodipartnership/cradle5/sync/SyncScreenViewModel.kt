@@ -18,12 +18,12 @@ class SyncScreenViewModel @Inject constructor(
   private val dbWrapper: CradleDatabaseWrapper,
 ) : ViewModel() {
 
-  val currentSyncJobFlow: StateFlow<SyncRepository.SyncStatus> =
+  val currentSyncJobFlow: StateFlow<SyncRepository.SyncStatus?> =
     syncRepository.currentSyncStatusFlow
       .stateIn(
         viewModelScope,
         SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000L),
-        SyncRepository.SyncStatus.None
+        null
       )
 
   val patientsToUploadCountFlow: StateFlow<Int?> = dbWrapper.patientsDao().countPatientsToUpload()
@@ -44,6 +44,12 @@ class SyncScreenViewModel @Inject constructor(
   fun enqueueSync() {
     viewModelScope.launch {
       syncRepository.enqueueSyncJob()
+    }
+  }
+
+  fun cancelSync() {
+    viewModelScope.launch {
+      syncRepository.cancelAllSyncWork()
     }
   }
 }

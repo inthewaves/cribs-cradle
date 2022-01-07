@@ -102,6 +102,7 @@
     <string name="patient_list_no_patients_available">No patients available</string>
     <string name="facility_list_no_facilities_available">No facilities available (an error?)</string>
     <string name="patient_list_no_patients_app_doesnt_download_from_medscinet">The app doesn\'t download patients from MedSciNet</string>
+    <string name="sync_screen_cancel_sync_button">Cancel</string>
     <plurals name="patient_form_snackbar_failed_to_save_there_are_d_errors">
         <item quantity="one">Failed to save, as there is %1$d error.</item>
         <item quantity="other">Failed to save, as there are %1$d errors.</item>
