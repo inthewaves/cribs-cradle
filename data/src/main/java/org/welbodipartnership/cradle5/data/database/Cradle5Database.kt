@@ -1,6 +1,7 @@
 package org.welbodipartnership.cradle5.data.database
 
 import android.content.Context
+import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -17,7 +18,7 @@ import org.welbodipartnership.cradle5.data.database.entities.Patient
 import javax.inject.Inject
 import javax.inject.Singleton
 
-const val DATABASE_VERSION = 1
+const val DATABASE_VERSION = 2
 const val DATABASE_NAME = "cradle5.db"
 
 @Singleton
@@ -71,6 +72,9 @@ class CradleDatabaseWrapper @Inject constructor() {
     Outcomes::class,
     Facility::class,
     GpsLocation::class,
+  ],
+  autoMigrations = [
+    AutoMigration(from = 1, to = 2)
   ]
 )
 @TypeConverters(DbTypeConverters::class)

@@ -178,6 +178,23 @@ sealed interface NetworkResult<SuccessT, FailT> {
   fun valueOrNull(): SuccessT? = if (this is Success) value else null
 
   /**
+   * Casts this error variant to a different type
+   */
+  fun <OtherSuccess> castError(): NetworkResult<OtherSuccess, FailT> = when (this) {
+    is Failure -> {
+      // must succeed; failure does not use the original SuccessT type anywhere
+      @Suppress("UNCHECKED_CAST")
+      this as Failure<OtherSuccess, FailT>
+    }
+    is NetworkException -> {
+      // must succeed; NetworkException does not use the original SuccessT type anywhere
+      @Suppress("UNCHECKED_CAST")
+      this as NetworkException<OtherSuccess, FailT>
+    }
+    is Success -> error("cannot use castError to cast a success")
+  }
+
+  /**
    * The result of a successful network request.
    *
    * A request is considered successful if the response has a status code in the 200..=300 range.
@@ -219,6 +236,20 @@ sealed interface NetworkResult<SuccessT, FailT> {
     fun formatErrorMessage(context: Context) =
       "(${cause::class.java.simpleName}) ${cause.localizedMessage}"
   }
+}
+
+/**
+ * Maps a [NetworkResult.Success] value to another type using the given [transform]. For error
+ * variants, this does nothing
+ */
+inline fun <SuccessT, FailT, OtherSuccess> NetworkResult<SuccessT, FailT>.mapSuccess(
+  transform: (SuccessT) -> OtherSuccess
+): NetworkResult<OtherSuccess, FailT> = if (this is NetworkResult.Success) {
+  NetworkResult.Success(transform(this.value), this.statusCode)
+} else {
+  // must succeed; failure types does not use the original SuccessT type anywhere
+  @Suppress("UNCHECKED_CAST")
+  this as NetworkResult<OtherSuccess, FailT>
 }
 
 /**

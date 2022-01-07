@@ -15,23 +15,32 @@ import org.welbodipartnership.cradle5.data.database.entities.Facility
 @Dao
 abstract class FacilityDao {
   /**
+   * A partial version of [Facility] so that the user notes don't get overwritten.
+   */
+  data class FacilityUpdate(
+    val id: Long,
+    val name: String?,
+    val listOrder: Int,
+  )
+
+  /**
    * Updates the [facility] or inserts it into the database if the [facility] doesn't yet exist.
    */
-  @Update
-  suspend fun upsert(facility: Facility) {
+  @Transaction
+  open suspend fun upsert(facility: FacilityUpdate) {
     if (update(facility) <= 0) {
       insert(facility)
     }
   }
 
-  @Update
-  abstract suspend fun update(facility: Facility): Int
+  @Update(entity = Facility::class)
+  abstract suspend fun update(facility: FacilityUpdate): Int
 
-  @Insert
-  protected abstract suspend fun insert(facility: Facility): Long
+  @Insert(entity = Facility::class)
+  protected abstract suspend fun insert(facility: FacilityUpdate): Long
 
   @Transaction
-  @Query("SELECT * FROM Facility $NAME_ORDER")
+  @Query("SELECT * FROM Facility $DEFAULT_ORDER")
   abstract fun facilitiesPagingSource(): PagingSource<Int, Facility>
 
   @RawQuery
@@ -48,7 +57,7 @@ abstract class FacilityDao {
     val query = SimpleSQLiteQuery(
       """
         SELECT rowNum FROM (
-          SELECT ROW_NUMBER () OVER ($NAME_ORDER) rowNum, id FROM Facility
+          SELECT ROW_NUMBER () OVER ($DEFAULT_ORDER) rowNum, id FROM Facility
         ) WHERE id = ?;
       """.trimIndent(),
       arrayOf(facilityId)
@@ -61,6 +70,6 @@ abstract class FacilityDao {
   abstract fun countTotalFacilities(): Flow<Int>
 
   companion object {
-    private const val NAME_ORDER = "ORDER BY name COLLATE NOCASE ASC"
+    private const val DEFAULT_ORDER = "ORDER BY listOrder, name COLLATE NOCASE ASC"
   }
 }

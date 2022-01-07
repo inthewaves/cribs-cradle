@@ -127,12 +127,85 @@ class RestApi @Inject internal constructor(
     )
   }
 
-  suspend inline fun <reified T> getDynamicLookupData(
+  suspend fun <T> getDynamicLookupData(
+    valuesClass: Class<T>,
     controlId: ControlId,
     formId: FormId,
     objectId: ObjectId,
-    page: Int = 1
+  ): DefaultNetworkResult<List<T>> {
+
+    val firstPageRes: DefaultNetworkResult<DynamicLookupBody<T>> = getPageForDynamicLookup(
+      valuesClass,
+      controlId,
+      formId,
+      objectId,
+      page = 1,
+    )
+
+    if (firstPageRes !is NetworkResult.Success) {
+      return firstPageRes.castError()
+    }
+    if (firstPageRes.value.pageNumber >= firstPageRes.value.totalNumberOfPages) {
+      // fast path: avoid allocating an new list and just returned the (mapped) result
+      return firstPageRes.mapSuccess { it.results }
+    }
+    Log.d(
+      TAG,
+      "Dynamic lookup $controlId, $formId, $objectId " +
+        "has more pages: total pages = ${firstPageRes.value.totalNumberOfPages}; " +
+        "total number of records: ${firstPageRes.value.totalNumberOfRecords}"
+    )
+    // copy and pasted code, but we're optimizing by not creating this list builder if there's
+    // only one page
+    return firstPageRes.mapSuccess {
+      buildList<T>(capacity = firstPageRes.value.totalNumberOfRecords) {
+        addAll(firstPageRes.value.results)
+
+        val totalPages = firstPageRes.value.totalNumberOfPages
+        var iterations = 0
+        var currentPageResult: NetworkResult.Success<DynamicLookupBody<T>, ByteArray> =
+          firstPageRes
+        do {
+          val pageNow = currentPageResult.value.pageNumber + 1
+          val thisPageResult: DefaultNetworkResult<DynamicLookupBody<T>> =
+            getPageForDynamicLookup(
+              valuesClass,
+              controlId,
+              formId,
+              objectId,
+              page = pageNow,
+            )
+          if (thisPageResult !is NetworkResult.Success) {
+            return thisPageResult.castError()
+          }
+
+          addAll(thisPageResult.value.results)
+          currentPageResult = thisPageResult
+          iterations++
+        } while (
+          currentPageResult.value.pageNumber < totalPages &&
+          iterations < MAX_LIST_PAGINATION_RECURSION
+        )
+
+        if (iterations >= MAX_LIST_PAGINATION_RECURSION) {
+          Log.w(
+            TAG,
+            "Dynamic lookup $controlId, $formId, $objectId: server returned too many pages; " +
+              "iterated $iterations times"
+          )
+        }
+      }
+    }
+  }
+
+  private suspend fun <T> getPageForDynamicLookup(
+    valuesClass: Class<T>,
+    controlId: ControlId,
+    formId: FormId,
+    objectId: ObjectId,
+    page: Int
   ): DefaultNetworkResult<DynamicLookupBody<T>> {
+    require(page >= 1) { "page should be a positive integer" }
     return httpClient.makeRequest(
       method = HttpClient.Method.GET,
       url = urlProvider.dynamicLookups(controlId, formId, objectId, page),
@@ -143,9 +216,9 @@ class RestApi @Inject internal constructor(
       successReader = { src, _ ->
         runInterruptible {
           moshi.adapter<DynamicLookupBody<T>>(
-            Types.newParameterizedType(DynamicLookupBody::class.java, T::class.java)
+            Types.newParameterizedType(DynamicLookupBody::class.java, valuesClass)
           ).fromJson(src)
-            ?: throw IOException("missing item ${T::class.java.simpleName}")
+            ?: throw IOException("missing item for dynamic lookup")
         }
       }
     )
@@ -374,5 +447,7 @@ class RestApi @Inject internal constructor(
   companion object {
     @PublishedApi
     internal const val TAG = "RestApi"
+
+    private const val MAX_LIST_PAGINATION_RECURSION = 100
   }
 }

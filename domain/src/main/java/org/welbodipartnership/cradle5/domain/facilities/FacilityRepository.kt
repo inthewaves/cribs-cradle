@@ -7,8 +7,9 @@ import kotlinx.coroutines.channels.SendChannel
 import org.welbodipartnership.api.cradle5.HealthcareFacilityDynamicLookupEntry
 import org.welbodipartnership.api.cradle5.Registration
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
-import org.welbodipartnership.cradle5.data.database.entities.Facility
+import org.welbodipartnership.cradle5.data.database.daos.FacilityDao
 import org.welbodipartnership.cradle5.domain.ControlId
+import org.welbodipartnership.cradle5.domain.DefaultNetworkResult
 import org.welbodipartnership.cradle5.domain.FormId
 import org.welbodipartnership.cradle5.domain.NetworkResult
 import org.welbodipartnership.cradle5.domain.ObjectId
@@ -30,12 +31,16 @@ class FacilityRepository @Inject constructor(
     data class Exception(val cause: java.lang.Exception, val errorMessage: String?) : DownloadResult()
   }
 
+  /**
+   * TODO: Might be worth streaming this response from the server
+   */
   suspend fun downloadAndSaveFacilities(
     eventMessagesChannel: SendChannel<String>?
   ): DownloadResult {
     when (
-      val result = restApi
-        .getDynamicLookupData<HealthcareFacilityDynamicLookupEntry>(
+      val result: DefaultNetworkResult<List<HealthcareFacilityDynamicLookupEntry>> = restApi
+        .getDynamicLookupData(
+          HealthcareFacilityDynamicLookupEntry::class.java,
           ControlId("Control2092"),
           FormId.fromAnnotationOrThrow<Registration>(),
           ObjectId.QUERIES
@@ -44,28 +49,28 @@ class FacilityRepository @Inject constructor(
       is NetworkResult.Success -> {
         Log.d(
           TAG,
-          "facilities count: ${result.value.totalNumberOfRecords}," +
-            " pages: ${result.value.totalNumberOfPages}"
+          "facilities count: ${result.value.size}"
+        )
+        eventMessagesChannel?.trySend(
+          "Saving ${result.value.size} facilities"
         )
         dbWrapper.withTransaction { db ->
-          eventMessagesChannel?.trySend(
-            "Saving ${result.value.totalNumberOfRecords} facilities"
-          )
           val dao = db.facilitiesDao()
-          result.value.results.forEach { dao.upsert(Facility(it.id, it.name)) }
+          result.value.forEachIndexed { index, apiFacility ->
+            dao.upsert(FacilityDao.FacilityUpdate(apiFacility.id, apiFacility.name, index))
+          }
         }
       }
       is NetworkResult.Failure -> {
         val message = result.errorValue.decodeToString()
-        eventMessagesChannel?.trySend("Unable to get facilities")
-        return DownloadResult.Invalid(
-          "Unable to get facilities: HTTP ${result.statusCode} error (message: $message)",
-          result.statusCode
-        )
+        val error = "Unable to get facilities: HTTP ${result.statusCode} error (message: $message)"
+        eventMessagesChannel?.trySend(error)
+        return DownloadResult.Invalid(error, result.statusCode)
       }
       is NetworkResult.NetworkException -> {
-        eventMessagesChannel?.trySend("Unable to get facilities")
-        return DownloadResult.Exception(result.cause, result.formatErrorMessage(context))
+        val formatted = result.formatErrorMessage(context)
+        eventMessagesChannel?.trySend("Unable to get facilities: $formatted")
+        return DownloadResult.Exception(result.cause, formatted)
       }
     }
 

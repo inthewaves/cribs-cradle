@@ -209,7 +209,7 @@ fun FacilityListItemPreview() {
       Column {
         FacilityListHeader()
         FacilityListItem(
-          facility = Facility(id = 50, name = "CHC Test Facility"),
+          facility = Facility(id = 50, name = "CHC Test Facility", listOrder = 0),
           onClick = {}
         )
         FacilityListItemPlaceholder()

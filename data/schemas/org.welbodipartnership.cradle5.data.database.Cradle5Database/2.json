@@ -1,0 +1,349 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 2,
+    "identityHash": "6c8ac766d23dd848f8a243b83f531af7",
+    "entities": [
+      {
+        "tableName": "Patient",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `initials` TEXT NOT NULL, `presentationDate` TEXT, `dateOfBirth` TEXT NOT NULL, `healthcareFacilityId` INTEGER NOT NULL, `lastUpdatedTimestamp` INTEGER NOT NULL, `localNotes` TEXT, `nodeId` INTEGER, `objectId` INTEGER)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "initials",
+            "columnName": "initials",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "presentationDate",
+            "columnName": "presentationDate",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "dateOfBirth",
+            "columnName": "dateOfBirth",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "healthcareFacilityId",
+            "columnName": "healthcareFacilityId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastUpdatedTimestamp",
+            "columnName": "lastUpdatedTimestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "localNotes",
+            "columnName": "localNotes",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "serverInfo.nodeId",
+            "columnName": "nodeId",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "serverInfo.objectId",
+            "columnName": "objectId",
+            "affinity": "INTEGER",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [
+          {
+            "name": "index_Patient_healthcareFacilityId",
+            "unique": false,
+            "columnNames": [
+              "healthcareFacilityId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_Patient_healthcareFacilityId` ON `${TABLE_NAME}` (`healthcareFacilityId`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "Outcomes",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `patientId` INTEGER NOT NULL, `nodeId` INTEGER, `objectId` INTEGER, `eclampsia_date` TEXT, `eclampsia_place` INTEGER, `hysterectomy_date` TEXT, `hysterectomy_additionalInfo` TEXT, `hysterectomy_cause_selectionId` INTEGER, `hysterectomy_cause_otherString` TEXT, `hdu_itu_admission_date` TEXT, `hdu_itu_admission_stayInDays` INTEGER, `hdu_itu_admission_cause_selectionId` INTEGER, `hdu_itu_admission_cause_otherString` TEXT, `maternal_death_date` TEXT, `maternal_death_place` INTEGER, `maternal_death_cause_selectionId` INTEGER, `maternal_death_cause_otherString` TEXT, `surgical_mgmt_date` TEXT, `surgical_mgmt_type_selectionId` INTEGER, `surgical_mgmt_type_otherString` TEXT, `perinatal_death_date` TEXT, `perinatal_death_outcome` INTEGER, `perinatal_death_maternalfactors_selectionId` INTEGER, `perinatal_death_maternalfactors_otherString` TEXT, FOREIGN KEY(`patientId`) REFERENCES `Patient`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "patientId",
+            "columnName": "patientId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "serverInfo.nodeId",
+            "columnName": "nodeId",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "serverInfo.objectId",
+            "columnName": "objectId",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "eclampsiaFit.date",
+            "columnName": "eclampsia_date",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "eclampsiaFit.place",
+            "columnName": "eclampsia_place",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "hysterectomy.date",
+            "columnName": "hysterectomy_date",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "hysterectomy.additionalInfo",
+            "columnName": "hysterectomy_additionalInfo",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "hysterectomy.cause.selectionId",
+            "columnName": "hysterectomy_cause_selectionId",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "hysterectomy.cause.otherString",
+            "columnName": "hysterectomy_cause_otherString",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "hduOrItuAdmission.date",
+            "columnName": "hdu_itu_admission_date",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "hduOrItuAdmission.stayInDays",
+            "columnName": "hdu_itu_admission_stayInDays",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "hduOrItuAdmission.cause.selectionId",
+            "columnName": "hdu_itu_admission_cause_selectionId",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "hduOrItuAdmission.cause.otherString",
+            "columnName": "hdu_itu_admission_cause_otherString",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "maternalDeath.date",
+            "columnName": "maternal_death_date",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "maternalDeath.place",
+            "columnName": "maternal_death_place",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "maternalDeath.underlyingCause.selectionId",
+            "columnName": "maternal_death_cause_selectionId",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "maternalDeath.underlyingCause.otherString",
+            "columnName": "maternal_death_cause_otherString",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "surgicalManagement.date",
+            "columnName": "surgical_mgmt_date",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "surgicalManagement.typeOfSurgicalManagement.selectionId",
+            "columnName": "surgical_mgmt_type_selectionId",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "surgicalManagement.typeOfSurgicalManagement.otherString",
+            "columnName": "surgical_mgmt_type_otherString",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "perinatalDeath.date",
+            "columnName": "perinatal_death_date",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "perinatalDeath.outcome",
+            "columnName": "perinatal_death_outcome",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "perinatalDeath.relatedMaternalFactors.selectionId",
+            "columnName": "perinatal_death_maternalfactors_selectionId",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "perinatalDeath.relatedMaternalFactors.otherString",
+            "columnName": "perinatal_death_maternalfactors_otherString",
+            "affinity": "TEXT",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [
+          {
+            "name": "index_Outcomes_patientId",
+            "unique": false,
+            "columnNames": [
+              "patientId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_Outcomes_patientId` ON `${TABLE_NAME}` (`patientId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "Patient",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "patientId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "Facility",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `name` TEXT, `listOrder` INTEGER NOT NULL DEFAULT 0, `localNotes` TEXT, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "listOrder",
+            "columnName": "listOrder",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "localNotes",
+            "columnName": "localNotes",
+            "affinity": "TEXT",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "GpsLocation",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `timestamp` INTEGER NOT NULL, `gpsCoordinates` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "gpsCoordinates",
+            "columnName": "gpsCoordinates",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [],
+        "foreignKeys": []
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6c8ac766d23dd848f8a243b83f531af7')"
+    ]
+  }
+}

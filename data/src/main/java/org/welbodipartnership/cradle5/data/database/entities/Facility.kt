@@ -17,5 +17,11 @@ data class Facility(
   @PrimaryKey
   @ColumnInfo(name = "id")
   val id: Long,
-  val name: String?
+  val name: String?,
+  @ColumnInfo(defaultValue = "0")
+  val listOrder: Int,
+  /**
+   * Local notes the user may have saved for the patient. This is not uploaded to the server.
+   */
+  val localNotes: String? = null
 ) : Parcelable

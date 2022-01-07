@@ -35,7 +35,7 @@ class EnumRepository @Inject constructor(
     ) : DownloadResult()
   }
 
-  private fun DefaultNetworkResult<*>.castError(): DownloadResult {
+  private fun DefaultNetworkResult<*>.castErrorToDownloadResult(): DownloadResult {
     return when (this) {
       is NetworkResult.Success -> error("cannot cast success to failure")
       is NetworkResult.Failure -> DownloadResult.Invalid(
@@ -52,7 +52,7 @@ class EnumRepository @Inject constructor(
   suspend fun downloadAndSaveEnumsFromServer(eventChannel: SendChannel<String>?): DownloadResult {
     val lookupsList = when (val result = restApi.getAllPossibleLookups()) {
       is NetworkResult.Success -> result.value
-      else -> return result.castError()
+      else -> return result.castErrorToDownloadResult()
     }
 
     Log.d(TAG, "received ${lookupsList.size} lookups / enums from the server")
@@ -65,7 +65,7 @@ class EnumRepository @Inject constructor(
           is NetworkResult.Success -> {
             add(lookupGetResult.value.toProtoDynamicServerEnum())
           }
-          else -> return lookupGetResult.castError()
+          else -> return lookupGetResult.castErrorToDownloadResult()
         }
       }
     }
