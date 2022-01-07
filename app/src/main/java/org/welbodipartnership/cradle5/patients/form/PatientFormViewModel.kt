@@ -5,7 +5,6 @@ import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -27,6 +26,8 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import org.welbodipartnership.cradle5.LeafScreen
 import org.welbodipartnership.cradle5.R
+import org.welbodipartnership.cradle5.compose.SavedStateMutableState
+import org.welbodipartnership.cradle5.compose.createMutableState
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
 import org.welbodipartnership.cradle5.data.database.entities.EclampsiaFit
 import org.welbodipartnership.cradle5.data.database.entities.Facility
@@ -117,7 +118,8 @@ class PatientFormViewModel @Inject constructor(
         isRequired = true,
         handle.createMutableState("patientHealthFacility", null)
       ),
-      localNotes = handle.createMutableState("patientLocalNotes", "")
+      localNotes = handle.createMutableState("patientLocalNotes", ""),
+      isDraft = enabledState("eclampsiaEnabled")
     ),
     eclampsia = OutcomeFields.Eclampsia(
       isEnabled = enabledState("eclampsiaEnabled"),
@@ -259,6 +261,9 @@ class PatientFormViewModel @Inject constructor(
                 facilityPosition
               )
             }
+
+            localNotes.value = patient.localNotes ?: ""
+            isDraft.value = patient.isDraft
           }
 
           with(formFields.eclampsia) {
@@ -413,7 +418,8 @@ class PatientFormViewModel @Inject constructor(
               ) {
                 "Missing healthcareFacilityId"
               },
-              localNotes = localNotes.value
+              localNotes = localNotes.value,
+              isDraft = isDraft.value!!
             )
           }
         }
@@ -663,6 +669,16 @@ class PatientFormViewModel @Inject constructor(
           }
         }
 
+        with(formFields.patientFields) {
+          if (isDraft.value == null) {
+            fieldToErrorMap.addFieldError(
+              R.string.other_card_title,
+              R.string.mark_as_draft_label,
+              context.getString(R.string.mark_as_draft_not_selected_error)
+            )
+          }
+        }
+
         if (fieldToErrorMap.isNotEmpty()) {
           Log.d(TAG, "Errors: $fieldToErrorMap")
           FormState.FailedValidation(fieldToErrorMap)
@@ -762,7 +778,8 @@ class PatientFormViewModel @Inject constructor(
     val dateOfBirth: LimitedAgeDateState,
     val age: LimitedAgeIntState,
     val healthcareFacility: HealthcareFacilityState,
-    val localNotes: MutableState<String>
+    val localNotes: MutableState<String>,
+    val isDraft: SavedStateMutableState<Boolean?>,
   ) {
     fun forceShowErrors() {
       initials.enableShowErrors(force = true)
@@ -921,35 +938,3 @@ class PatientFormViewModel @Inject constructor(
     private const val TAG = "PatientFormViewModel"
   }
 }
-
-class SavedStateMutableState<T>(
-  private val handle: SavedStateHandle,
-  private val key: String,
-  defaultValue: T,
-) : MutableState<T> {
-
-  private val mutableState: MutableState<T>
-
-  init {
-    val savedValue = handle.get<T>(key)
-    mutableState = mutableStateOf(savedValue ?: defaultValue)
-  }
-
-  override var value: T
-    get() = mutableState.value
-    set(value) {
-      set(value)
-    }
-
-  private fun set(new: T) {
-    mutableState.value = new
-    handle[key] = new
-  }
-
-  override fun component1(): T = value
-
-  override fun component2(): (T) -> Unit = ::set
-}
-
-fun <T> SavedStateHandle.createMutableState(key: String, defaultValue: T) =
-  SavedStateMutableState(this, key, defaultValue)

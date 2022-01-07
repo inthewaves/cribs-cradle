@@ -10,7 +10,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.LinearProgressIndicator
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
@@ -179,7 +178,7 @@ fun InactiveOrNoSyncCard(
       WorkInfo.State.FAILED -> Text("Last sync failed")
       WorkInfo.State.BLOCKED -> Text("Last sync blocked")
       WorkInfo.State.CANCELLED -> Text("Last sync cancelled")
-      null -> CircularProgressIndicator()
+      null -> {}
     }
 
     AnimatedVisibilityFadingWrapper(visible = lastTimeSyncCompleted != null) {
@@ -204,7 +203,7 @@ fun InactiveOrNoSyncCard(
       Spacer(Modifier.height(24.dp))
     }
 
-    if (numIncompletePatientsToUpload != null) {
+    if (numIncompletePatientsToUpload != null && numIncompletePatientsToUpload >= 1) {
       Text(
         resources.getQuantityString(
           R.plurals.sync_screen_there_are_currently_d_incomplete_patients_to_upload,

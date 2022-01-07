@@ -24,6 +24,7 @@ import org.welbodipartnership.cradle5.util.datetime.FormDate
 fun PatientCard(patient: Patient, facility: Facility?, modifier: Modifier = Modifier) {
   BaseDetailsCard(title = stringResource(R.string.patient_registration_card_title), modifier = modifier) {
     val spacerHeight = 4.dp
+    Spacer(modifier = Modifier.height(spacerHeight))
     LabelAndValueOrNone(
       label = stringResource(R.string.patient_registration_card_id_label),
       value = patient.serverPatientId?.toString()
@@ -70,7 +71,8 @@ fun PatientCardPreview() {
         presentationDate = FormDate(day = 10, month = 2, year = 1995),
         dateOfBirth = FormDate(day = 19, month = 8, year = 1989),
         healthcareFacilityId = 50L,
-        lastUpdatedTimestamp = 162224953
+        lastUpdatedTimestamp = 162224953,
+        isDraft = true,
       ),
       facility = null,
       modifier = Modifier.verticalScroll(scrollState)

@@ -2,6 +2,7 @@ package org.welbodipartnership.cradle5.patients.details
 
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -10,21 +11,26 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.ContentAlpha
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
+import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Scaffold
+import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.accompanist.insets.LocalWindowInsets
@@ -35,11 +41,17 @@ import org.welbodipartnership.cradle5.R
 import org.welbodipartnership.cradle5.data.database.entities.Facility
 import org.welbodipartnership.cradle5.data.database.entities.Outcomes
 import org.welbodipartnership.cradle5.data.database.entities.Patient
+import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
+import org.welbodipartnership.cradle5.domain.patients.PatientsManager
+import org.welbodipartnership.cradle5.ui.composables.AnimatedVisibilityFadingWrapper
+import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
+import org.welbodipartnership.cradle5.util.datetime.FormDate
 
 @Composable
 fun PatientDetailsScreen(
   onBackPressed: () -> Unit,
   onPatientEdit: (patientPrimaryKey: Long) -> Unit,
+  onPatientOtherInfoEditPress: (patientPrimaryKey: Long) -> Unit,
   viewModel: PatientDetailsViewModel = hiltViewModel()
 ) {
   Scaffold(
@@ -66,6 +78,8 @@ fun PatientDetailsScreen(
   ) { padding ->
     val state by viewModel.patientOutcomesStateFlow
       .collectAsState(PatientDetailsViewModel.State.Loading)
+    val editState by viewModel.editStateFlow
+      .collectAsState()
 
     LaunchedEffect(state) {
       Log.d("PatientDetailsViewModel", "new state $state")
@@ -77,7 +91,9 @@ fun PatientDetailsScreen(
             patientState.patientFacilityOutcomes.patient,
             patientState.patientFacilityOutcomes.facility,
             patientState.patientFacilityOutcomes.outcomes,
+            editState = editState,
             onPatientEditPress = onPatientEdit,
+            onPatientOtherInfoEditPress = onPatientOtherInfoEditPress,
             contentPadding = padding
           )
         }
@@ -107,7 +123,9 @@ private fun PatientDetailsScreen(
   patient: Patient,
   facility: Facility?,
   outcomes: Outcomes?,
+  editState: PatientsManager.FormEditState?,
   onPatientEditPress: (patientPrimaryKey: Long) -> Unit,
+  onPatientOtherInfoEditPress: (patientPrimaryKey: Long) -> Unit,
   modifier: Modifier = Modifier,
   contentPadding: PaddingValues = PaddingValues()
 ) {
@@ -115,10 +133,51 @@ private fun PatientDetailsScreen(
     item {
       BaseDetailsCard(title = null, modifier = modifier) {
         // Don't allow editing patients already uploaded.
-        OutlinedButton(enabled = patient.serverInfo == null, onClick = { onPatientEditPress(patient.id) }) {
-          Text(stringResource(R.string.patient_edit_button))
+        OutlinedButton(
+          enabled = !patient.isUploadedToServer && editState?.canEdit == true,
+          onClick = { onPatientEditPress(patient.id) }
+        ) {
+          Text(stringResource(R.string.patient_details_screen_edit_button))
+        }
+
+        Box {
+          AnimatedVisibilityFadingWrapper(visible = patient.isUploadedToServer) {
+            CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+              Text(text = "Patient has been uploaded to the server and is locked for editing on the app")
+            }
+          }
+
+          AnimatedVisibilityFadingWrapper(
+            visible = editState?.canEdit == false && !patient.isUploadedToServer
+          ) {
+            CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+              val text = when (editState) {
+                PatientsManager.FormEditState.CANT_EDIT_SYNC_ENQUEUED -> {
+                  "Unable to make edits when sync is enqueued"
+                }
+                PatientsManager.FormEditState.CANT_EDIT_SYNC_IN_PROGRESS -> {
+                  "Unable to make edits while sync is running"
+                }
+                PatientsManager.FormEditState.CAN_EDIT, null -> ""
+              }
+              Text(text = text)
+            }
+          }
         }
       }
+    }
+
+    item { Spacer(Modifier.height(8.dp)) }
+
+    item {
+      OtherInfoCard(
+        editState,
+        isPatientUploadedToServer = patient.isUploadedToServer,
+        isDraft = patient.isDraft,
+        localNotes = patient.localNotes,
+        onEditOtherInfoButtonClick = { onPatientOtherInfoEditPress(patient.id) },
+        modifier = Modifier.padding(16.dp)
+      )
     }
 
     item { Spacer(Modifier.height(8.dp)) }
@@ -132,9 +191,83 @@ private fun PatientDetailsScreen(
     item {
       OutcomesCard(
         outcomes = outcomes,
-        // TODO: Get enums from server
         LocalServerEnumCollection.current,
         modifier = Modifier.padding(16.dp)
+      )
+    }
+  }
+}
+
+@Preview
+@Composable
+fun PatientDetailsScreenNotUploadedPreview() {
+  CradleTrialAppTheme {
+    Surface {
+      PatientDetailsScreen(
+        patient = Patient(
+          initials = "AA",
+          serverInfo = null,
+          presentationDate = FormDate(day = 10, month = 2, year = 1995),
+          dateOfBirth = FormDate(day = 19, month = 8, year = 1989),
+          healthcareFacilityId = 50L,
+          lastUpdatedTimestamp = 162224953,
+          isDraft = true,
+        ),
+        facility = Facility(5L, "Test facility", 0, "My notes"),
+        outcomes = testOutcomes,
+        editState = PatientsManager.FormEditState.CAN_EDIT,
+        onPatientEditPress = {},
+        onPatientOtherInfoEditPress = {}
+      )
+    }
+  }
+}
+
+@Preview
+@Composable
+fun PatientDetailsScreenUploadedPreview() {
+  CradleTrialAppTheme {
+    Surface {
+      PatientDetailsScreen(
+        patient = Patient(
+          initials = "AA",
+          serverInfo = ServerInfo(nodeId = 5L, objectId = null),
+          presentationDate = FormDate(day = 10, month = 2, year = 1995),
+          dateOfBirth = FormDate(day = 19, month = 8, year = 1989),
+          healthcareFacilityId = 50L,
+          lastUpdatedTimestamp = 162224953,
+          isDraft = true,
+        ),
+        facility = Facility(5L, "Test facility", 0, "My notes"),
+        outcomes = testOutcomes,
+        editState = PatientsManager.FormEditState.CAN_EDIT,
+        onPatientEditPress = {},
+        onPatientOtherInfoEditPress = {}
+      )
+    }
+  }
+}
+
+@Preview
+@Composable
+fun PatientDetailsScreenSyncingPreview() {
+  CradleTrialAppTheme {
+    Surface {
+      PatientDetailsScreen(
+        patient = Patient(
+          initials = "AA",
+          serverInfo = null,
+          presentationDate = FormDate(day = 10, month = 2, year = 1995),
+          dateOfBirth = FormDate(day = 19, month = 8, year = 1989),
+          healthcareFacilityId = 50L,
+          lastUpdatedTimestamp = 162224953,
+          isDraft = true,
+        ),
+        facility = Facility(5L, "Test facility", 0, "My notes"),
+        outcomes = testOutcomes,
+        editState = PatientsManager.FormEditState.CAN_EDIT,
+        onPatientEditPress = {},
+        onPatientOtherInfoEditPress = {}
       )
     }
   }

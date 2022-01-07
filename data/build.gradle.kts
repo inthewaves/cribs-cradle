@@ -66,6 +66,14 @@ ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
 }
 
+/*
+kapt {
+    arguments {
+        arg("room.schemaLocation", "$projectDir/schemas")
+    }
+}
+ */
+
 protobuf {
     protoc {
         artifact = libs.protobuf.compiler.get().toString()

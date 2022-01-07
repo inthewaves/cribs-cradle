@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 2,
-    "identityHash": "6c8ac766d23dd848f8a243b83f531af7",
+    "identityHash": "8457b32176b7b763f34b7705a295d91f",
     "entities": [
       {
         "tableName": "Patient",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `initials` TEXT NOT NULL, `presentationDate` TEXT, `dateOfBirth` TEXT NOT NULL, `healthcareFacilityId` INTEGER NOT NULL, `lastUpdatedTimestamp` INTEGER NOT NULL, `localNotes` TEXT, `nodeId` INTEGER, `objectId` INTEGER)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `initials` TEXT NOT NULL, `presentationDate` TEXT, `dateOfBirth` TEXT NOT NULL, `healthcareFacilityId` INTEGER NOT NULL, `lastUpdatedTimestamp` INTEGER NOT NULL, `localNotes` TEXT, `isDraft` INTEGER NOT NULL DEFAULT 0, `nodeId` INTEGER, `objectId` INTEGER)",
         "fields": [
           {
             "fieldPath": "id",
@@ -49,6 +49,13 @@
             "columnName": "localNotes",
             "affinity": "TEXT",
             "notNull": false
+          },
+          {
+            "fieldPath": "isDraft",
+            "columnName": "isDraft",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
           },
           {
             "fieldPath": "serverInfo.nodeId",
@@ -343,7 +350,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6c8ac766d23dd848f8a243b83f531af7')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8457b32176b7b763f34b7705a295d91f')"
     ]
   }
 }

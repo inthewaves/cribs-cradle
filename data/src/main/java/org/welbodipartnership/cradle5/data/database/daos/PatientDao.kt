@@ -5,6 +5,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.RewriteQueriesToDropUnusedColumns
 import androidx.room.Transaction
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
@@ -14,6 +15,7 @@ import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
 import org.welbodipartnership.cradle5.data.database.resultentities.ListPatient
 import org.welbodipartnership.cradle5.data.database.resultentities.PatientAndOutcomes
 import org.welbodipartnership.cradle5.data.database.resultentities.PatientFacilityOutcomes
+import org.welbodipartnership.cradle5.data.database.resultentities.PatientOtherInfo
 
 @Dao
 abstract class PatientDao {
@@ -60,6 +62,29 @@ abstract class PatientDao {
   @Query("SELECT * FROM Patient WHERE id = :patientPk")
   abstract fun getPatientAndOutcomesFlow(patientPk: Long): Flow<PatientFacilityOutcomes?>
 
+  @Query("SELECT initials FROM Patient WHERE id = :patientPk")
+  abstract fun getPatientInitialsFlow(patientPk: Long): Flow<String?>
+
+  @Query("SELECT nodeId FROM Patient WHERE id = :patientPk")
+  abstract fun getPatientNodeIdFlow(patientPk: Long): Flow<Long?>
+
+  @Query("UPDATE Patient SET isDraft = :isDraft, localNotes = :localNotes WHERE id = :patientPk")
+  protected abstract suspend fun updatePatientOtherInfoInner(
+    patientPk: Long,
+    isDraft: Boolean,
+    localNotes: String?
+  ): Int
+
+  suspend fun updatePatientOtherInfo(
+    patientPk: Long,
+    isDraft: Boolean,
+    localNotes: String?
+  ): Boolean = updatePatientOtherInfoInner(patientPk, isDraft, localNotes) == 1
+
+  @RewriteQueriesToDropUnusedColumns
+  @Query("SELECT * FROM Patient WHERE id = :patientPk")
+  abstract suspend fun getPatientOtherInfo(patientPk: Long): PatientOtherInfo?
+
   @Transaction
   @Query("SELECT * FROM Patient WHERE id = :patientPk")
   abstract suspend fun getPatientFacilityAndOutcomes(patientPk: Long): PatientFacilityOutcomes?
@@ -87,11 +112,11 @@ abstract class PatientDao {
   @Query("SELECT COUNT(*) FROM Patient")
   abstract fun countTotalPatients(): Flow<Int>
 
-  @Query("SELECT COUNT(*) FROM Patient WHERE nodeId IS NULL")
+  @Query("SELECT COUNT(*) FROM Patient WHERE nodeId IS NULL AND isDraft = 0")
   abstract fun countPatientsToUpload(): Flow<Int>
 
   @Transaction
-  @Query("SELECT * FROM Patient WHERE nodeId IS NULL ORDER BY id")
+  @Query("SELECT * FROM Patient WHERE nodeId IS NULL AND isDraft = 0 ORDER BY id")
   abstract suspend fun getNewPatientsToUploadOrderedById(): List<PatientAndOutcomes>
 
   @Query("SELECT COUNT(*) FROM Patient WHERE nodeId IS NOT NULL AND objectId IS NULL")

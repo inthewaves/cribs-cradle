@@ -74,7 +74,7 @@ class CradleDatabaseWrapper @Inject constructor() {
     GpsLocation::class,
   ],
   autoMigrations = [
-    AutoMigration(from = 1, to = 2)
+    AutoMigration(from = 1, to = 2),
   ]
 )
 @TypeConverters(DbTypeConverters::class)

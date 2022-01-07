@@ -47,9 +47,13 @@ data class Patient(
   /**
    * Local notes the user may have saved for the patient. This is not uploaded to the server.
    */
-  val localNotes: String? = null
+  val localNotes: String? = null,
+  /**
+   * Whether the user has marked this patient as uploaded.
+   */
+  @ColumnInfo(defaultValue = "0")
+  val isDraft: Boolean
 ) : FormEntity, Verifiable<Patient> {
-  val isUploadedToServer: Boolean get() = serverInfo?.nodeId != null
   val serverPatientId: Long? get() = serverInfo?.objectId
 
   fun isValueForPropertyValid(

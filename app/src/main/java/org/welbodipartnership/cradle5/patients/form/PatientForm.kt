@@ -18,8 +18,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.AlertDialog
-import androidx.compose.material.Button
-import androidx.compose.material.Card
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
@@ -213,8 +211,7 @@ fun PatientForm(
         navigationIcon = {
           val backPressedDispatcher = requireNotNull(
             LocalOnBackPressedDispatcherOwner.current!!, { "failed to get a back pressed dispatcher" }
-          )
-            .onBackPressedDispatcher
+          ).onBackPressedDispatcher
           IconButton(onClick = backPressedDispatcher::onBackPressed) {
             Icon(
               imageVector = Icons.Filled.ArrowBack,
@@ -237,6 +234,7 @@ fun PatientForm(
       contentPadding = padding,
       modifier = Modifier.navigationBarsWithImePadding()
     ) {
+
       item {
         BaseDetailsCard(
           stringResource(R.string.patient_registration_card_title),
@@ -534,11 +532,28 @@ fun PatientForm(
       }
 
       item {
+        val (isDraft, setIsDraft) = viewModel.formFields.patientFields.isDraft
+        val (localNotes, setLocalNotes) = viewModel.formFields.patientFields.localNotes
+        OtherCard(
+          hideDraft = false,
+          isDraft = isDraft,
+          onIsDraftChange = setIsDraft,
+          localNotes = localNotes,
+          onLocalNotesChange = setLocalNotes,
+          modifier = Modifier.padding(16.dp)
+        )
+      }
+
+      item {
         SaveButtonCard(
           isEnabled = formState.value !is PatientFormViewModel.FormState.Loading &&
             formState.value !is PatientFormViewModel.FormState.Saving,
           onSaveButtonClick = { viewModel.save() },
-          isExistingPatientEdit = viewModel.isExistingPatientEdit
+          text = if (viewModel.isExistingPatientEdit) {
+            stringResource(id = R.string.patient_form_save_edits)
+          } else {
+            stringResource(R.string.patient_form_save_new_patient_button)
+          }
         )
       }
     }
@@ -557,46 +572,6 @@ fun PatientForm(
         }
         else -> {}
       }
-    }
-  }
-}
-
-@Composable
-fun SaveButtonCard(
-  onSaveButtonClick: () -> Unit,
-  isExistingPatientEdit: Boolean,
-  modifier: Modifier = Modifier,
-  isEnabled: Boolean = true,
-) {
-  Card(
-    elevation = 4.dp,
-    shape = MaterialTheme.shapes.small,
-    modifier = modifier.padding(36.dp)
-  ) {
-    Button(
-      modifier = Modifier
-        .fillMaxWidth()
-        .padding(horizontal = 12.dp),
-      onClick = onSaveButtonClick,
-      enabled = isEnabled,
-    ) {
-      Text(
-        if (isExistingPatientEdit) {
-          stringResource(id = R.string.patient_form_save_edits)
-        } else {
-          stringResource(R.string.patient_form_save_new_patient_button)
-        }
-      )
-    }
-  }
-}
-
-@Preview
-@Composable
-fun SaveButtonCardPreview() {
-  CradleTrialAppTheme {
-    Scaffold {
-      SaveButtonCard(onSaveButtonClick = { /*TODO*/ }, isExistingPatientEdit = false)
     }
   }
 }

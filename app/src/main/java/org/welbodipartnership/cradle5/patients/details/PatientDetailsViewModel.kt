@@ -3,21 +3,27 @@ package org.welbodipartnership.cradle5.patients.details
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.stateIn
 import org.welbodipartnership.cradle5.LeafScreen
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
 import org.welbodipartnership.cradle5.data.database.resultentities.PatientFacilityOutcomes
+import org.welbodipartnership.cradle5.domain.patients.PatientsManager
 import javax.inject.Inject
 
 @HiltViewModel
 class PatientDetailsViewModel @Inject constructor(
   savedStateHandle: SavedStateHandle,
-  private val dbWrapper: CradleDatabaseWrapper
+  private val dbWrapper: CradleDatabaseWrapper,
+  private val patientsManager: PatientsManager,
 ) : ViewModel() {
   sealed class State {
     object Loading : State()
@@ -43,6 +49,14 @@ class PatientDetailsViewModel @Inject constructor(
         } ?: flowOf(State.Failed)
       )
     }
+
+  val editStateFlow: StateFlow<PatientsManager.FormEditState?> = patientsManager
+    .editPatientsOutcomesState
+    .stateIn(
+      viewModelScope,
+      SharingStarted.WhileSubscribed(2000L),
+      initialValue = null
+    )
 
   override fun onCleared() {
     super.onCleared()
