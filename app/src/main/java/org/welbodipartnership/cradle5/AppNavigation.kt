@@ -63,7 +63,7 @@ internal enum class Screen(val route: String, val startLeaf: LeafScreen) {
   }
 }
 
-internal sealed class LeafScreen(private val route: String, val hideBottomBar: Boolean) {
+internal sealed class LeafScreen(private val route: String) {
   protected abstract val matchRegex: Regex
 
   fun doesRouteMatch(route: String): Boolean = matchRegex.matches(route)
@@ -76,21 +76,21 @@ internal sealed class LeafScreen(private val route: String, val hideBottomBar: B
 
   fun createRoute(root: Screen) = "${root.route}/$route"
 
-  object Patients : LeafScreen("patients", hideBottomBar = false) {
+  object Patients : LeafScreen("patients") {
     override val matchRegex = createRouteMatcherWithNoArgs()
   }
 
-  object PatientDetails : LeafScreen("patients/view/{patientPk}", hideBottomBar = false) {
+  object PatientDetails : LeafScreen("patients/view/{patientPk}") {
     const val ARG_PATIENT_PRIMARY_KEY = "patientPk"
     override val matchRegex = createRouteMatcherWithOneNumericalArg()
     fun createRoute(root: Screen, patientPrimaryKey: Long): String {
       return "${root.route}/patients/view/$patientPrimaryKey"
     }
   }
-  object PatientCreate : LeafScreen("patients/create", hideBottomBar = true) {
+  object PatientCreate : LeafScreen("patients/create") {
     override val matchRegex = createRouteMatcherWithNoArgs()
   }
-  object PatientEdit : LeafScreen("patients/edit/{patientEditPk}", hideBottomBar = true) {
+  object PatientEdit : LeafScreen("patients/edit/{patientEditPk}") {
     const val ARG_PATIENT_PRIMARY_KEY = "patientEditPk"
     override val matchRegex = createRouteMatcherWithOneNumericalArg()
     fun createRoute(root: Screen, existingPatientPrimaryKey: Long): String {
@@ -99,7 +99,6 @@ internal sealed class LeafScreen(private val route: String, val hideBottomBar: B
   }
   object PatientOtherInfoEdit : LeafScreen(
     "patients/other_info/edit/{patientEditPk}",
-    hideBottomBar = true
   ) {
     const val ARG_PATIENT_PRIMARY_KEY = "patientEditPk"
     override val matchRegex = createRouteMatcherWithOneNumericalArg()
@@ -108,18 +107,18 @@ internal sealed class LeafScreen(private val route: String, val hideBottomBar: B
     }
   }
 
-  object Location : LeafScreen("location", hideBottomBar = false) {
+  object Location : LeafScreen("location") {
     override val matchRegex = createRouteMatcherWithNoArgs()
   }
 
-  object Sync : LeafScreen("sync", hideBottomBar = false) {
+  object Sync : LeafScreen("sync") {
     override val matchRegex = createRouteMatcherWithNoArgs()
   }
 
-  object Facilities : LeafScreen("facilities", hideBottomBar = false) {
+  object Facilities : LeafScreen("facilities") {
     override val matchRegex = createRouteMatcherWithNoArgs()
   }
-  object FacilityDetails : LeafScreen("facilities/view/{facilityPk}", hideBottomBar = false) {
+  object FacilityDetails : LeafScreen("facilities/view/{facilityPk}") {
     const val ARG_FACILITY_PRIMARY_KEY = "facilityPk"
     override val matchRegex = createRouteMatcherWithOneNumericalArg()
     fun createRoute(root: Screen, facilityPrimaryKey: Long): String {
@@ -128,7 +127,6 @@ internal sealed class LeafScreen(private val route: String, val hideBottomBar: B
   }
   object FacilityOtherInfoEdit : LeafScreen(
     "facilities/other_info/edit/{facilityPk}",
-    hideBottomBar = true
   ) {
     const val ARG_FACILITY_PRIMARY_KEY = "facilityPk"
     override val matchRegex = createRouteMatcherWithOneNumericalArg()

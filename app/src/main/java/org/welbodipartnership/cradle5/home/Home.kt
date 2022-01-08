@@ -199,7 +199,7 @@ fun LoggedInHome(
         bottomBar = {
           val currentSelectedItemPair by navController.currentScreenAndLeafAsState()
           val (screen, leaf) = currentSelectedItemPair
-          val isVisible = leaf?.hideBottomBar == null || !leaf.hideBottomBar
+          val isVisible = screen.startLeaf == leaf
 
           if (isVisible) {
             HomeBottomNavigation(
