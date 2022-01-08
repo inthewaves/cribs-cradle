@@ -29,7 +29,7 @@ android {
         minSdk = appconfig.versions.minSdkVersion.get().toInt()
         targetSdk = appconfig.versions.targetSdkVersion.get().toInt()
         versionCode = 1
-        versionName = "1.0"
+        versionName = "0.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
@@ -67,10 +67,11 @@ android {
         create("staging") {
             initWith(getByName("release"))
             applicationIdSuffix = ".releaseStaging"
+            versionNameSuffix = "-staging"
             isDebuggable = false
-            isMinifyEnabled = false
-            isShrinkResources = false
-            matchingFallbacks += listOf("release", "debug")
+            isMinifyEnabled = true
+            isShrinkResources = true
+            matchingFallbacks += listOf("release")
 
             buildConfigField("String", "SERVER_URL", "\"https://www.medscinet.com/Cradle5Test/api\"")
         }
