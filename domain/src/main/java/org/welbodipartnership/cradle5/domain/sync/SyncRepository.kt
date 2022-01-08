@@ -82,9 +82,8 @@ class SyncRepository @Inject constructor(
       }
     }
 
-  suspend fun enqueueSyncJob() {
-    val workId = SyncWorker.enqueue(workManager)
-    appValuesStore.insertSyncUuid(workId)
+  fun enqueueSyncJob() {
+    SyncWorker.enqueue(workManager)
   }
 
   suspend fun cancelAllSyncWork() {

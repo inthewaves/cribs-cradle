@@ -12,7 +12,6 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
-import androidx.work.workDataOf
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.channels.Channel
@@ -26,9 +25,10 @@ import org.welbodipartnership.cradle5.data.database.entities.LocationCheckIn
 import org.welbodipartnership.cradle5.data.database.resultentities.PatientAndOutcomes
 import org.welbodipartnership.cradle5.data.settings.AppValuesStore
 import org.welbodipartnership.cradle5.domain.RestApi
+import org.welbodipartnership.cradle5.domain.enums.EnumRepository
+import org.welbodipartnership.cradle5.domain.facilities.FacilityRepository
 import org.welbodipartnership.cradle5.domain.patients.PatientsManager
 import org.welbodipartnership.cradle5.domain.toApiBody
-import java.util.UUID
 import javax.annotation.concurrent.Immutable
 
 @HiltWorker
@@ -39,11 +39,14 @@ class SyncWorker @AssistedInject constructor(
   private val patientsManager: PatientsManager,
   private val dbWrapper: CradleDatabaseWrapper,
   private val restApi: RestApi,
+  private val facilityRepository: FacilityRepository,
+  private val enumRepository: EnumRepository,
 ) : CoroutineWorker(appContext, workerParams) {
   override suspend fun doWork(): Result {
     Log.d(TAG, "starting SyncWorker")
     reportProgress(Stage.STARTING)
 
+    Log.d(TAG, "uploading patients")
     val newPatientsUploadResult = runUploadForPatientsAndOutcomes(
       Stage.UPLOADING_NEW_PATIENTS,
       dbWrapper
@@ -51,6 +54,7 @@ class SyncWorker @AssistedInject constructor(
         .getNewPatientsToUploadOrderedById()
     )
 
+    Log.d(TAG, "uploading any failed patients")
     val failedPatientsUploadResult = runUploadForPatientsAndOutcomes(
       Stage.UPLOADING_INCOMPLETE_PATIENTS,
       dbWrapper
@@ -58,7 +62,28 @@ class SyncWorker @AssistedInject constructor(
         .getPatientsWithPartialServerInfoOrderedById()
     )
 
+    Log.d(TAG, "uploading check ins")
     runUploadForCheckIns(dbWrapper.locationCheckInDao().getCheckInsForUpload())
+
+    coroutineScope {
+      val logChannel = actor<String> {
+        consumeEach {
+          Log.d(TAG, it)
+        }
+      }
+      try {
+        Log.d(TAG, "downloading facilities")
+        reportProgress(Stage.DOWNLOADING_FACILITIES)
+        facilityRepository.downloadAndSaveFacilities(logChannel)
+
+        Log.d(TAG, "downloading dropdown values")
+        reportProgress(Stage.DOWNLOADING_DROPDOWN_VALUES)
+        enumRepository.downloadAndSaveEnumsFromServer(logChannel)
+      } finally {
+        logChannel.close()
+      }
+    }
+
 
     appValuesStore.setLastTimeSyncCompletedToNow()
     return Result.success()
@@ -95,7 +120,7 @@ class SyncWorker @AssistedInject constructor(
         Log.w(TAG, "refusing to upload patient ${patient.id} because they have no outcomes")
       } else {
         val result = patientsManager.uploadPatientAndOutcomes(patient, outcomes)
-        Log.d(TAG, "result: $result")
+        Log.d(TAG, "patient result: $result")
         if (result is PatientsManager.UploadResult.Success) {
           successfulPatientIds.add(patient.id)
         } else {
@@ -154,22 +179,22 @@ class SyncWorker @AssistedInject constructor(
 
   private suspend fun reportProgress(
     stage: Stage,
-    doneSoFar: Int,
-    totalToDo: Int,
+    doneSoFar: Int = 0,
+    totalToDo: Int = 0,
     numFailed: Int = 0
   ) {
-    setProgress(
-      Data.Builder()
-        .putString(PROGRESS_DATA_STAGE_KEY, stage.name)
-        .putInt(PROGRESS_DATA_PROGRESS_KEY, doneSoFar)
-        .putInt(PROGRESS_DATA_TOTAL_KEY, totalToDo)
-        .putInt(PROGRESS_DATA_FAILED_KEY, numFailed)
-        .build()
-    )
-  }
-
-  private suspend fun reportProgress(stage: Stage) {
-    setProgress(workDataOf(PROGRESS_DATA_STAGE_KEY to stage.name,))
+    if (doneSoFar == 0 && totalToDo == 0 && numFailed == 0) {
+      setProgress(Data.Builder().putString(PROGRESS_DATA_STAGE_KEY, stage.name).build())
+    } else {
+      setProgress(
+        Data.Builder()
+          .putString(PROGRESS_DATA_STAGE_KEY, stage.name)
+          .putInt(PROGRESS_DATA_PROGRESS_KEY, doneSoFar)
+          .putInt(PROGRESS_DATA_TOTAL_KEY, totalToDo)
+          .putInt(PROGRESS_DATA_FAILED_KEY, numFailed)
+          .build()
+      )
+    }
   }
 
   @Immutable
@@ -208,6 +233,7 @@ class SyncWorker @AssistedInject constructor(
     private const val PROGRESS_DATA_TOTAL_KEY = "numTotal"
     private const val PROGRESS_DATA_FAILED_KEY = "numFailed"
 
+
     private const val TAG = "SyncWorker"
     const val UNIQUE_WORK_NAME = "SyncWorker-unique-work"
 
@@ -236,9 +262,9 @@ class SyncWorker @AssistedInject constructor(
     }
 
     /**
-     * Enqueues a [SyncWorker] and returns the [UUID] of the work
+     * Enqueues a [SyncWorker]
      */
-    fun enqueue(workManager: WorkManager): UUID {
+    fun enqueue(workManager: WorkManager) {
       val request = OneTimeWorkRequestBuilder<SyncWorker>()
         .setConstraints(
           Constraints.Builder()
@@ -246,12 +272,7 @@ class SyncWorker @AssistedInject constructor(
             .build()
         )
         .build()
-      workManager.enqueueUniqueWork(
-        UNIQUE_WORK_NAME,
-        ExistingWorkPolicy.KEEP,
-        request
-      )
-      return request.id
+      workManager.enqueueUniqueWork(UNIQUE_WORK_NAME, ExistingWorkPolicy.KEEP, request)
     }
   }
 }
