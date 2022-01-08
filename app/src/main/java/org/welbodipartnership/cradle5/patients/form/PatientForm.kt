@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -71,6 +72,7 @@ import org.welbodipartnership.cradle5.ui.composables.forms.EnumDropdownMenuWithO
 import org.welbodipartnership.cradle5.ui.composables.forms.FacilityAndPosition
 import org.welbodipartnership.cradle5.ui.composables.forms.FieldState
 import org.welbodipartnership.cradle5.ui.composables.forms.HealthcareFacilityDropdown
+import org.welbodipartnership.cradle5.ui.composables.forms.MoreInfoIconButton
 import org.welbodipartnership.cradle5.ui.composables.forms.OutlinedTextFieldWithErrorHint
 import org.welbodipartnership.cradle5.ui.composables.forms.TextFieldState
 import org.welbodipartnership.cradle5.ui.composables.forms.darkerDisabledOutlinedTextFieldColors
@@ -322,6 +324,7 @@ fun PatientForm(
               .fillMaxWidth(),
             // textStyle = MaterialTheme.typography.body2,
             errorHint = patientFields.dateOfBirth.getError(),
+            helpButtonText = "Please enter 00 for unknown part of the date e.g. 00/06/1986, 00/00/1986.",
             keyboardOptions = KeyboardOptions.Default,
             keyboardActions = KeyboardActions(
               onDone = {
@@ -474,7 +477,6 @@ fun PatientForm(
             },
             dateState = surgicalManagement.date,
             surgicalManagementTypeState = surgicalManagement.type,
-            serverEnumCollection = serverEnumCollection,
           )
 
           Spacer(Modifier.height(categoryToCategorySpacerHeight))
@@ -491,7 +493,6 @@ fun PatientForm(
             dateState = perinatalDeath.date,
             outcomeState = perinatalDeath.outcome,
             maternalFactorsState = perinatalDeath.relatedMaternalFactors,
-            serverEnumCollection = serverEnumCollection
           )
         }
       }
@@ -587,10 +588,13 @@ fun EclampsiaForm(
   textFieldModifier: Modifier = Modifier,
 ) {
   Column(modifier) {
-    BooleanRadioButtonRow(
-      isTrue = isFormEnabled,
-      onBooleanChange = onFormEnabledStateChange,
-    )
+    Row {
+      BooleanRadioButtonRow(
+        isTrue = isFormEnabled,
+        onBooleanChange = onFormEnabledStateChange,
+      )
+      MoreInfoIconButton(stringResource(R.string.outcomes_eclampsia_more_info))
+    }
 
     val serverEnum = requireNotNull(serverEnumCollection[DropdownType.Place]) {
       "missing Place lookup values from the server"
@@ -695,7 +699,6 @@ fun AdmittedToHduItuForm(
   causeState: EnumWithOtherState,
   lengthOfStayInDaysState: LimitedHduItuState,
   modifier: Modifier = Modifier,
-  textFieldModifier: Modifier = Modifier,
 ) {
   Column(modifier) {
     BooleanRadioButtonRow(
@@ -770,12 +773,14 @@ fun MaternalDeathForm(
   underlyingCauseState: EnumWithOtherState,
   placeOfDeathState: EnumIdOnlyState,
   modifier: Modifier = Modifier,
-  textFieldModifier: Modifier = Modifier,
 ) {
-  BooleanRadioButtonRow(
-    isTrue = isFormEnabled,
-    onBooleanChange = onFormEnabledChange,
-  )
+  Row {
+    BooleanRadioButtonRow(
+      isTrue = isFormEnabled,
+      onBooleanChange = onFormEnabledChange,
+    )
+    MoreInfoIconButton(stringResource(R.string.outcomes_maternal_death_more_info))
+  }
 
   Column(modifier) {
     DateOutlinedTextField(
@@ -829,9 +834,7 @@ fun SurgicalManagementForm(
   onFormEnabledChange: (newState: Boolean) -> Unit,
   dateState: NoFutureDateState,
   surgicalManagementTypeState: EnumWithOtherState,
-  serverEnumCollection: ServerEnumCollection,
   modifier: Modifier = Modifier,
-  textFieldModifier: Modifier = Modifier,
 ) {
   BooleanRadioButtonRow(
     isTrue = isFormEnabled,
@@ -881,14 +884,15 @@ fun PerinatalDeathForm(
   dateState: NoFutureDateState,
   outcomeState: EnumIdOnlyState,
   maternalFactorsState: EnumWithOtherState,
-  serverEnumCollection: ServerEnumCollection,
   modifier: Modifier = Modifier,
-  textFieldModifier: Modifier = Modifier,
 ) {
-  BooleanRadioButtonRow(
-    isTrue = isFormEnabled,
-    onBooleanChange = onFormEnabledChange,
-  )
+  Row {
+    BooleanRadioButtonRow(
+      isTrue = isFormEnabled,
+      onBooleanChange = onFormEnabledChange,
+    )
+    MoreInfoIconButton(stringResource(R.string.outcomes_perinatal_death_more_info))
+  }
 
   Column(modifier) {
     DateOutlinedTextField(

@@ -129,6 +129,9 @@
     <string name="edit_facility_other_info_title">Editing other info for facility</string>
     <string name="facility_list_header_visited">Visited</string>
     <string name="facility_other_info_card_description">This information won\'t be uploaded to MedSciNet.</string>
+    <string name="outcomes_maternal_death_more_info">A maternal death is the death of a woman while pregnant or within 42 days of termination of pregnancy, irrespective of the duration and the site of the pregnancy, from any cause related to or aggravated by the pregnancy or its management, but not from accidental or incidental causes.</string>
+    <string name="outcomes_eclampsia_more_info">Occurrence of generalised convulsions with increased BP in the absence of epilepsy or another condition predisposing to convulsions.</string>
+    <string name="outcomes_perinatal_death_more_info">The loss of a baby before or during delivery (stillbirth), an early neonatal death (0 to 7 days) or a late neonatal death (8 to 28 days after delivery).</string>
     <plurals name="patient_form_snackbar_failed_to_save_there_are_d_errors">
         <item quantity="one">Failed to save, as there is %1$d error.</item>
         <item quantity="other">Failed to save, as there are %1$d errors.</item>

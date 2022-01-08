@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.util.Log
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Icon
@@ -108,6 +109,7 @@ fun DateOutlinedTextField(
   dateStringToTimestampMapper: (dateString: String) -> Long?,
   timestampToDateStringMapper: (timestampMillis: Long) -> String,
   modifier: Modifier = Modifier,
+  helpButtonText: String? = null,
   maxLength: Int = Int.MAX_VALUE,
   onPickerClose: () -> Unit = {},
   textFieldModifier: Modifier = Modifier,
@@ -204,14 +206,19 @@ fun DateOutlinedTextField(
     label = label,
     placeholder = placeholder,
     trailingIcon = {
-      IconButton(
-        onClick = { channelState.value?.trySend(Unit) },
-        enabled = enabled && !readOnly,
-      ) {
-        Icon(
-          imageVector = Icons.Filled.EditCalendar,
-          contentDescription = stringResource(R.string.date_text_field_icon_button_cd),
-        )
+      Row {
+        IconButton(
+          onClick = { channelState.value?.trySend(Unit) },
+          enabled = enabled && !readOnly,
+        ) {
+          Icon(
+            imageVector = Icons.Filled.EditCalendar,
+            contentDescription = stringResource(R.string.date_text_field_icon_button_cd),
+          )
+        }
+        if (helpButtonText != null) {
+          MoreInfoIconButton(moreInfoText = helpButtonText,)
+        }
       }
     },
     errorHint = errorHint,
