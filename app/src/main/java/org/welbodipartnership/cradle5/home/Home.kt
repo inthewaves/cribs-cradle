@@ -45,11 +45,13 @@ import androidx.compose.material.contentColorFor
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.LocationCity
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material.icons.outlined.LocationCity
+import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Sync
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -90,6 +92,7 @@ fun LoggedInHome(
   districtName: String?,
   onLogout: () -> Unit,
   onLock: () -> Unit,
+  onOpenSettingsForApp: () -> Unit,
   modifier: Modifier = Modifier,
   homeViewModel: HomeViewModel = hiltViewModel(),
 ) {
@@ -236,6 +239,7 @@ fun LoggedInHome(
       ) {
         LoggedInNavigation(
           navController,
+          onOpenSettingsForApp,
           modifier = Modifier
             .padding(it)
             .fillMaxHeight()
@@ -387,6 +391,13 @@ private val HomeNavigationItems = listOf(
     contentDescriptionResId = R.string.cd_sync_nav_button,
     iconImageVector = Icons.Outlined.Sync,
     selectedImageVector = Icons.Default.Sync,
+  ),
+  HomeNavigationItem.ImageVectorIcon(
+    screen = Screen.Location,
+    labelResId = R.string.location_checkin_nav_button_title,
+    contentDescriptionResId = R.string.cd_sync_nav_button,
+    iconImageVector = Icons.Outlined.LocationOn,
+    selectedImageVector = Icons.Default.LocationOn,
   ),
   HomeNavigationItem.ImageVectorIcon(
     screen = Screen.Facilities,

@@ -1,6 +1,9 @@
 package org.welbodipartnership.cradle5
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -79,7 +82,17 @@ class MainActivity : AppCompatActivity() {
     setContent {
       ProvideWindowInsets(consumeWindowInsets = false, windowInsetsAnimationsEnabled = true) {
         CradleTrialAppTheme {
-          MainApp(viewModel)
+          MainApp(
+            viewModel,
+            onOpenSettingsForApp = {
+              startActivity(
+                Intent(
+                  Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                  Uri.fromParts("package", packageName, null)
+                )
+              )
+            }
+          )
         }
       }
     }
@@ -87,7 +100,7 @@ class MainActivity : AppCompatActivity() {
 }
 
 @Composable
-private fun MainApp(viewModel: MainActivityViewModel) {
+private fun MainApp(viewModel: MainActivityViewModel, onOpenSettingsForApp: () -> Unit,) {
   val systemUiController = rememberSystemUiController()
   val useDarkIcons = MaterialTheme.colors.isLight
   SideEffect {
@@ -147,7 +160,8 @@ private fun MainApp(viewModel: MainActivityViewModel) {
                 currentAuthState,
                 districtName,
                 onLogout = { viewModel.logout() },
-                onLock = { viewModel.forceLockScreen() }
+                onLock = { viewModel.forceLockScreen() },
+                onOpenSettingsForApp = onOpenSettingsForApp
               )
             }
           } else {

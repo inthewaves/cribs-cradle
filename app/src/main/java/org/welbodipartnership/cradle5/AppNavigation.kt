@@ -41,6 +41,7 @@ import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.composable
 import com.google.accompanist.navigation.animation.navigation
 import org.welbodipartnership.cradle5.facilities.FacilitiesListScreen
+import org.welbodipartnership.cradle5.locationcheckin.LocationCheckInScreen
 import org.welbodipartnership.cradle5.patients.details.PatientDetailsScreen
 import org.welbodipartnership.cradle5.patients.form.PatientForm
 import org.welbodipartnership.cradle5.patients.form.otherinfo.PatientOtherInfoFormScreen
@@ -51,6 +52,7 @@ import org.welbodipartnership.cradle5.sync.SyncScreen
 internal enum class Screen(val route: String, val startLeaf: LeafScreen) {
   Patients("patients", LeafScreen.Patients),
   Sync("sync", LeafScreen.Sync),
+  Location("location", LeafScreen.Location),
   Facilities("facilities", LeafScreen.Facilities);
 
   // The lazy is needed to prevent nulls (https://youtrack.jetbrains.com/issue/KT-25957)
@@ -104,6 +106,10 @@ internal sealed class LeafScreen(private val route: String, val hideBottomBar: B
     }
   }
 
+  object Location : LeafScreen("location", hideBottomBar = false) {
+    override val matchRegex = createRouteMatcherWithNoArgs()
+  }
+
   object Sync : LeafScreen("sync", hideBottomBar = false) {
     override val matchRegex = createRouteMatcherWithNoArgs()
   }
@@ -123,18 +129,20 @@ internal sealed class LeafScreen(private val route: String, val hideBottomBar: B
         PatientDetails -> {}
         PatientEdit -> {}
         Patients -> {}
+        Location -> {}
         Sync -> {}
-        PatientOtherInfoEdit -> TODO()
+        PatientOtherInfoEdit -> {}
       }
 
       listOf(
-        Facilities,
         PatientCreate,
         PatientDetails,
         PatientEdit,
+        PatientOtherInfoEdit,
         Patients,
+        Location,
         Sync,
-        PatientOtherInfoEdit
+        Facilities,
       )
     }
 
@@ -165,6 +173,7 @@ private inline fun NavController.withDebouncedAction(
 @Composable
 internal fun LoggedInNavigation(
   navController: NavHostController,
+  onOpenSettingsForApp: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
   AnimatedNavHost(
@@ -178,6 +187,7 @@ internal fun LoggedInNavigation(
   ) {
     addPatientsTopLevel(navController)
     addSyncTopLevel(navController)
+    addLocationCheckInTopLevel(navController, onOpenSettingsForApp)
     addFacilitiesTopLevel(navController)
   }
 }
@@ -334,6 +344,28 @@ private fun NavGraphBuilder.addSyncScreen(
 ) {
   composable(route = LeafScreen.Sync.createRoute(root)) {
     SyncScreen()
+  }
+}
+
+private fun NavGraphBuilder.addLocationCheckInTopLevel(
+  navController: NavController,
+  onOpenSettingsForApp: () -> Unit,
+) {
+  navigation(
+    route = Screen.Location.route,
+    startDestination = LeafScreen.Location.createRoute(Screen.Location),
+  ) {
+    addLocationCheckInScreen(navController, Screen.Location, onOpenSettingsForApp)
+  }
+}
+
+private fun NavGraphBuilder.addLocationCheckInScreen(
+  navController: NavController,
+  root: Screen,
+  onOpenSettingsForApp: () -> Unit,
+) {
+  composable(route = LeafScreen.Location.createRoute(root)) {
+    LocationCheckInScreen(onOpenSettingsForApp)
   }
 }
 

@@ -16,6 +16,7 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach 
             "-Xopt-in=androidx.compose.material.ExperimentalMaterialApi",
             "-Xopt-in=com.google.accompanist.insets.ExperimentalAnimatedInsets",
             "-Xopt-in=androidx.compose.foundation.ExperimentalFoundationApi",
+            "-Xopt-in=com.google.accompanist.permissions.ExperimentalPermissionsApi",
             "-Xopt-in=kotlin.RequiresOptIn",
         )
     }

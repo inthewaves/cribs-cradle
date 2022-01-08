@@ -11,7 +11,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import org.welbodipartnership.cradle5.util.appinit.AppInitTask
 import org.welbodipartnership.cradle5.util.coroutines.AppCoroutineDispatchers
+import org.welbodipartnership.cradle5.util.executors.AppExecutors
 import org.welbodipartnership.cradle5.util.foreground.AppForegroundedObserverSetupTask
+import java.util.concurrent.Executors
 import javax.inject.Qualifier
 import javax.inject.Singleton
 
@@ -47,6 +49,15 @@ object CoroutineModule {
   fun providesApplicationCoroutineScope(
     appCoroutineDispatchers: AppCoroutineDispatchers,
   ): CoroutineScope = CoroutineScope(SupervisorJob() + appCoroutineDispatchers.default)
+}
+
+@Module
+@InstallIn(SingletonComponent::class)
+@Suppress("UNUSED")
+object ExecutorsModule {
+  @Singleton
+  @Provides
+  fun providesAppExecutors() = AppExecutors(Executors.newSingleThreadExecutor())
 }
 
 @Module
