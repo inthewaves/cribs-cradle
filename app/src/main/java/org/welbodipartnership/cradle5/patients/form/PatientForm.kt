@@ -21,7 +21,6 @@ import androidx.compose.material.AlertDialog
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Scaffold
 import androidx.compose.material.SnackbarHostState
 import androidx.compose.material.Text
@@ -65,6 +64,7 @@ import org.welbodipartnership.cradle5.data.serverenums.ServerEnumCollection
 import org.welbodipartnership.cradle5.patients.details.BaseDetailsCard
 import org.welbodipartnership.cradle5.patients.details.CategoryHeader
 import org.welbodipartnership.cradle5.ui.composables.forms.BooleanRadioButtonRow
+import org.welbodipartnership.cradle5.ui.composables.forms.BringIntoViewOutlinedTextField
 import org.welbodipartnership.cradle5.ui.composables.forms.DateOutlinedTextField
 import org.welbodipartnership.cradle5.ui.composables.forms.EnumDropdownMenuIdOnly
 import org.welbodipartnership.cradle5.ui.composables.forms.EnumDropdownMenuWithOther
@@ -675,7 +675,7 @@ fun HysterectomyForm(
       errorHint = causeState.getError()
     )
 
-    OutlinedTextField(
+    BringIntoViewOutlinedTextField(
       value = additionalInfo,
       onValueChange = onAdditionInfoChanged,
       modifier = textFieldModifier

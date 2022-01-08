@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -25,7 +24,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -60,6 +58,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import org.welbodipartnership.cradle5.domain.auth.AuthRepository
 import org.welbodipartnership.cradle5.domain.auth.AuthState
 import org.welbodipartnership.cradle5.home.LoggedInHome
+import org.welbodipartnership.cradle5.ui.composables.forms.BringIntoViewOutlinedTextField
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
 import org.welbodipartnership.cradle5.util.appinit.AppInitManager
 import javax.inject.Inject
@@ -257,97 +256,85 @@ private fun LoginForm(
     }
   }
 
-  LazyColumn(
+  val scrollState = rememberScrollState()
+  Column(
     verticalArrangement = Arrangement.Center,
     horizontalAlignment = Alignment.Start,
     modifier = modifier
+      .verticalScroll(scrollState)
       .navigationBarsWithImePadding()
       .widthIn(max = 600.dp)
       .padding(horizontal = 24.dp)
   ) {
-    item {
-      Column(
-        Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally
-      ) {
-        Image(
-          painterResource(R.mipmap.ic_launcher_foreground),
-          stringResource(R.string.app_icon_cd),
-          contentScale = ContentScale.Fit,
-          modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = 200.dp)
-        )
-        Text(
-          stringResource(R.string.app_name), style = MaterialTheme.typography.h4,
-          textAlign = TextAlign.Center
-        )
-      }
+
+    Column(
+      Modifier.fillMaxWidth(),
+      horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+      Image(
+        painterResource(R.mipmap.ic_launcher_foreground),
+        stringResource(R.string.app_icon_cd),
+        contentScale = ContentScale.Fit,
+        modifier = Modifier
+          .fillMaxWidth()
+          .heightIn(min = 200.dp)
+      )
+      Text(
+        stringResource(R.string.app_name), style = MaterialTheme.typography.h4,
+        textAlign = TextAlign.Center
+      )
     }
 
-    item {
+    Spacer(Modifier.height(12.dp))
+
+    if (loginType is LoginType.Lockscreen) {
+      Text(stringResource(R.string.lockscreen_title), style = MaterialTheme.typography.h5)
       Spacer(Modifier.height(12.dp))
     }
 
-    if (loginType is LoginType.Lockscreen) {
-      item {
-        Text(stringResource(R.string.lockscreen_title), style = MaterialTheme.typography.h5)
-      }
-      item {
-        Spacer(Modifier.height(12.dp))
-      }
-    }
-
     if (errorMessage != null) {
-      item {
-        Text(errorMessage, color = MaterialTheme.colors.error)
-        Spacer(Modifier.height(12.dp))
-      }
-    }
-    item {
-      if (loginType is LoginType.NewLogin) {
-        OutlinedTextField(
-          value = username,
-          onValueChange = onUsernameChange,
-          modifier = Modifier.fillMaxWidth(),
-          label = { Text(stringResource(R.string.username_label)) },
-          keyboardOptions = KeyboardOptions(
-            autoCorrect = false,
-            imeAction = ImeAction.Next,
-          ),
-          maxLines = 1,
-        )
-      }
+      Text(errorMessage, color = MaterialTheme.colors.error)
+      Spacer(Modifier.height(12.dp))
     }
 
-    item {
-      OutlinedTextField(
-        value = password,
-        onValueChange = onPasswordChange,
+    if (loginType is LoginType.NewLogin) {
+      BringIntoViewOutlinedTextField(
+        value = username,
+        onValueChange = onUsernameChange,
         modifier = Modifier.fillMaxWidth(),
-        label = { Text(stringResource(R.string.password_label)) },
-        visualTransformation = PasswordVisualTransformation(),
+        label = { Text(stringResource(R.string.username_label)) },
         keyboardOptions = KeyboardOptions(
           autoCorrect = false,
-          keyboardType = KeyboardType.Password,
-          imeAction = ImeAction.Done,
+          imeAction = ImeAction.Next,
         ),
-        keyboardActions = KeyboardActions(onDone = { onSubmit() }),
         maxLines = 1,
       )
     }
 
-    item { Spacer(Modifier.height(12.dp)) }
+    BringIntoViewOutlinedTextField(
+      value = password,
+      onValueChange = onPasswordChange,
+      modifier = Modifier.fillMaxWidth(),
+      label = { Text(stringResource(R.string.password_label)) },
+      visualTransformation = PasswordVisualTransformation(),
+      keyboardOptions = KeyboardOptions(
+        autoCorrect = false,
+        keyboardType = KeyboardType.Password,
+        imeAction = ImeAction.Done,
+      ),
+      keyboardActions = KeyboardActions(onDone = { onSubmit() }),
+      maxLines = 1,
+    )
 
-    item {
-      Button(
-        onClick = onSubmit,
-        modifier = Modifier.fillMaxWidth()
-      ) {
-        when (loginType) {
-          is LoginType.Lockscreen -> Text(stringResource(R.string.unlock_button))
-          is LoginType.NewLogin -> Text(stringResource(R.string.login_button))
-        }
+    Spacer(Modifier.height(12.dp))
+
+    Button(
+      onClick = onSubmit,
+      modifier = Modifier.fillMaxWidth()
+    ) {
+      when (loginType) {
+        is LoginType.Lockscreen -> Text(stringResource(R.string.unlock_button))
+        is LoginType.NewLogin -> Text(stringResource(R.string.login_button))
       }
     }
   }

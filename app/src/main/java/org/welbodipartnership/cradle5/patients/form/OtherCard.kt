@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.LocalContentAlpha
-import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -15,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import org.welbodipartnership.cradle5.R
 import org.welbodipartnership.cradle5.patients.details.BaseDetailsCard
 import org.welbodipartnership.cradle5.ui.composables.forms.BooleanRadioButtonRow
+import org.welbodipartnership.cradle5.ui.composables.forms.BringIntoViewOutlinedTextField
 import org.welbodipartnership.cradle5.ui.composables.forms.darkerDisabledOutlinedTextFieldColors
 
 @Composable
@@ -36,7 +36,7 @@ fun OtherCard(
       Spacer(Modifier.height(8.dp))
     }
 
-    OutlinedTextField(
+    BringIntoViewOutlinedTextField(
       value = localNotes,
       onValueChange = onLocalNotesChange,
       modifier = Modifier.fillMaxWidth(),

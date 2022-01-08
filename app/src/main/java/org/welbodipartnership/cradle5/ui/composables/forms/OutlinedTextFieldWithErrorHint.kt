@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import androidx.compose.material.TextFieldColors
 import androidx.compose.runtime.Composable
@@ -50,7 +49,7 @@ fun OutlinedTextFieldWithErrorHint(
 ) {
   val showError = enabled && errorHint != null
   Column(modifier) {
-    OutlinedTextField(
+    BringIntoViewOutlinedTextField(
       value = value,
       onValueChange = onValueChange,
       modifier = textFieldModifier,
