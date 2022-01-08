@@ -117,6 +117,8 @@
     <string name="save_button">Save</string>
     <string name="error_dialog_title">Error</string>
     <string name="app_icon_cd">Icon for the app</string>
+    <string name="not_available_n_slash_a">N/A</string>
+    <string name="patient_list_icon_locked_cd">Patient has been uploaded and is locked for editing</string>
     <plurals name="patient_form_snackbar_failed_to_save_there_are_d_errors">
         <item quantity="one">Failed to save, as there is %1$d error.</item>
         <item quantity="other">Failed to save, as there are %1$d errors.</item>

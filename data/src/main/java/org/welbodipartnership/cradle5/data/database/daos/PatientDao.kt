@@ -54,8 +54,9 @@ abstract class PatientDao {
   @Insert(onConflict = OnConflictStrategy.IGNORE)
   protected abstract suspend fun insert(patient: Patient): Long
 
+  @RewriteQueriesToDropUnusedColumns
   @Transaction
-  @Query("SELECT id, initials, dateOfBirth FROM Patient ORDER BY id ASC")
+  @Query("SELECT * FROM Patient ORDER BY id ASC")
   abstract fun patientsPagingSource(): PagingSource<Int, ListPatient>
 
   @Transaction

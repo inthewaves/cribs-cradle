@@ -2,12 +2,9 @@ package org.welbodipartnership.cradle5.patients.details
 
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
-import androidx.compose.material.ContentAlpha
-import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -32,17 +29,6 @@ fun OtherInfoCard(
         label = stringResource(R.string.marked_as_draft_label),
         value = stringResource(if (isDraft) R.string.yes else R.string.no)
       )
-      CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
-        Text(
-          stringResource(
-            if (isDraft) {
-              R.string.mark_as_draft_yes_patient_will_not_be_synced
-            } else {
-              R.string.mark_as_draft_no_patient_will_be_synced
-            }
-          )
-        )
-      }
       Spacer(modifier = Modifier.height(spacerHeight))
     }
     LabelAndValueOrNone(

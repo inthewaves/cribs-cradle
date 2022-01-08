@@ -5,11 +5,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -23,7 +25,12 @@ import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.LockOpen
+import androidx.compose.material.icons.filled.Note
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -32,6 +39,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -48,6 +57,7 @@ import com.google.accompanist.insets.rememberInsetsPaddingValues
 import com.google.accompanist.insets.ui.TopAppBar
 import org.welbodipartnership.cradle5.R
 import org.welbodipartnership.cradle5.compose.rememberFlowWithLifecycle
+import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
 import org.welbodipartnership.cradle5.data.database.resultentities.ListPatient
 import org.welbodipartnership.cradle5.home.AccountInfoButton
 import org.welbodipartnership.cradle5.ui.composables.AnimatedVisibilityFadingWrapper
@@ -193,9 +203,10 @@ private fun PatientsListScreen(
 fun PatientListHeader(modifier: Modifier = Modifier) {
   Card(elevation = 1.dp) {
     BasePatientListItem(
-      first = stringResource(R.string.patient_list_header_id),
-      second = stringResource(R.string.patient_list_header_initials),
-      third = stringResource(R.string.patient_list_header_date_of_birth),
+      id = stringResource(R.string.patient_list_header_id),
+      initials = stringResource(R.string.patient_list_header_initials),
+      dateOfBirth = stringResource(R.string.patient_list_header_date_of_birth),
+      listIconType = ListIconType.DontShow,
       minHeight = 24.dp,
       textStyle = MaterialTheme.typography.subtitle2,
       onClick = null,
@@ -211,9 +222,15 @@ fun PatientListItem(
   modifier: Modifier = Modifier
 ) {
   BasePatientListItem(
-    first = listPatient.id.toString(),
-    second = listPatient.initials,
-    third = listPatient.dateOfBirth.toString(),
+    id = listPatient.serverInfo?.objectId?.toString()
+      ?: stringResource(R.string.not_available_n_slash_a),
+    initials = listPatient.initials,
+    dateOfBirth = listPatient.dateOfBirth.toString(),
+    listIconType = ListIconType.ShowIcons(
+      isPatientUploaded = listPatient.serverInfo != null,
+      hasLocalNotes = !listPatient.localNotes.isNullOrBlank(),
+      isPatientDraft = listPatient.isDraft
+    ),
     minHeight = 48.dp,
     textStyle = MaterialTheme.typography.body2,
     onClick = { onClick(listPatient) },
@@ -233,11 +250,24 @@ fun PatientListItemPlaceholder(modifier: Modifier = Modifier) {
   }
 }
 
+@Immutable
+sealed class ListIconType {
+  @Immutable
+  object DontShow : ListIconType()
+  @Immutable
+  data class ShowIcons(
+    val isPatientDraft: Boolean,
+    val hasLocalNotes: Boolean,
+    val isPatientUploaded: Boolean
+  ) : ListIconType()
+}
+
 @Composable
 private fun BasePatientListItem(
-  first: String,
-  second: String,
-  third: String,
+  id: String,
+  initials: String,
+  dateOfBirth: String,
+  listIconType: ListIconType,
   minHeight: Dp,
   textStyle: TextStyle,
   onClick: (() -> Unit)?,
@@ -249,26 +279,65 @@ private fun BasePatientListItem(
     modifier = modifier
   ) {
     Text(
-      first,
+      id,
       modifier = Modifier
         .weight(0.15f)
         .align(Alignment.CenterVertically),
       style = textStyle
     )
     Text(
-      second,
+      initials,
       modifier = Modifier
         .weight(0.2f)
         .align(Alignment.CenterVertically),
       style = textStyle
     )
     Text(
-      third,
+      dateOfBirth,
       modifier = Modifier
         .weight(0.3f)
         .align(Alignment.CenterVertically),
       style = textStyle
     )
+    Row {
+      Spacer(Modifier.width(5.dp))
+      val hasLocalNotesIconAlpha = if (
+        listIconType is ListIconType.ShowIcons && listIconType.hasLocalNotes
+      ) {
+        1f
+      } else {
+        0f
+      }
+      Icon(
+        imageVector = Icons.Filled.Note, contentDescription = "Draft status",
+        modifier = Modifier.alpha(hasLocalNotesIconAlpha)
+      )
+
+      Spacer(Modifier.width(5.dp))
+
+      val uploadedIconAlpha = if (listIconType is ListIconType.DontShow) 0f else 1f
+      val contentDescription: String
+      val icon: ImageVector
+      when (listIconType) {
+        ListIconType.DontShow -> {
+          icon = Icons.Default.LockOpen
+          contentDescription = ""
+        }
+        is ListIconType.ShowIcons -> {
+          icon = when {
+            listIconType.isPatientDraft -> Icons.Outlined.Edit
+            listIconType.isPatientUploaded -> Icons.Default.Lock
+            else -> Icons.Default.LockOpen
+          }
+          contentDescription = stringResource(R.string.patient_list_icon_locked_cd)
+        }
+      }
+
+      Icon(
+        imageVector = icon, contentDescription = contentDescription,
+        modifier = Modifier.alpha(uploadedIconAlpha)
+      )
+    }
   }
 }
 
@@ -280,7 +349,25 @@ fun PatientListItemPreview() {
       Column {
         PatientListHeader()
         PatientListItem(
-          listPatient = ListPatient(0L, "AA", FormDate.today()),
+          listPatient = ListPatient(
+            0L,
+            serverInfo = null,
+            "AA",
+            FormDate.today(),
+            localNotes = "My notes",
+            isDraft = true
+          ),
+          onClick = {}
+        )
+        PatientListItem(
+          listPatient = ListPatient(
+            id = 0L,
+            serverInfo = ServerInfo(nodeId = 50, objectId = 50),
+            initials = "AA",
+            dateOfBirth = FormDate.today(),
+            localNotes = null,
+            isDraft = false
+          ),
           onClick = {}
         )
         PatientListItemPlaceholder()
