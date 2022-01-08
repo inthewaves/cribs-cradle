@@ -1,6 +1,10 @@
 package org.welbodipartnership.cradle5.locationcheckin
 
+import android.content.ActivityNotFoundException
+import android.content.Intent
 import android.os.Build
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -30,7 +34,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -117,20 +123,51 @@ private fun LocationCheckInScreen(
               val state = viewModel.screenState.collectAsState().value
               when (state) {
                 is LocationCheckInViewModel.ScreenState.Error -> {
-                  Text(state.errorMessage)
+                  Text(state.errorMessage, textAlign = TextAlign.Center)
                 }
                 LocationCheckInViewModel.ScreenState.GettingLocation -> {
-                  Text("Getting location")
+                  Text("Getting location", textAlign = TextAlign.Center)
                   Spacer(Modifier.height(8.dp))
                   CircularProgressIndicator()
                 }
                 LocationCheckInViewModel.ScreenState.Success -> {}
                 LocationCheckInViewModel.ScreenState.Ready -> {}
+                LocationCheckInViewModel.ScreenState.ErrorLocationDisabled -> {
+                  Text(
+                    "Unable to get location: " +
+                      "Location is disabled on the device and needs to be enabled " +
+                      "in the system settings.",
+                    textAlign = TextAlign.Center
+                  )
+                  Spacer(Modifier.height(8.dp))
+                  val context = LocalContext.current
+                  Button(
+                    onClick = {
+                      val intent = Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                      try {
+                        context.startActivity(intent)
+                      } catch (e: ActivityNotFoundException) {
+                        Log.e("LocationCheckInScreen", "unable to find location source")
+                        Toast
+                          .makeText(
+                            context,
+                            "Unable to open system location settings",
+                            Toast.LENGTH_SHORT
+                          ).show()
+                      }
+                    }
+                  ) {
+                    Text("Open settings")
+                  }
+                }
               }
               AnimatedVisibilityFadingWrapper(
                 visible = state is LocationCheckInViewModel.ScreenState.Success
               ) {
-                Text("Successfully created location check in")
+                Text(
+                  "Successfully created location check in",
+                  textAlign = TextAlign.Center
+                )
               }
 
               if (state !is LocationCheckInViewModel.ScreenState.GettingLocation) {

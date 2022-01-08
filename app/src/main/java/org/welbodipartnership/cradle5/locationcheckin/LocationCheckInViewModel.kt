@@ -55,6 +55,7 @@ class LocationCheckInViewModel @Inject constructor(
     object GettingLocation : ScreenState()
     @Immutable
     data class Error(val errorMessage: String) : ScreenState()
+    object ErrorLocationDisabled : ScreenState()
     object Success : ScreenState()
   }
 
@@ -175,7 +176,7 @@ class LocationCheckInViewModel @Inject constructor(
         if (isLocationEnabled) {
           ScreenState.Error("Failed to get location")
         } else {
-          ScreenState.Error("Failed to get location (location is disabled)")
+          ScreenState.ErrorLocationDisabled
         }
       }
     }
