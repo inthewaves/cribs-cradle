@@ -31,6 +31,14 @@ value class UnixTimestamp(val timestamp: Long) : Comparable<UnixTimestamp> {
     return abs(this.timestamp - other.timestamp).seconds
   }
 
+  fun formatAsIso8601Date(): String {
+    val thisAsZonedDateTime: ZonedDateTime = ZonedDateTime.ofInstant(
+      Instant.ofEpochSecond(timestamp),
+      ZoneId.of("UTC")
+    )
+    return thisAsZonedDateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+  }
+
   fun formatAsConciseDate(): String {
     val thisAsZonedDateTime: ZonedDateTime = ZonedDateTime.ofInstant(
       Instant.ofEpochSecond(timestamp),
@@ -56,3 +64,5 @@ value class UnixTimestamp(val timestamp: Long) : Comparable<UnixTimestamp> {
         .let { UnixTimestamp(it) }
   }
 }
+
+fun Long.toUnixTimestamp() = UnixTimestamp(this)

@@ -49,6 +49,14 @@ class SyncScreenViewModel @Inject constructor(
       null
     )
 
+  val locationCheckInsToUploadCountFlow: StateFlow<Int?> = dbWrapper.locationCheckInDao()
+    .countCheckInsForUpload()
+    .stateIn(
+      viewModelScope,
+      SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000L),
+      null
+    )
+
   fun enqueueSync() {
     viewModelScope.launch {
       syncRepository.enqueueSyncJob()

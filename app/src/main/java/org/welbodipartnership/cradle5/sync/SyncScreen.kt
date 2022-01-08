@@ -79,7 +79,10 @@ private fun SyncScreen(viewModel: SyncScreenViewModel) {
           }
           is SyncRepository.SyncStatus.Inactive, null -> {
             val patientsToUpload by viewModel.patientsToUploadCountFlow.collectAsState()
-            val partialPatientsToUpload by viewModel.incompletePatientsToUploadCountFlow.collectAsState()
+            val partialPatientsToUpload by viewModel.incompletePatientsToUploadCountFlow
+              .collectAsState()
+            val locationCheckInsToUpload by viewModel.locationCheckInsToUploadCountFlow
+              .collectAsState()
             val lastTimeSyncCompleted by viewModel.lastSyncCompletedTimestamp.collectAsState()
             InactiveOrNoSyncCard(
               onSyncButtonClicked = { viewModel.enqueueSync() },
@@ -87,7 +90,8 @@ private fun SyncScreen(viewModel: SyncScreenViewModel) {
               syncStatus = status as SyncRepository.SyncStatus.Inactive?,
               lastTimeSyncCompleted = lastTimeSyncCompleted,
               numPatientsToUpload = patientsToUpload,
-              numIncompletePatientsToUpload = partialPatientsToUpload
+              numIncompletePatientsToUpload = partialPatientsToUpload,
+              numLocationCheckinsToUpload = locationCheckInsToUpload,
             )
           }
         }
@@ -115,6 +119,9 @@ private fun ActiveSyncCard(
       }
       SyncWorker.Stage.UPLOADING_INCOMPLETE_PATIENTS -> {
         Text("Uploading patients that failed to upload before")
+      }
+      SyncWorker.Stage.UPLOADING_LOCATION_CHECK_INS -> {
+        Text("Uploading location check ins")
       }
       SyncWorker.Stage.DOWNLOADING_FACILITIES -> {
         Text("Downloading facilities")
@@ -161,6 +168,7 @@ fun InactiveOrNoSyncCard(
   syncStatus: SyncRepository.SyncStatus.Inactive?,
   numPatientsToUpload: Int?,
   numIncompletePatientsToUpload: Int?,
+  numLocationCheckinsToUpload: Int?,
   lastTimeSyncCompleted: UnixTimestamp?,
   modifier: Modifier = Modifier,
 ) {
@@ -210,6 +218,18 @@ fun InactiveOrNoSyncCard(
           numIncompletePatientsToUpload,
           numIncompletePatientsToUpload
         ),
+        textAlign = TextAlign.Center
+      )
+      Spacer(Modifier.height(24.dp))
+    }
+
+    if (numLocationCheckinsToUpload != null) {
+      Text(
+        if (numLocationCheckinsToUpload == 1) {
+          "There is 1 location check in to upload"
+        } else {
+          "There are $numLocationCheckinsToUpload location check ins to upload"
+        },
         textAlign = TextAlign.Center
       )
       Spacer(Modifier.height(24.dp))
@@ -266,7 +286,8 @@ fun SyncPagePreview() {
           syncStatus = SyncRepository.SyncStatus.Inactive(WorkInfo.State.SUCCEEDED),
           lastTimeSyncCompleted = UnixTimestamp.now(),
           numPatientsToUpload = 5,
-          numIncompletePatientsToUpload = 1
+          numIncompletePatientsToUpload = 1,
+          numLocationCheckinsToUpload = 1
         )
       }
     }

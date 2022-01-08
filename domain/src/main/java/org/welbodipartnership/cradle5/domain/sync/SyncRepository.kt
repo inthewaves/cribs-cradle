@@ -54,6 +54,34 @@ class SyncRepository @Inject constructor(
     }
     .flowOn(appCoroutineDispatchers.default)
 
+  /**
+   * Represents whether the main fields of any forms (registration and outcomes) can be
+   * edited in the app.
+   */
+  enum class FormEditState(val canEdit: Boolean) {
+    CAN_EDIT(true),
+    CANT_EDIT_SYNC_ENQUEUED(false),
+    CANT_EDIT_SYNC_IN_PROGRESS(false)
+  }
+
+  val editFormState: Flow<FormEditState> = currentSyncStatusFlow
+    .map { status ->
+      when (status) {
+        is SyncStatus.Active -> FormEditState.CANT_EDIT_SYNC_IN_PROGRESS
+        is SyncStatus.Inactive -> {
+          when (status.workState) {
+            WorkInfo.State.ENQUEUED -> FormEditState.CANT_EDIT_SYNC_ENQUEUED
+            WorkInfo.State.RUNNING -> FormEditState.CANT_EDIT_SYNC_IN_PROGRESS
+            WorkInfo.State.SUCCEEDED,
+            WorkInfo.State.FAILED,
+            WorkInfo.State.BLOCKED,
+            WorkInfo.State.CANCELLED,
+            null -> FormEditState.CAN_EDIT
+          }
+        }
+      }
+    }
+
   suspend fun enqueueSyncJob() {
     val workId = SyncWorker.enqueue(workManager)
     appValuesStore.insertSyncUuid(workId)

@@ -1,8 +1,6 @@
 package org.welbodipartnership.cradle5.domain.patients
 
 import android.util.Log
-import androidx.work.WorkInfo
-import kotlinx.coroutines.flow.map
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
 import org.welbodipartnership.cradle5.data.database.entities.Outcomes
 import org.welbodipartnership.cradle5.data.database.entities.Patient
@@ -20,33 +18,7 @@ class PatientsManager @Inject constructor(
   private val syncRepository: SyncRepository,
 ) {
 
-  /**
-   * Represents whether the main fields of any patient's forms (registration and outcomes) can be
-   * edited in the app.
-   */
-  enum class FormEditState(val canEdit: Boolean) {
-    CAN_EDIT(true),
-    CANT_EDIT_SYNC_ENQUEUED(false),
-    CANT_EDIT_SYNC_IN_PROGRESS(false)
-  }
-
-  val editPatientsOutcomesState = syncRepository.currentSyncStatusFlow
-    .map { status ->
-      when (status) {
-        is SyncRepository.SyncStatus.Active -> FormEditState.CANT_EDIT_SYNC_IN_PROGRESS
-        is SyncRepository.SyncStatus.Inactive -> {
-          when (status.workState) {
-            WorkInfo.State.ENQUEUED -> FormEditState.CANT_EDIT_SYNC_ENQUEUED
-            WorkInfo.State.RUNNING -> FormEditState.CANT_EDIT_SYNC_IN_PROGRESS
-            WorkInfo.State.SUCCEEDED,
-            WorkInfo.State.FAILED,
-            WorkInfo.State.BLOCKED,
-            WorkInfo.State.CANCELLED,
-            null -> FormEditState.CAN_EDIT
-          }
-        }
-      }
-    }
+  val editPatientsOutcomesState = syncRepository.editFormState
 
   sealed class UploadResult {
     data class PatientFailure(val error: RestApi.PostResult) : UploadResult()

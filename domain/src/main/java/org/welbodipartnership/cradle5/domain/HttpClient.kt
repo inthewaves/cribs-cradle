@@ -175,6 +175,8 @@ internal class HttpClient @Inject constructor(
 typealias DefaultNetworkResult<SuccessT> = NetworkResult<SuccessT, ByteArray>
 
 sealed interface NetworkResult<SuccessT, FailT> {
+  val isSuccess: Boolean get() = this is Success
+
   fun valueOrNull(): SuccessT? = if (this is Success) value else null
 
   /**

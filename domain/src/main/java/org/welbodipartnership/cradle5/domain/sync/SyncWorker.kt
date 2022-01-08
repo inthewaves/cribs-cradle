@@ -20,10 +20,14 @@ import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.firstOrNull
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
+import org.welbodipartnership.cradle5.data.database.entities.LocationCheckIn
 import org.welbodipartnership.cradle5.data.database.resultentities.PatientAndOutcomes
 import org.welbodipartnership.cradle5.data.settings.AppValuesStore
+import org.welbodipartnership.cradle5.domain.RestApi
 import org.welbodipartnership.cradle5.domain.patients.PatientsManager
+import org.welbodipartnership.cradle5.domain.toApiBody
 import java.util.UUID
 import javax.annotation.concurrent.Immutable
 
@@ -34,6 +38,7 @@ class SyncWorker @AssistedInject constructor(
   private val appValuesStore: AppValuesStore,
   private val patientsManager: PatientsManager,
   private val dbWrapper: CradleDatabaseWrapper,
+  private val restApi: RestApi,
 ) : CoroutineWorker(appContext, workerParams) {
   override suspend fun doWork(): Result {
     Log.d(TAG, "starting SyncWorker")
@@ -52,6 +57,8 @@ class SyncWorker @AssistedInject constructor(
         .patientsDao()
         .getPatientsWithPartialServerInfoOrderedById()
     )
+
+    runUploadForCheckIns(dbWrapper.locationCheckInDao().getCheckInsForUpload())
 
     appValuesStore.setLastTimeSyncCompletedToNow()
     return Result.success()
@@ -102,6 +109,49 @@ class SyncWorker @AssistedInject constructor(
     PatientUploadResult(successfulPatientIds, failedPatientIds)
   }
 
+  private suspend fun runUploadForCheckIns(checkIns: List<LocationCheckIn>): Unit = coroutineScope {
+    reportProgress(
+      Stage.UPLOADING_LOCATION_CHECK_INS,
+      doneSoFar = 0,
+      totalToDo = checkIns.size
+    )
+    val failedCheckInIds = mutableListOf<Long>()
+    val updateChannel = actor<Int>(capacity = Channel.CONFLATED) {
+      consumeEach { progress ->
+        reportProgress(
+          Stage.UPLOADING_LOCATION_CHECK_INS,
+          doneSoFar = progress.coerceAtMost(checkIns.size),
+          totalToDo = checkIns.size,
+          // don't really care about thread-safety here
+          numFailed = failedCheckInIds.size
+        )
+        // prevent contention with WorkManager's database
+        delay(75L)
+      }
+    }
+
+    Log.d(TAG, "getting userId")
+    try {
+      val userId = appValuesStore.userIdFlow.firstOrNull() ?: return@coroutineScope
+      checkIns.forEachIndexed { index, checkIn ->
+        if (checkIn.isUploaded) {
+          Log.w(TAG, "refusing to upload checkIn ${checkIn.id} because already uploaded")
+        } else {
+          val result = restApi.postGpsForm(checkIn.toApiBody(userId))
+          Log.d(TAG, "result: $result")
+          if (result.isSuccess) {
+            dbWrapper.locationCheckInDao().markAsUploaded(checkInId = checkIn.id)
+          } else {
+            failedCheckInIds.add(checkIn.id)
+          }
+        }
+        updateChannel.trySend(index + 1)
+      }
+    } finally {
+      updateChannel.close()
+    }
+  }
+
   private suspend fun reportProgress(
     stage: Stage,
     doneSoFar: Int,
@@ -147,6 +197,7 @@ class SyncWorker @AssistedInject constructor(
      * ObjectId. An ObjectId is strictly required for posting an outcome for a patient.
      */
     UPLOADING_INCOMPLETE_PATIENTS,
+    UPLOADING_LOCATION_CHECK_INS,
     DOWNLOADING_FACILITIES,
     DOWNLOADING_DROPDOWN_VALUES,
   }

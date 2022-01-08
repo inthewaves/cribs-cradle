@@ -10,12 +10,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import org.welbodipartnership.cradle5.R
-import org.welbodipartnership.cradle5.domain.patients.PatientsManager
+import org.welbodipartnership.cradle5.domain.sync.SyncRepository
 import org.welbodipartnership.cradle5.ui.composables.LabelAndValueOrNone
 
 @Composable
 fun OtherInfoCard(
-  editState: PatientsManager.FormEditState?,
+  editState: SyncRepository.FormEditState?,
   isPatientUploadedToServer: Boolean,
   isDraft: Boolean,
   localNotes: String?,

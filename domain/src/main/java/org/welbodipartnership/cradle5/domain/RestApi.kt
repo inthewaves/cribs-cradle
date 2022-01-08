@@ -16,6 +16,7 @@ import okio.BufferedSource
 import org.welbodipartnership.api.ApiAuthToken
 import org.welbodipartnership.api.IndexMenuItem
 import org.welbodipartnership.api.LoginErrorMessage
+import org.welbodipartnership.api.cradle5.GpsForm
 import org.welbodipartnership.api.forms.FormGetResponse
 import org.welbodipartnership.api.forms.FormPostBody
 import org.welbodipartnership.api.lookups.LookupResult
@@ -499,6 +500,27 @@ class RestApi @Inject internal constructor(
           basePatientId = patientObjectId
         )
       }
+    )
+  }
+
+  suspend fun postGpsForm(gpsForm: GpsForm): DefaultNetworkResult<Unit> {
+    val postBody: FormPostBody<GpsForm>
+    val adapter: JsonAdapter<FormPostBody<GpsForm>> = try {
+      postBody = FormPostBody.create(gpsForm)
+      moshi.adapter(Types.newParameterizedType(FormPostBody::class.java, GpsForm::class.java))
+    } catch (e: Exception) {
+      Log.e(TAG, "postGpsForm: missing adapter or annotatiion", e)
+      return NetworkResult.NetworkException(e)
+    }
+    val formId = FormId.fromAnnotationOrThrow<GpsForm>()
+    val body = HttpClient.buildJsonRequestBody { sink -> adapter.toJson(sink, postBody) }
+    return httpClient.makeRequest(
+      method = HttpClient.Method.POST,
+      url = urlProvider.forms(formId, ObjectId.NEW_POST),
+      headers = defaultHeadersFlow.first(),
+      requestBody = body,
+      failureReader = { src, _ -> src.readByteArray() },
+      successReader = { _, _ -> Unit }
     )
   }
 

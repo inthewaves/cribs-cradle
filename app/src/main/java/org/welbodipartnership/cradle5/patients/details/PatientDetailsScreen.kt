@@ -47,7 +47,7 @@ import org.welbodipartnership.cradle5.data.database.entities.Facility
 import org.welbodipartnership.cradle5.data.database.entities.Outcomes
 import org.welbodipartnership.cradle5.data.database.entities.Patient
 import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
-import org.welbodipartnership.cradle5.domain.patients.PatientsManager
+import org.welbodipartnership.cradle5.domain.sync.SyncRepository
 import org.welbodipartnership.cradle5.ui.composables.AnimatedVisibilityFadingWrapper
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
 import org.welbodipartnership.cradle5.util.datetime.FormDate
@@ -128,7 +128,7 @@ private fun PatientDetailsScreen(
   patient: Patient,
   facility: Facility?,
   outcomes: Outcomes?,
-  editState: PatientsManager.FormEditState?,
+  editState: SyncRepository.FormEditState?,
   onPatientEditPress: (patientPrimaryKey: Long) -> Unit,
   onPatientOtherInfoEditPress: (patientPrimaryKey: Long) -> Unit,
   modifier: Modifier = Modifier,
@@ -180,13 +180,13 @@ private fun PatientDetailsScreen(
           ) {
             CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
               val text = when (editState) {
-                PatientsManager.FormEditState.CANT_EDIT_SYNC_ENQUEUED -> {
+                SyncRepository.FormEditState.CANT_EDIT_SYNC_ENQUEUED -> {
                   "Unable to make edits when sync is enqueued"
                 }
-                PatientsManager.FormEditState.CANT_EDIT_SYNC_IN_PROGRESS -> {
+                SyncRepository.FormEditState.CANT_EDIT_SYNC_IN_PROGRESS -> {
                   "Unable to make edits while sync is running"
                 }
-                PatientsManager.FormEditState.CAN_EDIT, null -> ""
+                SyncRepository.FormEditState.CAN_EDIT, null -> ""
               }
               Text(text = text)
             }
@@ -243,7 +243,7 @@ fun PatientDetailsScreenNotUploadedPreview() {
         ),
         facility = Facility(5L, "Test facility", 0, "My notes"),
         outcomes = testOutcomes,
-        editState = PatientsManager.FormEditState.CAN_EDIT,
+        editState = SyncRepository.FormEditState.CAN_EDIT,
         onPatientEditPress = {},
         onPatientOtherInfoEditPress = {}
       )
@@ -268,7 +268,7 @@ fun PatientDetailsScreenUploadedPreview() {
         ),
         facility = Facility(5L, "Test facility", 0, "My notes"),
         outcomes = testOutcomes,
-        editState = PatientsManager.FormEditState.CAN_EDIT,
+        editState = SyncRepository.FormEditState.CAN_EDIT,
         onPatientEditPress = {},
         onPatientOtherInfoEditPress = {}
       )
@@ -293,7 +293,7 @@ fun PatientDetailsScreenSyncingPreview() {
         ),
         facility = Facility(5L, "Test facility", 0, "My notes"),
         outcomes = testOutcomes,
-        editState = PatientsManager.FormEditState.CAN_EDIT,
+        editState = SyncRepository.FormEditState.CAN_EDIT,
         onPatientEditPress = {},
         onPatientOtherInfoEditPress = {}
       )

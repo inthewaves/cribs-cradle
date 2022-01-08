@@ -73,6 +73,11 @@ class AppValuesStore @Inject internal constructor(
     .distinctUntilChanged()
     .conflate()
 
+  val userIdFlow = encryptedSettings.encryptedSettingsFlow()
+    .map { settings -> settings.userInfo.userId.takeIf { settings.hasUserInfo() } }
+    .distinctUntilChanged()
+    .conflate()
+
   /**
    * When login is successful, the server returns a [authToken].
    *

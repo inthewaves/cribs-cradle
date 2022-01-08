@@ -17,6 +17,7 @@ import org.welbodipartnership.cradle5.LeafScreen
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
 import org.welbodipartnership.cradle5.data.database.resultentities.PatientFacilityOutcomes
 import org.welbodipartnership.cradle5.domain.patients.PatientsManager
+import org.welbodipartnership.cradle5.domain.sync.SyncRepository
 import javax.inject.Inject
 
 @HiltViewModel
@@ -50,7 +51,7 @@ class PatientDetailsViewModel @Inject constructor(
       )
     }
 
-  val editStateFlow: StateFlow<PatientsManager.FormEditState?> = patientsManager
+  val editStateFlow: StateFlow<SyncRepository.FormEditState?> = patientsManager
     .editPatientsOutcomesState
     .stateIn(
       viewModelScope,

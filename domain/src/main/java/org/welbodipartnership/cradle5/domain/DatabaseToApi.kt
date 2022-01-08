@@ -1,9 +1,12 @@
 package org.welbodipartnership.cradle5.domain
 
+import org.welbodipartnership.api.cradle5.GpsForm
 import org.welbodipartnership.api.cradle5.Outcome
 import org.welbodipartnership.api.cradle5.Registration
+import org.welbodipartnership.cradle5.data.database.entities.LocationCheckIn
 import org.welbodipartnership.cradle5.data.database.entities.Outcomes
 import org.welbodipartnership.cradle5.data.database.entities.Patient
+import org.welbodipartnership.cradle5.util.datetime.toUnixTimestamp
 
 fun Patient.toApiBody() = Registration(
   initials = initials,
@@ -46,4 +49,10 @@ fun Outcomes.toApiBody() = Outcome(
   perinatalOutcome = perinatalDeath?.outcome?.selectionId,
   perinatalMaternalFactors = perinatalDeath?.relatedMaternalFactors?.selectionId,
   perinatalOtherMaternalFactors = perinatalDeath?.relatedMaternalFactors?.otherString
+)
+
+fun LocationCheckIn.toApiBody(userId: Int) = GpsForm(
+  userId = userId.toString(),
+  dateTimeIso8601 = this.timestamp.toUnixTimestamp().formatAsIso8601Date(),
+  coordinates = "${this.latitude},${this.longitude}"
 )
