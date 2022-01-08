@@ -2,6 +2,7 @@ package org.welbodipartnership.cradle5.locationcheckin
 
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,7 +11,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.Button
@@ -35,9 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -45,7 +43,6 @@ import androidx.paging.compose.items
 import com.google.accompanist.insets.LocalWindowInsets
 import com.google.accompanist.insets.rememberInsetsPaddingValues
 import com.google.accompanist.insets.ui.TopAppBar
-import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import org.welbodipartnership.cradle5.R
 import org.welbodipartnership.cradle5.data.database.entities.LocationCheckIn
@@ -74,7 +71,7 @@ private fun LocationCheckInScreen(
       try {
         val timestamp = UnixTimestamp(current.timestamp).formatAsConciseDate()
         val result = snackbarHostState.showSnackbar(
-          "Deleted entry at $timestamp",
+          "Deleted entry that was made at $timestamp",
           actionLabel = "Undo",
           SnackbarDuration.Long
         )
@@ -119,7 +116,6 @@ private fun LocationCheckInScreen(
           modifier = Modifier.padding(24.dp)
         ) {
           when {
-            // If all permissions are granted, then show screen with the feature enabled
             multiLocationPermsState.allPermissionsGranted -> {
               val state = viewModel.screenState.collectAsState().value
               when (state) {
@@ -156,17 +152,10 @@ private fun LocationCheckInScreen(
             // previously selected a "don't ask again" checkbox or option"
             // - https://developer.android.com/training/permissions/requesting#handle-denial
             multiLocationPermsState.shouldShowRationale ||
-              !multiLocationPermsState.permissionRequested -> {
+              !multiLocationPermsState.permissionRequested ||
+              Build.VERSION.SDK_INT < Build.VERSION_CODES.R -> {
 
-              if (
-                multiLocationPermsState.revokedPermissions.size == 1 &&
-                android.Manifest.permission.ACCESS_FINE_LOCATION
-                in multiLocationPermsState.revokedPermissions.asSequence().map { it.permission }
-              ) {
-                Text("The app requires precise location information")
-              } else {
-                Text("The app requires the location permission to perform location check ins")
-              }
+              Text("The app requires the precise location permission to perform location check ins.")
 
               Spacer(modifier = Modifier.height(8.dp))
 
@@ -176,8 +165,9 @@ private fun LocationCheckInScreen(
             }
             else -> {
               Text(
-                "Precise location permissions have been denied. " +
-                  "Permissions have to be given through the app settings"
+                "Precise location permissions have been denied. This permission is required" +
+                  "to perform location check ins. " +
+                  "Permissions have to be given through the app settings."
               )
               Spacer(modifier = Modifier.height(8.dp))
               Button(onClick = onOpenSettingsForApp) {
@@ -190,7 +180,7 @@ private fun LocationCheckInScreen(
 
       items(lazyItems) { checkIn ->
         if (checkIn != null) {
-          NewCheckInListItem(
+          CheckInListItem(
             checkIn = checkIn,
             modifier = Modifier
               .fillMaxWidth()
@@ -209,40 +199,6 @@ private fun LocationCheckInScreen(
 }
 
 @Composable
-fun CheckInListHeader(modifier: Modifier = Modifier) {
-  Card(elevation = 1.dp) {
-    BaseCheckInListItem(
-      first = "Time",
-      second = "Coordinates",
-      third = "Accuracy",
-      fourth = "Provider",
-      minHeight = 24.dp,
-      textStyle = MaterialTheme.typography.subtitle2,
-      onClick = null,
-      modifier = modifier
-    )
-  }
-}
-
-@Composable
-fun CheckInListItem(
-  checkIn: LocationCheckIn,
-  onClick: (checkIn: LocationCheckIn) -> Unit,
-  modifier: Modifier = Modifier
-) {
-  BaseCheckInListItem(
-    first = UnixTimestamp(checkIn.timestamp).formatAsConciseDate(),
-    second = "${checkIn.latitude}, ${checkIn.longitude}",
-    third = checkIn.accuracy?.toString() ?: stringResource(R.string.unknown),
-    fourth = checkIn.providerName,
-    minHeight = 48.dp,
-    textStyle = MaterialTheme.typography.body2,
-    onClick = { onClick(checkIn) },
-    modifier = modifier
-  )
-}
-
-@Composable
 fun CheckInListItemPlaceholder(modifier: Modifier = Modifier) {
   ScreenListItem(
     minHeight = 48.dp,
@@ -255,57 +211,7 @@ fun CheckInListItemPlaceholder(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun BaseCheckInListItem(
-  first: String,
-  second: String,
-  third: String,
-  fourth: String,
-  minHeight: Dp,
-  textStyle: TextStyle,
-  onClick: (() -> Unit)?,
-  modifier: Modifier = Modifier,
-) {
-  ScreenListItem(
-    minHeight = minHeight,
-    onClick = onClick,
-    modifier = modifier
-  ) {
-    Text(
-      first,
-      modifier = Modifier
-        .weight(0.4f)
-        .align(Alignment.CenterVertically),
-      style = textStyle
-    )
-    Spacer(Modifier.width(8.dp))
-    Text(
-      second,
-      modifier = Modifier
-        .weight(0.4f)
-        .align(Alignment.CenterVertically),
-      style = textStyle
-    )
-    Spacer(Modifier.width(8.dp))
-    Text(
-      third,
-      modifier = Modifier
-        .weight(0.3f)
-        .align(Alignment.CenterVertically),
-      style = textStyle
-    )
-    Spacer(Modifier.width(8.dp))
-    Text(
-      fourth,
-      modifier = Modifier
-        .weight(0.2f)
-        .align(Alignment.CenterVertically),
-      style = textStyle
-    )
-  }
-}
-
-@Composable
-fun NewCheckInListItem(
+fun CheckInListItem(
   checkIn: LocationCheckIn,
   isDeleteEnabled: Boolean,
   onDeletePressed: (LocationCheckIn) -> Unit,
@@ -373,11 +279,11 @@ fun NewCheckInListItem(
 
 @Preview
 @Composable
-fun NewCheckInListItemPreview() {
+fun CheckInListItemPreview() {
   CradleTrialAppTheme {
     Surface {
       Column(Modifier.padding(16.dp)) {
-        NewCheckInListItem(
+        CheckInListItem(
           checkIn = LocationCheckIn(
             isUploaded = false,
             timestamp = UnixTimestamp.now().timestamp,
@@ -394,55 +300,3 @@ fun NewCheckInListItemPreview() {
   }
 }
 
-@Preview
-@Composable
-fun CheckInListItemPreview() {
-  CradleTrialAppTheme {
-    Surface {
-      Column {
-        CheckInListHeader()
-        CheckInListItem(
-          checkIn = LocationCheckIn(
-            isUploaded = false,
-            timestamp = UnixTimestamp.now().timestamp,
-            providerName = "gps",
-            accuracy = 0.5,
-            latitude = -50.0,
-            longitude = -50.0
-          ),
-          onClick = {}
-        )
-        CheckInListItemPlaceholder()
-      }
-    }
-  }
-}
-
-/**
- * https://github.com/google/accompanist/blob/main/sample/src/main/java/com/google/accompanist/sample/permissions/RequestMultiplePermissionsSample.kt
- */
-private fun getPermissionsText(permissions: List<PermissionState>): String {
-  val revokedPermissionsSize = permissions.size
-  if (revokedPermissionsSize == 0) return ""
-
-  val textToShow = StringBuilder().apply {
-    append("The ")
-  }
-
-  for (i in permissions.indices) {
-    textToShow.append(permissions[i].permission)
-    when {
-      revokedPermissionsSize > 1 && i == revokedPermissionsSize - 2 -> {
-        textToShow.append(", and ")
-      }
-      i == revokedPermissionsSize - 1 -> {
-        textToShow.append(" ")
-      }
-      else -> {
-        textToShow.append(", ")
-      }
-    }
-  }
-  textToShow.append(if (revokedPermissionsSize == 1) "permission is" else "permissions are")
-  return textToShow.toString()
-}
