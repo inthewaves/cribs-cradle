@@ -19,14 +19,17 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -76,6 +79,7 @@ class LocationCheckInViewModel @Inject constructor(
 
   @SuppressLint("MissingPermission")
   private val locationRequestChannel = viewModelScope.actor<Unit>(capacity = Channel.RENDEZVOUS) {
+    var resetStateJob: Job? = null
     consumeEach {
       val hasFineLocation = ContextCompat.checkSelfPermission(
         context,
@@ -153,6 +157,18 @@ class LocationCheckInViewModel @Inject constructor(
           longitude = location.longitude,
         )
         dbWrapper.locationCheckInDao().insertCheckIn(checkIn)
+
+        resetStateJob?.cancel()
+        resetStateJob = launch {
+          delay(5000L)
+          _screenState.getAndUpdate { current ->
+            if (current is ScreenState.Success) {
+              ScreenState.Ready
+            } else {
+              current
+            }
+          }
+        }
 
         ScreenState.Success
       } else {

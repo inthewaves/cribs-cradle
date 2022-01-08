@@ -195,8 +195,8 @@ fun InactiveOrNoSyncCard(
         lastTimeSyncCompleted?.formatAsConciseDate() ?: ""
       }
       Text("Last synced at $localDateString")
+      Spacer(Modifier.height(24.dp))
     }
-    Spacer(Modifier.height(24.dp))
 
     val resources = LocalContext.current.resources
     if (numPatientsToUpload != null) {

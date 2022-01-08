@@ -48,6 +48,7 @@ import org.welbodipartnership.cradle5.R
 import org.welbodipartnership.cradle5.data.database.entities.LocationCheckIn
 import org.welbodipartnership.cradle5.home.AccountInfoButton
 import org.welbodipartnership.cradle5.patients.details.BaseDetailsCard
+import org.welbodipartnership.cradle5.ui.composables.AnimatedVisibilityFadingWrapper
 import org.welbodipartnership.cradle5.ui.composables.screenlists.ScreenListItem
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
 import org.welbodipartnership.cradle5.util.datetime.UnixTimestamp
@@ -127,10 +128,13 @@ private fun LocationCheckInScreen(
                   Spacer(Modifier.height(8.dp))
                   CircularProgressIndicator()
                 }
-                LocationCheckInViewModel.ScreenState.Success -> {
-                  Text("Successfully created location check in")
-                }
+                LocationCheckInViewModel.ScreenState.Success -> {}
                 LocationCheckInViewModel.ScreenState.Ready -> {}
+              }
+              AnimatedVisibilityFadingWrapper(
+                visible = state is LocationCheckInViewModel.ScreenState.Success
+              ) {
+                Text("Successfully created location check in")
               }
 
               if (state !is LocationCheckInViewModel.ScreenState.GettingLocation) {
@@ -299,4 +303,3 @@ fun CheckInListItemPreview() {
     }
   }
 }
-
