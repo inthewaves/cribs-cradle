@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
@@ -248,6 +249,14 @@ private fun LoginForm(
   errorMessage: String?,
   modifier: Modifier = Modifier,
 ) {
+
+  val onSubmit: () -> Unit = {
+    when (loginType) {
+      is LoginType.Lockscreen -> loginType.onSubmit(password)
+      is LoginType.NewLogin -> loginType.onSubmit(username, password)
+    }
+  }
+
   LazyColumn(
     verticalArrangement = Arrangement.Center,
     horizontalAlignment = Alignment.Start,
@@ -321,8 +330,9 @@ private fun LoginForm(
         keyboardOptions = KeyboardOptions(
           autoCorrect = false,
           keyboardType = KeyboardType.Password,
-          imeAction = ImeAction.Done
+          imeAction = ImeAction.Done,
         ),
+        keyboardActions = KeyboardActions(onDone = { onSubmit() }),
         maxLines = 1,
       )
     }
@@ -331,12 +341,7 @@ private fun LoginForm(
 
     item {
       Button(
-        onClick = {
-          when (loginType) {
-            is LoginType.Lockscreen -> loginType.onSubmit(password)
-            is LoginType.NewLogin -> loginType.onSubmit(username, password)
-          }
-        },
+        onClick = onSubmit,
         modifier = Modifier.fillMaxWidth()
       ) {
         when (loginType) {
