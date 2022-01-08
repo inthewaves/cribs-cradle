@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
@@ -38,6 +40,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -252,9 +256,33 @@ private fun LoginForm(
       .widthIn(max = 600.dp)
       .padding(horizontal = 24.dp)
   ) {
+    item {
+      Column(
+        Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+      ) {
+        Image(
+          painterResource(R.mipmap.ic_launcher_foreground),
+          stringResource(R.string.app_icon_cd),
+          contentScale = ContentScale.Fit,
+          modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 200.dp)
+        )
+        Text(
+          stringResource(R.string.app_name), style = MaterialTheme.typography.h4,
+          textAlign = TextAlign.Center
+        )
+      }
+    }
+
+    item {
+      Spacer(Modifier.height(12.dp))
+    }
+
     if (loginType is LoginType.Lockscreen) {
       item {
-        Text(stringResource(R.string.lockscreen_title), style = MaterialTheme.typography.h4)
+        Text(stringResource(R.string.lockscreen_title), style = MaterialTheme.typography.h5)
       }
       item {
         Spacer(Modifier.height(12.dp))
@@ -322,12 +350,29 @@ private fun LoginForm(
 
 @Preview
 @Composable
-fun LoginFormPreview() {
+fun LoginFormLockscreenPreview() {
   CradleTrialAppTheme {
     Surface {
       LoginForm(
         loginType = LoginType.Lockscreen {},
         username = "",
+        onUsernameChange = {},
+        password = "password",
+        onPasswordChange = {},
+        errorMessage = "My error message"
+      )
+    }
+  }
+}
+
+@Preview
+@Composable
+fun LoginFormNewLoginPreview() {
+  CradleTrialAppTheme {
+    Surface {
+      LoginForm(
+        loginType = LoginType.NewLogin { _, _ -> },
+        username = "testuser",
         onUsernameChange = {},
         password = "password",
         onPasswordChange = {},

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Cradle5TrialApp</string>
+    <string name="app_name">CRIBS CRADLE</string>
     <string name="patients_title">Patients</string>
     <string name="cd_patients_nav_button">Show the patients list</string>
     <string name="sync_title">Sync</string>
@@ -116,6 +116,7 @@
     <string name="edit_button">Edit</string>
     <string name="save_button">Save</string>
     <string name="error_dialog_title">Error</string>
+    <string name="app_icon_cd">Icon for the app</string>
     <plurals name="patient_form_snackbar_failed_to_save_there_are_d_errors">
         <item quantity="one">Failed to save, as there is %1$d error.</item>
         <item quantity="other">Failed to save, as there are %1$d errors.</item>
