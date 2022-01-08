@@ -244,7 +244,7 @@ fun PatientForm(
         ) {
           val patientFields = viewModel.formFields.patientFields
           OutlinedTextFieldWithErrorHint(
-            value = patientFields.initials.stateValue.uppercase(),
+            value = patientFields.initials.stateValue,
             onValueChange = {
               // TODO: Hard limit text
               patientFields.initials.stateValue = it.uppercase()
