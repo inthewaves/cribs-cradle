@@ -29,7 +29,10 @@ import org.welbodipartnership.cradle5.domain.enums.EnumRepository
 import org.welbodipartnership.cradle5.domain.facilities.FacilityRepository
 import org.welbodipartnership.cradle5.domain.patients.PatientsManager
 import org.welbodipartnership.cradle5.domain.toApiBody
+import java.security.SecureRandom
 import javax.annotation.concurrent.Immutable
+import kotlin.random.asKotlinRandom
+import kotlin.random.nextLong
 
 @HiltWorker
 class SyncWorker @AssistedInject constructor(
@@ -42,6 +45,16 @@ class SyncWorker @AssistedInject constructor(
   private val facilityRepository: FacilityRepository,
   private val enumRepository: EnumRepository,
 ) : CoroutineWorker(appContext, workerParams) {
+
+  private val secureRandom = SecureRandom()
+  private val kotlinSecureRadnom = secureRandom.asKotlinRandom()
+
+  private suspend fun delayWithRetryJitter() {
+    val delayMillis = kotlinSecureRadnom.nextLong(1000L..4000L)
+    Log.d(TAG, "delaying for $delayMillis ms")
+    delay(delayMillis)
+  }
+
   override suspend fun doWork(): Result {
     Log.d(TAG, "starting SyncWorker")
     reportProgress(Stage.STARTING)
@@ -125,6 +138,8 @@ class SyncWorker @AssistedInject constructor(
           successfulPatientIds.add(patient.id)
         } else {
           failedPatientIds.add(patient.id)
+          Log.d(TAG, "got a failed result; applying retry jitter")
+          delayWithRetryJitter()
         }
       }
       updateChannel.trySend(index + 1)
@@ -168,6 +183,8 @@ class SyncWorker @AssistedInject constructor(
             dbWrapper.locationCheckInDao().markAsUploaded(checkInId = checkIn.id)
           } else {
             failedCheckInIds.add(checkIn.id)
+            Log.d(TAG, "got a failed result; applying retry jitter")
+            delayWithRetryJitter()
           }
         }
         updateChannel.trySend(index + 1)
