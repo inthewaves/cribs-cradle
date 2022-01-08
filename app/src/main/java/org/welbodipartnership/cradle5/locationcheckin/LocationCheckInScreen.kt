@@ -1,9 +1,6 @@
 package org.welbodipartnership.cradle5.locationcheckin
 
-import android.content.Intent
-import android.net.Uri
 import android.os.Build
-import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -33,7 +30,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -248,10 +244,9 @@ fun CheckInListItem(
         uploadedText,
         style = MaterialTheme.typography.body1
       )
-      Spacer(modifier = Modifier.height(16.dp))
-
-      Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-        if (!checkIn.isUploaded) {
+      if (!checkIn.isUploaded) {
+        Spacer(modifier = Modifier.height(16.dp))
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
           TextButton(
             onClick = { onDeletePressed(checkIn) },
             enabled = isDeleteEnabled,
@@ -259,22 +254,6 @@ fun CheckInListItem(
           ) {
             Text("Delete")
           }
-        }
-        val context = LocalContext.current
-        TextButton(
-          onClick = {
-            val intent = Intent(Intent.ACTION_VIEW)
-              .setData(Uri.parse("${checkIn.latitude},${checkIn.longitude}"))
-            if (intent.resolveActivity(context.packageManager) != null) {
-              context.startActivity(intent)
-            } else {
-              Toast
-                .makeText(context, "Unable to find a maps application", Toast.LENGTH_SHORT)
-                .show()
-            }
-          }
-        ) {
-          Text("Show in maps app")
         }
       }
     }
