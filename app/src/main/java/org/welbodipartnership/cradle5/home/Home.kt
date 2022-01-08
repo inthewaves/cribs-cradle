@@ -79,6 +79,7 @@ import androidx.navigation.NavHostController
 import com.google.accompanist.insets.LocalWindowInsets
 import com.google.accompanist.insets.rememberInsetsPaddingValues
 import com.google.accompanist.insets.ui.BottomNavigation
+import org.welbodipartnership.cradle5.BuildConfig
 import org.welbodipartnership.cradle5.LeafScreen
 import org.welbodipartnership.cradle5.LoggedInNavigation
 import org.welbodipartnership.cradle5.R
@@ -188,6 +189,18 @@ fun LoggedInHome(
               modifier = Modifier.clickable(onClick = { showLogoutConfirmDialog = true })
             )
           }
+        }
+        item { Divider() }
+        item {
+          Text(
+            "App version: ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+            modifier = Modifier.padding(
+              start = textPadding,
+              top = textPadding,
+              end = textPadding,
+              bottom = textPadding
+            )
+          )
         }
       }
     },
