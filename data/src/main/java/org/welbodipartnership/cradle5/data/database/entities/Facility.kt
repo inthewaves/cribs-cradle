@@ -20,6 +20,8 @@ data class Facility(
   val name: String?,
   @ColumnInfo(defaultValue = "0")
   val listOrder: Int,
+  @ColumnInfo(defaultValue = "0")
+  val hasVisited: Boolean,
   /**
    * Local notes the user may have saved for the patient. This is not uploaded to the server.
    */

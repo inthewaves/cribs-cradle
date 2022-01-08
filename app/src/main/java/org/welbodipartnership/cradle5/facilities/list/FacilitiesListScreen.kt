@@ -1,26 +1,32 @@
-package org.welbodipartnership.cradle5.facilities
+package org.welbodipartnership.cradle5.facilities.list
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.Card
 import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Note
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -45,15 +51,17 @@ import org.welbodipartnership.cradle5.ui.composables.screenlists.ScreenListItem
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
 
 @Composable
-fun FacilitiesListScreen() {
+fun FacilitiesListScreen(onOpenFacilityDetails: (facilityPk: Long) -> Unit,) {
   FacilitiesListScreen(
     viewModel = hiltViewModel(),
+    onOpenFacilityDetails
   )
 }
 
 @Composable
 private fun FacilitiesListScreen(
-  viewModel: FacilitiesListViewModel
+  viewModel: FacilitiesListViewModel,
+  onOpenFacilityDetails: (facilityPk: Long) -> Unit,
 ) {
   Scaffold(
     topBar = {
@@ -103,7 +111,10 @@ private fun FacilitiesListScreen(
           LazyColumn(state = lazyListState) {
             items(lazyPagingItems) { facility ->
               if (facility != null) {
-                FacilityListItem(facility, onClick = { })
+                FacilityListItem(
+                  facility,
+                  onClick = { onOpenFacilityDetails(facility.id) }
+                )
               } else {
                 FacilityListItemPlaceholder()
               }
@@ -134,6 +145,8 @@ fun FacilityListHeader(modifier: Modifier = Modifier) {
     BaseFacilityListItem(
       first = stringResource(R.string.facility_list_header_id),
       second = stringResource(R.string.facility_list_header_name),
+      third = stringResource(R.string.facility_list_header_visited),
+      localNotes = null,
       minHeight = 24.dp,
       textStyle = MaterialTheme.typography.subtitle2,
       onClick = null,
@@ -151,6 +164,8 @@ fun FacilityListItem(
   BaseFacilityListItem(
     first = facility.id.toString(),
     second = facility.name ?: stringResource(R.string.unknown),
+    third = stringResource(if (facility.hasVisited) R.string.yes else R.string.no),
+    localNotes = facility.localNotes?.ifBlank { null },
     minHeight = 48.dp,
     textStyle = MaterialTheme.typography.body2,
     onClick = { onClick(facility) },
@@ -174,6 +189,8 @@ fun FacilityListItemPlaceholder(modifier: Modifier = Modifier) {
 private fun BaseFacilityListItem(
   first: String,
   second: String,
+  third: String,
+  localNotes: String?,
   minHeight: Dp,
   textStyle: TextStyle,
   onClick: (() -> Unit)?,
@@ -187,21 +204,35 @@ private fun BaseFacilityListItem(
     Text(
       first,
       modifier = Modifier
-        .weight(0.3f)
+        .weight(0.12f)
         .align(Alignment.CenterVertically),
       style = textStyle
     )
     Text(
       second,
       modifier = Modifier
-        .weight(0.85f)
+        .weight(0.70f)
         .align(Alignment.CenterVertically),
       style = textStyle
+    )
+    Spacer(Modifier.width(5.dp))
+    Text(
+      third,
+      modifier = Modifier
+        .weight(0.2f)
+        .align(Alignment.CenterVertically),
+      style = textStyle
+    )
+    Spacer(Modifier.width(2.dp))
+    val hasLocalNotesIconAlpha = if (localNotes != null) 1f else 0f
+    Icon(
+      imageVector = Icons.Filled.Note, contentDescription = "Notes status",
+      modifier = Modifier.alpha(hasLocalNotesIconAlpha)
     )
   }
 }
 
-@Preview
+@Preview(widthDp = 800)
 @Composable
 fun FacilityListItemPreview() {
   CradleTrialAppTheme {
@@ -209,7 +240,12 @@ fun FacilityListItemPreview() {
       Column {
         FacilityListHeader()
         FacilityListItem(
-          facility = Facility(id = 50, name = "CHC Test Facility", listOrder = 0),
+          facility = Facility(
+            id = 50,
+            name = "CHC Test Facility",
+            listOrder = 0,
+            hasVisited = false
+          ),
           onClick = {}
         )
         FacilityListItemPlaceholder()

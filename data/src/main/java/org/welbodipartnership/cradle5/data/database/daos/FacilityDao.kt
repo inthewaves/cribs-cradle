@@ -23,6 +23,12 @@ abstract class FacilityDao {
     val listOrder: Int,
   )
 
+  @Query("SELECT * FROM Facility WHERE id = :facilityPk")
+  abstract fun getFacilityFlow(facilityPk: Long): Flow<Facility?>
+
+  @Query("SELECT * FROM Facility WHERE id = :facilityPk")
+  abstract suspend fun getFacility(facilityPk: Long): Facility?
+
   /**
    * Updates the [facility] or inserts it into the database if the [facility] doesn't yet exist.
    */
@@ -35,6 +41,19 @@ abstract class FacilityDao {
 
   @Update(entity = Facility::class)
   abstract suspend fun update(facility: FacilityUpdate): Int
+
+  @Query("UPDATE Facility SET hasVisited = :hasVisited, localNotes = :localNotes WHERE id = :facilityPk")
+  protected abstract suspend fun updateFacilityOtherInfoInner(
+    facilityPk: Long,
+    hasVisited: Boolean,
+    localNotes: String?
+  ): Int
+
+  suspend fun updateFacilityOtherInfo(
+    facilityPk: Long,
+    hasVisited: Boolean,
+    localNotes: String?
+  ): Boolean = updateFacilityOtherInfoInner(facilityPk, hasVisited, localNotes) == 1
 
   @Insert(entity = Facility::class)
   protected abstract suspend fun insert(facility: FacilityUpdate): Long

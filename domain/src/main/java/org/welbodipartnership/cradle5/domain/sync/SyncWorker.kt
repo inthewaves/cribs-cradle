@@ -97,7 +97,6 @@ class SyncWorker @AssistedInject constructor(
       }
     }
 
-
     appValuesStore.setLastTimeSyncCompletedToNow()
     return Result.success()
   }
@@ -249,7 +248,6 @@ class SyncWorker @AssistedInject constructor(
     private const val PROGRESS_DATA_PROGRESS_KEY = "numCompleted"
     private const val PROGRESS_DATA_TOTAL_KEY = "numTotal"
     private const val PROGRESS_DATA_FAILED_KEY = "numFailed"
-
 
     private const val TAG = "SyncWorker"
     const val UNIQUE_WORK_NAME = "SyncWorker-unique-work"

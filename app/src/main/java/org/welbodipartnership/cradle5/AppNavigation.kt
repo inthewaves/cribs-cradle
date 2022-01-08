@@ -40,7 +40,9 @@ import androidx.navigation.navArgument
 import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.composable
 import com.google.accompanist.navigation.animation.navigation
-import org.welbodipartnership.cradle5.facilities.FacilitiesListScreen
+import org.welbodipartnership.cradle5.facilities.details.FacilityDetailsScreen
+import org.welbodipartnership.cradle5.facilities.list.FacilitiesListScreen
+import org.welbodipartnership.cradle5.facilities.otherinfoform.FacilityOtherInfoFormScreen
 import org.welbodipartnership.cradle5.locationcheckin.LocationCheckInScreen
 import org.welbodipartnership.cradle5.patients.details.PatientDetailsScreen
 import org.welbodipartnership.cradle5.patients.form.PatientForm
@@ -117,6 +119,23 @@ internal sealed class LeafScreen(private val route: String, val hideBottomBar: B
   object Facilities : LeafScreen("facilities", hideBottomBar = false) {
     override val matchRegex = createRouteMatcherWithNoArgs()
   }
+  object FacilityDetails : LeafScreen("facilities/view/{facilityPk}", hideBottomBar = false) {
+    const val ARG_FACILITY_PRIMARY_KEY = "facilityPk"
+    override val matchRegex = createRouteMatcherWithOneNumericalArg()
+    fun createRoute(root: Screen, facilityPrimaryKey: Long): String {
+      return "${root.route}/facilities/view/$facilityPrimaryKey"
+    }
+  }
+  object FacilityOtherInfoEdit : LeafScreen(
+    "facilities/other_info/edit/{facilityPk}",
+    hideBottomBar = true
+  ) {
+    const val ARG_FACILITY_PRIMARY_KEY = "facilityPk"
+    override val matchRegex = createRouteMatcherWithOneNumericalArg()
+    fun createRoute(root: Screen, patientEditPk: Long): String {
+      return "${root.route}/facilities/other_info/edit/$patientEditPk"
+    }
+  }
 
   companion object {
     private val allLeaves by lazy {
@@ -124,7 +143,6 @@ internal sealed class LeafScreen(private val route: String, val hideBottomBar: B
       // This will cause a compiler error in 1.7 if a new subtype is added without updating this.
       @Suppress("USELESS_CAST")
       when (Patients as LeafScreen) {
-        Facilities -> {}
         PatientCreate -> {}
         PatientDetails -> {}
         PatientEdit -> {}
@@ -132,6 +150,8 @@ internal sealed class LeafScreen(private val route: String, val hideBottomBar: B
         Location -> {}
         Sync -> {}
         PatientOtherInfoEdit -> {}
+        Facilities -> {}
+        FacilityDetails -> {}
       }
 
       listOf(
@@ -143,6 +163,7 @@ internal sealed class LeafScreen(private val route: String, val hideBottomBar: B
         Location,
         Sync,
         Facilities,
+        FacilityDetails,
       )
     }
 
@@ -315,6 +336,8 @@ private fun NavGraphBuilder.addFacilitiesTopLevel(
     startDestination = LeafScreen.Facilities.createRoute(Screen.Facilities),
   ) {
     addFacilitiesList(navController, Screen.Facilities)
+    addFacilityDetails(navController, Screen.Facilities)
+    addFacilityOtherInfoEdit(navController, Screen.Facilities)
   }
 }
 
@@ -323,7 +346,48 @@ private fun NavGraphBuilder.addFacilitiesList(
   root: Screen,
 ) {
   composable(route = LeafScreen.Facilities.createRoute(root)) {
-    FacilitiesListScreen()
+    FacilitiesListScreen(
+      onOpenFacilityDetails = { facilityPk ->
+        navController.navigate(LeafScreen.FacilityDetails.createRoute(root, facilityPk))
+      }
+    )
+  }
+}
+
+private fun NavGraphBuilder.addFacilityDetails(
+  navController: NavController,
+  root: Screen,
+) {
+  composable(
+    route = LeafScreen.FacilityDetails.createRoute(root),
+    arguments = listOf(
+      navArgument(LeafScreen.FacilityDetails.ARG_FACILITY_PRIMARY_KEY) { type = NavType.LongType }
+    )
+  ) {
+    FacilityDetailsScreen(
+      onBackPressed = { navController.navigateUp() },
+      onFacilityOtherInfoEditPress = { facilityPrimaryKey ->
+        navController.navigate(LeafScreen.FacilityOtherInfoEdit.createRoute(root, facilityPrimaryKey))
+      }
+    )
+  }
+}
+
+private fun NavGraphBuilder.addFacilityOtherInfoEdit(
+  navController: NavController,
+  root: Screen,
+) {
+  composable(
+    route = LeafScreen.FacilityOtherInfoEdit.createRoute(root),
+    arguments = listOf(
+      navArgument(LeafScreen.FacilityOtherInfoEdit.ARG_FACILITY_PRIMARY_KEY) {
+        type = NavType.LongType
+      }
+    )
+  ) {
+    FacilityOtherInfoFormScreen(
+      onNavigateBack = { navController.navigateUp() },
+    )
   }
 }
 

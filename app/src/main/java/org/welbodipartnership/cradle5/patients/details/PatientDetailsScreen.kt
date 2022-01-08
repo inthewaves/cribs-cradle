@@ -77,14 +77,12 @@ fun PatientDetailsScreen(
           }
         },
         modifier = Modifier.fillMaxWidth(),
-        title = { Text(text = stringResource(R.string.patients_details_title)) },
+        title = { Text(text = stringResource(R.string.patient_details_title)) },
       )
     }
   ) { padding ->
-    val state by viewModel.patientOutcomesStateFlow
-      .collectAsState(PatientDetailsViewModel.State.Loading)
-    val editState by viewModel.editStateFlow
-      .collectAsState()
+    val state by viewModel.patientOutcomesStateFlow.collectAsState()
+    val editState by viewModel.editStateFlow.collectAsState()
 
     LaunchedEffect(state) {
       Log.d("PatientDetailsViewModel", "new state $state")
@@ -241,7 +239,7 @@ fun PatientDetailsScreenNotUploadedPreview() {
           lastUpdatedTimestamp = 162224953,
           isDraft = true,
         ),
-        facility = Facility(5L, "Test facility", 0, "My notes"),
+        facility = Facility(5L, "Test facility", 0, false, "My notes"),
         outcomes = testOutcomes,
         editState = SyncRepository.FormEditState.CAN_EDIT,
         onPatientEditPress = {},
@@ -266,7 +264,7 @@ fun PatientDetailsScreenUploadedPreview() {
           lastUpdatedTimestamp = 162224953,
           isDraft = true,
         ),
-        facility = Facility(5L, "Test facility", 0, "My notes"),
+        facility = Facility(5L, "Test facility", 0, false, "My notes"),
         outcomes = testOutcomes,
         editState = SyncRepository.FormEditState.CAN_EDIT,
         onPatientEditPress = {},
@@ -291,7 +289,7 @@ fun PatientDetailsScreenSyncingPreview() {
           lastUpdatedTimestamp = 162224953,
           isDraft = true,
         ),
-        facility = Facility(5L, "Test facility", 0, "My notes"),
+        facility = Facility(5L, "Test facility", 0, false, "My notes"),
         outcomes = testOutcomes,
         editState = SyncRepository.FormEditState.CAN_EDIT,
         onPatientEditPress = {},

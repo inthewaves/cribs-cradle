@@ -1,4 +1,4 @@
-package org.welbodipartnership.cradle5.facilities
+package org.welbodipartnership.cradle5.facilities.list
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

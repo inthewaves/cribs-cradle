@@ -40,7 +40,7 @@
     <string name="marked_as_draft_label">Marked as draft</string>
     <string name="patient_registration_date_of_birth_label">Date of birth (dd/mm/yyyy)</string>
     <string name="patients_list_title">Patients list</string>
-    <string name="patients_details_title">Patient details</string>
+    <string name="patient_details_title">Patient details</string>
     <string name="outcomes_card_no_outcomes">No outcomes recorded for this patient</string>
     <string name="back_button">Back button</string>
     <string name="patient_list_header_id">ID</string>
@@ -121,6 +121,14 @@
     <string name="patient_list_icon_locked_cd">Patient has been uploaded and is locked for editing</string>
     <string name="location_checkin_nav_button_title">Check in</string>
     <string name="location_checkin_title">Location check in</string>
+    <string name="facility_card_id_label">ID</string>
+    <string name="facility_card_name_label">Name</string>
+    <string name="facility_details_title">Facility details</string>
+    <string name="facility_card_title">Facility</string>
+    <string name="facility_has_visited_label">Has visited</string>
+    <string name="edit_facility_other_info_title">Editing other info for facility</string>
+    <string name="facility_list_header_visited">Visited</string>
+    <string name="facility_other_info_card_description">This information won\'t be uploaded to MedSciNet.</string>
     <plurals name="patient_form_snackbar_failed_to_save_there_are_d_errors">
         <item quantity="one">Failed to save, as there is %1$d error.</item>
         <item quantity="other">Failed to save, as there are %1$d errors.</item>
