@@ -52,7 +52,8 @@ class LocationCheckInViewModel @Inject constructor(
   @Immutable
   sealed class ScreenState {
     object Ready : ScreenState()
-    object GettingLocation : ScreenState()
+    @Immutable
+    data class GettingLocation(val providerName: String) : ScreenState()
     @Immutable
     data class Error(val errorMessage: String) : ScreenState()
     object ErrorLocationDisabled : ScreenState()
@@ -127,7 +128,7 @@ class LocationCheckInViewModel @Inject constructor(
           LocationManager.PASSIVE_PROVIDER
         }
       }
-      _screenState.value = ScreenState.GettingLocation
+      _screenState.value = ScreenState.GettingLocation(provider)
       val isLocationEnabled = LocationManagerCompat.isLocationEnabled(locationManager)
       Log.d(TAG, "provider = $provider, isLocationEnabled = $isLocationEnabled")
 

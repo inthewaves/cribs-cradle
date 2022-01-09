@@ -125,8 +125,11 @@ private fun LocationCheckInScreen(
                 is LocationCheckInViewModel.ScreenState.Error -> {
                   Text(state.errorMessage, textAlign = TextAlign.Center)
                 }
-                LocationCheckInViewModel.ScreenState.GettingLocation -> {
-                  Text("Getting location", textAlign = TextAlign.Center)
+                is LocationCheckInViewModel.ScreenState.GettingLocation -> {
+                  Text(
+                    "Getting location (provider: ${state.providerName})",
+                    textAlign = TextAlign.Center
+                  )
                   Spacer(Modifier.height(8.dp))
                   CircularProgressIndicator()
                 }
