@@ -136,7 +136,7 @@ class LocationCheckInViewModel @Inject constructor(
         try {
           LocationManagerCompat.getCurrentLocation(
             locationManager,
-            LocationManager.GPS_PROVIDER,
+            provider,
             cancellationSignal,
             executors.locationExecutor,
           ) { location ->
