@@ -178,6 +178,13 @@ private fun LocationCheckInScreen(
                   Text("Create location check in")
                 }
               }
+
+              Spacer(Modifier.height(4.dp))
+              val locationProviderList by viewModel.locationProviderListText.collectAsState()
+              Text(
+                "Available location providers: $locationProviderList",
+                textAlign = TextAlign.Center
+              )
             }
 
             // If the user denied any permission but a rationale should be shown, or the user sees

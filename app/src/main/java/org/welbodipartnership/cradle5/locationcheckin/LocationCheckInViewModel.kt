@@ -4,13 +4,14 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
+import android.location.Criteria
 import android.location.Location
 import android.location.LocationManager
+import android.os.Build
 import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.core.location.LocationManagerCompat
 import androidx.core.os.CancellationSignal
-import androidx.core.os.OperationCanceledException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
@@ -24,6 +25,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -41,6 +43,7 @@ import org.welbodipartnership.cradle5.util.datetime.UnixTimestamp
 import org.welbodipartnership.cradle5.util.executors.AppExecutors
 import javax.annotation.concurrent.Immutable
 import javax.inject.Inject
+import kotlin.coroutines.resumeWithException
 
 @HiltViewModel
 class LocationCheckInViewModel @Inject constructor(
@@ -79,10 +82,68 @@ class LocationCheckInViewModel @Inject constructor(
 
   private val locationManager = ContextCompat.getSystemService(context, LocationManager::class.java)
 
+  private val _locationProviderListText = MutableStateFlow("")
+  val locationProviderListText = _locationProviderListText.asStateFlow()
+  init {
+    viewModelScope.launch {
+      updateLocationProviderList()
+    }
+  }
+
+  private fun updateLocationProviderList() {
+    if (locationManager == null) {
+      _locationProviderListText.value = "No location manager available"
+      return
+    }
+
+    val allProviders: List<String> = try {
+      locationManager.allProviders
+    } catch (e: Exception) {
+      Log.e(TAG, "failed to get all providers from location manager", e)
+      _locationProviderListText.value =
+        "Unable to get location provider list: ${e::class.java}: ${e.localizedMessage}"
+      return
+    }
+
+    _locationProviderListText.value = allProviders.asSequence()
+      .mapNotNull {
+        // isProviderEnabled should not throw on Android >= 5
+        try {
+          if (locationManager.isProviderEnabled(it)) {
+            it
+          } else {
+            "$it (disabled)"
+          }
+        } catch (e: Exception) {
+          Log.e(TAG, "exception trying to query provider enabled status for $it", e)
+          "$it (unknown status: ${e::class.java}: ${e.localizedMessage})"
+        }
+      }
+      .joinToString(", ")
+  }
+
+  private val locationCriteria = Criteria().apply { accuracy = Criteria.ACCURACY_FINE }
+
+  private fun hasEnabledProviderSafe(providerName: String): Boolean {
+    if (locationManager == null) {
+      return false
+    }
+
+    return try {
+      LocationManagerCompat.hasProvider(locationManager, providerName) &&
+        locationManager.isProviderEnabled(providerName)
+    } catch (e: Exception) {
+      Log.e(TAG, "error trying to determine if $providerName is present and enabled")
+      false
+    }
+  }
+
   @SuppressLint("MissingPermission")
   private val locationRequestChannel = viewModelScope.actor<Unit>(capacity = Channel.RENDEZVOUS) {
     var resetStateJob: Job? = null
     consumeEach {
+      updateLocationProviderList()
+
       val hasFineLocation = ContextCompat.checkSelfPermission(
         context,
         Manifest.permission.ACCESS_FINE_LOCATION
@@ -114,39 +175,50 @@ class LocationCheckInViewModel @Inject constructor(
         return@consumeEach
       }
 
-      val provider = if (
-        LocationManagerCompat.hasProvider(locationManager, LocationManager.GPS_PROVIDER)
-      ) {
-        LocationManager.GPS_PROVIDER
-      } else {
-        Log.w(TAG, "no GPS provider")
-
-        if (LocationManagerCompat.hasProvider(locationManager, LocationManager.NETWORK_PROVIDER)) {
+      val provider: String = try {
+        locationManager.getBestProvider(locationCriteria, true)
+      } catch (e: Exception) {
+        Log.e(TAG, "failed to run getBestProvider", e)
+        null
+      } ?: when {
+        hasEnabledProviderSafe(LocationManager.FUSED_PROVIDER) &&
+          Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> LocationManager.FUSED_PROVIDER
+        hasEnabledProviderSafe(LocationManager.GPS_PROVIDER) -> LocationManager.GPS_PROVIDER
+        hasEnabledProviderSafe(LocationManager.NETWORK_PROVIDER) -> {
           LocationManager.NETWORK_PROVIDER
-        } else {
+        }
+        else -> {
           // this provider is always present
           LocationManager.PASSIVE_PROVIDER
         }
       }
+
       _screenState.value = ScreenState.GettingLocation(provider)
       val isLocationEnabled = LocationManagerCompat.isLocationEnabled(locationManager)
       Log.d(TAG, "provider = $provider, isLocationEnabled = $isLocationEnabled")
 
-      val location = suspendCancellableCoroutine<Location?> { cont ->
-        val cancellationSignal = CancellationSignal()
-        try {
-          LocationManagerCompat.getCurrentLocation(
-            locationManager,
-            provider,
-            cancellationSignal,
-            executors.locationExecutor,
-          ) { location ->
-            cont.resume(location, null)
+      val location: Location? = try {
+        suspendCancellableCoroutine<Location?> { cont ->
+          val cancellationSignal = CancellationSignal()
+          try {
+            LocationManagerCompat.getCurrentLocation(
+              locationManager,
+              provider,
+              cancellationSignal,
+              executors.locationExecutor,
+            ) { location ->
+              cont.resume(location, null)
+            }
+          } catch (e: Exception) {
+            Log.w(TAG, "${e::class.java.simpleName} while getting location", e)
+            cont.resumeWithException(e)
           }
-        } catch (e: OperationCanceledException) {
-          Log.w(TAG, "OperationCanceledException", e)
+          cont.invokeOnCancellation { cancellationSignal.cancel() }
         }
-        cont.invokeOnCancellation { cancellationSignal.cancel() }
+      } catch (e: Exception) {
+        Log.e(TAG, "${e::class.java.simpleName} while getting location, outside", e)
+        ensureActive()
+        null
       }
 
       _screenState.value = if (location != null) {
