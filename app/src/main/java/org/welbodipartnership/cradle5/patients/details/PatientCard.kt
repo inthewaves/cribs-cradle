@@ -41,14 +41,14 @@ fun PatientCard(patient: Patient, facility: Facility?, modifier: Modifier = Modi
       value = patient.presentationDate?.toString(),
     )
     Spacer(modifier = Modifier.height(spacerHeight))
-    LabelAndValueOrNone(
+    LabelAndValueOrUnknown(
       label = stringResource(R.string.patient_registration_date_of_birth_label),
-      value = patient.dateOfBirth.toString(),
+      value = patient.dateOfBirth?.toString(),
     )
     Spacer(modifier = Modifier.height(spacerHeight))
-    LabelAndValueOrNone(
+    LabelAndValueOrUnknown(
       label = stringResource(R.string.patient_registration_age_label),
-      value = patient.dateOfBirth.getAgeInYearsFromNow().toString(),
+      value = patient.dateOfBirth?.getAgeInYearsFromNow()?.toString(),
     )
     Spacer(modifier = Modifier.height(spacerHeight))
     LabelAndValueOrUnknown(

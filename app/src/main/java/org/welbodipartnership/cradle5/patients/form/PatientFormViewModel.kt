@@ -38,6 +38,7 @@ import org.welbodipartnership.cradle5.data.database.entities.Outcomes
 import org.welbodipartnership.cradle5.data.database.entities.Patient
 import org.welbodipartnership.cradle5.data.database.entities.PerinatalDeath
 import org.welbodipartnership.cradle5.data.database.entities.SurgicalManagementOfHaemorrhage
+import org.welbodipartnership.cradle5.data.database.entities.TouchedState
 import org.welbodipartnership.cradle5.data.database.resultentities.PatientFacilityOutcomes
 import org.welbodipartnership.cradle5.data.serverenums.DropdownType
 import org.welbodipartnership.cradle5.data.settings.AppValuesStore
@@ -95,10 +96,13 @@ class PatientFormViewModel @Inject constructor(
   private val _formState: MutableStateFlow<FormState> = MutableStateFlow(FormState.Loading)
   val formState: StateFlow<FormState> = _formState
 
+  private val isFormDraftState = enabledState("isFormDraft")
+
   val formFields = PatientFormFields(
     patientFields = PatientFields(
       initials = InitialsState(
-        backingState = handle.createMutableState("patientInitials", "")
+        backingState = handle.createMutableState("patientInitials", ""),
+        isFormDraftState = isFormDraftState,
       ),
       presentationDate = dateState(
         "patientPresentationDate",
@@ -106,20 +110,23 @@ class PatientFormViewModel @Inject constructor(
         areApproximateDatesAcceptable = false,
       ),
       dateOfBirth = LimitedAgeDateState(
-        AGE_RANGE,
+        limit = AGE_RANGE,
         areApproximateDatesAcceptable = true,
-        handle.createMutableState("patientDateOfBirth", "")
+        backingState = handle.createMutableState("patientDateOfBirth", ""),
+        isFormDraftState = isFormDraftState,
       ),
       age = LimitedAgeIntState(
         AGE_RANGE,
-        handle.createMutableState("patientAge", "")
+        handle.createMutableState("patientAge", ""),
+        isFormDraftState = isFormDraftState,
       ),
       healthcareFacility = HealthcareFacilityState(
         isRequired = true,
-        handle.createMutableState("patientHealthFacility", null)
+        handle.createMutableState("patientHealthFacility", null),
+        isFormDraftState = isFormDraftState
       ),
       localNotes = handle.createMutableState("patientLocalNotes", ""),
-      isDraft = enabledState("eclampsiaEnabled")
+      isDraft = isFormDraftState
     ),
     eclampsia = OutcomeFields.Eclampsia(
       isEnabled = enabledState("eclampsiaEnabled"),
@@ -162,7 +169,8 @@ class PatientFormViewModel @Inject constructor(
       ),
       hduItuStayLengthInDays = LimitedHduItuState(
         VALID_LENGTH_OF_ITU_HDU_STAY,
-        handle.createMutableState("hduItuStayLengthDays", "")
+        handle.createMutableState("hduItuStayLengthDays", ""),
+        isFormDraftState = isFormDraftState,
       )
     ),
     maternalDeath = OutcomeFields.MaternalDeath(
@@ -241,14 +249,8 @@ class PatientFormViewModel @Inject constructor(
 
           with(formFields.patientFields) {
             initials.backingState.value = patient.initials
-            if (patient.presentationDate != null) {
-              presentationDate.setStateFromFormDate(patient.presentationDate!!)
-            } else {
-              presentationDate.backingState.value = patient.presentationDate
-                ?.toString(withSlashes = false)
-                ?: ""
-            }
-            age.backingState.value = patient.dateOfBirth.getAgeInYearsFromNow().toString()
+            presentationDate.setStateFromFormDate(patient.presentationDate)
+            age.backingState.value = patient.dateOfBirth?.getAgeInYearsFromNow()?.toString() ?: ""
             dateOfBirth.setStateFromFormDate(patient.dateOfBirth)
 
             val facilityPosition = facility?.id
@@ -271,7 +273,9 @@ class PatientFormViewModel @Inject constructor(
               isEnabled.value = true
               date.setStateFromFormDate(it.date)
               placeOfFirstFit.backingState.value = it.place
-            } ?: clearFormsAndCheckNo()
+            } ?: clearFormsAndSetCheckbox(
+              newEnabledState = outcomes?.eclampsiaFitTouched?.nullEnabledState
+            )
           }
 
           with(formFields.hysterectomy) {
@@ -280,7 +284,7 @@ class PatientFormViewModel @Inject constructor(
               date.setStateFromFormDate(it.date)
               cause.backingState.value = it.cause
               additionalInfo.value = it.additionalInfo
-            } ?: clearFormsAndCheckNo()
+            } ?: clearFormsAndSetCheckbox(outcomes?.hysterectomyTouched?.nullEnabledState)
           }
 
           with(formFields.hduItuAdmission) {
@@ -289,7 +293,9 @@ class PatientFormViewModel @Inject constructor(
               date.setStateFromFormDate(it.date)
               cause.backingState.value = it.cause
               hduItuStayLengthInDays.backingState.value = it.stayInDays?.toString() ?: ""
-            } ?: clearFormsAndCheckNo()
+            } ?: clearFormsAndSetCheckbox(
+              newEnabledState = outcomes?.hduOrItuAdmissionTouched?.nullEnabledState
+            )
           }
 
           with(formFields.maternalDeath) {
@@ -298,7 +304,9 @@ class PatientFormViewModel @Inject constructor(
               date.setStateFromFormDate(it.date)
               underlyingCause.backingState.value = it.underlyingCause
               placeOfDeath.backingState.value = it.place
-            } ?: clearFormsAndCheckNo()
+            } ?: clearFormsAndSetCheckbox(
+              newEnabledState = outcomes?.maternalDeathTouched?.nullEnabledState
+            )
           }
 
           with(formFields.surgicalManagement) {
@@ -306,7 +314,9 @@ class PatientFormViewModel @Inject constructor(
               isEnabled.value = true
               date.setStateFromFormDate(it.date)
               type.backingState.value = it.typeOfSurgicalManagement
-            } ?: clearFormsAndCheckNo()
+            } ?: clearFormsAndSetCheckbox(
+              newEnabledState = outcomes?.surgicalManagementTouched?.nullEnabledState
+            )
           }
 
           with(formFields.perinatalDeath) {
@@ -315,7 +325,9 @@ class PatientFormViewModel @Inject constructor(
               date.setStateFromFormDate(it.date)
               outcome.backingState.value = it.outcome
               relatedMaternalFactors.backingState.value = it.relatedMaternalFactors
-            } ?: clearFormsAndCheckNo()
+            } ?: clearFormsAndSetCheckbox(
+              newEnabledState = outcomes?.perinatalDeathTouched?.nullEnabledState
+            )
           }
 
           FormState.Ready(patientAndOutcomes)
@@ -331,6 +343,8 @@ class PatientFormViewModel @Inject constructor(
     saveRequestChannel.trySend(Unit)
   }
 
+  fun isDraft() = formFields.patientFields.isDraft.value == true
+
   private val saveRequestChannel = viewModelScope.actor<Unit>(
     context = appCoroutineDispatchers.default,
     capacity = Channel.RENDEZVOUS,
@@ -338,6 +352,7 @@ class PatientFormViewModel @Inject constructor(
     for (saveTick in channel) {
       Log.d(TAG, "Handling save request")
       _formState.value = FormState.Saving
+      val isDraft = isDraft()
 
       formFields.forceAllErrors()
 
@@ -385,25 +400,31 @@ class PatientFormViewModel @Inject constructor(
             )
           }
           if (!age.isValid) {
-            fieldToErrorMap.addFieldError(
-              R.string.patient_registration_card_title,
-              R.string.patient_registration_age_label,
-              age.errorFor(context, age.stateValue)
-            )
+            if (!(isDraft && age.isMissing())) {
+              fieldToErrorMap.addFieldError(
+                R.string.patient_registration_card_title,
+                R.string.patient_registration_age_label,
+                age.errorFor(context, age.stateValue)
+              )
+            }
           }
           if (!dateOfBirth.isValid) {
-            fieldToErrorMap.addFieldError(
-              R.string.patient_registration_card_title,
-              R.string.patient_registration_date_of_birth_label,
-              dateOfBirth.errorFor(context, dateOfBirth.stateValue)
-            )
+            if (!(isDraft && dateOfBirth.isMissing())) {
+              fieldToErrorMap.addFieldError(
+                R.string.patient_registration_card_title,
+                R.string.patient_registration_date_of_birth_label,
+                dateOfBirth.errorFor(context, dateOfBirth.stateValue)
+              )
+            }
           }
           if (!healthcareFacility.isValid) {
-            fieldToErrorMap.addFieldError(
-              R.string.patient_registration_card_title,
-              R.string.patient_registration_healthcare_facility_label,
-              healthcareFacility.errorFor(context, healthcareFacility.stateValue)
-            )
+            if (!(isDraft && healthcareFacility.stateValue == null)) {
+              fieldToErrorMap.addFieldError(
+                R.string.patient_registration_card_title,
+                R.string.patient_registration_healthcare_facility_label,
+                healthcareFacility.errorFor(context, healthcareFacility.stateValue)
+              )
+            }
           }
 
           runCatching {
@@ -412,14 +433,16 @@ class PatientFormViewModel @Inject constructor(
               serverInfo = patientAndOutcomes?.patient?.serverInfo,
               initials = initials.stateValue,
               presentationDate = presentationDate.dateFromStateOrNull(),
-              dateOfBirth = dateOfBirth.dateFromStateOrThrow(),
-              healthcareFacilityId = requireNotNull(
+              dateOfBirth = if (isDraft) dateOfBirth.dateFromStateOrNull() else dateOfBirth.dateFromStateOrThrow(),
+              healthcareFacilityId = if (isDraft) {
                 healthcareFacility.stateValue?.facility?.id
-              ) {
-                "Missing healthcareFacilityId"
+              } else {
+                requireNotNull(
+                  healthcareFacility.stateValue?.facility?.id
+                ) { "Missing healthcareFacilityId" }
               },
               localNotes = localNotes.value,
-              isDraft = isDraft.value!!
+              isDraft = isDraft
             )
           }
         }
@@ -427,20 +450,24 @@ class PatientFormViewModel @Inject constructor(
         val eclampsia = with(formFields.eclampsia) {
           when (isEnabled.value) {
             null -> {
-              fieldToErrorMap.addFieldError(
-                getCategoryStringRes(),
-                R.string.outcomes_eclampsia_label,
-                context.getString(R.string.outcomes_eclampsia_not_selected_error)
-              )
+              if (!isDraft) {
+                fieldToErrorMap.addFieldError(
+                  getCategoryStringRes(),
+                  R.string.outcomes_eclampsia_label,
+                  context.getString(R.string.outcomes_eclampsia_not_selected_error)
+                )
+              }
               null
             }
             true -> {
               if (!date.isValid) {
-                fieldToErrorMap.addFieldError(
-                  getCategoryStringRes(),
-                  R.string.form_date_label,
-                  date.errorFor(context, date.stateValue)
-                )
+                if (!(isDraft && date.isMissing())) {
+                  fieldToErrorMap.addFieldError(
+                    getCategoryStringRes(),
+                    R.string.form_date_label,
+                    date.errorFor(context, date.stateValue)
+                  )
+                }
               }
               if (!placeOfFirstFit.isValid) {
                 fieldToErrorMap.addFieldError(
@@ -452,7 +479,7 @@ class PatientFormViewModel @Inject constructor(
 
               runCatching {
                 EclampsiaFit(
-                  date = date.dateFromStateOrThrow(),
+                  date = if (isDraft) date.dateFromStateOrNull() else date.dateFromStateOrThrow(),
                   place = placeOfFirstFit.stateValue
                 )
               }
@@ -464,20 +491,24 @@ class PatientFormViewModel @Inject constructor(
         val hysterectomy = with(formFields.hysterectomy) {
           when (isEnabled.value) {
             null -> {
-              fieldToErrorMap.addFieldError(
-                getCategoryStringRes(),
-                R.string.outcomes_hysterectomy_label,
-                context.getString(R.string.outcomes_hysterectomy_not_selected_error)
-              )
+              if (!isDraft) {
+                fieldToErrorMap.addFieldError(
+                  getCategoryStringRes(),
+                  R.string.outcomes_hysterectomy_label,
+                  context.getString(R.string.outcomes_hysterectomy_not_selected_error)
+                )
+              }
               null
             }
             true -> {
               if (!date.isValid) {
-                fieldToErrorMap.addFieldError(
-                  getCategoryStringRes(),
-                  R.string.form_date_label,
-                  date.errorFor(context, date.stateValue)
-                )
+                if (!(isDraft && date.isMissing())) {
+                  fieldToErrorMap.addFieldError(
+                    getCategoryStringRes(),
+                    R.string.form_date_label,
+                    date.errorFor(context, date.stateValue)
+                  )
+                }
               }
               if (!cause.isValid) {
                 fieldToErrorMap.addFieldError(
@@ -490,7 +521,7 @@ class PatientFormViewModel @Inject constructor(
 
               runCatching {
                 Hysterectomy(
-                  date = date.dateFromStateOrThrow(),
+                  date = if (isDraft) date.dateFromStateOrNull() else date.dateFromStateOrThrow(),
                   cause = cause.stateValue,
                   additionalInfo = additionalInfo.value
                 )
@@ -503,11 +534,13 @@ class PatientFormViewModel @Inject constructor(
         val hduOrItuAdmission = with(formFields.hduItuAdmission) {
           when (isEnabled.value) {
             null -> {
-              fieldToErrorMap.addFieldError(
-                getCategoryStringRes(),
-                R.string.outcomes_admission_to_hdu_or_itu_label,
-                context.getString(R.string.outcomes_hdu_itu_admission_not_selected_error)
-              )
+              if (!isDraft) {
+                fieldToErrorMap.addFieldError(
+                  getCategoryStringRes(),
+                  R.string.outcomes_admission_to_hdu_or_itu_label,
+                  context.getString(R.string.outcomes_hdu_itu_admission_not_selected_error)
+                )
+              }
               null
             }
             true -> {
@@ -519,11 +552,13 @@ class PatientFormViewModel @Inject constructor(
                 )
               }
               if (!cause.isValid || cause.stateValue == null) {
-                fieldToErrorMap.addFieldError(
-                  getCategoryStringRes(),
-                  R.string.hdu_or_idu_admission_cause_label,
-                  cause.errorFor(context, cause.stateValue)
-                )
+                if (!(isDraft && cause.isMissing())) {
+                  fieldToErrorMap.addFieldError(
+                    getCategoryStringRes(),
+                    R.string.hdu_or_idu_admission_cause_label,
+                    cause.errorFor(context, cause.stateValue)
+                  )
+                }
               }
               if (!hduItuStayLengthInDays.isValid) {
                 fieldToErrorMap.addFieldError(
@@ -535,8 +570,8 @@ class PatientFormViewModel @Inject constructor(
 
               runCatching {
                 HduOrItuAdmission(
-                  date = date.dateFromStateOrThrow(),
-                  cause = cause.stateValue!!,
+                  date = if (isDraft) date.dateFromStateOrNull() else date.dateFromStateOrThrow(),
+                  cause = cause.stateValue,
                   stayInDays = hduItuStayLengthInDays.stateValue.toIntOrNull()
                 )
               }
@@ -548,20 +583,24 @@ class PatientFormViewModel @Inject constructor(
         val maternalDeath = with(formFields.maternalDeath) {
           when (isEnabled.value) {
             null -> {
-              fieldToErrorMap.addFieldError(
-                getCategoryStringRes(),
-                R.string.outcomes_maternal_death_label,
-                context.getString(R.string.outcomes_maternal_death_not_selected_error)
-              )
+              if (!isDraft) {
+                fieldToErrorMap.addFieldError(
+                  getCategoryStringRes(),
+                  R.string.outcomes_maternal_death_label,
+                  context.getString(R.string.outcomes_maternal_death_not_selected_error)
+                )
+              }
               null
             }
             true -> {
               if (!date.isValid) {
-                fieldToErrorMap.addFieldError(
-                  getCategoryStringRes(),
-                  R.string.form_date_label,
-                  date.errorFor(context, date.stateValue)
-                )
+                if (!(isDraft && date.isMissing())) {
+                  fieldToErrorMap.addFieldError(
+                    getCategoryStringRes(),
+                    R.string.form_date_label,
+                    date.errorFor(context, date.stateValue)
+                  )
+                }
               }
               if (!underlyingCause.isValid) {
                 fieldToErrorMap.addFieldError(
@@ -579,7 +618,7 @@ class PatientFormViewModel @Inject constructor(
               }
               runCatching {
                 MaternalDeath(
-                  date = date.dateFromStateOrThrow(),
+                  date = if (isDraft) date.dateFromStateOrNull() else date.dateFromStateOrThrow(),
                   underlyingCause = underlyingCause.stateValue,
                   place = placeOfDeath.stateValue
                 )
@@ -592,20 +631,24 @@ class PatientFormViewModel @Inject constructor(
         val surgicalManagement = with(formFields.surgicalManagement) {
           when (isEnabled.value) {
             null -> {
-              fieldToErrorMap.addFieldError(
-                getCategoryStringRes(),
-                R.string.outcomes_surgical_management_label,
-                context.getString(R.string.outcomes_surgical_management_not_selected_error)
-              )
+              if (!isDraft) {
+                fieldToErrorMap.addFieldError(
+                  getCategoryStringRes(),
+                  R.string.outcomes_surgical_management_label,
+                  context.getString(R.string.outcomes_surgical_management_not_selected_error)
+                )
+              }
               null
             }
             true -> {
               if (!date.isValid) {
-                fieldToErrorMap.addFieldError(
-                  getCategoryStringRes(),
-                  R.string.form_date_label,
-                  date.errorFor(context, date.stateValue)
-                )
+                if (!(isDraft && date.isMissing())) {
+                  fieldToErrorMap.addFieldError(
+                    getCategoryStringRes(),
+                    R.string.form_date_label,
+                    date.errorFor(context, date.stateValue)
+                  )
+                }
               }
               if (!type.isValid) {
                 fieldToErrorMap.addFieldError(
@@ -616,7 +659,7 @@ class PatientFormViewModel @Inject constructor(
               }
               runCatching {
                 SurgicalManagementOfHaemorrhage(
-                  date = date.dateFromStateOrThrow(),
+                  date = if (isDraft) date.dateFromStateOrNull() else date.dateFromStateOrThrow(),
                   typeOfSurgicalManagement = type.stateValue
                 )
               }
@@ -628,20 +671,24 @@ class PatientFormViewModel @Inject constructor(
         val perinatalDeath = with(formFields.perinatalDeath) {
           when (isEnabled.value) {
             null -> {
-              fieldToErrorMap.addFieldError(
-                getCategoryStringRes(),
-                R.string.outcomes_perinatal_death_label,
-                context.getString(R.string.outcomes_perinatal_death_not_selected_error)
-              )
+              if (!isDraft) {
+                fieldToErrorMap.addFieldError(
+                  getCategoryStringRes(),
+                  R.string.outcomes_perinatal_death_label,
+                  context.getString(R.string.outcomes_perinatal_death_not_selected_error)
+                )
+              }
               null
             }
             true -> {
               if (!date.isValid) {
-                fieldToErrorMap.addFieldError(
-                  getCategoryStringRes(),
-                  R.string.form_date_label,
-                  date.errorFor(context, date.stateValue)
-                )
+                if (!(isDraft && date.isMissing())) {
+                  fieldToErrorMap.addFieldError(
+                    getCategoryStringRes(),
+                    R.string.form_date_label,
+                    date.errorFor(context, date.stateValue)
+                  )
+                }
               }
               if (!outcome.isValid) {
                 fieldToErrorMap.addFieldError(
@@ -659,7 +706,7 @@ class PatientFormViewModel @Inject constructor(
               }
               runCatching {
                 PerinatalDeath(
-                  date = date.dateFromStateOrThrow(),
+                  date = if (isDraft) date.dateFromStateOrNull() else date.dateFromStateOrThrow(),
                   outcome = outcome.stateValue,
                   relatedMaternalFactors = relatedMaternalFactors.stateValue
                 )
@@ -670,7 +717,7 @@ class PatientFormViewModel @Inject constructor(
         }
 
         with(formFields.patientFields) {
-          if (isDraft.value == null) {
+          if (this.isDraft.value == null) {
             fieldToErrorMap.addFieldError(
               R.string.other_card_title,
               R.string.mark_as_draft_label,
@@ -692,11 +739,41 @@ class PatientFormViewModel @Inject constructor(
                 id = patientAndOutcomes?.outcomes?.id ?: 0,
                 patientId = pk,
                 serverInfo = patientAndOutcomes?.outcomes?.serverInfo,
+                eclampsiaFitTouched = when (formFields.eclampsia.isEnabled.value) {
+                  true -> TouchedState.TOUCHED_ENABLED
+                  false -> TouchedState.TOUCHED
+                  null -> TouchedState.NOT_TOUCHED
+                },
                 eclampsiaFit = eclampsia?.getOrThrow(),
+                hysterectomyTouched = when (formFields.hysterectomy.isEnabled.value) {
+                  true -> TouchedState.TOUCHED_ENABLED
+                  false -> TouchedState.TOUCHED
+                  null -> TouchedState.NOT_TOUCHED
+                },
                 hysterectomy = hysterectomy?.getOrThrow(),
+                hduOrItuAdmissionTouched = when (formFields.hduItuAdmission.isEnabled.value) {
+                  true -> TouchedState.TOUCHED_ENABLED
+                  false -> TouchedState.TOUCHED
+                  null -> TouchedState.NOT_TOUCHED
+                },
                 hduOrItuAdmission = hduOrItuAdmission?.getOrThrow(),
+                maternalDeathTouched = when (formFields.maternalDeath.isEnabled.value) {
+                  true -> TouchedState.TOUCHED_ENABLED
+                  false -> TouchedState.TOUCHED
+                  null -> TouchedState.NOT_TOUCHED
+                },
                 maternalDeath = maternalDeath?.getOrThrow(),
+                surgicalManagementTouched = when (formFields.surgicalManagement.isEnabled.value) {
+                  true -> TouchedState.TOUCHED_ENABLED
+                  false -> TouchedState.TOUCHED
+                  null -> TouchedState.NOT_TOUCHED
+                },
                 surgicalManagement = surgicalManagement?.getOrThrow(),
+                perinatalDeathTouched = when (formFields.perinatalDeath.isEnabled.value) {
+                  true -> TouchedState.TOUCHED_ENABLED
+                  false -> TouchedState.TOUCHED
+                  null -> TouchedState.NOT_TOUCHED
+                },
                 perinatalDeath = perinatalDeath?.getOrThrow()
               )
             )
@@ -723,12 +800,16 @@ class PatientFormViewModel @Inject constructor(
   private fun enabledState(key: String): SavedStateMutableState<Boolean?> =
     handle.createMutableState(key, null)
 
-  private fun dateState(key: String, isMandatory: Boolean, areApproximateDatesAcceptable: Boolean) =
-    NoFutureDateState(
-      isMandatory,
-      areApproximateDatesAcceptable = areApproximateDatesAcceptable,
-      handle.createMutableState(key, "")
-    )
+  private fun dateState(
+    key: String,
+    isMandatory: Boolean,
+    areApproximateDatesAcceptable: Boolean
+  ) = NoFutureDateState(
+    isMandatory,
+    areApproximateDatesAcceptable = areApproximateDatesAcceptable,
+    handle.createMutableState(key, ""),
+    isFormDraftState,
+  )
 
   private fun enumIdOnlyState(
     key: String,
@@ -738,6 +819,7 @@ class PatientFormViewModel @Inject constructor(
     valuesStore.serverEnumCollection.value[dropdownType],
     isMandatory = isMandatory,
     handle.createMutableState(key, null),
+    isFormDraftState
   )
 
   private fun enumWithOtherState(
@@ -747,7 +829,8 @@ class PatientFormViewModel @Inject constructor(
   ) = EnumWithOtherState(
     enum = valuesStore.serverEnumCollection.value[dropdownType],
     isMandatory = isMandatory,
-    backingState = handle.createMutableState(key, null)
+    backingState = handle.createMutableState(key, null),
+    isFormDraftState = isFormDraftState,
   )
 
   @Stable
@@ -796,9 +879,10 @@ class PatientFormViewModel @Inject constructor(
     abstract val date: NoFutureDateState
 
     /**
-     * Sets the entire card to use isEnabled = false
+     * Resets the error state on the forms, using the [newEnabledState] for the checkbox state (null
+     * means no selection).
      */
-    abstract fun clearFormsAndCheckNo()
+    abstract fun clearFormsAndSetCheckbox(newEnabledState: Boolean?)
 
     abstract fun forceShowErrors()
 
@@ -808,8 +892,8 @@ class PatientFormViewModel @Inject constructor(
       override val date: NoFutureDateState,
       val placeOfFirstFit: EnumIdOnlyState
     ) : OutcomeFields() {
-      override fun clearFormsAndCheckNo() {
-        isEnabled.value = false
+      override fun clearFormsAndSetCheckbox(newEnabledState: Boolean?) {
+        isEnabled.value = newEnabledState
         date.reset()
         placeOfFirstFit.reset()
       }
@@ -829,8 +913,8 @@ class PatientFormViewModel @Inject constructor(
       val cause: EnumWithOtherState,
       val additionalInfo: MutableState<String?>
     ) : OutcomeFields() {
-      override fun clearFormsAndCheckNo() {
-        isEnabled.value = false
+      override fun clearFormsAndSetCheckbox(newEnabledState: Boolean?) {
+        isEnabled.value = newEnabledState
         date.reset()
         cause.reset()
         additionalInfo.value = null
@@ -851,8 +935,8 @@ class PatientFormViewModel @Inject constructor(
       val cause: EnumWithOtherState,
       val hduItuStayLengthInDays: LimitedHduItuState
     ) : OutcomeFields() {
-      override fun clearFormsAndCheckNo() {
-        isEnabled.value = false
+      override fun clearFormsAndSetCheckbox(newEnabledState: Boolean?) {
+        isEnabled.value = newEnabledState
         date.reset()
         cause.reset()
         hduItuStayLengthInDays.reset()
@@ -874,8 +958,8 @@ class PatientFormViewModel @Inject constructor(
       val underlyingCause: EnumWithOtherState,
       val placeOfDeath: EnumIdOnlyState
     ) : OutcomeFields() {
-      override fun clearFormsAndCheckNo() {
-        isEnabled.value = false
+      override fun clearFormsAndSetCheckbox(newEnabledState: Boolean?) {
+        isEnabled.value = newEnabledState
         date.reset()
         underlyingCause.reset()
         placeOfDeath.reset()
@@ -896,8 +980,8 @@ class PatientFormViewModel @Inject constructor(
       override val date: NoFutureDateState,
       val type: EnumWithOtherState
     ) : OutcomeFields() {
-      override fun clearFormsAndCheckNo() {
-        isEnabled.value = false
+      override fun clearFormsAndSetCheckbox(newEnabledState: Boolean?) {
+        isEnabled.value = newEnabledState
         date.reset()
         type.reset()
       }
@@ -917,8 +1001,8 @@ class PatientFormViewModel @Inject constructor(
       val outcome: EnumIdOnlyState,
       val relatedMaternalFactors: EnumWithOtherState,
     ) : OutcomeFields() {
-      override fun clearFormsAndCheckNo() {
-        isEnabled.value = false
+      override fun clearFormsAndSetCheckbox(newEnabledState: Boolean?) {
+        isEnabled.value = newEnabledState
         date.reset()
         outcome.reset()
         relatedMaternalFactors.reset()

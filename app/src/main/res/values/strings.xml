@@ -9,7 +9,7 @@
     <string name="patient_registration_card_id_label">ID</string>
     <string name="patient_registration_initials_label">Initials</string>
     <string name="patient_registration_presentation_date_label">Presentation date (dd/mm/yyyy)</string>
-    <string name="outcomes_eclampsia_label">Eclampsia</string>
+    <string name="outcomes_eclampsia_label">Eclampsia (first fit)</string>
     <string name="none">None</string>
     <string name="form_date_label">Date (dd/mm/yyyy)</string>
     <string name="place_of_first_eclamptic_fit_label">Place of first eclamptic fit</string>
@@ -132,6 +132,8 @@
     <string name="outcomes_maternal_death_more_info">A maternal death is the death of a woman while pregnant or within 42 days of termination of pregnancy, irrespective of the duration and the site of the pregnancy, from any cause related to or aggravated by the pregnancy or its management, but not from accidental or incidental causes.</string>
     <string name="outcomes_eclampsia_more_info">Occurrence of generalised convulsions with increased BP in the absence of epilepsy or another condition predisposing to convulsions.</string>
     <string name="outcomes_perinatal_death_more_info">The loss of a baby before or during delivery (stillbirth), an early neonatal death (0 to 7 days) or a late neonatal death (8 to 28 days after delivery).</string>
+    <string name="outcomes_card_enabled_but_missing_details_from_draft">Yes (missing details due to draft)</string>
+    <string name="other_card_draft_more_info">If you are missing some details or if a patient is not ready for upload to MedSciNet, you can mark the patient as a draft in order to save even with missing details. You can come edit the patient later to fill in the missing details.\n\nThe missing details will be required to save a patient without marking them as a draft.</string>
     <plurals name="patient_form_snackbar_failed_to_save_there_are_d_errors">
         <item quantity="one">Failed to save, as there is %1$d error.</item>
         <item quantity="other">Failed to save, as there are %1$d errors.</item>

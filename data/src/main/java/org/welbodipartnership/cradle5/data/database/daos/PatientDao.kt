@@ -69,18 +69,16 @@ abstract class PatientDao {
   @Query("SELECT nodeId FROM Patient WHERE id = :patientPk")
   abstract fun getPatientNodeIdFlow(patientPk: Long): Flow<Long?>
 
-  @Query("UPDATE Patient SET isDraft = :isDraft, localNotes = :localNotes WHERE id = :patientPk")
-  protected abstract suspend fun updatePatientOtherInfoInner(
+  @Query("UPDATE Patient SET localNotes = :localNotes WHERE id = :patientPk")
+  protected abstract suspend fun updatePatientLocalNotesInner(
     patientPk: Long,
-    isDraft: Boolean,
     localNotes: String?
   ): Int
 
-  suspend fun updatePatientOtherInfo(
+  suspend fun updatePatientLocalNotesInfo(
     patientPk: Long,
-    isDraft: Boolean,
     localNotes: String?
-  ): Boolean = updatePatientOtherInfoInner(patientPk, isDraft, localNotes) == 1
+  ): Boolean = updatePatientLocalNotesInner(patientPk, localNotes) == 1
 
   @RewriteQueriesToDropUnusedColumns
   @Query("SELECT * FROM Patient WHERE id = :patientPk")

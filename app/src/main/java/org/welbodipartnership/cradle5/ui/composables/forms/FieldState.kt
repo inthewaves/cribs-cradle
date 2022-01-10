@@ -19,6 +19,7 @@ package org.welbodipartnership.cradle5.ui.composables.forms
 import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,8 +33,10 @@ open class TextFieldState(
   errorFor: (Context, String) -> String,
   initialValue: String = "",
   backingState: MutableState<String> = mutableStateOf(initialValue),
-) : FieldState<String>(validator, errorFor, initialValue, backingState) {
+  isFormDraftState: State<Boolean?>
+) : FieldState<String>(validator, errorFor, initialValue, backingState, isFormDraftState) {
   override val showErrorOnInput: Boolean = false
+  override fun isMissing(): Boolean = stateValue.isBlank()
 }
 
 /**
@@ -44,6 +47,7 @@ abstract class FieldState<T>(
   val errorFor: (Context, T) -> String = { _, _ -> "" },
   val initialValue: T,
   val backingState: MutableState<T> = mutableStateOf(initialValue),
+  val isFormDraftState: State<Boolean?>
 ) {
   abstract val showErrorOnInput: Boolean
 
@@ -59,6 +63,8 @@ abstract class FieldState<T>(
     }
 
   open fun onNewStateValue(newValue: T) {}
+
+  abstract fun isMissing(): Boolean
 
   // was the TextField ever focused
   var isFocusedDirty by mutableStateOf(false)

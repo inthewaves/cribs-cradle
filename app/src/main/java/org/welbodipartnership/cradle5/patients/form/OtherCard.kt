@@ -1,5 +1,6 @@
 package org.welbodipartnership.cradle5.patients.form
 
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -15,6 +16,7 @@ import org.welbodipartnership.cradle5.R
 import org.welbodipartnership.cradle5.patients.details.BaseDetailsCard
 import org.welbodipartnership.cradle5.ui.composables.forms.BooleanRadioButtonRow
 import org.welbodipartnership.cradle5.ui.composables.forms.BringIntoViewOutlinedTextField
+import org.welbodipartnership.cradle5.ui.composables.forms.MoreInfoIconButton
 import org.welbodipartnership.cradle5.ui.composables.forms.darkerDisabledOutlinedTextFieldColors
 
 @Composable
@@ -29,7 +31,10 @@ fun OtherCard(
   BaseDetailsCard(title = null, modifier) {
     if (!hideDraft) {
       RequiredText(stringResource(R.string.mark_as_draft_label))
-      BooleanRadioButtonRow(isTrue = isDraft, onBooleanChange = onIsDraftChange)
+      Row {
+        BooleanRadioButtonRow(isTrue = isDraft, onBooleanChange = onIsDraftChange)
+        MoreInfoIconButton(stringResource(R.string.other_card_draft_more_info))
+      }
       CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
         Text(stringResource(R.string.mark_as_draft_description))
       }

@@ -41,7 +41,7 @@ fun PatientOtherInfoFormScreen(
 ) {
   var errorDialogText: String? by rememberSaveable { mutableStateOf(null) }
   errorDialogText?.let { currentError ->
-    if (!currentError.isNullOrBlank()) {
+    if (currentError.isNotBlank()) {
       AlertDialog(
         onDismissRequest = { errorDialogText = null },
         title = { Text(stringResource(id = R.string.error_dialog_title)) },
@@ -136,13 +136,11 @@ fun PatientOtherInfoFormScreen(
       modifier = Modifier.navigationBarsWithImePadding()
     ) {
       item {
-        val (isDraft, setIsDraft) = viewModel.isDraftState
         val (localNotes, setLocalNotes) = viewModel.localNotesState
-        val isUploadedToServer by viewModel.isUploadedToServer.collectAsState()
         OtherCard(
-          hideDraft = isUploadedToServer,
-          isDraft = isDraft,
-          onIsDraftChange = setIsDraft,
+          hideDraft = true,
+          isDraft = null,
+          onIsDraftChange = {},
           localNotes = localNotes,
           onLocalNotesChange = setLocalNotes,
           modifier = Modifier.padding(16.dp)

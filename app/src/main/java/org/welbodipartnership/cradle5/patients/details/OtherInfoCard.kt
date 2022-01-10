@@ -10,12 +10,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import org.welbodipartnership.cradle5.R
-import org.welbodipartnership.cradle5.domain.sync.SyncRepository
+import org.welbodipartnership.cradle5.ui.composables.AnimatedVisibilityFadingWrapper
 import org.welbodipartnership.cradle5.ui.composables.LabelAndValueOrNone
 
 @Composable
 fun OtherInfoCard(
-  editState: SyncRepository.FormEditState?,
   isPatientUploadedToServer: Boolean,
   isDraft: Boolean,
   localNotes: String?,
@@ -35,19 +34,14 @@ fun OtherInfoCard(
       label = stringResource(R.string.local_notes_label),
       value = localNotes?.ifBlank { null }
     )
-    Spacer(modifier = Modifier.height(spacerHeight))
-
-    val canEdit = if (isPatientUploadedToServer) {
-      true
-    } else {
-      editState?.canEdit == true
-    }
-    TextButton(
-      onClick = onEditOtherInfoButtonClick,
-      enabled = canEdit,
-      modifier = Modifier.align(Alignment.End)
-    ) {
-      Text(stringResource(R.string.edit_button))
+    AnimatedVisibilityFadingWrapper(visible = isPatientUploadedToServer) {
+      Spacer(modifier = Modifier.height(spacerHeight))
+      TextButton(
+        onClick = onEditOtherInfoButtonClick,
+        modifier = Modifier.align(Alignment.End)
+      ) {
+        Text(stringResource(R.string.edit_button))
+      }
     }
   }
 }

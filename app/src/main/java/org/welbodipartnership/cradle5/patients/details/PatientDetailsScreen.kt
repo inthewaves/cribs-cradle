@@ -197,7 +197,6 @@ private fun PatientDetailsScreen(
 
     item {
       OtherInfoCard(
-        editState,
         isPatientUploadedToServer = patient.isUploadedToServer,
         isDraft = patient.isDraft,
         localNotes = patient.localNotes,

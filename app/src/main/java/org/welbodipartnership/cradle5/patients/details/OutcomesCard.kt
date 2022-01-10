@@ -19,6 +19,7 @@ import org.welbodipartnership.cradle5.data.database.entities.MaternalDeath
 import org.welbodipartnership.cradle5.data.database.entities.Outcomes
 import org.welbodipartnership.cradle5.data.database.entities.PerinatalDeath
 import org.welbodipartnership.cradle5.data.database.entities.SurgicalManagementOfHaemorrhage
+import org.welbodipartnership.cradle5.data.database.entities.TouchedState
 import org.welbodipartnership.cradle5.data.database.entities.embedded.EnumSelection
 import org.welbodipartnership.cradle5.data.serverenums.DropdownType
 import org.welbodipartnership.cradle5.data.serverenums.ServerEnumCollection
@@ -45,12 +46,18 @@ fun OutcomesCard(
       _,
       _,
       _,
-      eclampsiaFit,
-      hysterectomy,
-      hduOrItuAdmission,
-      maternalDeath,
-      surgicalManagement,
-      perinatalDeath
+      eclampsiaFitTouched: TouchedState,
+      eclampsiaFit: EclampsiaFit?,
+      hysterectomyTouched: TouchedState,
+      hysterectomy: Hysterectomy?,
+      hduOrItuAdmissionTouched: TouchedState,
+      hduOrItuAdmission: HduOrItuAdmission?,
+      maternalDeathTouched: TouchedState,
+      maternalDeath: MaternalDeath?,
+      surgicalManagementTouched: TouchedState,
+      surgicalManagement: SurgicalManagementOfHaemorrhage?,
+      perinatalDeathTouched: TouchedState,
+      perinatalDeath: PerinatalDeath?
     ) = outcomes
 
     val categoryToBodySpacerHeight = 0.dp
@@ -59,7 +66,7 @@ fun OutcomesCard(
     CategoryHeader(text = stringResource(R.string.outcomes_eclampsia_label))
     Spacer(Modifier.height(categoryToBodySpacerHeight))
     if (eclampsiaFit != null) {
-      LabelAndValueOrNone(stringResource(R.string.form_date_label), eclampsiaFit.date.toString())
+      LabelAndValueOrUnknown(stringResource(R.string.form_date_label), eclampsiaFit.date?.toString())
       LabelAndValueForDropdownOrUnknown(
         dropdownType = DropdownType.Place,
         label = stringResource(R.string.place_of_first_eclamptic_fit_label),
@@ -68,7 +75,11 @@ fun OutcomesCard(
       )
     } else {
       Text(
-        text = stringResource(R.string.none),
+        text = if (eclampsiaFitTouched == TouchedState.TOUCHED_ENABLED) {
+          stringResource(R.string.outcomes_card_enabled_but_missing_details_from_draft)
+        } else {
+          stringResource(R.string.none)
+        },
         style = MaterialTheme.typography.body2,
       )
     }
@@ -78,7 +89,10 @@ fun OutcomesCard(
     CategoryHeader(text = stringResource(R.string.outcomes_hysterectomy_label))
     Spacer(Modifier.height(categoryToBodySpacerHeight))
     if (hysterectomy != null) {
-      LabelAndValueOrNone(stringResource(R.string.form_date_label), hysterectomy.date.toString())
+      LabelAndValueOrUnknown(
+        stringResource(R.string.form_date_label),
+        hysterectomy.date?.toString()
+      )
       LabelAndValueForDropdownOrUnknown(
         dropdownType = DropdownType.CauseOfHysterectomy,
         label = stringResource(R.string.hysterectomy_cause_label),
@@ -91,7 +105,11 @@ fun OutcomesCard(
       )
     } else {
       Text(
-        text = stringResource(R.string.no),
+        text = if (hysterectomyTouched == TouchedState.TOUCHED_ENABLED) {
+          stringResource(R.string.outcomes_card_enabled_but_missing_details_from_draft)
+        } else {
+          stringResource(R.string.none)
+        },
         style = MaterialTheme.typography.body2,
       )
     }
@@ -101,7 +119,10 @@ fun OutcomesCard(
     CategoryHeader(text = stringResource(R.string.outcomes_admission_to_hdu_or_itu_label))
     Spacer(Modifier.height(categoryToBodySpacerHeight))
     if (hduOrItuAdmission != null) {
-      LabelAndValueOrNone(stringResource(R.string.form_date_label), hduOrItuAdmission.date.toString())
+      LabelAndValueOrUnknown(
+        stringResource(R.string.form_date_label),
+        hduOrItuAdmission.date?.toString()
+      )
       LabelAndValueForDropdownOrUnknown(
         dropdownType = DropdownType.CauseForHduOrItuAdmission,
         label = stringResource(R.string.hdu_or_idu_admission_cause_label),
@@ -114,7 +135,11 @@ fun OutcomesCard(
       )
     } else {
       Text(
-        text = stringResource(R.string.none),
+        text = if (hduOrItuAdmissionTouched == TouchedState.TOUCHED_ENABLED) {
+          stringResource(R.string.outcomes_card_enabled_but_missing_details_from_draft)
+        } else {
+          stringResource(R.string.none)
+        },
         style = MaterialTheme.typography.body2,
       )
     }
@@ -124,7 +149,7 @@ fun OutcomesCard(
     CategoryHeader(text = stringResource(R.string.outcomes_maternal_death_label))
     Spacer(Modifier.height(categoryToBodySpacerHeight))
     if (maternalDeath != null) {
-      LabelAndValueOrNone(stringResource(R.string.form_date_label), maternalDeath.date.toString())
+      LabelAndValueOrUnknown(stringResource(R.string.form_date_label), maternalDeath.date?.toString())
       LabelAndValueForDropdownOrUnknown(
         dropdownType = DropdownType.UnderlyingCauseOfMaternalDeath,
         label = stringResource(R.string.maternal_death_underlying_cause_label),
@@ -139,7 +164,11 @@ fun OutcomesCard(
       )
     } else {
       Text(
-        text = stringResource(R.string.none),
+        text = if (maternalDeathTouched == TouchedState.TOUCHED_ENABLED) {
+          stringResource(R.string.outcomes_card_enabled_but_missing_details_from_draft)
+        } else {
+          stringResource(R.string.none)
+        },
         style = MaterialTheme.typography.body2,
       )
     }
@@ -149,7 +178,7 @@ fun OutcomesCard(
     CategoryHeader(text = stringResource(R.string.outcomes_surgical_management_label))
     Spacer(Modifier.height(categoryToBodySpacerHeight))
     if (surgicalManagement != null) {
-      LabelAndValueOrNone(stringResource(R.string.form_date_label), surgicalManagement.date.toString())
+      LabelAndValueOrNone(stringResource(R.string.form_date_label), surgicalManagement.date?.toString())
       LabelAndValueForDropdownOrUnknown(
         dropdownType = DropdownType.TypeOfSurgicalManagement,
         label = stringResource(R.string.surgical_management_type_label),
@@ -158,7 +187,11 @@ fun OutcomesCard(
       )
     } else {
       Text(
-        text = stringResource(R.string.none),
+        text = if (surgicalManagementTouched == TouchedState.TOUCHED_ENABLED) {
+          stringResource(R.string.outcomes_card_enabled_but_missing_details_from_draft)
+        } else {
+          stringResource(R.string.none)
+        },
         style = MaterialTheme.typography.body2,
       )
     }
@@ -168,7 +201,7 @@ fun OutcomesCard(
     CategoryHeader(text = stringResource(R.string.outcomes_perinatal_death_label))
     Spacer(Modifier.height(categoryToBodySpacerHeight))
     if (perinatalDeath != null) {
-      LabelAndValueOrNone(stringResource(R.string.form_date_label), perinatalDeath.date.toString())
+      LabelAndValueOrNone(stringResource(R.string.form_date_label), perinatalDeath.date?.toString())
       LabelAndValueForDropdownOrUnknown(
         dropdownType = DropdownType.PerinatalOutcome,
         label = stringResource(R.string.perinatal_death_outcome_label),
@@ -183,7 +216,11 @@ fun OutcomesCard(
       )
     } else {
       Text(
-        text = stringResource(R.string.none),
+        text = if (perinatalDeathTouched == TouchedState.TOUCHED_ENABLED) {
+          stringResource(R.string.outcomes_card_enabled_but_missing_details_from_draft)
+        } else {
+          stringResource(R.string.none)
+        },
         style = MaterialTheme.typography.body2,
       )
     }
@@ -215,29 +252,35 @@ fun OutcomesCardPreview() {
 val testOutcomes = Outcomes(
   patientId = 5L,
   serverInfo = null,
+  eclampsiaFitTouched = TouchedState.TOUCHED_ENABLED,
   eclampsiaFit = EclampsiaFit(
     date = FormDate(20, 4, 2019),
     place = EnumSelection.IdOnly(2)
   ),
+  hysterectomyTouched = TouchedState.TOUCHED_ENABLED,
   hysterectomy = Hysterectomy(
     date = FormDate.today(),
     cause = EnumSelection.WithOther(4, "The other string"),
     additionalInfo = "Additional info here"
   ),
+  hduOrItuAdmissionTouched = TouchedState.TOUCHED_ENABLED,
   hduOrItuAdmission = HduOrItuAdmission(
     date = FormDate.today(),
     cause = EnumSelection.WithOther(4, "This is input for the `other` cause"),
     stayInDays = 5
   ),
+  maternalDeathTouched = TouchedState.TOUCHED_ENABLED,
   maternalDeath = MaternalDeath(
     date = FormDate.today(),
     underlyingCause = EnumSelection.WithOther(6),
     place = EnumSelection.IdOnly(2),
   ),
+  surgicalManagementTouched = TouchedState.TOUCHED_ENABLED,
   surgicalManagement = SurgicalManagementOfHaemorrhage(
     date = FormDate.today(),
     typeOfSurgicalManagement = EnumSelection.WithOther(3)
   ),
+  perinatalDeathTouched = TouchedState.TOUCHED_ENABLED,
   perinatalDeath = PerinatalDeath(
     date = FormDate.today(),
     outcome = EnumSelection.IdOnly(2),

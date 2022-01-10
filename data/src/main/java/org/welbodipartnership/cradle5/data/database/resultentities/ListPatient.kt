@@ -12,7 +12,7 @@ data class ListPatient(
   @Embedded
   val serverInfo: ServerInfo?,
   val initials: String,
-  val dateOfBirth: FormDate,
+  val dateOfBirth: FormDate?,
   val localNotes: String?,
   val isDraft: Boolean,
 )

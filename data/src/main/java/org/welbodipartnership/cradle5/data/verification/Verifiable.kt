@@ -9,6 +9,14 @@ import kotlin.reflect.KProperty1
 // TODO: Figure out if we need reflection. kotlin.reflect is huge and adds about 7 MB to the
 //  installed app size
 
+inline fun <T : Verifiable<T>, reified V> Verifier<T>.verifyValue(
+  property: KProperty1<T, V>,
+  value: Any?,
+  verifierBlock: (possibleValue: V?) -> Verifiable.Result
+): Verifiable.Result {
+  return verifierBlock(value as? V)
+}
+
 /**
  * Describes classes that can validate its properties according to its criteria. The type parameter
  * [T] should be the same type as the class that is implementing this interface.

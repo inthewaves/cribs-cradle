@@ -20,7 +20,7 @@ import org.welbodipartnership.cradle5.data.database.entities.Patient
 import javax.inject.Inject
 import javax.inject.Singleton
 
-const val DATABASE_VERSION = 5
+const val DATABASE_VERSION = 6
 const val DATABASE_NAME = "cradle5.db"
 
 @Singleton
@@ -96,6 +96,7 @@ private val MIGRATIONS = arrayOf(
     AutoMigration(from = 1, to = 2),
     AutoMigration(from = 3, to = 4),
     AutoMigration(from = 4, to = 5),
+    AutoMigration(from = 5, to = 6),
   ]
 )
 @TypeConverters(DbTypeConverters::class)

@@ -10,7 +10,9 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import org.welbodipartnership.cradle5.data.R
 import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
+import org.welbodipartnership.cradle5.data.verification.HasRequiredFields
 import org.welbodipartnership.cradle5.data.verification.Verifiable
+import org.welbodipartnership.cradle5.data.verification.verifyValue
 import org.welbodipartnership.cradle5.util.datetime.FormDate
 import kotlin.reflect.KProperty1
 
@@ -38,8 +40,8 @@ data class Patient(
   /**
    * This also represents an approximate date if only the age was known at the time of entry.
    */
-  val dateOfBirth: FormDate,
-  val healthcareFacilityId: Long,
+  val dateOfBirth: FormDate?,
+  val healthcareFacilityId: Long?,
   /**
    * A Unix timestamp of when this was last updated
    */
@@ -53,8 +55,15 @@ data class Patient(
    */
   @ColumnInfo(defaultValue = "0")
   val isDraft: Boolean
-) : FormEntity, Verifiable<Patient> {
+) : FormEntity, Verifiable<Patient>, HasRequiredFields {
   val serverPatientId: Long? get() = serverInfo?.objectId
+
+  override fun requiredFieldsPresent(): Boolean {
+    return when {
+      dateOfBirth == null || healthcareFacilityId == null -> false
+      else -> true
+    }
+  }
 
   fun isValueForPropertyValid(
     property: KProperty1<out Patient, *>,
@@ -90,16 +99,18 @@ data class Patient(
       }
       Patient::presentationDate -> with(value as? FormDate) {
         if (this == null) {
-          return Verifiable.Invalid(
-            property, "Missing patient presentation date"
-          )
+          return Verifiable.Valid
         }
+
         if (this.getAgeInYearsFromNow() < 0) {
           return Verifiable.Invalid(
             property, "Can't be in the future"
           )
         }
 
+        return Verifiable.Valid
+      }
+      Patient::dateOfBirth -> verifyValue(Patient::dateOfBirth, value) { possibleValue ->
         return Verifiable.Valid
       }
 

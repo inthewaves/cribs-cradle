@@ -222,10 +222,9 @@ fun PatientListItem(
   modifier: Modifier = Modifier
 ) {
   BasePatientListItem(
-    id = listPatient.serverInfo?.objectId?.toString()
-      ?: stringResource(R.string.not_available_n_slash_a),
+    id = listPatient.serverInfo?.objectId?.toString() ?: stringResource(R.string.not_available_n_slash_a),
     initials = listPatient.initials,
-    dateOfBirth = listPatient.dateOfBirth.toString(),
+    dateOfBirth = listPatient.dateOfBirth?.toString() ?: stringResource(R.string.not_available_n_slash_a),
     listIconType = ListIconType.ShowIcons(
       isPatientUploaded = listPatient.serverInfo != null,
       hasLocalNotes = !listPatient.localNotes.isNullOrBlank(),

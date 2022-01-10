@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,6 +20,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.AlertDialog
+import androidx.compose.material.Divider
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
@@ -33,6 +35,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,6 +46,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -394,7 +398,7 @@ fun PatientForm(
             isFormEnabled = eclampsia.isEnabled.value,
             onFormEnabledStateChange = {
               eclampsia.isEnabled.value = it
-              if (!it) eclampsia.clearFormsAndCheckNo()
+              if (!it) eclampsia.clearFormsAndSetCheckbox(newEnabledState = false)
             },
             dateState = eclampsia.date,
             placeOfFirstFitState = eclampsia.placeOfFirstFit,
@@ -411,7 +415,7 @@ fun PatientForm(
             isFormEnabled = hysterectomy.isEnabled.value,
             onFormEnabledChange = {
               hysterectomy.isEnabled.value = it
-              if (!it) hysterectomy.clearFormsAndCheckNo()
+              if (!it) hysterectomy.clearFormsAndSetCheckbox(newEnabledState = false)
             },
             dateState = hysterectomy.date,
             causeState = hysterectomy.cause,
@@ -441,7 +445,7 @@ fun PatientForm(
             isFormEnabled = hduItuAdmission.isEnabled.value,
             onFormEnabledChange = {
               hduItuAdmission.isEnabled.value = it
-              if (!it) hduItuAdmission.clearFormsAndCheckNo()
+              if (!it) hduItuAdmission.clearFormsAndSetCheckbox(newEnabledState = false)
             },
             dateState = hduItuAdmission.date,
             causeState = hduItuAdmission.cause,
@@ -457,7 +461,7 @@ fun PatientForm(
             isFormEnabled = maternalDeath.isEnabled.value,
             onFormEnabledChange = {
               maternalDeath.isEnabled.value = it
-              if (!it) maternalDeath.clearFormsAndCheckNo()
+              if (!it) maternalDeath.clearFormsAndSetCheckbox(newEnabledState = false)
             },
             dateState = maternalDeath.date,
             underlyingCauseState = maternalDeath.underlyingCause,
@@ -473,7 +477,7 @@ fun PatientForm(
             isFormEnabled = surgicalManagement.isEnabled.value,
             onFormEnabledChange = {
               surgicalManagement.isEnabled.value = it
-              if (!it) surgicalManagement.clearFormsAndCheckNo()
+              if (!it) surgicalManagement.clearFormsAndSetCheckbox(newEnabledState = false)
             },
             dateState = surgicalManagement.date,
             surgicalManagementTypeState = surgicalManagement.type,
@@ -488,7 +492,7 @@ fun PatientForm(
             isFormEnabled = perinatalDeath.isEnabled.value,
             onFormEnabledChange = {
               perinatalDeath.isEnabled.value = it
-              if (!it) perinatalDeath.clearFormsAndCheckNo()
+              if (!it) perinatalDeath.clearFormsAndSetCheckbox(newEnabledState = false)
             },
             dateState = perinatalDeath.date,
             outcomeState = perinatalDeath.outcome,
@@ -499,35 +503,51 @@ fun PatientForm(
 
       item {
         formState.value.let { currentFormState ->
-          if (currentFormState is PatientFormViewModel.FormState.FailedValidation) {
-            BaseDetailsCard(
-              title = stringResource(R.string.errors_card_title),
-              modifier = Modifier.padding(16.dp),
-              backgroundColor = MaterialTheme.colors.error.copy(alpha = 0.3f)
-            ) {
-              for ((section, errors) in currentFormState.errorsBySectionStringId) {
-                CategoryHeader(stringResource(section))
-                for (error in errors) {
-                  Text(error.errorMessage)
+          val detailsContent: @Composable (ColumnScope.() -> Unit)? = when (currentFormState) {
+            is PatientFormViewModel.FormState.FailedValidation -> {
+              {
+                for ((section, errors) in currentFormState.errorsBySectionStringId) {
+                  CategoryHeader(stringResource(section))
+                  for (error in errors) {
+                    Text(error.errorMessage)
+                  }
                 }
               }
             }
-          } else if (currentFormState is PatientFormViewModel.FormState.FailedException) {
-            val horizontalScrollState = rememberScrollState()
-            BaseDetailsCard(
-              title = stringResource(R.string.errors_card_title),
-              modifier = Modifier.padding(16.dp),
-              backgroundColor = MaterialTheme.colors.error.copy(alpha = 0.3f)
-            ) {
-              SelectionContainer {
-                Column {
-                  Text(
-                    currentFormState.exception.stackTraceToString(),
-                    modifier = Modifier.horizontalScroll(horizontalScrollState)
-                  )
+            is PatientFormViewModel.FormState.FailedException -> {
+              {
+                val horizontalScrollState = rememberScrollState()
+                SelectionContainer {
+                  Column {
+                    Text(
+                      currentFormState.exception.stackTraceToString(),
+                      modifier = Modifier.horizontalScroll(horizontalScrollState)
+                    )
+                  }
                 }
               }
             }
+            else -> {
+              null
+            }
+          }
+
+          detailsContent?.let { columnContent ->
+            BaseDetailsCard(
+              title = stringResource(R.string.errors_card_title),
+              modifier = Modifier.padding(16.dp),
+              backgroundColor = MaterialTheme.colors.error.copy(alpha = 0.3f),
+              columnContent = {
+                columnContent()
+                Spacer(Modifier.height(16.dp))
+                Divider(
+                  color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
+                  thickness = 4.dp
+                )
+                Spacer(Modifier.height(16.dp))
+                Text(stringResource(R.string.other_card_draft_more_info))
+              },
+            )
           }
         }
       }
@@ -546,10 +566,14 @@ fun PatientForm(
       }
 
       item {
+        val focusManager = LocalFocusManager.current
         SaveButtonCard(
           isEnabled = formState.value !is PatientFormViewModel.FormState.Loading &&
             formState.value !is PatientFormViewModel.FormState.Saving,
-          onSaveButtonClick = { viewModel.save() },
+          onSaveButtonClick = {
+            focusManager.clearFocus()
+            viewModel.save()
+          },
           text = if (viewModel.isExistingPatientEdit) {
             stringResource(id = R.string.patient_form_save_edits)
           } else {
@@ -611,7 +635,8 @@ fun EclampsiaForm(
       },
       enabled = isFormEnabled == true,
       modifier = Modifier.fillMaxWidth(),
-      textFieldModifier = textFieldModifier.fillMaxWidth(),
+      textFieldModifier = textFieldModifier.fillMaxWidth()
+        .then(dateState.createFocusChangeModifier()),
       errorHint = dateState.getError(),
       keyboardOptions = KeyboardOptions.Default,
     )
@@ -946,13 +971,19 @@ fun EclampsiaFormPreview() {
   CradleTrialAppTheme {
     Scaffold {
       val defaultEnums = ServerEnumCollection.defaultInstance
+      val draft = remember { mutableStateOf(false) }
       EclampsiaForm(
         isFormEnabled = false,
         onFormEnabledStateChange = {},
-        dateState = NoFutureDateState(isMandatory = true, areApproximateDatesAcceptable = true),
+        dateState = NoFutureDateState(
+          isMandatory = true,
+          areApproximateDatesAcceptable = true,
+          isFormDraftState = draft
+        ),
         placeOfFirstFitState = EnumIdOnlyState(
           defaultEnums[DropdownType.Place],
-          isMandatory = false
+          isMandatory = false,
+          isFormDraftState = draft
         ),
         serverEnumCollection = defaultEnums,
       )
@@ -973,19 +1004,36 @@ fun PatientFormPreview() {
 class HealthcareFacilityState(
   val isRequired: Boolean,
   backingState: MutableState<FacilityAndPosition?>,
+  isFormDraftState: State<Boolean?>
 ) : FieldState<FacilityAndPosition?>(
-  validator = { facility -> if (isRequired) facility?.facility != null else true },
+  validator = { facility ->
+    if (isFormDraftState.value == true && facility == null) {
+      true
+    } else if (isRequired) {
+      facility?.facility != null
+    } else {
+      true
+    }
+  },
   errorFor = { ctx, _ -> ctx.getString(R.string.missing_healthcare_facility_error) },
-  backingState = backingState,
   initialValue = null,
+  backingState = backingState,
+  isFormDraftState = isFormDraftState,
 ) {
   override val showErrorOnInput: Boolean = true
+  override fun isMissing(): Boolean {
+    return stateValue == null
+  }
 }
 
-class InitialsState(backingState: MutableState<String> = mutableStateOf("")) : TextFieldState(
+class InitialsState(
+  backingState: MutableState<String> = mutableStateOf(""),
+  isFormDraftState: State<Boolean?>
+) : TextFieldState(
   validator = { it.length in 1..MAX_INITIALS_LENGTH },
   errorFor = { ctx, _, -> ctx.getString(R.string.patient_registration_initials_error) },
-  backingState = backingState
+  backingState = backingState,
+  isFormDraftState = isFormDraftState,
 ) {
   override val showErrorOnInput: Boolean = false
 }
@@ -993,10 +1041,15 @@ class InitialsState(backingState: MutableState<String> = mutableStateOf("")) : T
 class NoFutureDateState(
   val isMandatory: Boolean,
   val areApproximateDatesAcceptable: Boolean,
-  backingState: MutableState<String> = mutableStateOf("")
+  backingState: MutableState<String> = mutableStateOf(""),
+  isFormDraftState: State<Boolean?>
 ) : TextFieldState(
   validator = { possibleDate ->
     run {
+      if (isFormDraftState.value == true && possibleDate.isEmpty()) {
+        return@run true
+      }
+
       if (!isMandatory && possibleDate.isEmpty()) {
         return@run true
       }
@@ -1027,29 +1080,35 @@ class NoFutureDateState(
         }
       }
     } else {
-      if (isMandatory) {
+      if (isMandatory && date.isBlank()) {
         ctx.getString(R.string.form_date_required_error)
       } else {
         ctx.getString(R.string.form_date_invalid_error)
       }
     }
   },
-  backingState = backingState
+  backingState = backingState,
+  isFormDraftState = isFormDraftState,
 ) {
   fun dateFromStateOrNull() = stateValue.toFormDateFromNoSlashesOrNull()
   fun dateFromStateOrThrow() = stateValue.toFormDateFromNoSlashesOrThrow()
-  fun setStateFromFormDate(formDate: FormDate) {
-    stateValue = formDate.toString(withSlashes = false)
+  fun setStateFromFormDate(formDate: FormDate?) {
+    stateValue = formDate?.toString(withSlashes = false) ?: ""
   }
 }
 
 class LimitedAgeDateState(
   val limit: LongRange,
   val areApproximateDatesAcceptable: Boolean,
-  backingState: MutableState<String> = mutableStateOf("")
+  backingState: MutableState<String> = mutableStateOf(""),
+  isFormDraftState: State<Boolean?>,
 ) : TextFieldState(
   validator = { possibleDate ->
     run {
+      if (isFormDraftState.value == true && possibleDate.isBlank()) {
+        return@run true
+      }
+
       val formDate = try {
         possibleDate.toFormDateFromNoSlashesOrThrow()
       } catch (e: NumberFormatException) {
@@ -1085,35 +1144,44 @@ class LimitedAgeDateState(
       }
     }
   },
-  backingState = backingState
+  backingState = backingState,
+  isFormDraftState = isFormDraftState,
 ) {
   fun dateFromStateOrNull() = stateValue.toFormDateFromNoSlashesOrNull()
   fun dateFromStateOrThrow() = stateValue.toFormDateFromNoSlashesOrThrow()
-  fun setStateFromFormDate(formDate: FormDate) {
-    stateValue = formDate.toString(withSlashes = false)
+  fun setStateFromFormDate(formDate: FormDate?) {
+    stateValue = formDate?.toString(withSlashes = false) ?: ""
   }
 }
 
 class LimitedAgeIntState(
   val limit: LongRange,
-  backingState: MutableState<String> = mutableStateOf("")
+  backingState: MutableState<String> = mutableStateOf(""),
+  isFormDraftState: State<Boolean?>,
 ) : TextFieldState(
   validator = { possibleAge ->
     run {
+      if (isFormDraftState.value == true && possibleAge.isBlank()) {
+        return@run true
+      }
+
       val age = possibleAge.toIntOrNull() ?: return@run false
       age in limit
     }
   },
   errorFor = { ctx, _ -> ctx.getString(R.string.age_must_be_in_range_d_and_d, limit.first, limit.last) },
-  backingState = backingState
+  backingState = backingState,
+  isFormDraftState = isFormDraftState,
 )
 
 class LimitedHduItuState(
   val limit: LongRange,
-  backingState: MutableState<String> = mutableStateOf("")
+  backingState: MutableState<String> = mutableStateOf(""),
+  isFormDraftState: State<Boolean?>
 ) : TextFieldState(
   validator = { stay ->
     run {
+      // optional
       if (stay.isBlank()) return@run true
       val stayAsInt = stay.toIntOrNull() ?: return@run false
       stayAsInt in limit
@@ -1126,44 +1194,51 @@ class LimitedHduItuState(
       limit.last
     )
   },
-  backingState = backingState
+  backingState = backingState,
+  isFormDraftState = isFormDraftState,
 )
 
 class EnumIdOnlyState(
   val enum: ServerEnum?,
   private val isMandatory: Boolean,
-  backingState: MutableState<EnumSelection.IdOnly?> = mutableStateOf(null)
+  backingState: MutableState<EnumSelection.IdOnly?> = mutableStateOf(null),
+  isFormDraftState: State<Boolean?>,
 ) : FieldState<EnumSelection.IdOnly?>(
   validator = { selection ->
     when {
-      selection == null -> !isMandatory
+      selection == null -> !isMandatory || (isMandatory && isFormDraftState.value == true)
       enum == null -> true
       else -> enum.getValueFromId(selection.selectionId) != null
     }
   },
   errorFor = { ctx, _, -> ctx.getString(R.string.server_enum_unknown_selection_error) },
   initialValue = null,
-  backingState = backingState
+  backingState = backingState,
+  isFormDraftState = isFormDraftState,
 ) {
   override val showErrorOnInput: Boolean = true
+  override fun isMissing(): Boolean = stateValue == null
 }
 
 class EnumWithOtherState(
   val enum: ServerEnum?,
   val isMandatory: Boolean,
   private val otherSelection: ServerEnum.Entry? = enum?.validSortedValues?.find { it.name == "Other" },
-  backingState: MutableState<EnumSelection.WithOther?> = mutableStateOf(null)
+  backingState: MutableState<EnumSelection.WithOther?> = mutableStateOf(null),
+  isFormDraftState: State<Boolean?>
 ) : FieldState<EnumSelection.WithOther?>(
   validator = { selection ->
     when {
-      selection == null -> !isMandatory
+      selection == null -> !isMandatory || (isMandatory && isFormDraftState.value == true)
       enum == null -> true
       else -> {
         val entry = selection.let { enum.getValueFromId(it.selectionId) }
         if (entry == null) {
           false
+        } else if (entry == otherSelection && selection.otherString.isNullOrBlank()) {
+          isFormDraftState.value == true
         } else {
-          !(entry == otherSelection && selection.otherString.isNullOrBlank())
+          true
         }
       }
     }
@@ -1180,8 +1255,10 @@ class EnumWithOtherState(
   },
   initialValue = null,
   backingState,
+  isFormDraftState
 ) {
   override val showErrorOnInput: Boolean = true
+  override fun isMissing() = stateValue == null
   override fun onNewStateValue(newValue: EnumSelection.WithOther?) {
     if (isMandatory && newValue != null) {
       enableShowErrors(force = true)

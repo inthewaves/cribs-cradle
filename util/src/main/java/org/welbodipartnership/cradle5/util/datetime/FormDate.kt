@@ -88,11 +88,7 @@ data class FormDate(val day: Int, val month: Int, val year: Int) : Comparable<Fo
   fun getAgeInYearsFromDate(other: FormDate): Long {
     val otherDate = other.toGmtGregorianCalendar().toZonedDateTime()
     val thisAsDate = toGmtGregorianCalendar().toZonedDateTime()
-    return if (compareDayAndMonth(this, other) < 0) {
-      ChronoUnit.YEARS.between(thisAsDate, otherDate)
-    } else {
-      ChronoUnit.YEARS.between(thisAsDate, otherDate)
-    }
+    return ChronoUnit.YEARS.between(thisAsDate, otherDate)
   }
 
   /**

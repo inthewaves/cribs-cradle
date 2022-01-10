@@ -12,8 +12,8 @@ fun Patient.toApiBody() = Registration(
   initials = initials,
   presentationDate = presentationDate,
   birthdateDate = dateOfBirth,
-  age = if (dateOfBirth.isExact) null else dateOfBirth.getAgeInYearsFromNow().toInt(),
-  healthcareFacility = healthcareFacilityId.toInt()
+  age = if (dateOfBirth!!.isExact) null else dateOfBirth!!.getAgeInYearsFromNow().toInt(),
+  healthcareFacility = healthcareFacilityId!!.toInt()
 )
 
 fun Outcomes.toApiBody() = Outcome(

@@ -134,9 +134,7 @@ fun DateOutlinedTextField(
       val newChannel = scope.actor<Unit>(capacity = Channel.RENDEZVOUS) {
         for (unused in channel) {
           val activity = requireNotNull(context.getFragmentActivity()) { "failed to get activity" }
-          val currentMonth: Int
           val nowDate: Long = with(LocalDate.now()) {
-            currentMonth = month.value
             val dateTime = LocalDateTime.of(year, month, dayOfMonth, 0, 0)
             dateTime.atZone(ZoneId.ofOffset("UTC", ZoneOffset.UTC))
               .toInstant()
@@ -179,9 +177,11 @@ fun DateOutlinedTextField(
             }
             onPickerClose()
           } finally {
-            datePicker.clearOnPositiveButtonClickListeners()
-            datePicker.clearOnCancelListeners()
-            datePicker.clearOnNegativeButtonClickListeners()
+            datePicker.apply {
+              clearOnPositiveButtonClickListeners()
+              clearOnCancelListeners()
+              clearOnNegativeButtonClickListeners()
+            }
           }
         }
       }

@@ -9,6 +9,7 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import org.welbodipartnership.cradle5.data.database.entities.embedded.EnumSelection
 import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
+import org.welbodipartnership.cradle5.data.verification.HasRequiredFields
 import org.welbodipartnership.cradle5.data.verification.Verifiable
 import org.welbodipartnership.cradle5.util.datetime.FormDate
 import kotlin.reflect.KProperty1
@@ -28,19 +29,49 @@ data class Outcomes(
   @Embedded
   override val serverInfo: ServerInfo?,
 
+  /** Whether nullability is from the user not selected an option and saving as draft */
+  @ColumnInfo(defaultValue = "1")
+  val eclampsiaFitTouched: TouchedState,
   @Embedded(prefix = "eclampsia_")
   val eclampsiaFit: EclampsiaFit?,
+
+  @ColumnInfo(defaultValue = "1")
+  val hysterectomyTouched: TouchedState,
   @Embedded(prefix = "hysterectomy_")
   val hysterectomy: Hysterectomy?,
+
+  @ColumnInfo(defaultValue = "1")
+  val hduOrItuAdmissionTouched: TouchedState,
   @Embedded(prefix = "hdu_itu_admission_")
   val hduOrItuAdmission: HduOrItuAdmission?,
+
+  @ColumnInfo(defaultValue = "1")
+  val maternalDeathTouched: TouchedState,
   @Embedded(prefix = "maternal_death_")
   val maternalDeath: MaternalDeath?,
+
+  @ColumnInfo(defaultValue = "1")
+  val surgicalManagementTouched: TouchedState,
   @Embedded(prefix = "surgical_mgmt_")
   val surgicalManagement: SurgicalManagementOfHaemorrhage?,
+
+  @ColumnInfo(defaultValue = "1")
+  val perinatalDeathTouched: TouchedState,
   @Embedded(prefix = "perinatal_death_")
   val perinatalDeath: PerinatalDeath?
-) : FormEntity, Verifiable<Outcomes> {
+) : FormEntity, Verifiable<Outcomes>, HasRequiredFields {
+
+  override fun requiredFieldsPresent(): Boolean {
+    return when {
+      eclampsiaFit?.requiredFieldsPresent() == false ||
+        hysterectomy?.requiredFieldsPresent() == false ||
+        hduOrItuAdmission?.requiredFieldsPresent() == false ||
+        maternalDeath?.requiredFieldsPresent() == false ||
+        surgicalManagement?.requiredFieldsPresent() == false ||
+        perinatalDeath?.requiredFieldsPresent() == false -> false
+      else -> true
+    }
+  }
 
   fun isValueForPropertyValid(
     property: KProperty1<out Outcomes, *>,
@@ -56,42 +87,52 @@ data class Outcomes(
  */
 @Immutable
 data class EclampsiaFit(
-  val date: FormDate,
+  @Required
+  val date: FormDate?,
   /**
    * The server provides enums for location starting at 1
    */
-  @get:JvmName("getPlace")
   val place: EnumSelection.IdOnly?,
-)
+) : HasRequiredFields {
+  override fun requiredFieldsPresent() = date != null
+}
 
 /**
  * Represents the first eclampsia fit
  */
 @Immutable
 data class Hysterectomy(
-  val date: FormDate,
+  @Required
+  val date: FormDate?,
   /**
    * The server provides enums for `cause` starting at 1
    */
   @Embedded(prefix = "cause_")
   val cause: EnumSelection.WithOther?,
   val additionalInfo: String?
-)
+) : HasRequiredFields {
+  override fun requiredFieldsPresent() = date != null
+}
 
 @Immutable
 data class HduOrItuAdmission(
-  val date: FormDate,
+  @Required
+  val date: FormDate?,
   /**
    * The server provides enums for `cause` starting at 1
    */
+  @Required
   @Embedded(prefix = "cause_")
-  val cause: EnumSelection.WithOther,
+  val cause: EnumSelection.WithOther?,
   val stayInDays: Int?,
-)
+) : HasRequiredFields {
+  override fun requiredFieldsPresent() = date != null && cause != null
+}
 
 @Immutable
 data class MaternalDeath(
-  val date: FormDate,
+  @Required
+  val date: FormDate?,
   /**
    * The server provides enums for `cause` starting at 1
    */
@@ -102,29 +143,36 @@ data class MaternalDeath(
    */
   @get:JvmName("getPlace")
   val place: EnumSelection.IdOnly?,
-)
+) : HasRequiredFields {
+  override fun requiredFieldsPresent() = date != null
+}
 
 /**
  * Surgical management of postpartum haemorrhage requiring anaesthesia
  */
 @Immutable
 data class SurgicalManagementOfHaemorrhage(
-  val date: FormDate,
+  @Required
+  val date: FormDate?,
   @Embedded(prefix = "type_")
   val typeOfSurgicalManagement: EnumSelection.WithOther?,
-)
+) : HasRequiredFields {
+  override fun requiredFieldsPresent() = date != null
+}
 
 /**
  * Surgical management of postpartum haemorrhage requiring anaesthesia
  */
 @Immutable
 data class PerinatalDeath(
-  val date: FormDate,
-  @get:JvmName("getOutcome")
+  @Required
+  val date: FormDate?,
   val outcome: EnumSelection.IdOnly?,
   @Embedded(prefix = "maternalfactors_")
   val relatedMaternalFactors: EnumSelection.WithOther?
-)
+) : HasRequiredFields {
+  override fun requiredFieldsPresent() = date != null
+}
 
 sealed class Location(val serverId: Long) {
   /**

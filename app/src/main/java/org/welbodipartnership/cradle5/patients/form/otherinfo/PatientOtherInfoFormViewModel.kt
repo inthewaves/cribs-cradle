@@ -11,7 +11,6 @@ import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.welbodipartnership.cradle5.LeafScreen
@@ -44,16 +43,6 @@ class PatientOtherInfoFormViewModel @Inject constructor(
     .getPatientInitialsFlow(existingPatientPrimaryKey)
     .stateIn(viewModelScope, SharingStarted.WhileSubscribed(2000L), null)
 
-  val isUploadedToServer: StateFlow<Boolean> = dbWrapper.patientsDao()
-    .getPatientNodeIdFlow(existingPatientPrimaryKey)
-    .map {
-      Log.d(TAG, "server info = $it")
-      it != null
-    }
-    .stateIn(viewModelScope, SharingStarted.WhileSubscribed(2000L), false)
-
-  val isDraftState: SavedStateMutableState<Boolean?> =
-    handle.createMutableState("otherInfoIsDraft", null)
   val localNotesState: SavedStateMutableState<String> =
     handle.createMutableState("otherInfoLocalNotes", "")
 
@@ -65,7 +54,6 @@ class PatientOtherInfoFormViewModel @Inject constructor(
         Log.e(TAG, "no patient with primary key $existingPatientPrimaryKey")
         FormState.Error("no patient with primary key $existingPatientPrimaryKey")
       } else {
-        isDraftState.value = patientOtherInfo.isDraft
         localNotesState.value = patientOtherInfo.localNotes ?: ""
 
         FormState.Loaded
@@ -73,13 +61,12 @@ class PatientOtherInfoFormViewModel @Inject constructor(
     }
   }
 
-  val submissionActor = viewModelScope.actor<Unit>(capacity = Channel.RENDEZVOUS) {
+  private val submissionActor = viewModelScope.actor<Unit>(capacity = Channel.RENDEZVOUS) {
     consumeEach {
       _formState.value = FormState.Saving
       _formState.value = try {
-        val updateSuccess = dbWrapper.patientsDao().updatePatientOtherInfo(
+        val updateSuccess = dbWrapper.patientsDao().updatePatientLocalNotesInfo(
           existingPatientPrimaryKey,
-          isDraft = isDraftState.value!!,
           localNotes = localNotesState.value.ifBlank { null }
         )
 

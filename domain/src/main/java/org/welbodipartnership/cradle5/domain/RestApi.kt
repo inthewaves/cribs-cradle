@@ -365,7 +365,12 @@ class RestApi @Inject internal constructor(
       )
       NodeId(serverInfo.nodeId.toInt())
     } else {
-      val submission: PostType = transform(entityToUpload)
+      val submission: PostType = try {
+        transform(entityToUpload)
+      } catch (e: Exception) {
+        Log.e(TAG, "transform failed", e)
+        return PostResult.AllFailed(null, e)
+      }
       val postBody: FormPostBody<PostType>
       val adapter: JsonAdapter<FormPostBody<PostType>> = try {
         postBody = FormPostBody.create(submission)
