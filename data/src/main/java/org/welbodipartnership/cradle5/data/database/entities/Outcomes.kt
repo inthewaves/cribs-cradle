@@ -5,7 +5,6 @@ import androidx.compose.runtime.Immutable
 import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Entity
-import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import org.welbodipartnership.cradle5.data.database.entities.embedded.EnumSelection
@@ -18,15 +17,6 @@ import kotlin.reflect.KProperty1
   indices = [
     Index("patientId")
   ],
-  foreignKeys = [
-    ForeignKey(
-      entity = Patient::class,
-      parentColumns = ["id"],
-      childColumns = ["patientId"],
-      onDelete = ForeignKey.CASCADE,
-      onUpdate = ForeignKey.CASCADE
-    )
-  ]
 )
 @Immutable
 data class Outcomes(
