@@ -99,10 +99,6 @@ fun OutcomesCard(
         enumValue = hysterectomy.cause,
         enumCollection = enumCollection
       )
-      LabelAndValueOrNone(
-        stringResource(R.string.hysterectomy_additional_info_label),
-        hysterectomy.additionalInfo
-      )
     } else {
       Text(
         text = if (hysterectomyTouched == TouchedState.TOUCHED_ENABLED) {
@@ -132,6 +128,10 @@ fun OutcomesCard(
       LabelAndValueOrUnknown(
         stringResource(R.string.hdu_or_idu_admission_length_stay_days_if_known_label),
         hduOrItuAdmission.stayInDays?.toString()
+      )
+      LabelAndValueOrNone(
+        stringResource(R.string.hdu_or_idu_admission_additional_info),
+        hduOrItuAdmission.additionalInfo
       )
     } else {
       Text(
@@ -261,13 +261,13 @@ val testOutcomes = Outcomes(
   hysterectomy = Hysterectomy(
     date = FormDate.today(),
     cause = EnumSelection.WithOther(4, "The other string"),
-    additionalInfo = "Additional info here"
   ),
   hduOrItuAdmissionTouched = TouchedState.TOUCHED_ENABLED,
   hduOrItuAdmission = HduOrItuAdmission(
     date = FormDate.today(),
     cause = EnumSelection.WithOther(4, "This is input for the `other` cause"),
-    stayInDays = 5
+    stayInDays = 5,
+    additionalInfo = "Additional info here"
   ),
   maternalDeathTouched = TouchedState.TOUCHED_ENABLED,
   maternalDeath = MaternalDeath(

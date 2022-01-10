@@ -1,5 +1,6 @@
 package org.welbodipartnership.cradle5.patients.form
 
+import android.content.Context
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.foundation.horizontalScroll
@@ -419,8 +420,6 @@ fun PatientForm(
             },
             dateState = hysterectomy.date,
             causeState = hysterectomy.cause,
-            additionalInfo = hysterectomy.additionalInfo.value ?: "",
-            onAdditionInfoChanged = { hysterectomy.additionalInfo.value = it },
             textFieldModifier = Modifier
               .bringIntoViewRequester(bringIntoViewRequester)
               /*
@@ -450,6 +449,8 @@ fun PatientForm(
             dateState = hduItuAdmission.date,
             causeState = hduItuAdmission.cause,
             lengthOfStayInDaysState = hduItuAdmission.hduItuStayLengthInDays,
+            additionalInfo = hduItuAdmission.additionalInfo.value ?: "",
+            onAdditionalInfoChanged = { hduItuAdmission.additionalInfo.value = it }
           )
 
           Spacer(Modifier.height(categoryToCategorySpacerHeight))
@@ -635,7 +636,8 @@ fun EclampsiaForm(
       },
       enabled = isFormEnabled == true,
       modifier = Modifier.fillMaxWidth(),
-      textFieldModifier = textFieldModifier.fillMaxWidth()
+      textFieldModifier = textFieldModifier
+        .fillMaxWidth()
         .then(dateState.createFocusChangeModifier()),
       errorHint = dateState.getError(),
       keyboardOptions = KeyboardOptions.Default,
@@ -661,8 +663,6 @@ fun HysterectomyForm(
   onFormEnabledChange: (newState: Boolean) -> Unit,
   dateState: NoFutureDateState,
   causeState: EnumWithOtherState,
-  additionalInfo: String,
-  onAdditionInfoChanged: (String) -> Unit,
   modifier: Modifier = Modifier,
   textFieldModifier: Modifier = Modifier,
 ) {
@@ -703,16 +703,6 @@ fun HysterectomyForm(
         .then(causeState.createFocusChangeModifier()),
       errorHint = causeState.getError()
     )
-
-    BringIntoViewOutlinedTextField(
-      value = additionalInfo,
-      onValueChange = onAdditionInfoChanged,
-      modifier = textFieldModifier
-        .fillMaxWidth(),
-      label = { Text(stringResource(R.string.hysterectomy_additional_info_label)) },
-      enabled = isFormEnabled == true,
-      colors = darkerDisabledOutlinedTextFieldColors()
-    )
   }
 }
 
@@ -723,6 +713,8 @@ fun AdmittedToHduItuForm(
   dateState: NoFutureDateState,
   causeState: EnumWithOtherState,
   lengthOfStayInDaysState: LimitedHduItuState,
+  additionalInfo: String,
+  onAdditionalInfoChanged: (String) -> Unit,
   modifier: Modifier = Modifier,
 ) {
   Column(modifier) {
@@ -787,6 +779,14 @@ fun AdmittedToHduItuForm(
         keyboardType = KeyboardType.Number
       ),
     )
+    BringIntoViewOutlinedTextField(
+      value = additionalInfo,
+      onValueChange = onAdditionalInfoChanged,
+      modifier = Modifier.fillMaxWidth(),
+      label = { Text(stringResource(R.string.hdu_or_idu_admission_additional_info)) },
+      enabled = isFormEnabled == true,
+      colors = darkerDisabledOutlinedTextFieldColors()
+    )
   }
 }
 
@@ -831,7 +831,12 @@ fun MaternalDeathForm(
       currentSelection = underlyingCauseState.stateValue,
       onSelect = { underlyingCauseState.stateValue = it },
       serverEnum = underlyingCauseState.enum!!,
-      label = { Text(stringResource(R.string.maternal_death_underlying_cause_label)) },
+      label = {
+        RequiredText(
+          stringResource(R.string.maternal_death_underlying_cause_label),
+          required = underlyingCauseState.isMandatory && isFormEnabled == true
+        )
+      },
       enabled = isFormEnabled == true,
       dropdownTextModifier = Modifier.fillMaxWidth(),
       showErrorHintOnOtherField = underlyingCauseState.stateValue != null,
@@ -978,7 +983,7 @@ fun EclampsiaFormPreview() {
         dateState = NoFutureDateState(
           isMandatory = true,
           areApproximateDatesAcceptable = true,
-          isFormDraftState = draft
+          isFormDraftState = draft,
         ),
         placeOfFirstFitState = EnumIdOnlyState(
           defaultEnums[DropdownType.Place],
@@ -1002,14 +1007,14 @@ fun PatientFormPreview() {
 }
 
 class HealthcareFacilityState(
-  val isRequired: Boolean,
+  isMandatory: Boolean,
   backingState: MutableState<FacilityAndPosition?>,
   isFormDraftState: State<Boolean?>
 ) : FieldState<FacilityAndPosition?>(
   validator = { facility ->
     if (isFormDraftState.value == true && facility == null) {
       true
-    } else if (isRequired) {
+    } else if (isMandatory) {
       facility?.facility != null
     } else {
       true
@@ -1019,6 +1024,7 @@ class HealthcareFacilityState(
   initialValue = null,
   backingState = backingState,
   isFormDraftState = isFormDraftState,
+  isMandatory = isMandatory,
 ) {
   override val showErrorOnInput: Boolean = true
   override fun isMissing(): Boolean {
@@ -1027,6 +1033,7 @@ class HealthcareFacilityState(
 }
 
 class InitialsState(
+  isMandatory: Boolean,
   backingState: MutableState<String> = mutableStateOf(""),
   isFormDraftState: State<Boolean?>
 ) : TextFieldState(
@@ -1034,17 +1041,82 @@ class InitialsState(
   errorFor = { ctx, _, -> ctx.getString(R.string.patient_registration_initials_error) },
   backingState = backingState,
   isFormDraftState = isFormDraftState,
+  isMandatory = isMandatory,
 ) {
   override val showErrorOnInput: Boolean = false
 }
 
-class NoFutureDateState(
-  val isMandatory: Boolean,
+class NoFutureDateAndAheadOfMaternalDeathState(
+  isMandatory: Boolean,
+  areApproximateDatesAcceptable: Boolean,
+  backingState: MutableState<String> = mutableStateOf(""),
+  isFormDraftState: State<Boolean?>,
+  maternalDeathDateState: NoFutureDateState
+) : NoFutureDateState(
+  validator = { possibleDate ->
+    run {
+      if (isFormDraftState.value == true && possibleDate.isEmpty()) {
+        return@run true
+      }
+
+      if (!isMandatory && possibleDate.isEmpty()) {
+        return@run true
+      }
+
+      val formDate = try {
+        possibleDate.toFormDateFromNoSlashesOrThrow()
+      } catch (e: NumberFormatException) {
+        return@run false
+      }
+
+      if (!formDate.isValid(areApproximateDatesAcceptable)) {
+        return@run false
+      }
+      if (formDate > FormDate.today()) {
+        return@run false
+      }
+      val maternalDeathDate = maternalDeathDateState.dateFromStateOrNull() ?: return@run true
+      formDate <= maternalDeathDate
+    }
+  },
+  errorFor = { ctx, date ->
+    val formDate = date.toFormDateFromNoSlashesOrNull()
+    if (formDate != null) {
+      when {
+        formDate.isValid(areApproximateDatesAcceptable) -> {
+          if (formDate > FormDate.today()) {
+            ctx.getString(R.string.form_date_cannot_be_in_future_error)
+          } else {
+            ctx.getString(R.string.form_date_cannot_be_after_maternal_death_error)
+          }
+        }
+        formDate.isValidIfItWereMmDdYyyyFormat(areApproximateDatesAcceptable) -> {
+          ctx.getString(R.string.form_date_expected_day_month_year_format_error)
+        }
+        else -> {
+          ctx.getString(R.string.form_date_invalid_error)
+        }
+      }
+    } else {
+      if (isMandatory && date.isBlank()) {
+        ctx.getString(R.string.form_date_required_error)
+      } else {
+        ctx.getString(R.string.form_date_invalid_error)
+      }
+    }
+  },
+  areApproximateDatesAcceptable = areApproximateDatesAcceptable,
+  backingState = backingState,
+  isFormDraftState = isFormDraftState,
+  isMandatory = isMandatory,
+)
+
+open class NoFutureDateState(
+  isMandatory: Boolean,
   val areApproximateDatesAcceptable: Boolean,
   backingState: MutableState<String> = mutableStateOf(""),
-  isFormDraftState: State<Boolean?>
-) : TextFieldState(
-  validator = { possibleDate ->
+  isFormDraftState: State<Boolean?>,
+  validator: (String) -> Boolean = { possibleDate ->
     run {
       if (isFormDraftState.value == true && possibleDate.isEmpty()) {
         return@run true
@@ -1067,7 +1139,7 @@ class NoFutureDateState(
       formDate <= FormDate.today()
     }
   },
-  errorFor = { ctx, date ->
+  errorFor: (Context, String) -> String = { ctx, date ->
     val formDate = date.toFormDateFromNoSlashesOrNull()
     if (formDate != null) {
       when {
@@ -1087,9 +1159,14 @@ class NoFutureDateState(
       }
     }
   },
+) : TextFieldState(
+  validator = validator,
+  errorFor = errorFor,
   backingState = backingState,
   isFormDraftState = isFormDraftState,
+  isMandatory = isMandatory,
 ) {
+
   fun dateFromStateOrNull() = stateValue.toFormDateFromNoSlashesOrNull()
   fun dateFromStateOrThrow() = stateValue.toFormDateFromNoSlashesOrThrow()
   fun setStateFromFormDate(formDate: FormDate?) {
@@ -1098,6 +1175,7 @@ class NoFutureDateState(
 }
 
 class LimitedAgeDateState(
+  isMandatory: Boolean,
   val limit: LongRange,
   val areApproximateDatesAcceptable: Boolean,
   backingState: MutableState<String> = mutableStateOf(""),
@@ -1146,6 +1224,7 @@ class LimitedAgeDateState(
   },
   backingState = backingState,
   isFormDraftState = isFormDraftState,
+  isMandatory = isMandatory,
 ) {
   fun dateFromStateOrNull() = stateValue.toFormDateFromNoSlashesOrNull()
   fun dateFromStateOrThrow() = stateValue.toFormDateFromNoSlashesOrThrow()
@@ -1155,6 +1234,7 @@ class LimitedAgeDateState(
 }
 
 class LimitedAgeIntState(
+  isMandatory: Boolean,
   val limit: LongRange,
   backingState: MutableState<String> = mutableStateOf(""),
   isFormDraftState: State<Boolean?>,
@@ -1172,9 +1252,11 @@ class LimitedAgeIntState(
   errorFor = { ctx, _ -> ctx.getString(R.string.age_must_be_in_range_d_and_d, limit.first, limit.last) },
   backingState = backingState,
   isFormDraftState = isFormDraftState,
+  isMandatory = isMandatory
 )
 
 class LimitedHduItuState(
+  isMandatory: Boolean,
   val limit: LongRange,
   backingState: MutableState<String> = mutableStateOf(""),
   isFormDraftState: State<Boolean?>
@@ -1196,11 +1278,12 @@ class LimitedHduItuState(
   },
   backingState = backingState,
   isFormDraftState = isFormDraftState,
+  isMandatory = isMandatory
 )
 
 class EnumIdOnlyState(
   val enum: ServerEnum?,
-  private val isMandatory: Boolean,
+  isMandatory: Boolean,
   backingState: MutableState<EnumSelection.IdOnly?> = mutableStateOf(null),
   isFormDraftState: State<Boolean?>,
 ) : FieldState<EnumSelection.IdOnly?>(
@@ -1215,6 +1298,7 @@ class EnumIdOnlyState(
   initialValue = null,
   backingState = backingState,
   isFormDraftState = isFormDraftState,
+  isMandatory = isMandatory,
 ) {
   override val showErrorOnInput: Boolean = true
   override fun isMissing(): Boolean = stateValue == null
@@ -1222,7 +1306,7 @@ class EnumIdOnlyState(
 
 class EnumWithOtherState(
   val enum: ServerEnum?,
-  val isMandatory: Boolean,
+  isMandatory: Boolean,
   private val otherSelection: ServerEnum.Entry? = enum?.validSortedValues?.find { it.name == "Other" },
   backingState: MutableState<EnumSelection.WithOther?> = mutableStateOf(null),
   isFormDraftState: State<Boolean?>
@@ -1254,8 +1338,9 @@ class EnumWithOtherState(
     }
   },
   initialValue = null,
-  backingState,
-  isFormDraftState
+  backingState = backingState,
+  isFormDraftState = isFormDraftState,
+  isMandatory = isMandatory,
 ) {
   override val showErrorOnInput: Boolean = true
   override fun isMissing() = stateValue == null

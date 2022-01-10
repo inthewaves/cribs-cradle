@@ -98,11 +98,34 @@ class PatientFormViewModel @Inject constructor(
 
   private val isFormDraftState = enabledState("isFormDraft")
 
+  /**
+   * putting this outside so that additional validation can work
+   */
+  private val maternalDeathState = OutcomeFields.MaternalDeath(
+    isEnabled = enabledState("maternalDeathEnabled"),
+    date = dateState(
+      "maternalDeathDate",
+      isMandatory = true,
+      areApproximateDatesAcceptable = false,
+    ),
+    underlyingCause = enumWithOtherState(
+      "maternalDeathUnderlyingCause",
+      DropdownType.UnderlyingCauseOfMaternalDeath,
+      isMandatory = true
+    ),
+    placeOfDeath = enumIdOnlyState(
+      "maternalDeathPlace",
+      DropdownType.Place,
+      isMandatory = false
+    )
+  )
+
   val formFields = PatientFormFields(
     patientFields = PatientFields(
       initials = InitialsState(
         backingState = handle.createMutableState("patientInitials", ""),
         isFormDraftState = isFormDraftState,
+        isMandatory = true,
       ),
       presentationDate = dateState(
         "patientPresentationDate",
@@ -114,14 +137,16 @@ class PatientFormViewModel @Inject constructor(
         areApproximateDatesAcceptable = true,
         backingState = handle.createMutableState("patientDateOfBirth", ""),
         isFormDraftState = isFormDraftState,
+        isMandatory = true,
       ),
       age = LimitedAgeIntState(
+        isMandatory = true,
         AGE_RANGE,
         handle.createMutableState("patientAge", ""),
         isFormDraftState = isFormDraftState,
       ),
       healthcareFacility = HealthcareFacilityState(
-        isRequired = true,
+        isMandatory = true,
         handle.createMutableState("patientHealthFacility", null),
         isFormDraftState = isFormDraftState
       ),
@@ -130,10 +155,10 @@ class PatientFormViewModel @Inject constructor(
     ),
     eclampsia = OutcomeFields.Eclampsia(
       isEnabled = enabledState("eclampsiaEnabled"),
-      date = dateState(
+      date = maternalDeathBoundedDateState(
         "eclampsiaDate",
         isMandatory = true,
-        areApproximateDatesAcceptable = false
+        areApproximateDatesAcceptable = false,
       ),
       placeOfFirstFit = enumIdOnlyState(
         "eclampsiaPlace",
@@ -143,24 +168,23 @@ class PatientFormViewModel @Inject constructor(
     ),
     hysterectomy = OutcomeFields.Hysterectomy(
       isEnabled = enabledState("hysterectomyEnabled"),
-      date = dateState(
+      date = maternalDeathBoundedDateState(
         "hysterectomyDate",
         isMandatory = true,
-        areApproximateDatesAcceptable = false
+        areApproximateDatesAcceptable = false,
       ),
       cause = enumWithOtherState(
         "hysterectomyCause",
         DropdownType.CauseOfHysterectomy,
         isMandatory = false
       ),
-      additionalInfo = handle.createMutableState("hysterectomyExtraInfo", null)
     ),
     hduItuAdmission = OutcomeFields.HduItuAdmission(
       isEnabled = enabledState("hduItuAdmissionEnabled"),
-      date = dateState(
+      date = maternalDeathBoundedDateState(
         "hduItuAdmissionDate",
         isMandatory = true,
-        areApproximateDatesAcceptable = false
+        areApproximateDatesAcceptable = false,
       ),
       cause = enumWithOtherState(
         "hduItuAdmissionCause",
@@ -168,35 +192,20 @@ class PatientFormViewModel @Inject constructor(
         isMandatory = true
       ),
       hduItuStayLengthInDays = LimitedHduItuState(
+        isMandatory = false,
         VALID_LENGTH_OF_ITU_HDU_STAY,
         handle.createMutableState("hduItuStayLengthDays", ""),
         isFormDraftState = isFormDraftState,
-      )
-    ),
-    maternalDeath = OutcomeFields.MaternalDeath(
-      isEnabled = enabledState("maternalDeathEnabled"),
-      date = dateState(
-        "maternalDeathDate",
-        isMandatory = true,
-        areApproximateDatesAcceptable = false
       ),
-      underlyingCause = enumWithOtherState(
-        "maternalDeathUnderlyingCause",
-        DropdownType.UnderlyingCauseOfMaternalDeath,
-        isMandatory = false
-      ),
-      placeOfDeath = enumIdOnlyState(
-        "maternalDeathPlace",
-        DropdownType.Place,
-        isMandatory = false
-      )
+      additionalInfo = handle.createMutableState("hduItuAdditionalInfo", null)
     ),
+    maternalDeath = maternalDeathState,
     surgicalManagement = OutcomeFields.SurgicalManagement(
       isEnabled = enabledState("surgicalManagementEnabled"),
-      date = dateState(
+      date = maternalDeathBoundedDateState(
         "surgicalManagementDate",
         isMandatory = true,
-        areApproximateDatesAcceptable = false
+        areApproximateDatesAcceptable = false,
       ),
       type = enumWithOtherState(
         "surgicalManagementType",
@@ -206,10 +215,10 @@ class PatientFormViewModel @Inject constructor(
     ),
     perinatalDeath = OutcomeFields.PerinatalDeath(
       isEnabled = enabledState("perinatalDeathEnabled"),
-      date = dateState(
+      date = maternalDeathBoundedDateState(
         "perinatalDeathDate",
         isMandatory = true,
-        areApproximateDatesAcceptable = false
+        areApproximateDatesAcceptable = false,
       ),
       outcome = enumIdOnlyState(
         "perinatalDeathOutcome",
@@ -283,7 +292,6 @@ class PatientFormViewModel @Inject constructor(
               isEnabled.value = true
               date.setStateFromFormDate(it.date)
               cause.backingState.value = it.cause
-              additionalInfo.value = it.additionalInfo
             } ?: clearFormsAndSetCheckbox(outcomes?.hysterectomyTouched?.nullEnabledState)
           }
 
@@ -293,6 +301,7 @@ class PatientFormViewModel @Inject constructor(
               date.setStateFromFormDate(it.date)
               cause.backingState.value = it.cause
               hduItuStayLengthInDays.backingState.value = it.stayInDays?.toString() ?: ""
+              additionalInfo.value = it.additionalInfo
             } ?: clearFormsAndSetCheckbox(
               newEnabledState = outcomes?.hduOrItuAdmissionTouched?.nullEnabledState
             )
@@ -513,7 +522,6 @@ class PatientFormViewModel @Inject constructor(
                 Hysterectomy(
                   date = if (isDraft) date.dateFromStateOrNull() else date.dateFromStateOrThrow(),
                   cause = cause.stateValue,
-                  additionalInfo = additionalInfo.value
                 )
               }
             }
@@ -560,7 +568,8 @@ class PatientFormViewModel @Inject constructor(
                 HduOrItuAdmission(
                   date = if (isDraft) date.dateFromStateOrNull() else date.dateFromStateOrThrow(),
                   cause = cause.stateValue,
-                  stayInDays = hduItuStayLengthInDays.stateValue.toIntOrNull()
+                  stayInDays = hduItuStayLengthInDays.stateValue.toIntOrNull(),
+                  additionalInfo = additionalInfo.value,
                 )
               }
             }
@@ -785,12 +794,24 @@ class PatientFormViewModel @Inject constructor(
   private fun dateState(
     key: String,
     isMandatory: Boolean,
-    areApproximateDatesAcceptable: Boolean
-  ) = NoFutureDateState(
+    areApproximateDatesAcceptable: Boolean,
+  ): NoFutureDateState = NoFutureDateState(
     isMandatory,
     areApproximateDatesAcceptable = areApproximateDatesAcceptable,
-    handle.createMutableState(key, ""),
-    isFormDraftState,
+    backingState = handle.createMutableState(key, ""),
+    isFormDraftState = isFormDraftState,
+  )
+
+  private fun maternalDeathBoundedDateState(
+    key: String,
+    isMandatory: Boolean,
+    areApproximateDatesAcceptable: Boolean
+  ) = NoFutureDateAndAheadOfMaternalDeathState(
+    isMandatory,
+    areApproximateDatesAcceptable = areApproximateDatesAcceptable,
+    backingState = handle.createMutableState(key, ""),
+    isFormDraftState = isFormDraftState,
+    maternalDeathDateState = maternalDeathState.date
   )
 
   private fun enumIdOnlyState(
@@ -893,13 +914,11 @@ class PatientFormViewModel @Inject constructor(
       override val isEnabled: MutableState<Boolean?>,
       override val date: NoFutureDateState,
       val cause: EnumWithOtherState,
-      val additionalInfo: MutableState<String?>
     ) : OutcomeFields() {
       override fun clearFormsAndSetCheckbox(newEnabledState: Boolean?) {
         isEnabled.value = newEnabledState
         date.reset()
         cause.reset()
-        additionalInfo.value = null
       }
 
       override fun forceShowErrors() {
@@ -915,13 +934,15 @@ class PatientFormViewModel @Inject constructor(
       override val isEnabled: MutableState<Boolean?>,
       override val date: NoFutureDateState,
       val cause: EnumWithOtherState,
-      val hduItuStayLengthInDays: LimitedHduItuState
+      val hduItuStayLengthInDays: LimitedHduItuState,
+      val additionalInfo: MutableState<String?>
     ) : OutcomeFields() {
       override fun clearFormsAndSetCheckbox(newEnabledState: Boolean?) {
         isEnabled.value = newEnabledState
         date.reset()
         cause.reset()
         hduItuStayLengthInDays.reset()
+        additionalInfo.value = null
       }
 
       override fun forceShowErrors() {

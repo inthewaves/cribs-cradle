@@ -3,9 +3,11 @@ package org.welbodipartnership.cradle5.data.database
 import android.content.Context
 import androidx.room.AutoMigration
 import androidx.room.Database
+import androidx.room.DeleteColumn
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.room.migration.AutoMigrationSpec
 import androidx.room.migration.Migration
 import androidx.room.withTransaction
 import net.sqlcipher.database.SupportFactory
@@ -20,7 +22,7 @@ import org.welbodipartnership.cradle5.data.database.entities.Patient
 import javax.inject.Inject
 import javax.inject.Singleton
 
-const val DATABASE_VERSION = 6
+const val DATABASE_VERSION = 7
 const val DATABASE_NAME = "cradle5.db"
 
 @Singleton
@@ -97,10 +99,17 @@ private val MIGRATIONS = arrayOf(
     AutoMigration(from = 3, to = 4),
     AutoMigration(from = 4, to = 5),
     AutoMigration(from = 5, to = 6),
+    AutoMigration(from = 6, to = 7, spec = Cradle5Database.Version6To7::class),
   ]
 )
 @TypeConverters(DbTypeConverters::class)
 abstract class Cradle5Database : RoomDatabase() {
+  @DeleteColumn(
+    tableName = "Outcomes",
+    columnName = "hysterectomy_additionalInfo"
+  )
+  internal class Version6To7 : AutoMigrationSpec
+
   abstract fun patientDao(): PatientDao
   abstract fun outcomesDao(): OutcomesDao
   abstract fun facilitiesDao(): FacilityDao

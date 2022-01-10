@@ -109,7 +109,6 @@ data class Hysterectomy(
    */
   @Embedded(prefix = "cause_")
   val cause: EnumSelection.WithOther?,
-  val additionalInfo: String?
 ) : HasRequiredFields {
   override fun requiredFieldsPresent() = date != null
 }
@@ -125,6 +124,7 @@ data class HduOrItuAdmission(
   @Embedded(prefix = "cause_")
   val cause: EnumSelection.WithOther?,
   val stayInDays: Int?,
+  val additionalInfo: String?
 ) : HasRequiredFields {
   override fun requiredFieldsPresent() = date != null && cause != null
 }
@@ -144,7 +144,7 @@ data class MaternalDeath(
   @get:JvmName("getPlace")
   val place: EnumSelection.IdOnly?,
 ) : HasRequiredFields {
-  override fun requiredFieldsPresent() = date != null
+  override fun requiredFieldsPresent() = date != null && underlyingCause != null
 }
 
 /**

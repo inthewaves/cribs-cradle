@@ -25,8 +25,6 @@ data class Outcome(
   val hysterectomyCause: Int? = null,
   @Json(name = "Control1553")
   val hysterectomyOtherCause: String? = null,
-  @Json(name = "Control1728")
-  val hysterectomyAdditionalInfo: String? = null,
 
   @Json(name = "Control1720")
   val isAdmittedToHduOrItu: Boolean = false,
@@ -38,13 +36,15 @@ data class Outcome(
   val hduOrItuAdmissionOtherCause: String? = null,
   @Json(name = "Control1918")
   val hduOrItuStayDays: Int? = null,
+  @Json(name = "Control1728")
+  val hduOrItuAdditionalInfo: String? = null,
 
   @Json(name = "Control1921")
   val hasMaternalDeath: Boolean = false,
   @Json(name = "Control1386")
   val maternalDeathDate: FormDate? = null,
   @Json(name = "Control1557")
-  val maternalDeathUnderlyingCause: Int? = null,
+  val maternalDeathUnderlyingCause: Int?,
   @Json(name = "Control1558")
   val maternalDeathOtherCause: String? = null,
   @Json(name = "Control1559")

@@ -25,13 +25,13 @@ fun Outcomes.toApiBody() = Outcome(
   hysterectomyDate = hysterectomy?.date,
   hysterectomyCause = hysterectomy?.cause?.selectionId,
   hysterectomyOtherCause = hysterectomy?.cause?.otherString?.ifBlank { null },
-  hysterectomyAdditionalInfo = hysterectomy?.additionalInfo,
 
   isAdmittedToHduOrItu = hduOrItuAdmission != null,
   hduOrItuAdmissionDate = hduOrItuAdmission?.date,
   hduOrItuAdmissionCause = hduOrItuAdmission?.cause?.selectionId,
   hduOrItuAdmissionOtherCause = hduOrItuAdmission?.cause?.otherString?.ifBlank { null },
   hduOrItuStayDays = hduOrItuAdmission?.stayInDays,
+  hduOrItuAdditionalInfo = hduOrItuAdmission?.additionalInfo,
 
   hasMaternalDeath = maternalDeath != null,
   maternalDeathDate = maternalDeath?.date,

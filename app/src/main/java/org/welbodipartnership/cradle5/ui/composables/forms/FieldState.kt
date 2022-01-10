@@ -33,8 +33,16 @@ open class TextFieldState(
   errorFor: (Context, String) -> String,
   initialValue: String = "",
   backingState: MutableState<String> = mutableStateOf(initialValue),
-  isFormDraftState: State<Boolean?>
-) : FieldState<String>(validator, errorFor, initialValue, backingState, isFormDraftState) {
+  isFormDraftState: State<Boolean?>,
+  isMandatory: Boolean,
+) : FieldState<String>(
+  validator,
+  errorFor,
+  initialValue,
+  backingState,
+  isFormDraftState,
+  isMandatory
+) {
   override val showErrorOnInput: Boolean = false
   override fun isMissing(): Boolean = stateValue.isBlank()
 }
@@ -47,7 +55,8 @@ abstract class FieldState<T>(
   val errorFor: (Context, T) -> String = { _, _ -> "" },
   val initialValue: T,
   val backingState: MutableState<T> = mutableStateOf(initialValue),
-  val isFormDraftState: State<Boolean?>
+  val isFormDraftState: State<Boolean?>,
+  val isMandatory: Boolean
 ) {
   abstract val showErrorOnInput: Boolean
 
@@ -121,6 +130,7 @@ abstract class FieldState<T>(
     if (stateValue != other.stateValue) return false
     if (isFocusedDirty != other.isFocusedDirty) return false
     if (isFocused != other.isFocused) return false
+    if (isMandatory != other.isMandatory) return false
 
     return true
   }
@@ -129,6 +139,7 @@ abstract class FieldState<T>(
     var result = stateValue?.hashCode() ?: 0
     result = 31 * result + isFocusedDirty.hashCode()
     result = 31 * result + isFocused.hashCode()
+    result = 31 * result + isMandatory.hashCode()
     return result
   }
 }
