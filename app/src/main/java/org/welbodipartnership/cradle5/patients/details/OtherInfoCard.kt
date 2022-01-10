@@ -10,7 +10,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import org.welbodipartnership.cradle5.R
-import org.welbodipartnership.cradle5.ui.composables.AnimatedVisibilityFadingWrapper
 import org.welbodipartnership.cradle5.ui.composables.LabelAndValueOrNone
 
 @Composable
@@ -34,7 +33,7 @@ fun OtherInfoCard(
       label = stringResource(R.string.local_notes_label),
       value = localNotes?.ifBlank { null }
     )
-    AnimatedVisibilityFadingWrapper(visible = isPatientUploadedToServer) {
+    if (isPatientUploadedToServer) {
       Spacer(modifier = Modifier.height(spacerHeight))
       TextButton(
         onClick = onEditOtherInfoButtonClick,

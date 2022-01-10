@@ -400,31 +400,25 @@ class PatientFormViewModel @Inject constructor(
             )
           }
           if (!age.isValid) {
-            if (!(isDraft && age.isMissing())) {
-              fieldToErrorMap.addFieldError(
-                R.string.patient_registration_card_title,
-                R.string.patient_registration_age_label,
-                age.errorFor(context, age.stateValue)
-              )
-            }
+            fieldToErrorMap.addFieldError(
+              R.string.patient_registration_card_title,
+              R.string.patient_registration_age_label,
+              age.errorFor(context, age.stateValue)
+            )
           }
           if (!dateOfBirth.isValid) {
-            if (!(isDraft && dateOfBirth.isMissing())) {
-              fieldToErrorMap.addFieldError(
-                R.string.patient_registration_card_title,
-                R.string.patient_registration_date_of_birth_label,
-                dateOfBirth.errorFor(context, dateOfBirth.stateValue)
-              )
-            }
+            fieldToErrorMap.addFieldError(
+              R.string.patient_registration_card_title,
+              R.string.patient_registration_date_of_birth_label,
+              dateOfBirth.errorFor(context, dateOfBirth.stateValue)
+            )
           }
           if (!healthcareFacility.isValid) {
-            if (!(isDraft && healthcareFacility.stateValue == null)) {
-              fieldToErrorMap.addFieldError(
-                R.string.patient_registration_card_title,
-                R.string.patient_registration_healthcare_facility_label,
-                healthcareFacility.errorFor(context, healthcareFacility.stateValue)
-              )
-            }
+            fieldToErrorMap.addFieldError(
+              R.string.patient_registration_card_title,
+              R.string.patient_registration_healthcare_facility_label,
+              healthcareFacility.errorFor(context, healthcareFacility.stateValue)
+            )
           }
 
           runCatching {
@@ -461,13 +455,11 @@ class PatientFormViewModel @Inject constructor(
             }
             true -> {
               if (!date.isValid) {
-                if (!(isDraft && date.isMissing())) {
-                  fieldToErrorMap.addFieldError(
-                    getCategoryStringRes(),
-                    R.string.form_date_label,
-                    date.errorFor(context, date.stateValue)
-                  )
-                }
+                fieldToErrorMap.addFieldError(
+                  getCategoryStringRes(),
+                  R.string.form_date_label,
+                  date.errorFor(context, date.stateValue)
+                )
               }
               if (!placeOfFirstFit.isValid) {
                 fieldToErrorMap.addFieldError(
@@ -502,13 +494,11 @@ class PatientFormViewModel @Inject constructor(
             }
             true -> {
               if (!date.isValid) {
-                if (!(isDraft && date.isMissing())) {
-                  fieldToErrorMap.addFieldError(
-                    getCategoryStringRes(),
-                    R.string.form_date_label,
-                    date.errorFor(context, date.stateValue)
-                  )
-                }
+                fieldToErrorMap.addFieldError(
+                  getCategoryStringRes(),
+                  R.string.form_date_label,
+                  date.errorFor(context, date.stateValue)
+                )
               }
               if (!cause.isValid) {
                 fieldToErrorMap.addFieldError(
@@ -551,14 +541,12 @@ class PatientFormViewModel @Inject constructor(
                   date.errorFor(context, date.stateValue)
                 )
               }
-              if (!cause.isValid || cause.stateValue == null) {
-                if (!(isDraft && cause.isMissing())) {
-                  fieldToErrorMap.addFieldError(
-                    getCategoryStringRes(),
-                    R.string.hdu_or_idu_admission_cause_label,
-                    cause.errorFor(context, cause.stateValue)
-                  )
-                }
+              if (!cause.isValid) {
+                fieldToErrorMap.addFieldError(
+                  getCategoryStringRes(),
+                  R.string.hdu_or_idu_admission_cause_label,
+                  cause.errorFor(context, cause.stateValue)
+                )
               }
               if (!hduItuStayLengthInDays.isValid) {
                 fieldToErrorMap.addFieldError(
@@ -594,13 +582,11 @@ class PatientFormViewModel @Inject constructor(
             }
             true -> {
               if (!date.isValid) {
-                if (!(isDraft && date.isMissing())) {
-                  fieldToErrorMap.addFieldError(
-                    getCategoryStringRes(),
-                    R.string.form_date_label,
-                    date.errorFor(context, date.stateValue)
-                  )
-                }
+                fieldToErrorMap.addFieldError(
+                  getCategoryStringRes(),
+                  R.string.form_date_label,
+                  date.errorFor(context, date.stateValue)
+                )
               }
               if (!underlyingCause.isValid) {
                 fieldToErrorMap.addFieldError(
@@ -642,13 +628,11 @@ class PatientFormViewModel @Inject constructor(
             }
             true -> {
               if (!date.isValid) {
-                if (!(isDraft && date.isMissing())) {
-                  fieldToErrorMap.addFieldError(
-                    getCategoryStringRes(),
-                    R.string.form_date_label,
-                    date.errorFor(context, date.stateValue)
-                  )
-                }
+                fieldToErrorMap.addFieldError(
+                  getCategoryStringRes(),
+                  R.string.form_date_label,
+                  date.errorFor(context, date.stateValue)
+                )
               }
               if (!type.isValid) {
                 fieldToErrorMap.addFieldError(
@@ -682,13 +666,11 @@ class PatientFormViewModel @Inject constructor(
             }
             true -> {
               if (!date.isValid) {
-                if (!(isDraft && date.isMissing())) {
-                  fieldToErrorMap.addFieldError(
-                    getCategoryStringRes(),
-                    R.string.form_date_label,
-                    date.errorFor(context, date.stateValue)
-                  )
-                }
+                fieldToErrorMap.addFieldError(
+                  getCategoryStringRes(),
+                  R.string.form_date_label,
+                  date.errorFor(context, date.stateValue)
+                )
               }
               if (!outcome.isValid) {
                 fieldToErrorMap.addFieldError(
