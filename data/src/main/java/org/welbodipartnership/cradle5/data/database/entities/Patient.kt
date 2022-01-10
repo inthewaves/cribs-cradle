@@ -34,6 +34,7 @@ data class Patient(
   override val id: Long = 0,
   @Embedded
   override val serverInfo: ServerInfo?,
+  val serverErrorMessage: String?,
 
   val initials: String,
   val presentationDate: FormDate?,

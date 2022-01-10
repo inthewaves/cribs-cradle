@@ -232,6 +232,7 @@ fun PatientDetailsScreenNotUploadedPreview() {
         patient = Patient(
           initials = "AA",
           serverInfo = null,
+          serverErrorMessage = null,
           presentationDate = FormDate(day = 10, month = 2, year = 1995),
           dateOfBirth = FormDate(day = 19, month = 8, year = 1989),
           healthcareFacilityId = 50L,
@@ -257,6 +258,7 @@ fun PatientDetailsScreenUploadedPreview() {
         patient = Patient(
           initials = "AA",
           serverInfo = ServerInfo(nodeId = 5L, objectId = null),
+          serverErrorMessage = null,
           presentationDate = FormDate(day = 10, month = 2, year = 1995),
           dateOfBirth = FormDate(day = 19, month = 8, year = 1989),
           healthcareFacilityId = 50L,
@@ -282,6 +284,7 @@ fun PatientDetailsScreenSyncingPreview() {
         patient = Patient(
           initials = "AA",
           serverInfo = null,
+          serverErrorMessage = null,
           presentationDate = FormDate(day = 10, month = 2, year = 1995),
           dateOfBirth = FormDate(day = 19, month = 8, year = 1989),
           healthcareFacilityId = 50L,

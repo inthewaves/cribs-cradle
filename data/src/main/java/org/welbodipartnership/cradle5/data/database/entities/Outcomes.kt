@@ -28,6 +28,7 @@ data class Outcomes(
   val patientId: Long,
   @Embedded
   override val serverInfo: ServerInfo?,
+  val serverErrorMessage: String?,
 
   /** Whether nullability is from the user not selected an option and saving as draft */
   @ColumnInfo(defaultValue = "1")

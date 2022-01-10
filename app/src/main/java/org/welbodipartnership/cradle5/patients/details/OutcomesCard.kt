@@ -46,6 +46,7 @@ fun OutcomesCard(
       _,
       _,
       _,
+      _,
       eclampsiaFitTouched: TouchedState,
       eclampsiaFit: EclampsiaFit?,
       hysterectomyTouched: TouchedState,
@@ -252,6 +253,7 @@ fun OutcomesCardPreview() {
 val testOutcomes = Outcomes(
   patientId = 5L,
   serverInfo = null,
+  serverErrorMessage = "some error",
   eclampsiaFitTouched = TouchedState.TOUCHED_ENABLED,
   eclampsiaFit = EclampsiaFit(
     date = FormDate(20, 4, 2019),

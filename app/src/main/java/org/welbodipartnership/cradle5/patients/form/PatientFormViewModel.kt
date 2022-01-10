@@ -434,6 +434,7 @@ class PatientFormViewModel @Inject constructor(
             Patient(
               id = patientAndOutcomes?.patient?.id ?: 0L,
               serverInfo = patientAndOutcomes?.patient?.serverInfo,
+              serverErrorMessage = null,
               initials = initials.stateValue,
               presentationDate = presentationDate.dateFromStateOrNull(),
               dateOfBirth = if (isDraft) dateOfBirth.dateFromStateOrNull() else dateOfBirth.dateFromStateOrThrow(),
@@ -730,6 +731,8 @@ class PatientFormViewModel @Inject constructor(
                 id = patientAndOutcomes?.outcomes?.id ?: 0,
                 patientId = pk,
                 serverInfo = patientAndOutcomes?.outcomes?.serverInfo,
+                serverErrorMessage = null,
+
                 eclampsiaFitTouched = when (formFields.eclampsia.isEnabled.value) {
                   true -> TouchedState.TOUCHED_ENABLED
                   false -> TouchedState.TOUCHED

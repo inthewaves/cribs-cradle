@@ -68,6 +68,7 @@ fun PatientCardPreview() {
       patient = Patient(
         initials = "AA",
         serverInfo = null,
+        serverErrorMessage = null,
         presentationDate = FormDate(day = 10, month = 2, year = 1995),
         dateOfBirth = FormDate(day = 19, month = 8, year = 1989),
         healthcareFacilityId = 50L,

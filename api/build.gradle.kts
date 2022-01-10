@@ -32,6 +32,8 @@ dependencies {
     coreLibraryDesugaring(libs.desugar)
     // implementation(kotlin("reflect"))
 
+    implementation(libs.androidx.core.ktx)
+
     api(libs.moshi.core)
     implementation(libs.moshi.adapters)
     ksp(libs.moshi.codegen)
