@@ -54,10 +54,29 @@ abstract class PatientDao {
   @Insert(onConflict = OnConflictStrategy.IGNORE)
   protected abstract suspend fun insert(patient: Patient): Long
 
+  // ---- Patients paging
+
   @RewriteQueriesToDropUnusedColumns
   @Transaction
-  @Query("SELECT * FROM Patient ORDER BY id ASC")
+  @Query("SELECT * FROM Patient ORDER BY id DESC")
   abstract fun patientsPagingSource(): PagingSource<Int, ListPatient>
+
+  @RewriteQueriesToDropUnusedColumns
+  @Transaction
+  @Query("SELECT * FROM Patient WHERE nodeId IS NULL AND isDraft = 1 ORDER BY id DESC")
+  abstract fun patientsPagingSourceFilterByDraft(): PagingSource<Int, ListPatient>
+
+  @RewriteQueriesToDropUnusedColumns
+  @Transaction
+  @Query("SELECT * FROM Patient WHERE nodeId IS NOT NULL ORDER BY id DESC")
+  abstract fun patientsPagingSourceFilterByUploaded(): PagingSource<Int, ListPatient>
+
+  @RewriteQueriesToDropUnusedColumns
+  @Transaction
+  @Query("SELECT * FROM Patient WHERE nodeId IS NULL AND isDraft = 0 ORDER BY id DESC")
+  abstract fun patientsPagingSourceFilterByNotUploadedAndNotDraft(): PagingSource<Int, ListPatient>
+
+  // ---- Patient + outcomes observations
 
   @Transaction
   @Query("SELECT * FROM Patient WHERE id = :patientPk")

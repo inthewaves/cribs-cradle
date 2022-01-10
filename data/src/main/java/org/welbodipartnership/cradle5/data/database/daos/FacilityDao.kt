@@ -62,6 +62,12 @@ abstract class FacilityDao {
   @Query("SELECT * FROM Facility $DEFAULT_ORDER")
   abstract fun facilitiesPagingSource(): PagingSource<Int, Facility>
 
+  @Transaction
+  @Query("SELECT * FROM Facility WHERE hasVisited = :visited $DEFAULT_ORDER")
+  abstract fun facilitiesPagingSourceFilterByVisited(
+    visited: Boolean
+  ): PagingSource<Int, Facility>
+
   @RawQuery
   protected abstract suspend fun getFacilityIndexWhenOrderedByName(
     query: SupportSQLiteQuery
