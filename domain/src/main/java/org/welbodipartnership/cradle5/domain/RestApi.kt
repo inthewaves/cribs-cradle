@@ -13,12 +13,15 @@ import kotlinx.coroutines.runInterruptible
 import okhttp3.FormBody
 import okhttp3.Headers
 import okio.BufferedSource
+import okio.buffer
+import okio.source
 import org.welbodipartnership.api.ApiAuthToken
 import org.welbodipartnership.api.IndexMenuItem
 import org.welbodipartnership.api.LoginErrorMessage
 import org.welbodipartnership.api.cradle5.GpsForm
 import org.welbodipartnership.api.forms.FormGetResponse
 import org.welbodipartnership.api.forms.FormPostBody
+import org.welbodipartnership.api.forms.PostFailureBody
 import org.welbodipartnership.api.lookups.LookupResult
 import org.welbodipartnership.api.lookups.LookupsEnumerationEntry
 import org.welbodipartnership.api.lookups.dynamic.DynamicLookupBody
@@ -311,6 +314,7 @@ class RestApi @Inject internal constructor(
      */
     data class AllFailed(
       val failOrException: NetworkResult<*, ByteArray>?,
+      val failureBody: PostFailureBody?,
       val otherCause: Exception? = null
     ) : PostResult
 
@@ -369,7 +373,7 @@ class RestApi @Inject internal constructor(
         transform(entityToUpload)
       } catch (e: Exception) {
         Log.e(TAG, "transform failed", e)
-        return PostResult.AllFailed(null, e)
+        return PostResult.AllFailed(null, null, e)
       }
       val postBody: FormPostBody<PostType>
       val adapter: JsonAdapter<FormPostBody<PostType>> = try {
@@ -382,7 +386,7 @@ class RestApi @Inject internal constructor(
             "${PostType::class.java.simpleName} does not have an adapter",
           e
         )
-        return PostResult.AllFailed(failOrException = null, otherCause = e)
+        return PostResult.AllFailed(failOrException = null, failureBody = null, otherCause = e)
       }
       val formId = try {
         FormId.fromAnnotationOrThrow<PostType>()
@@ -393,7 +397,7 @@ class RestApi @Inject internal constructor(
             "${PostType::class.java.simpleName} missing FormId annotation",
           e
         )
-        return PostResult.AllFailed(failOrException = null, otherCause = e)
+        return PostResult.AllFailed(failOrException = null, failureBody = null, otherCause = e)
       }
 
       val body = HttpClient.buildJsonRequestBody { sink -> adapter.toJson(sink, postBody) }
@@ -409,14 +413,36 @@ class RestApi @Inject internal constructor(
         )
       ) {
         is NetworkResult.Success -> result.value
-        else -> {
+        is NetworkResult.Failure -> {
           Log.e(
             TAG,
             "multiStageNewFormSubmission: " +
               "failed to POST ${PostType::class.java.simpleName}: " +
               result.getErrorMessageOrNull(context)
           )
-          return PostResult.AllFailed(result)
+
+          val failureBody: PostFailureBody? = try {
+            if (result.statusCode == 400) {
+              val failureAdapter = moshi.adapter(PostFailureBody::class.java)
+              failureAdapter.fromJson(result.errorValue.inputStream().source().buffer())
+            } else {
+              null
+            }
+          } catch (e: Exception) {
+            Log.e(TAG, "failed to parse error message")
+            null
+          }
+
+          return PostResult.AllFailed(result, failureBody, null)
+        }
+        is NetworkResult.NetworkException -> {
+          Log.e(
+            TAG,
+            "multiStageNewFormSubmission: " +
+              "exception during POST ${PostType::class.java.simpleName}: " +
+              result.getErrorMessageOrNull(context)
+          )
+          return PostResult.AllFailed(result, null, null)
         }
       }.also {
         Log.d(

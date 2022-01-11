@@ -22,7 +22,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.firstOrNull
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
 import org.welbodipartnership.cradle5.data.database.entities.LocationCheckIn
-import org.welbodipartnership.cradle5.data.database.resultentities.PatientAndOutcomes
+import org.welbodipartnership.cradle5.data.database.resultentities.PatientOutcomePair
 import org.welbodipartnership.cradle5.data.settings.AppValuesStore
 import org.welbodipartnership.cradle5.domain.RestApi
 import org.welbodipartnership.cradle5.domain.enums.EnumRepository
@@ -75,6 +75,14 @@ class SyncWorker @AssistedInject constructor(
         .getPatientsWithPartialServerInfoOrderedById()
     )
 
+    Log.d(TAG, "uploading any patients with unuploaded outcomes")
+    val failedOutcomesResult = runUploadForPatientsAndOutcomes(
+      Stage.UPLOADING_INCOMPLETE_OUTCOMES,
+      dbWrapper
+        .outcomesDao()
+        .getOutcomesNotFullyUploadedOrderedWithOrWithoutErrorsById()
+    )
+
     Log.d(TAG, "uploading check ins")
     runUploadForCheckIns(dbWrapper.locationCheckInDao().getCheckInsForUpload())
 
@@ -108,7 +116,7 @@ class SyncWorker @AssistedInject constructor(
 
   private suspend fun runUploadForPatientsAndOutcomes(
     stage: Stage,
-    patientsAndOutcomes: List<PatientAndOutcomes>
+    patientsAndOutcomes: List<PatientOutcomePair>
   ): PatientUploadResult = coroutineScope {
     val successfulPatientIds = linkedSetOf<Long>()
     val failedPatientIds = linkedSetOf<Long>()
@@ -127,9 +135,13 @@ class SyncWorker @AssistedInject constructor(
       }
     }
 
-    patientsAndOutcomes.forEachIndexed { index, (patient, outcomes) ->
-      if (outcomes == null) {
-        Log.w(TAG, "refusing to upload patient ${patient.id} because they have no outcomes")
+    patientsAndOutcomes.forEachIndexed { index, patientOutcomePair ->
+      val patient = patientOutcomePair.patient
+      val outcomes = patientOutcomePair.outcomes
+      if (patient == null) {
+        Log.w(TAG, "refusing to upload outcome ${outcomes?.id} because missing patient")
+      } else if (outcomes == null) {
+        Log.w(TAG, "refusing to upload patient ${patient?.id} because they have no outcomes")
       } else {
         val result = patientsManager.uploadPatientAndOutcomes(patient, outcomes)
         Log.d(TAG, "patient result: $result")
@@ -238,6 +250,7 @@ class SyncWorker @AssistedInject constructor(
      * ObjectId. An ObjectId is strictly required for posting an outcome for a patient.
      */
     UPLOADING_INCOMPLETE_PATIENTS,
+    UPLOADING_INCOMPLETE_OUTCOMES,
     UPLOADING_LOCATION_CHECK_INS,
     DOWNLOADING_FACILITIES,
     DOWNLOADING_DROPDOWN_VALUES,

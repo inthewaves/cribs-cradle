@@ -69,6 +69,7 @@ import org.welbodipartnership.cradle5.data.serverenums.ServerEnum
 import org.welbodipartnership.cradle5.data.serverenums.ServerEnumCollection
 import org.welbodipartnership.cradle5.patients.details.BaseDetailsCard
 import org.welbodipartnership.cradle5.patients.details.CategoryHeader
+import org.welbodipartnership.cradle5.ui.composables.LabelAndValueOrNone
 import org.welbodipartnership.cradle5.ui.composables.forms.BooleanRadioButtonRow
 import org.welbodipartnership.cradle5.ui.composables.forms.BringIntoViewOutlinedTextField
 import org.welbodipartnership.cradle5.ui.composables.forms.DateOutlinedTextField
@@ -90,9 +91,6 @@ import org.welbodipartnership.cradle5.util.datetime.toFormDateFromNoSlashesOrThr
 
 private val MAX_INITIALS_LENGTH = 5
 
-private val DOB_RANGE = 10L..60L
-
-private val VALID_LENGTH_OF_ITU_HDU_STAY = 1L..100L
 
 /**
  * Support wide screen by making the content width max 840dp, centered horizontally.
@@ -184,6 +182,8 @@ fun PatientForm(
     )
   }
 
+  val existingPatientInfo by viewModel.existingParentFacilityOutcomes.collectAsState(initial = null)
+
   Scaffold(
     scaffoldState = rememberScaffoldState(snackbarHostState = snackbarHostState),
     topBar = {
@@ -198,16 +198,19 @@ fun PatientForm(
         title = {
           if (viewModel.isExistingPatientEdit) {
             Column {
-              Text(stringResource(R.string.edit_patient_title))
-              formState.value.let { state ->
-                if (
-                  state is PatientFormViewModel.FormState.Ready &&
-                  state.existingInfo != null
-                ) {
+              existingPatientInfo.let { existingInfo ->
+                if (existingInfo != null) {
+                  if (existingInfo.patient.isUploadedToServer) {
+                    Text(stringResource(R.string.edit_outcomes_title))
+                  } else {
+                    Text(stringResource(R.string.edit_patient_title))
+                  }
                   Text(
-                    state.existingInfo.patient.initials,
+                    existingInfo.patient.initials,
                     style = MaterialTheme.typography.subtitle2
                   )
+                } else {
+                  Text(stringResource(R.string.edit_patient_title))
                 }
               }
             }
@@ -247,6 +250,16 @@ fun PatientForm(
           stringResource(R.string.patient_registration_card_title),
           Modifier.padding(16.dp)
         ) {
+          if (existingPatientInfo?.patient?.isUploadedToServer == true) {
+            Text("Patient registration info has already been uploaded; only the outcomes can be edited")
+            return@BaseDetailsCard
+          }
+
+          existingPatientInfo?.patient?.serverErrorMessage?.let { serverErrorMessage ->
+            LabelAndValueOrNone(stringResource(R.string.errors_from_sync_label), serverErrorMessage)
+            Spacer(Modifier.height(categoryToCategorySpacerHeight))
+          }
+
           val patientFields = viewModel.formFields.patientFields
           OutlinedTextFieldWithErrorHint(
             value = patientFields.initials.stateValue,
@@ -392,6 +405,11 @@ fun PatientForm(
           stringResource(R.string.outcomes_card_title),
           Modifier.padding(16.dp)
         ) {
+          existingPatientInfo?.outcomes?.serverErrorMessage?.let { serverErrorMessage ->
+            LabelAndValueOrNone(stringResource(R.string.errors_from_sync_label), serverErrorMessage)
+            Spacer(Modifier.height(categoryToCategorySpacerHeight))
+          }
+
           CategoryHeader(stringResource(R.string.outcomes_eclampsia_label))
 
           val eclampsia = viewModel.formFields.eclampsia
@@ -540,13 +558,15 @@ fun PatientForm(
               backgroundColor = MaterialTheme.colors.error.copy(alpha = 0.3f),
               columnContent = {
                 columnContent()
-                Spacer(Modifier.height(16.dp))
-                Divider(
-                  color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
-                  thickness = 4.dp
-                )
-                Spacer(Modifier.height(16.dp))
-                Text(stringResource(R.string.other_card_draft_more_info))
+                if (existingPatientInfo?.patient?.isUploadedToServer != true) {
+                  Spacer(Modifier.height(16.dp))
+                  Divider(
+                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
+                    thickness = 4.dp
+                  )
+                  Spacer(Modifier.height(16.dp))
+                  Text(stringResource(R.string.other_card_draft_more_info))
+                }
               },
             )
           }
@@ -557,7 +577,7 @@ fun PatientForm(
         val (isDraft, setIsDraft) = viewModel.formFields.patientFields.isDraft
         val (localNotes, setLocalNotes) = viewModel.formFields.patientFields.localNotes
         OtherCard(
-          hideDraft = false,
+          hideDraft = existingPatientInfo?.patient?.isUploadedToServer == true,
           isDraft = isDraft,
           onIsDraftChange = setIsDraft,
           localNotes = localNotes,

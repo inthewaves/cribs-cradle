@@ -3,9 +3,12 @@ package org.welbodipartnership.cradle5.data.database.daos
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
+import kotlinx.coroutines.flow.Flow
 import org.welbodipartnership.cradle5.data.database.entities.Outcomes
 import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
+import org.welbodipartnership.cradle5.data.database.resultentities.OutcomesAndPatient
 
 @Dao
 abstract class OutcomesDao {
@@ -28,6 +31,12 @@ abstract class OutcomesDao {
   @Query("SELECT * FROM Outcomes WHERE id = :id")
   abstract suspend fun get(id: Long): Outcomes?
 
+  @Query("UPDATE Outcomes SET serverErrorMessage = :serverErrorMessage WHERE id = :outcomesId")
+  abstract suspend fun updateOutcomesWithServerErrorMessage(
+    outcomesId: Long,
+    serverErrorMessage: String?
+  )
+
   /**
    * @return the number of rows that were updated. Note that WHERE is set to the primary key,
    * so it either returns 1 or 0.
@@ -47,4 +56,60 @@ abstract class OutcomesDao {
   suspend fun updateWithServerInfo(outcomesId: Long, serverInfo: ServerInfo): Boolean {
     return updateWithServerInfo(outcomesId, serverInfo.nodeId, serverInfo.objectId) == 1
   }
+
+  /**
+   * Gets outcomes not fully uploaded where the error message has been cleared by editing the
+   * form.
+   */
+  @Transaction
+  @Query(
+    """
+SELECT
+  o.*
+FROM
+  Outcomes AS o
+  JOIN Patient AS p ON p.id = o.patientId
+WHERE
+  p.nodeId IS NOT NULL AND
+  p.objectId IS NOT NULL AND
+  o.objectId IS NULL
+    """
+  )
+  abstract suspend fun getOutcomesNotFullyUploadedOrderedWithOrWithoutErrorsById(): List<
+    OutcomesAndPatient
+    >
+
+  @Transaction
+  @Query(
+    """
+SELECT
+  COUNT(*)
+FROM
+  Outcomes AS o
+  JOIN Patient AS p ON p.id = o.patientId
+WHERE
+  p.nodeId IS NOT NULL AND
+  p.objectId IS NOT NULL AND
+  o.objectId IS NULL AND
+  o.serverErrorMessage IS NULL
+    """
+  )
+  abstract fun countOutcomesNotFullyUploadedWithoutErrors(): Flow<Int>
+
+  @Transaction
+  @Query(
+    """
+SELECT
+  COUNT(*)
+FROM
+  Outcomes AS o
+  JOIN Patient AS p ON p.id = o.patientId
+WHERE
+  p.nodeId IS NOT NULL AND
+  p.objectId IS NOT NULL AND
+  o.objectId IS NULL AND
+  o.serverErrorMessage IS NOT NULL
+    """
+  )
+  abstract fun countOutcomesNotFullyUploadedWithErrors(): Flow<Int>
 }

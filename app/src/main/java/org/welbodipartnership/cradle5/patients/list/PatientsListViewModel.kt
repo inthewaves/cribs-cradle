@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import org.welbodipartnership.cradle5.R
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
 import org.welbodipartnership.cradle5.data.database.entities.Patient
-import org.welbodipartnership.cradle5.data.database.resultentities.ListPatient
+import org.welbodipartnership.cradle5.data.database.resultentities.ListPatientAndOutcomeError
 import javax.inject.Inject
 
 @HiltViewModel
@@ -42,7 +42,7 @@ class PatientsListViewModel @Inject constructor(
     maxSize = 200
   )
 
-  val patientsPagerFlow: Flow<PagingData<ListPatient>> = filterOption
+  val patientsPagerFlow: Flow<PagingData<ListPatientAndOutcomeError>> = filterOption
     .flatMapLatest { filterOpt ->
       Pager(pagingConfig) {
         when (filterOpt) {

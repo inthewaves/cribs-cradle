@@ -26,7 +26,7 @@ data class Registration(
   val healthcareFacility: Int?,
 ) {
   companion object {
-    val controlIdToNameMap = ArrayMap<String, String>(5).apply {
+    val controlIdToNameMap: Map<String, String> = ArrayMap<String, String>(5).apply {
       put("Control1336", "Initials")
       put("Control1646", "Presentation date")
       put("Control1337", "Birthdate")

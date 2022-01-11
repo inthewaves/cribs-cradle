@@ -16,6 +16,7 @@ import androidx.compose.material.ContentAlpha
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.LocalContentAlpha
+import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Scaffold
@@ -23,6 +24,7 @@ import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.outlined.Edit
@@ -136,58 +138,79 @@ private fun PatientDetailsScreen(
     item {
       BaseDetailsCard(title = null, modifier = modifier) {
         // Don't allow editing patients already uploaded.
+
+        val isRegistrationUploadedButNotOutcomes = patient.isUploadedToServer &&
+          outcomes?.isUploadedToServer != true
         OutlinedButton(
-          enabled = !patient.isUploadedToServer && editState?.canEdit == true,
+          enabled = (!patient.isUploadedToServer || isRegistrationUploadedButNotOutcomes) &&
+            editState?.canEdit == true,
           onClick = { onPatientEditPress(patient.id) }
         ) {
-          Text(stringResource(R.string.patient_details_screen_edit_button))
+          Text(
+            stringResource(
+              if (isRegistrationUploadedButNotOutcomes) {
+                R.string.patient_details_screen_edit_outcomes_button
+              } else {
+                R.string.patient_details_screen_edit_button
+              }
+            )
+          )
         }
 
-        Column {
-          CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-              val icon: ImageVector
-              val contentDescription: String
-              val text: String
-              when {
-                patient.isUploadedToServer -> {
-                  icon = Icons.Default.Lock
-                  contentDescription = "Patient locked"
-                  text = "Patient has been uploaded to MedSciNet and is locked for editing on the app"
-                }
-                patient.isDraft -> {
-                  icon = Icons.Outlined.Edit
-                  contentDescription = "Patient marked as draft"
-                  text = "Patient is marked as draft and won't be included in the next sync"
-                }
-                else -> {
-                  icon = Icons.Default.LockOpen
-                  contentDescription = "Patient ready for upload"
-                  text = "Patient is ready for upload"
-                }
-              }
-
-              Icon(imageVector = icon, contentDescription = contentDescription)
-              Spacer(Modifier.width(4.dp))
-              Text(text)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+          val icon: ImageVector
+          val contentDescription: String
+          val text: String
+          val isError: Boolean
+          when {
+            isRegistrationUploadedButNotOutcomes -> {
+              icon = Icons.Default.Error
+              contentDescription = "Patient registration locked, but outcomes have errors"
+              text = "Patient registration has been uploaded to MedSciNet, but there were errors with the outcomes during sync"
+              isError = true
+            }
+            patient.isUploadedToServer -> {
+              icon = Icons.Default.Lock
+              contentDescription = "Patient locked"
+              text = "Patient has been uploaded to MedSciNet and is locked for editing on the app"
+              isError = false
+            }
+            patient.isDraft -> {
+              icon = Icons.Outlined.Edit
+              contentDescription = "Patient marked as draft"
+              text = "Patient is marked as draft and won't be included in the next sync"
+              isError = false
+            }
+            else -> {
+              icon = Icons.Default.LockOpen
+              contentDescription = "Patient ready for upload"
+              text = "Patient is ready for upload"
+              isError = false
             }
           }
 
-          AnimatedVisibilityFadingWrapper(
-            visible = editState?.canEdit == false && !patient.isUploadedToServer
-          ) {
-            CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
-              val text = when (editState) {
-                SyncRepository.FormEditState.CANT_EDIT_SYNC_ENQUEUED -> {
-                  "Unable to make edits when sync is enqueued"
-                }
-                SyncRepository.FormEditState.CANT_EDIT_SYNC_IN_PROGRESS -> {
-                  "Unable to make edits while sync is running"
-                }
-                SyncRepository.FormEditState.CAN_EDIT, null -> ""
+          val color = if (isError) MaterialTheme.colors.error else LocalContentColor.current
+          CompositionLocalProvider(LocalContentColor provides color) {
+            Icon(imageVector = icon, contentDescription = contentDescription)
+            Spacer(Modifier.width(4.dp))
+            Text(text)
+          }
+        }
+
+        AnimatedVisibilityFadingWrapper(
+          visible = editState?.canEdit == false && !patient.isUploadedToServer
+        ) {
+          CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+            val text = when (editState) {
+              SyncRepository.FormEditState.CANT_EDIT_SYNC_ENQUEUED -> {
+                "Unable to make edits when sync is enqueued"
               }
-              Text(text = text)
+              SyncRepository.FormEditState.CANT_EDIT_SYNC_IN_PROGRESS -> {
+                "Unable to make edits while sync is running"
+              }
+              SyncRepository.FormEditState.CAN_EDIT, null -> ""
             }
+            Text(text = text)
           }
         }
       }

@@ -4,9 +4,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -46,7 +48,7 @@ fun OutcomesCard(
       _,
       _,
       _,
-      _,
+      serverErrorMessage: String?,
       eclampsiaFitTouched: TouchedState,
       eclampsiaFit: EclampsiaFit?,
       hysterectomyTouched: TouchedState,
@@ -64,7 +66,18 @@ fun OutcomesCard(
     val categoryToBodySpacerHeight = 0.dp
     val categoryToCategorySpacerHeight = 16.dp
 
+    if (serverErrorMessage != null) {
+      CompositionLocalProvider(LocalContentColor provides MaterialTheme.colors.error) {
+        LabelAndValueOrNone(
+          label = stringResource(R.string.errors_from_sync_label),
+          value = serverErrorMessage
+        )
+      }
+      Spacer(Modifier.height(categoryToCategorySpacerHeight))
+    }
+
     CategoryHeader(text = stringResource(R.string.outcomes_eclampsia_label))
+
     Spacer(Modifier.height(categoryToBodySpacerHeight))
     if (eclampsiaFit != null) {
       LabelAndValueOrUnknown(stringResource(R.string.form_date_label), eclampsiaFit.date?.toString())

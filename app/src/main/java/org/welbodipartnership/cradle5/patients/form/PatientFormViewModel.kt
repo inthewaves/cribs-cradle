@@ -245,7 +245,7 @@ class PatientFormViewModel @Inject constructor(
             context.getString(R.string.patient_form_failed_to_load_patient_with_pk_d)
           )
         } else if (
-          patientAndOutcomes.patient.serverInfo != null ||
+          patientAndOutcomes.patient.serverInfo != null &&
           patientAndOutcomes.outcomes?.serverInfo != null
         ) {
           Log.w(TAG, "trying to edit a patient with server info")
@@ -255,6 +255,10 @@ class PatientFormViewModel @Inject constructor(
         } else {
           val (patient, facility, outcomes) = patientAndOutcomes
           Log.d(TAG, "Setting up form for edit")
+
+          if (patient.isUploadedToServer) {
+            Log.d(TAG, "This is an outcomes-only session")
+          }
 
           with(formFields.patientFields) {
             initials.backingState.value = patient.initials
@@ -393,62 +397,67 @@ class PatientFormViewModel @Inject constructor(
           "Existing patient doesn't match primary key"
         }
 
-        val patient = with(formFields.patientFields) {
-          if (!initials.isValid) {
-            fieldToErrorMap.addFieldError(
-              categoryTitle = R.string.patient_registration_card_title,
-              fieldLabel = R.string.patient_registration_initials_label,
-              errorMessage = initials.errorFor(context, initials.stateValue)
-            )
-          }
-          if (!presentationDate.isValid) {
-            fieldToErrorMap.addFieldError(
-              R.string.patient_registration_card_title,
-              R.string.patient_registration_presentation_date_label,
-              presentationDate.errorFor(context, presentationDate.stateValue)
-            )
-          }
-          if (!age.isValid) {
-            fieldToErrorMap.addFieldError(
-              R.string.patient_registration_card_title,
-              R.string.patient_registration_age_label,
-              age.errorFor(context, age.stateValue)
-            )
-          }
-          if (!dateOfBirth.isValid) {
-            fieldToErrorMap.addFieldError(
-              R.string.patient_registration_card_title,
-              R.string.patient_registration_date_of_birth_label,
-              dateOfBirth.errorFor(context, dateOfBirth.stateValue)
-            )
-          }
-          if (!healthcareFacility.isValid) {
-            fieldToErrorMap.addFieldError(
-              R.string.patient_registration_card_title,
-              R.string.patient_registration_healthcare_facility_label,
-              healthcareFacility.errorFor(context, healthcareFacility.stateValue)
-            )
-          }
+        val patient = if (patientAndOutcomes?.patient?.isUploadedToServer != true) {
+          with(formFields.patientFields) {
+            if (!initials.isValid) {
+              fieldToErrorMap.addFieldError(
+                categoryTitle = R.string.patient_registration_card_title,
+                fieldLabel = R.string.patient_registration_initials_label,
+                errorMessage = initials.errorFor(context, initials.stateValue)
+              )
+            }
+            if (!presentationDate.isValid) {
+              fieldToErrorMap.addFieldError(
+                R.string.patient_registration_card_title,
+                R.string.patient_registration_presentation_date_label,
+                presentationDate.errorFor(context, presentationDate.stateValue)
+              )
+            }
+            if (!age.isValid) {
+              fieldToErrorMap.addFieldError(
+                R.string.patient_registration_card_title,
+                R.string.patient_registration_age_label,
+                age.errorFor(context, age.stateValue)
+              )
+            }
+            if (!dateOfBirth.isValid) {
+              fieldToErrorMap.addFieldError(
+                R.string.patient_registration_card_title,
+                R.string.patient_registration_date_of_birth_label,
+                dateOfBirth.errorFor(context, dateOfBirth.stateValue)
+              )
+            }
+            if (!healthcareFacility.isValid) {
+              fieldToErrorMap.addFieldError(
+                R.string.patient_registration_card_title,
+                R.string.patient_registration_healthcare_facility_label,
+                healthcareFacility.errorFor(context, healthcareFacility.stateValue)
+              )
+            }
 
-          runCatching {
-            Patient(
-              id = patientAndOutcomes?.patient?.id ?: 0L,
-              serverInfo = patientAndOutcomes?.patient?.serverInfo,
-              serverErrorMessage = null,
-              initials = initials.stateValue,
-              presentationDate = presentationDate.dateFromStateOrNull(),
-              dateOfBirth = if (isDraft) dateOfBirth.dateFromStateOrNull() else dateOfBirth.dateFromStateOrThrow(),
-              healthcareFacilityId = if (isDraft) {
-                healthcareFacility.stateValue?.facility?.id
-              } else {
-                requireNotNull(
+            runCatching {
+              Patient(
+                id = patientAndOutcomes?.patient?.id ?: 0L,
+                serverInfo = patientAndOutcomes?.patient?.serverInfo,
+                serverErrorMessage = null,
+                initials = initials.stateValue,
+                presentationDate = presentationDate.dateFromStateOrNull(),
+                dateOfBirth = if (isDraft) dateOfBirth.dateFromStateOrNull() else dateOfBirth.dateFromStateOrThrow(),
+                healthcareFacilityId = if (isDraft) {
                   healthcareFacility.stateValue?.facility?.id
-                ) { "Missing healthcareFacilityId" }
-              },
-              localNotes = localNotes.value,
-              isDraft = isDraft
-            )
+                } else {
+                  requireNotNull(
+                    healthcareFacility.stateValue?.facility?.id
+                  ) { "Missing healthcareFacilityId" }
+                },
+                localNotes = localNotes.value,
+                isDraft = isDraft
+              )
+            }
           }
+        } else {
+          Log.d(TAG, "saving an outcomes-only session")
+          null
         }
 
         val eclampsia = with(formFields.eclampsia) {
@@ -724,12 +733,15 @@ class PatientFormViewModel @Inject constructor(
         } else {
           Log.d(TAG, "Attempting to save new patient")
           val patientPrimaryKey = database.withTransaction {
-            val pk = database.patientDao().upsert(patient.getOrThrow())
-            // we have a foreign key constraint here
+            val patientPk = patient?.let { database.patientDao().upsert(patient.getOrThrow()) }
+              ?: requireNotNull(patientAndOutcomes?.patient?.id) {
+                "expected patient ID for existing patient"
+              }
+            // we DON'T have a foreign key constraint here
             database.outcomesDao().upsert(
               Outcomes(
                 id = patientAndOutcomes?.outcomes?.id ?: 0,
-                patientId = pk,
+                patientId = patientPk,
                 serverInfo = patientAndOutcomes?.outcomes?.serverInfo,
                 serverErrorMessage = null,
 
@@ -771,7 +783,7 @@ class PatientFormViewModel @Inject constructor(
                 perinatalDeath = perinatalDeath?.getOrThrow()
               )
             )
-            pk
+            patientPk
           }
 
           if (existingPatientPrimaryKey != null) {

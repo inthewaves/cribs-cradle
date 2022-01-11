@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.Flow
 import org.welbodipartnership.cradle5.data.database.entities.Outcomes
 import org.welbodipartnership.cradle5.data.database.entities.Patient
 import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
-import org.welbodipartnership.cradle5.data.database.resultentities.ListPatient
+import org.welbodipartnership.cradle5.data.database.resultentities.ListPatientAndOutcomeError
 import org.welbodipartnership.cradle5.data.database.resultentities.PatientAndOutcomes
 import org.welbodipartnership.cradle5.data.database.resultentities.PatientFacilityOutcomes
 import org.welbodipartnership.cradle5.data.database.resultentities.PatientOtherInfo
@@ -59,22 +59,22 @@ abstract class PatientDao {
   @RewriteQueriesToDropUnusedColumns
   @Transaction
   @Query("SELECT * FROM Patient ORDER BY id DESC")
-  abstract fun patientsPagingSource(): PagingSource<Int, ListPatient>
+  abstract fun patientsPagingSource(): PagingSource<Int, ListPatientAndOutcomeError>
 
   @RewriteQueriesToDropUnusedColumns
   @Transaction
   @Query("SELECT * FROM Patient WHERE nodeId IS NULL AND isDraft = 1 ORDER BY id DESC")
-  abstract fun patientsPagingSourceFilterByDraft(): PagingSource<Int, ListPatient>
+  abstract fun patientsPagingSourceFilterByDraft(): PagingSource<Int, ListPatientAndOutcomeError>
 
   @RewriteQueriesToDropUnusedColumns
   @Transaction
   @Query("SELECT * FROM Patient WHERE nodeId IS NOT NULL ORDER BY id DESC")
-  abstract fun patientsPagingSourceFilterByUploaded(): PagingSource<Int, ListPatient>
+  abstract fun patientsPagingSourceFilterByUploaded(): PagingSource<Int, ListPatientAndOutcomeError>
 
   @RewriteQueriesToDropUnusedColumns
   @Transaction
   @Query("SELECT * FROM Patient WHERE nodeId IS NULL AND isDraft = 0 ORDER BY id DESC")
-  abstract fun patientsPagingSourceFilterByNotUploadedAndNotDraft(): PagingSource<Int, ListPatient>
+  abstract fun patientsPagingSourceFilterByNotUploadedAndNotDraft(): PagingSource<Int, ListPatientAndOutcomeError>
 
   // ---- Patient + outcomes observations
 
@@ -87,6 +87,9 @@ abstract class PatientDao {
 
   @Query("SELECT nodeId FROM Patient WHERE id = :patientPk")
   abstract fun getPatientNodeIdFlow(patientPk: Long): Flow<Long?>
+
+  @Query("UPDATE Patient SET isDraft = 0 WHERE id = :patientPk")
+  abstract suspend fun clearPatientDraftStatus(patientPk: Long): Int
 
   @Query("UPDATE Patient SET localNotes = :localNotes WHERE id = :patientPk")
   protected abstract suspend fun updatePatientLocalNotesInner(
@@ -117,6 +120,12 @@ abstract class PatientDao {
     nodeId: Long,
     objectId: Long?
   ): Int
+
+  @Query("UPDATE Patient SET serverErrorMessage = :serverErrorMessage WHERE id = :patientId")
+  abstract suspend fun updatePatientWithServerErrorMessage(
+    patientId: Long,
+    serverErrorMessage: String?
+  )
 
   /**
    * Updates a patient with new server info. This marks a patient as uploaded.

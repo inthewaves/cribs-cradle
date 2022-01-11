@@ -11,11 +11,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.LinearProgressIndicator
+import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -81,6 +83,12 @@ private fun SyncScreen(viewModel: SyncScreenViewModel) {
             val patientsToUpload by viewModel.patientsToUploadCountFlow.collectAsState()
             val partialPatientsToUpload by viewModel.incompletePatientsToUploadCountFlow
               .collectAsState()
+            val patientsWithOutcomesNotFullyUploadedWithErrors by viewModel
+              .patientsWithOutcomesNotFullyUploadedWithErrorsCountFlow
+              .collectAsState()
+            val patientsWithOutcomesNotFullyUploadedWithoutErrors by viewModel
+              .patientsWithOutcomesNotFullyUploadedWithoutErrorsCountFlow
+              .collectAsState()
             val locationCheckInsToUpload by viewModel.locationCheckInsToUploadCountFlow
               .collectAsState()
             val lastTimeSyncCompleted by viewModel.lastSyncCompletedTimestamp.collectAsState()
@@ -92,6 +100,8 @@ private fun SyncScreen(viewModel: SyncScreenViewModel) {
               numPatientsToUpload = patientsToUpload,
               numIncompletePatientsToUpload = partialPatientsToUpload,
               numLocationCheckinsToUpload = locationCheckInsToUpload,
+              numPatientsWithOutcomesNotFullyUploadedWithErrors = patientsWithOutcomesNotFullyUploadedWithErrors,
+              numPatientsWithOutcomesNotFullyUploadedWithoutErrors = patientsWithOutcomesNotFullyUploadedWithoutErrors
             )
           }
         }
@@ -110,27 +120,34 @@ private fun ActiveSyncCard(
     modifier = modifier,
     horizontalAlignment = Alignment.CenterHorizontally
   ) {
-    when (syncStatus.progress?.stage) {
-      SyncWorker.Stage.STARTING -> {
-        Text("Starting")
-      }
-      SyncWorker.Stage.UPLOADING_NEW_PATIENTS -> {
-        Text("Uploading new patients")
-      }
-      SyncWorker.Stage.UPLOADING_INCOMPLETE_PATIENTS -> {
-        Text("Uploading patients that failed to upload before")
-      }
-      SyncWorker.Stage.UPLOADING_LOCATION_CHECK_INS -> {
-        Text("Uploading location check ins")
-      }
-      SyncWorker.Stage.DOWNLOADING_FACILITIES -> {
-        Text("Downloading facilities")
-      }
-      SyncWorker.Stage.DOWNLOADING_DROPDOWN_VALUES -> {
-        Text("Downloading dropdown values")
-      }
-      null -> {
-        Text("Performing sync")
+    CompositionLocalProvider(
+      LocalTextStyle provides LocalTextStyle.current.copy(textAlign = TextAlign.Center)
+    ) {
+      when (syncStatus.progress?.stage) {
+        SyncWorker.Stage.STARTING -> {
+          Text("Starting")
+        }
+        SyncWorker.Stage.UPLOADING_NEW_PATIENTS -> {
+          Text("Uploading new patients")
+        }
+        SyncWorker.Stage.UPLOADING_INCOMPLETE_PATIENTS -> {
+          Text("Uploading patients that failed to upload before")
+        }
+        SyncWorker.Stage.UPLOADING_INCOMPLETE_OUTCOMES -> {
+          Text("Uploading patients with outcomes that failed to upload before")
+        }
+        SyncWorker.Stage.UPLOADING_LOCATION_CHECK_INS -> {
+          Text("Uploading location check ins")
+        }
+        SyncWorker.Stage.DOWNLOADING_FACILITIES -> {
+          Text("Downloading facilities")
+        }
+        SyncWorker.Stage.DOWNLOADING_DROPDOWN_VALUES -> {
+          Text("Downloading dropdown values")
+        }
+        null -> {
+          Text("Performing sync")
+        }
       }
     }
 
@@ -168,6 +185,8 @@ fun InactiveOrNoSyncCard(
   syncStatus: SyncRepository.SyncStatus.Inactive?,
   numPatientsToUpload: Int?,
   numIncompletePatientsToUpload: Int?,
+  numPatientsWithOutcomesNotFullyUploadedWithErrors: Int?,
+  numPatientsWithOutcomesNotFullyUploadedWithoutErrors: Int?,
   numLocationCheckinsToUpload: Int?,
   lastTimeSyncCompleted: UnixTimestamp?,
   modifier: Modifier = Modifier,
@@ -217,6 +236,37 @@ fun InactiveOrNoSyncCard(
           R.plurals.sync_screen_there_are_currently_d_incomplete_patients_to_upload,
           numIncompletePatientsToUpload,
           numIncompletePatientsToUpload
+        ),
+        textAlign = TextAlign.Center
+      )
+      Spacer(Modifier.height(24.dp))
+    }
+
+    if (
+      numPatientsWithOutcomesNotFullyUploadedWithErrors != null &&
+      numPatientsWithOutcomesNotFullyUploadedWithErrors >= 1
+    ) {
+      Text(
+        resources.getQuantityString(
+          R.plurals.sync_screen_there_are_currently_d_patients_with_not_uploaded_outcomes_errors_need_to_be_addressed,
+          numPatientsWithOutcomesNotFullyUploadedWithErrors,
+          numPatientsWithOutcomesNotFullyUploadedWithErrors
+        ),
+        textAlign = TextAlign.Center,
+        color = MaterialTheme.colors.error
+      )
+      Spacer(Modifier.height(24.dp))
+    }
+
+    if (
+      numPatientsWithOutcomesNotFullyUploadedWithoutErrors != null &&
+      numPatientsWithOutcomesNotFullyUploadedWithoutErrors >= 1
+    ) {
+      Text(
+        resources.getQuantityString(
+          R.plurals.sync_screen_there_are_currently_d_patients_with_not_uploaded_outcomes,
+          numPatientsWithOutcomesNotFullyUploadedWithoutErrors,
+          numPatientsWithOutcomesNotFullyUploadedWithoutErrors
         ),
         textAlign = TextAlign.Center
       )
@@ -287,6 +337,8 @@ fun SyncPagePreview() {
           lastTimeSyncCompleted = UnixTimestamp.now(),
           numPatientsToUpload = 5,
           numIncompletePatientsToUpload = 1,
+          numPatientsWithOutcomesNotFullyUploadedWithErrors = 1,
+          numPatientsWithOutcomesNotFullyUploadedWithoutErrors = 1,
           numLocationCheckinsToUpload = 1
         )
       }

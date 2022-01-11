@@ -24,6 +24,7 @@ import androidx.compose.material.Card
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.FloatingActionButton
 import androidx.compose.material.Icon
+import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.RadioButton
 import androidx.compose.material.Scaffold
@@ -32,11 +33,13 @@ import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.Note
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -68,6 +71,7 @@ import org.welbodipartnership.cradle5.R
 import org.welbodipartnership.cradle5.compose.rememberFlowWithLifecycle
 import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
 import org.welbodipartnership.cradle5.data.database.resultentities.ListPatient
+import org.welbodipartnership.cradle5.data.database.resultentities.ListPatientAndOutcomeError
 import org.welbodipartnership.cradle5.home.AccountInfoButton
 import org.welbodipartnership.cradle5.ui.composables.AnimatedVisibilityFadingWrapper
 import org.welbodipartnership.cradle5.ui.composables.carousel.Carousel
@@ -295,10 +299,15 @@ fun PatientListHeader(modifier: Modifier = Modifier) {
 
 @Composable
 fun PatientListItem(
-  listPatient: ListPatient,
+  listPatientAndOutcomeError: ListPatientAndOutcomeError,
   onClick: (listPatient: ListPatient) -> Unit,
   modifier: Modifier = Modifier
 ) {
+  val listPatient = listPatientAndOutcomeError.listPatient
+
+  val isPatientUploadedButOutcomeIsNot = listPatient.serverInfo?.objectId != null &&
+    listPatientAndOutcomeError.outcomeError?.serverInfo?.nodeId == null
+
   BasePatientListItem(
     id = listPatient.serverInfo?.objectId?.toString() ?: stringResource(R.string.not_available_n_slash_a),
     initials = listPatient.initials,
@@ -306,7 +315,10 @@ fun PatientListItem(
     listIconType = ListIconType.ShowIcons(
       isPatientUploaded = listPatient.serverInfo != null,
       hasLocalNotes = !listPatient.localNotes.isNullOrBlank(),
-      isPatientDraft = listPatient.isDraft
+      isPatientDraft = listPatient.isDraft,
+      hasErrors = !listPatient.serverErrorMessage.isNullOrBlank() ||
+        !listPatientAndOutcomeError.outcomeError?.serverErrorMessage.isNullOrBlank() ||
+        isPatientUploadedButOutcomeIsNot
     ),
     minHeight = 48.dp,
     textStyle = MaterialTheme.typography.body2,
@@ -335,7 +347,8 @@ sealed class ListIconType {
   data class ShowIcons(
     val isPatientDraft: Boolean,
     val hasLocalNotes: Boolean,
-    val isPatientUploaded: Boolean
+    val isPatientUploaded: Boolean,
+    val hasErrors: Boolean,
   ) : ListIconType()
 }
 
@@ -377,6 +390,21 @@ private fun BasePatientListItem(
       style = textStyle
     )
     Row {
+      Spacer(Modifier.width(5.dp))
+      val hasErrorsIconAlpha = if (
+        listIconType is ListIconType.ShowIcons && listIconType.hasErrors
+      ) {
+        1f
+      } else {
+        0f
+      }
+      CompositionLocalProvider(LocalContentColor provides MaterialTheme.colors.error) {
+        Icon(
+          imageVector = Icons.Filled.Error, contentDescription = "Error status",
+          modifier = Modifier.alpha(hasErrorsIconAlpha)
+        )
+      }
+
       Spacer(Modifier.width(5.dp))
       val hasLocalNotesIconAlpha = if (
         listIconType is ListIconType.ShowIcons && listIconType.hasLocalNotes
@@ -426,24 +454,32 @@ fun PatientListItemPreview() {
       Column {
         PatientListHeader()
         PatientListItem(
-          listPatient = ListPatient(
-            0L,
-            serverInfo = null,
-            "AA",
-            FormDate.today(),
-            localNotes = "My notes",
-            isDraft = true
+          listPatientAndOutcomeError = ListPatientAndOutcomeError(
+            listPatient = ListPatient(
+              0L,
+              serverInfo = null,
+              serverErrorMessage = "Errors",
+              "AA",
+              FormDate.today(),
+              localNotes = "My notes",
+              isDraft = true
+            ),
+            outcomeError = null
           ),
           onClick = {}
         )
         PatientListItem(
-          listPatient = ListPatient(
-            id = 0L,
-            serverInfo = ServerInfo(nodeId = 50, objectId = 50),
-            initials = "AA",
-            dateOfBirth = FormDate.today(),
-            localNotes = null,
-            isDraft = false
+          listPatientAndOutcomeError = ListPatientAndOutcomeError(
+            listPatient = ListPatient(
+              id = 0L,
+              serverInfo = ServerInfo(nodeId = 50, objectId = 50),
+              serverErrorMessage = null,
+              initials = "AA",
+              dateOfBirth = FormDate.today(),
+              localNotes = null,
+              isDraft = false
+            ),
+            outcomeError = null,
           ),
           onClick = {}
         )

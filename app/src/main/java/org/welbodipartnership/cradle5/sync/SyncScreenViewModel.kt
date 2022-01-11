@@ -41,6 +41,22 @@ class SyncScreenViewModel @Inject constructor(
       null
     )
 
+  val patientsWithOutcomesNotFullyUploadedWithErrorsCountFlow: StateFlow<Int?> = dbWrapper.outcomesDao()
+    .countOutcomesNotFullyUploadedWithErrors()
+    .stateIn(
+      viewModelScope,
+      SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000L),
+      null
+    )
+
+  val patientsWithOutcomesNotFullyUploadedWithoutErrorsCountFlow: StateFlow<Int?> = dbWrapper.outcomesDao()
+    .countOutcomesNotFullyUploadedWithoutErrors()
+    .stateIn(
+      viewModelScope,
+      SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000L),
+      null
+    )
+
   val lastSyncCompletedTimestamp: StateFlow<UnixTimestamp?> = syncRepository
     .lastTimeSyncCompletedFlow
     .stateIn(

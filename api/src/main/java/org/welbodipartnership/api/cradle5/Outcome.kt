@@ -75,7 +75,7 @@ data class Outcome(
   val perinatalOtherMaternalFactors: String? = null,
 ) {
   companion object {
-    val controlIdToNameMap = ArrayMap<String, String>().apply {
+    val controlIdToNameMap: Map<String, String> = ArrayMap<String, String>().apply {
       put("Control1378", "Eclampsia fit present")
       put("Control1541", "Eclampsia fit date")
       put("Control1551", "Eclampsia fit location")

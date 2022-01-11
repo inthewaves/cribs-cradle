@@ -99,7 +99,7 @@
     <string name="patient_registration_healthcare_facility_label">Healthcare facility</string>
     <string name="patient_registration_health_facility_dialog_title">Select a health facility</string>
     <string name="patient_registration_server_id_not_available">N/A (not yet uploaded)</string>
-    <string name="patient_form_cannot_edit_patient_already_on_server">Unable to edit a patient already on the server</string>
+    <string name="patient_form_cannot_edit_patient_already_on_server">Unable to edit patient and their outcomes that are already on the server</string>
     <string name="patient_form_snackbar_failed_to_save_exception">Failed to save due to an exception</string>
     <string name="sync_screen_start_sync_button">Sync</string>
     <string name="unknown_district">Unknown district</string>
@@ -142,6 +142,9 @@
     <string name="patients_list_filter_option_ready_for_upload">Ready for upload</string>
     <string name="patients_list_filter_option_uploaded">Uploaded</string>
     <string name="form_date_cannot_be_after_maternal_death_error">Date cannot be after maternal death</string>
+    <string name="errors_from_sync_label">Errors during sync</string>
+    <string name="patient_details_screen_edit_outcomes_button">Edit outcomes</string>
+    <string name="edit_outcomes_title">Editing outcomes</string>
     <plurals name="patient_form_snackbar_failed_to_save_there_are_d_errors">
         <item quantity="one">Failed to save, as there is %1$d error.</item>
         <item quantity="other">Failed to save, as there are %1$d errors.</item>
@@ -155,7 +158,15 @@
         <item quantity="other">There are %1$d partially uploaded patients who need an upload retry</item>
     </plurals>
     <plurals name="sync_screen_d_patients_failed_to_upload">
-        <item quantity="one">%1$d patient failed to upload</item>
-        <item quantity="other">%1$d patients failed to upload</item>
+        <item quantity="one">%1$d patient failed to upload and need a retry</item>
+        <item quantity="other">%1$d patients failed to upload and need a retry</item>
+    </plurals>
+    <plurals name="sync_screen_there_are_currently_d_patients_with_not_uploaded_outcomes_errors_need_to_be_addressed">
+        <item quantity="one">%1$d patient has outcomes that failed to upload and has errors that may need addressing</item>
+        <item quantity="other">%1$d patients have outcomes that failed to upload and have errors that may need addressing</item>
+    </plurals>
+    <plurals name="sync_screen_there_are_currently_d_patients_with_not_uploaded_outcomes">
+        <item quantity="one">%1$d patient has outcomes that failed to upload and needs a retry</item>
+        <item quantity="other">%1$d patients have outcomes that failed to upload and need a retry</item>
     </plurals>
 </resources>
