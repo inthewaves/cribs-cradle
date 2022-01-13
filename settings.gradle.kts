@@ -31,7 +31,7 @@ dependencyResolutionManagement {
             alias("kotlinx-coroutines-android").to("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.0")
 
             alias("androidx-core-ktx").to("androidx.core:core-ktx:1.7.0")
-            alias("androidx-appcompat").to("androidx.appcompat:appcompat:1.4.0")
+            alias("androidx-appcompat").to("androidx.appcompat:appcompat:1.4.1")
             version("lifecycle", "2.4.0")
             alias("androidx-lifecycle-runtime-ktx").to("androidx.lifecycle", "lifecycle-runtime-ktx").versionRef("lifecycle")
             alias("androidx-lifecycle-process").to("androidx.lifecycle", "lifecycle-process").versionRef("lifecycle")
