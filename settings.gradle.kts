@@ -39,7 +39,7 @@ dependencyResolutionManagement {
 
             alias("androidx-work-runtime").to("androidx.work:work-runtime-ktx:2.7.1")
 
-            alias("google-android-material").to("com.google.android.material:material:1.4.0")
+            alias("google-android-material").to("com.google.android.material:material:1.5.0")
 
             version("accompanist", "0.21.4-beta")
             alias("accompanist-navigation-animation").to("com.google.accompanist", "accompanist-navigation-animation").versionRef("accompanist")
