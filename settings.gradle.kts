@@ -91,7 +91,7 @@ dependencyResolutionManagement {
             alias("androidx-paging-runtime").to("androidx.paging", "paging-runtime-ktx").versionRef("paging")
             alias("androidx-paging-compose").to("androidx.paging:paging-compose:1.0.0-alpha14")
 
-            alias("androidx-constraintlayout-compose").to("androidx.constraintlayout:constraintlayout-compose:1.0.0-rc02")
+            alias("androidx-constraintlayout-compose").to("androidx.constraintlayout:constraintlayout-compose:1.0.0")
 
             version("compose", "1.1.0-rc01")
             // TODO: Remove this when all other Compose deps use 1.1.0-rc02 or higher
