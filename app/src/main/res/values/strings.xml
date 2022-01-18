@@ -145,6 +145,11 @@
     <string name="errors_from_sync_label">Errors during sync</string>
     <string name="patient_details_screen_edit_outcomes_button">Edit outcomes</string>
     <string name="edit_outcomes_title">Editing outcomes</string>
+    <string name="birthweight_selection_label">Birthweight</string>
+    <string name="age_at_delivery_selection_label">Age at delivery</string>
+    <string name="outcomes_birthweight_label">Birthweight</string>
+    <string name="outcomes_age_at_delivery_label">Age at delivery</string>
+    <string name="perinatal_death_additional_info_label">Additional information on reason for perinatal death</string>
     <plurals name="patient_form_snackbar_failed_to_save_there_are_d_errors">
         <item quantity="one">Failed to save, as there is %1$d error.</item>
         <item quantity="other">Failed to save, as there are %1$d errors.</item>

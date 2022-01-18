@@ -29,6 +29,8 @@ import org.welbodipartnership.cradle5.R
 import org.welbodipartnership.cradle5.compose.SavedStateMutableState
 import org.welbodipartnership.cradle5.compose.createMutableState
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
+import org.welbodipartnership.cradle5.data.database.entities.AgeAtDelivery
+import org.welbodipartnership.cradle5.data.database.entities.BirthWeight
 import org.welbodipartnership.cradle5.data.database.entities.EclampsiaFit
 import org.welbodipartnership.cradle5.data.database.entities.Facility
 import org.welbodipartnership.cradle5.data.database.entities.HduOrItuAdmission
@@ -101,7 +103,7 @@ class PatientFormViewModel @Inject constructor(
   /**
    * putting this outside so that additional validation can work
    */
-  private val maternalDeathState = OutcomeFields.MaternalDeath(
+  private val maternalDeathState = OutcomeFieldsWithCheckbox.MaternalDeath(
     isEnabled = enabledState("maternalDeathEnabled"),
     date = dateState(
       "maternalDeathDate",
@@ -153,7 +155,7 @@ class PatientFormViewModel @Inject constructor(
       localNotes = handle.createMutableState("patientLocalNotes", ""),
       isDraft = isFormDraftState
     ),
-    eclampsia = OutcomeFields.Eclampsia(
+    eclampsia = OutcomeFieldsWithCheckbox.Eclampsia(
       isEnabled = enabledState("eclampsiaEnabled"),
       date = maternalDeathBoundedDateState(
         "eclampsiaDate",
@@ -166,7 +168,7 @@ class PatientFormViewModel @Inject constructor(
         isMandatory = false
       ),
     ),
-    hysterectomy = OutcomeFields.Hysterectomy(
+    hysterectomy = OutcomeFieldsWithCheckbox.Hysterectomy(
       isEnabled = enabledState("hysterectomyEnabled"),
       date = maternalDeathBoundedDateState(
         "hysterectomyDate",
@@ -179,7 +181,7 @@ class PatientFormViewModel @Inject constructor(
         isMandatory = false
       ),
     ),
-    hduItuAdmission = OutcomeFields.HduItuAdmission(
+    hduItuAdmission = OutcomeFieldsWithCheckbox.HduItuAdmission(
       isEnabled = enabledState("hduItuAdmissionEnabled"),
       date = maternalDeathBoundedDateState(
         "hduItuAdmissionDate",
@@ -200,7 +202,7 @@ class PatientFormViewModel @Inject constructor(
       additionalInfo = handle.createMutableState("hduItuAdditionalInfo", null)
     ),
     maternalDeath = maternalDeathState,
-    surgicalManagement = OutcomeFields.SurgicalManagement(
+    surgicalManagement = OutcomeFieldsWithCheckbox.SurgicalManagement(
       isEnabled = enabledState("surgicalManagementEnabled"),
       date = maternalDeathBoundedDateState(
         "surgicalManagementDate",
@@ -213,7 +215,7 @@ class PatientFormViewModel @Inject constructor(
         isMandatory = false
       ),
     ),
-    perinatalDeath = OutcomeFields.PerinatalDeath(
+    perinatalDeath = OutcomeFieldsWithCheckbox.PerinatalDeath(
       isEnabled = enabledState("perinatalDeathEnabled"),
       date = maternalDeathBoundedDateState(
         "perinatalDeathDate",
@@ -230,6 +232,21 @@ class PatientFormViewModel @Inject constructor(
         DropdownType.MaternalFactorsRelatedToPerinatalLoss,
         isMandatory = false
       ),
+      additionalInfo = handle.createMutableState("perinatalDeathAdditionalInfo", null)
+    ),
+    birthWeight = OutcomeFieldsWithoutCheckbox.BirthWeight(
+      birthWeight = enumIdOnlyState(
+        "birthWeight",
+        DropdownType.Birthweight,
+        isMandatory = false,
+      )
+    ),
+    ageAtDelivery = OutcomeFieldsWithoutCheckbox.AgeAtDelivery(
+      ageAtDelivery = enumIdOnlyState(
+        "ageAtDelivery",
+        DropdownType.AgeAtDelivery,
+        isMandatory = false,
+      )
     )
   )
 
@@ -338,9 +355,22 @@ class PatientFormViewModel @Inject constructor(
               date.setStateFromFormDate(it.date)
               outcome.backingState.value = it.outcome
               relatedMaternalFactors.backingState.value = it.relatedMaternalFactors
+              additionalInfo.value = it.additionalInfo
             } ?: clearFormsAndSetCheckbox(
               newEnabledState = outcomes?.perinatalDeathTouched?.nullEnabledState
             )
+          }
+
+          with(formFields.birthWeight) {
+            outcomes?.birthWeight?.let {
+              birthWeight.backingState.value = it.birthWeight
+            } ?: clearForms()
+          }
+
+          with(formFields.ageAtDelivery) {
+            outcomes?.ageAtDelivery?.let {
+              ageAtDelivery.backingState.value = it.ageAtDelivery
+            } ?: clearForms()
           }
 
           FormState.Ready(patientAndOutcomes)
@@ -370,13 +400,13 @@ class PatientFormViewModel @Inject constructor(
       formFields.forceAllErrors()
 
       val fieldToErrorMap = linkedMapOf<Int, List<FieldError>>()
-      fun OutcomeFields.getCategoryStringRes() = when (this) {
-        is OutcomeFields.Eclampsia -> R.string.outcomes_eclampsia_label
-        is OutcomeFields.HduItuAdmission -> R.string.outcomes_admission_to_hdu_or_itu_label
-        is OutcomeFields.Hysterectomy -> R.string.outcomes_hysterectomy_label
-        is OutcomeFields.MaternalDeath -> R.string.outcomes_maternal_death_label
-        is OutcomeFields.PerinatalDeath -> R.string.outcomes_perinatal_death_label
-        is OutcomeFields.SurgicalManagement -> R.string.outcomes_surgical_management_label
+      fun OutcomeFieldsWithCheckbox.getCategoryStringRes() = when (this) {
+        is OutcomeFieldsWithCheckbox.Eclampsia -> R.string.outcomes_eclampsia_label
+        is OutcomeFieldsWithCheckbox.HduItuAdmission -> R.string.outcomes_admission_to_hdu_or_itu_label
+        is OutcomeFieldsWithCheckbox.Hysterectomy -> R.string.outcomes_hysterectomy_label
+        is OutcomeFieldsWithCheckbox.MaternalDeath -> R.string.outcomes_maternal_death_label
+        is OutcomeFieldsWithCheckbox.PerinatalDeath -> R.string.outcomes_perinatal_death_label
+        is OutcomeFieldsWithCheckbox.SurgicalManagement -> R.string.outcomes_surgical_management_label
       }
       fun LinkedHashMap<Int, List<FieldError>>.addFieldError(
         @StringRes categoryTitle: Int,
@@ -460,7 +490,7 @@ class PatientFormViewModel @Inject constructor(
           null
         }
 
-        val eclampsia = with(formFields.eclampsia) {
+        val eclampsia: Result<EclampsiaFit>? = with(formFields.eclampsia) {
           when (isEnabled.value) {
             null -> {
               if (!isDraft) {
@@ -499,7 +529,7 @@ class PatientFormViewModel @Inject constructor(
           }
         }
 
-        val hysterectomy = with(formFields.hysterectomy) {
+        val hysterectomy: Result<Hysterectomy>? = with(formFields.hysterectomy) {
           when (isEnabled.value) {
             null -> {
               if (!isDraft) {
@@ -539,7 +569,7 @@ class PatientFormViewModel @Inject constructor(
           }
         }
 
-        val hduOrItuAdmission = with(formFields.hduItuAdmission) {
+        val hduOrItuAdmission: Result<HduOrItuAdmission>? = with(formFields.hduItuAdmission) {
           when (isEnabled.value) {
             null -> {
               if (!isDraft) {
@@ -587,7 +617,7 @@ class PatientFormViewModel @Inject constructor(
           }
         }
 
-        val maternalDeath = with(formFields.maternalDeath) {
+        val maternalDeath: Result<MaternalDeath>? = with(formFields.maternalDeath) {
           when (isEnabled.value) {
             null -> {
               if (!isDraft) {
@@ -633,7 +663,7 @@ class PatientFormViewModel @Inject constructor(
           }
         }
 
-        val surgicalManagement = with(formFields.surgicalManagement) {
+        val surgicalManagement: Result<SurgicalManagementOfHaemorrhage>? = with(formFields.surgicalManagement) {
           when (isEnabled.value) {
             null -> {
               if (!isDraft) {
@@ -671,7 +701,7 @@ class PatientFormViewModel @Inject constructor(
           }
         }
 
-        val perinatalDeath = with(formFields.perinatalDeath) {
+        val perinatalDeath: Result<PerinatalDeath>? = with(formFields.perinatalDeath) {
           when (isEnabled.value) {
             null -> {
               if (!isDraft) {
@@ -709,12 +739,21 @@ class PatientFormViewModel @Inject constructor(
                 PerinatalDeath(
                   date = if (isDraft) date.dateFromStateOrNull() else date.dateFromStateOrThrow(),
                   outcome = outcome.stateValue,
-                  relatedMaternalFactors = relatedMaternalFactors.stateValue
+                  relatedMaternalFactors = relatedMaternalFactors.stateValue,
+                  additionalInfo = additionalInfo.value
                 )
               }
             }
             else -> null
           }
+        }
+
+        val birthWeight: BirthWeight? = with(formFields.birthWeight) {
+          birthWeight.stateValue?.let { BirthWeight(it) }
+        }
+
+        val ageAtDelivery: AgeAtDelivery? = with(formFields.ageAtDelivery) {
+          ageAtDelivery.stateValue?.let { AgeAtDelivery(it) }
         }
 
         with(formFields.patientFields) {
@@ -780,7 +819,9 @@ class PatientFormViewModel @Inject constructor(
                   false -> TouchedState.TOUCHED
                   null -> TouchedState.NOT_TOUCHED
                 },
-                perinatalDeath = perinatalDeath?.getOrThrow()
+                perinatalDeath = perinatalDeath?.getOrThrow(),
+                birthWeight = birthWeight,
+                ageAtDelivery = ageAtDelivery,
               )
             )
             patientPk
@@ -854,12 +895,14 @@ class PatientFormViewModel @Inject constructor(
   @Stable
   data class PatientFormFields(
     val patientFields: PatientFields,
-    val eclampsia: OutcomeFields.Eclampsia,
-    val hysterectomy: OutcomeFields.Hysterectomy,
-    val hduItuAdmission: OutcomeFields.HduItuAdmission,
-    val maternalDeath: OutcomeFields.MaternalDeath,
-    val surgicalManagement: OutcomeFields.SurgicalManagement,
-    val perinatalDeath: OutcomeFields.PerinatalDeath
+    val eclampsia: OutcomeFieldsWithCheckbox.Eclampsia,
+    val hysterectomy: OutcomeFieldsWithCheckbox.Hysterectomy,
+    val hduItuAdmission: OutcomeFieldsWithCheckbox.HduItuAdmission,
+    val maternalDeath: OutcomeFieldsWithCheckbox.MaternalDeath,
+    val surgicalManagement: OutcomeFieldsWithCheckbox.SurgicalManagement,
+    val perinatalDeath: OutcomeFieldsWithCheckbox.PerinatalDeath,
+    val birthWeight: OutcomeFieldsWithoutCheckbox.BirthWeight,
+    val ageAtDelivery: OutcomeFieldsWithoutCheckbox.AgeAtDelivery,
   ) {
     fun forceAllErrors() {
       patientFields.forceShowErrors()
@@ -893,8 +936,12 @@ class PatientFormViewModel @Inject constructor(
 
   @Stable
   sealed class OutcomeFields {
+    abstract fun forceShowErrors()
+  }
+
+  @Stable
+  sealed class OutcomeFieldsWithCheckbox : OutcomeFields() {
     abstract val isEnabled: MutableState<Boolean?>
-    abstract val date: NoFutureDateState
 
     /**
      * Resets the error state on the forms, using the [newEnabledState] for the checkbox state (null
@@ -902,14 +949,12 @@ class PatientFormViewModel @Inject constructor(
      */
     abstract fun clearFormsAndSetCheckbox(newEnabledState: Boolean?)
 
-    abstract fun forceShowErrors()
-
     @Stable
     data class Eclampsia(
       override val isEnabled: MutableState<Boolean?>,
-      override val date: NoFutureDateState,
+      val date: NoFutureDateState,
       val placeOfFirstFit: EnumIdOnlyState
-    ) : OutcomeFields() {
+    ) : OutcomeFieldsWithCheckbox() {
       override fun clearFormsAndSetCheckbox(newEnabledState: Boolean?) {
         isEnabled.value = newEnabledState
         date.reset()
@@ -927,9 +972,9 @@ class PatientFormViewModel @Inject constructor(
     @Stable
     data class Hysterectomy(
       override val isEnabled: MutableState<Boolean?>,
-      override val date: NoFutureDateState,
+      val date: NoFutureDateState,
       val cause: EnumWithOtherState,
-    ) : OutcomeFields() {
+    ) : OutcomeFieldsWithCheckbox() {
       override fun clearFormsAndSetCheckbox(newEnabledState: Boolean?) {
         isEnabled.value = newEnabledState
         date.reset()
@@ -947,11 +992,11 @@ class PatientFormViewModel @Inject constructor(
     @Stable
     data class HduItuAdmission(
       override val isEnabled: MutableState<Boolean?>,
-      override val date: NoFutureDateState,
+      val date: NoFutureDateState,
       val cause: EnumWithOtherState,
       val hduItuStayLengthInDays: LimitedHduItuState,
       val additionalInfo: MutableState<String?>
-    ) : OutcomeFields() {
+    ) : OutcomeFieldsWithCheckbox() {
       override fun clearFormsAndSetCheckbox(newEnabledState: Boolean?) {
         isEnabled.value = newEnabledState
         date.reset()
@@ -972,10 +1017,10 @@ class PatientFormViewModel @Inject constructor(
     @Stable
     data class MaternalDeath(
       override val isEnabled: MutableState<Boolean?>,
-      override val date: NoFutureDateState,
+      val date: NoFutureDateState,
       val underlyingCause: EnumWithOtherState,
       val placeOfDeath: EnumIdOnlyState
-    ) : OutcomeFields() {
+    ) : OutcomeFieldsWithCheckbox() {
       override fun clearFormsAndSetCheckbox(newEnabledState: Boolean?) {
         isEnabled.value = newEnabledState
         date.reset()
@@ -995,9 +1040,9 @@ class PatientFormViewModel @Inject constructor(
     @Stable
     data class SurgicalManagement(
       override val isEnabled: MutableState<Boolean?>,
-      override val date: NoFutureDateState,
+      val date: NoFutureDateState,
       val type: EnumWithOtherState
-    ) : OutcomeFields() {
+    ) : OutcomeFieldsWithCheckbox() {
       override fun clearFormsAndSetCheckbox(newEnabledState: Boolean?) {
         isEnabled.value = newEnabledState
         date.reset()
@@ -1015,15 +1060,17 @@ class PatientFormViewModel @Inject constructor(
     @Stable
     data class PerinatalDeath(
       override val isEnabled: MutableState<Boolean?>,
-      override val date: NoFutureDateState,
+      val date: NoFutureDateState,
       val outcome: EnumIdOnlyState,
       val relatedMaternalFactors: EnumWithOtherState,
-    ) : OutcomeFields() {
+      val additionalInfo: MutableState<String?>,
+    ) : OutcomeFieldsWithCheckbox() {
       override fun clearFormsAndSetCheckbox(newEnabledState: Boolean?) {
         isEnabled.value = newEnabledState
         date.reset()
         outcome.reset()
         relatedMaternalFactors.reset()
+        additionalInfo.value = null
       }
 
       override fun forceShowErrors() {
@@ -1032,6 +1079,37 @@ class PatientFormViewModel @Inject constructor(
           outcome.enableShowErrors(force = true)
           relatedMaternalFactors.enableShowErrors(force = true)
         }
+      }
+    }
+  }
+
+  @Stable
+  sealed class OutcomeFieldsWithoutCheckbox : OutcomeFields() {
+    abstract fun clearForms()
+
+    @Stable
+    data class BirthWeight(
+      val birthWeight: EnumIdOnlyState,
+    ) : OutcomeFieldsWithoutCheckbox() {
+      override fun forceShowErrors() {
+        birthWeight.enableShowErrors(force = true)
+      }
+
+      override fun clearForms() {
+        birthWeight.stateValue = null
+      }
+    }
+
+    @Stable
+    data class AgeAtDelivery(
+      val ageAtDelivery: EnumIdOnlyState,
+    ) : OutcomeFieldsWithoutCheckbox() {
+      override fun forceShowErrors() {
+        ageAtDelivery.enableShowErrors(force = true)
+      }
+
+      override fun clearForms() {
+        ageAtDelivery.stateValue = null
       }
     }
   }

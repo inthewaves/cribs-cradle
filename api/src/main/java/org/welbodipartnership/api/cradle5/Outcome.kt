@@ -73,6 +73,17 @@ data class Outcome(
   val perinatalMaternalFactors: Int? = null,
   @Json(name = "Control1934")
   val perinatalOtherMaternalFactors: String? = null,
+  /**
+   * Additional information on reason for perinatal death
+   */
+  @Json(name = "Control2104")
+  val perinatalAdditionalInfo: String?,
+
+  @Json(name = "Control2106")
+  val birthWeight: Int?,
+
+  @Json(name = "Control2107")
+  val ageAtDelivery: Int?,
 ) {
   companion object {
     val controlIdToNameMap: Map<String, String> = ArrayMap<String, String>().apply {
@@ -108,6 +119,10 @@ data class Outcome(
       put("Control1932", "Perinatal death outcome")
       put("Control1933", "Perinatal death maternal factors")
       put("Control1934", "Perinatal death other maternal factors")
+      put("Control2104", "Perinatal death additional info on reason")
+
+      put("Control2106", "Birthweight")
+      put("Control2107", "Age at delivery")
     }
   }
 }

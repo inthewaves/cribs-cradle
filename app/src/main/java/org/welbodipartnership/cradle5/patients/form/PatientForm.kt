@@ -91,7 +91,6 @@ import org.welbodipartnership.cradle5.util.datetime.toFormDateFromNoSlashesOrThr
 
 private val MAX_INITIALS_LENGTH = 5
 
-
 /**
  * Support wide screen by making the content width max 840dp, centered horizontally.
  */
@@ -516,7 +515,21 @@ fun PatientForm(
             dateState = perinatalDeath.date,
             outcomeState = perinatalDeath.outcome,
             maternalFactorsState = perinatalDeath.relatedMaternalFactors,
+            additionalInfo = perinatalDeath.additionalInfo.value ?: "",
+            onAdditionalInfoChanged = { perinatalDeath.additionalInfo.value = it }
           )
+
+          Spacer(Modifier.height(categoryToCategorySpacerHeight))
+
+          CategoryHeader(stringResource(R.string.outcomes_birthweight_label))
+
+          BirthWeightForm(birthWeightState = viewModel.formFields.birthWeight.birthWeight)
+
+          Spacer(Modifier.height(categoryToCategorySpacerHeight))
+
+          CategoryHeader(stringResource(R.string.outcomes_age_at_delivery_label))
+
+          AgeAtDeliveryForm(ageAtDeliveryState = viewModel.formFields.ageAtDelivery.ageAtDelivery)
         }
       }
 
@@ -934,6 +947,8 @@ fun PerinatalDeathForm(
   dateState: NoFutureDateState,
   outcomeState: EnumIdOnlyState,
   maternalFactorsState: EnumWithOtherState,
+  additionalInfo: String,
+  onAdditionalInfoChanged: (String) -> Unit,
   modifier: Modifier = Modifier,
 ) {
   Row {
@@ -986,6 +1001,51 @@ fun PerinatalDeathForm(
         .fillMaxWidth()
         .then(maternalFactorsState.createFocusChangeModifier()),
       errorHint = maternalFactorsState.getError()
+    )
+
+    BringIntoViewOutlinedTextField(
+      value = additionalInfo,
+      onValueChange = onAdditionalInfoChanged,
+      modifier = Modifier.fillMaxWidth(),
+      label = { Text(stringResource(R.string.perinatal_death_additional_info_label)) },
+      enabled = isFormEnabled == true,
+      colors = darkerDisabledOutlinedTextFieldColors()
+    )
+  }
+}
+
+@Composable
+fun BirthWeightForm(
+  birthWeightState: EnumIdOnlyState,
+  modifier: Modifier = Modifier,
+) {
+  Column(modifier) {
+    EnumDropdownMenuIdOnly(
+      currentSelection = birthWeightState.stateValue,
+      onSelect = { birthWeightState.stateValue = it },
+      serverEnum = birthWeightState.enum!!,
+      label = { Text(stringResource(R.string.birthweight_selection_label)) },
+      enabled = true,
+      errorHint = birthWeightState.getError(),
+      textModifier = Modifier.fillMaxWidth()
+    )
+  }
+}
+
+@Composable
+fun AgeAtDeliveryForm(
+  ageAtDeliveryState: EnumIdOnlyState,
+  modifier: Modifier = Modifier,
+) {
+  Column(modifier) {
+    EnumDropdownMenuIdOnly(
+      currentSelection = ageAtDeliveryState.stateValue,
+      onSelect = { ageAtDeliveryState.stateValue = it },
+      serverEnum = ageAtDeliveryState.enum!!,
+      label = { Text(stringResource(R.string.age_at_delivery_selection_label)) },
+      enabled = true,
+      errorHint = ageAtDeliveryState.getError(),
+      textModifier = Modifier.fillMaxWidth()
     )
   }
 }

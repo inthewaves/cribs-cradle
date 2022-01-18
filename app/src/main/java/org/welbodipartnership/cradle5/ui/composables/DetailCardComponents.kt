@@ -43,6 +43,18 @@ fun LabelAndValueOrUnknown(
 }
 
 @Composable
+fun ValueOrUnknown(
+  value: String?,
+  modifier: Modifier = Modifier,
+) {
+  Text(
+    text = value ?: stringResource(R.string.unknown),
+    style = MaterialTheme.typography.body1,
+    modifier = modifier
+  )
+}
+
+@Composable
 private fun LabelAndValue(
   label: String,
   value: String,
@@ -86,5 +98,27 @@ fun LabelAndValueForDropdownOrUnknown(
     value = value,
     modifier = modifier,
     textModifier = textModifier
+  )
+}
+
+@Composable
+fun ValueForDropdownOrUnknown(
+  dropdownType: DropdownType,
+  enumValue: EnumSelection?,
+  enumCollection: ServerEnumCollection,
+  modifier: Modifier = Modifier,
+) {
+  val value: String? = when (enumValue) {
+    is EnumSelection.IdOnly -> {
+      enumValue.getSelectionString(enumCollection[dropdownType]) { unknownSelectionFormatter(it) }
+    }
+    is EnumSelection.WithOther -> {
+      enumValue.getSelectionString(enumCollection[dropdownType]) { unknownSelectionFormatter(it) }
+    }
+    null -> null
+  }
+  ValueOrUnknown(
+    value = value,
+    modifier = modifier,
   )
 }

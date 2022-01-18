@@ -59,7 +59,13 @@ data class Outcomes(
   @ColumnInfo(defaultValue = "1")
   val perinatalDeathTouched: TouchedState,
   @Embedded(prefix = "perinatal_death_")
-  val perinatalDeath: PerinatalDeath?
+  val perinatalDeath: PerinatalDeath?,
+
+  @Embedded(prefix = "birthweight_")
+  val birthWeight: BirthWeight?,
+
+  @Embedded(prefix = "age_at_delivery_")
+  val ageAtDelivery: AgeAtDelivery?,
 ) : FormEntity, Verifiable<Outcomes>, HasRequiredFields {
 
   override fun requiredFieldsPresent(): Boolean {
@@ -170,10 +176,21 @@ data class PerinatalDeath(
   val date: FormDate?,
   val outcome: EnumSelection.IdOnly?,
   @Embedded(prefix = "maternalfactors_")
-  val relatedMaternalFactors: EnumSelection.WithOther?
+  val relatedMaternalFactors: EnumSelection.WithOther?,
+  val additionalInfo: String?
 ) : HasRequiredFields {
   override fun requiredFieldsPresent() = date != null
 }
+
+@Immutable
+data class BirthWeight(
+  val birthWeight: EnumSelection.IdOnly,
+)
+
+@Immutable
+data class AgeAtDelivery(
+  val ageAtDelivery: EnumSelection.IdOnly,
+)
 
 sealed class Location(val serverId: Long) {
   /**

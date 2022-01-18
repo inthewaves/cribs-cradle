@@ -11,6 +11,7 @@ import org.signal.argon2.MemoryCost
 import org.signal.argon2.Type
 import org.signal.argon2.Version
 import org.welbodipartnership.cradle5.data.appinit.DataAndEncryptionSetupTask
+import org.welbodipartnership.cradle5.data.appinit.EnumDefaultVersionCheckJob
 import org.welbodipartnership.cradle5.data.cryptography.PasswordHasher
 import org.welbodipartnership.cradle5.util.appinit.AppInitTask
 import org.welbodipartnership.cradle5.util.coroutines.AppCoroutineDispatchers
@@ -49,4 +50,8 @@ abstract class DataTaskModule {
   @Binds
   @IntoSet
   abstract fun bindDataSetupTask(bind: DataAndEncryptionSetupTask): AppInitTask
+
+  @Binds
+  @IntoSet
+  abstract fun bindEnumDefaultVersionCheckTask(bind: EnumDefaultVersionCheckJob): AppInitTask
 }

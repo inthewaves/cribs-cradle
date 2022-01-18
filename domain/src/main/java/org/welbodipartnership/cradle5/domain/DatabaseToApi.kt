@@ -48,7 +48,12 @@ fun Outcomes.toApiBody() = Outcome(
   perinatalDeathDate = perinatalDeath?.date,
   perinatalOutcome = perinatalDeath?.outcome?.selectionId,
   perinatalMaternalFactors = perinatalDeath?.relatedMaternalFactors?.selectionId,
-  perinatalOtherMaternalFactors = perinatalDeath?.relatedMaternalFactors?.otherString
+  perinatalOtherMaternalFactors = perinatalDeath?.relatedMaternalFactors?.otherString,
+  perinatalAdditionalInfo = perinatalDeath?.additionalInfo?.ifBlank { null },
+
+  birthWeight = birthWeight?.birthWeight?.selectionId,
+
+  ageAtDelivery = ageAtDelivery?.ageAtDelivery?.selectionId,
 )
 
 fun LocationCheckIn.toApiBody(userId: Int) = GpsForm(

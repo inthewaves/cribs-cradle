@@ -14,6 +14,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.welbodipartnership.cradle5.R
+import org.welbodipartnership.cradle5.data.database.entities.AgeAtDelivery
+import org.welbodipartnership.cradle5.data.database.entities.BirthWeight
 import org.welbodipartnership.cradle5.data.database.entities.EclampsiaFit
 import org.welbodipartnership.cradle5.data.database.entities.HduOrItuAdmission
 import org.welbodipartnership.cradle5.data.database.entities.Hysterectomy
@@ -28,6 +30,7 @@ import org.welbodipartnership.cradle5.data.serverenums.ServerEnumCollection
 import org.welbodipartnership.cradle5.ui.composables.LabelAndValueForDropdownOrUnknown
 import org.welbodipartnership.cradle5.ui.composables.LabelAndValueOrNone
 import org.welbodipartnership.cradle5.ui.composables.LabelAndValueOrUnknown
+import org.welbodipartnership.cradle5.ui.composables.ValueForDropdownOrUnknown
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
 import org.welbodipartnership.cradle5.util.datetime.FormDate
 
@@ -60,7 +63,9 @@ fun OutcomesCard(
       surgicalManagementTouched: TouchedState,
       surgicalManagement: SurgicalManagementOfHaemorrhage?,
       perinatalDeathTouched: TouchedState,
-      perinatalDeath: PerinatalDeath?
+      perinatalDeath: PerinatalDeath?,
+      birthWeight: BirthWeight?,
+      ageAtDelivery: AgeAtDelivery?,
     ) = outcomes
 
     val categoryToBodySpacerHeight = 0.dp
@@ -228,6 +233,10 @@ fun OutcomesCard(
         enumValue = perinatalDeath.relatedMaternalFactors,
         enumCollection = enumCollection
       )
+      LabelAndValueOrNone(
+        stringResource(R.string.perinatal_death_additional_info_label),
+        perinatalDeath.additionalInfo
+      )
     } else {
       Text(
         text = if (perinatalDeathTouched == TouchedState.TOUCHED_ENABLED) {
@@ -238,6 +247,26 @@ fun OutcomesCard(
         style = MaterialTheme.typography.body2,
       )
     }
+
+    Spacer(Modifier.height(categoryToCategorySpacerHeight))
+
+    CategoryHeader(text = stringResource(R.string.outcomes_birthweight_label))
+    Spacer(Modifier.height(categoryToBodySpacerHeight))
+    ValueForDropdownOrUnknown(
+      dropdownType = DropdownType.Birthweight,
+      enumValue = birthWeight?.birthWeight,
+      enumCollection = enumCollection
+    )
+
+    Spacer(Modifier.height(categoryToCategorySpacerHeight))
+
+    CategoryHeader(text = stringResource(R.string.outcomes_age_at_delivery_label))
+    Spacer(Modifier.height(categoryToBodySpacerHeight))
+    ValueForDropdownOrUnknown(
+      dropdownType = DropdownType.AgeAtDelivery,
+      enumValue = ageAtDelivery?.ageAtDelivery,
+      enumCollection = enumCollection
+    )
   }
 }
 
@@ -299,6 +328,9 @@ val testOutcomes = Outcomes(
   perinatalDeath = PerinatalDeath(
     date = FormDate.today(),
     outcome = EnumSelection.IdOnly(2),
-    relatedMaternalFactors = EnumSelection.WithOther(8)
+    relatedMaternalFactors = EnumSelection.WithOther(8),
+    additionalInfo = null,
   ),
+  birthWeight = BirthWeight(EnumSelection.IdOnly(1)),
+  ageAtDelivery = AgeAtDelivery(EnumSelection.IdOnly(1))
 )
