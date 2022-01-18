@@ -31,7 +31,7 @@ dependencyResolutionManagement {
             alias("kotlinx-coroutines-android").to("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.0")
 
             alias("androidx-core-ktx").to("androidx.core:core-ktx:1.7.0")
-            alias("androidx-appcompat").to("androidx.appcompat:appcompat:1.4.0")
+            alias("androidx-appcompat").to("androidx.appcompat:appcompat:1.4.1")
             version("lifecycle", "2.4.0")
             alias("androidx-lifecycle-runtime-ktx").to("androidx.lifecycle", "lifecycle-runtime-ktx").versionRef("lifecycle")
             alias("androidx-lifecycle-process").to("androidx.lifecycle", "lifecycle-process").versionRef("lifecycle")
@@ -39,7 +39,7 @@ dependencyResolutionManagement {
 
             alias("androidx-work-runtime").to("androidx.work:work-runtime-ktx:2.7.1")
 
-            alias("google-android-material").to("com.google.android.material:material:1.4.0")
+            alias("google-android-material").to("com.google.android.material:material:1.5.0")
 
             version("accompanist", "0.21.4-beta")
             alias("accompanist-navigation-animation").to("com.google.accompanist", "accompanist-navigation-animation").versionRef("accompanist")
@@ -91,7 +91,7 @@ dependencyResolutionManagement {
             alias("androidx-paging-runtime").to("androidx.paging", "paging-runtime-ktx").versionRef("paging")
             alias("androidx-paging-compose").to("androidx.paging:paging-compose:1.0.0-alpha14")
 
-            alias("androidx-constraintlayout-compose").to("androidx.constraintlayout:constraintlayout-compose:1.0.0-rc02")
+            alias("androidx-constraintlayout-compose").to("androidx.constraintlayout:constraintlayout-compose:1.0.0")
 
             version("compose", "1.1.0-rc01")
             // TODO: Remove this when all other Compose deps use 1.1.0-rc02 or higher
