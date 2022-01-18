@@ -23,7 +23,6 @@ value class ServerEnumCollection private constructor(
   operator fun get(type: DropdownType): ServerEnum? = map[type]
 
   companion object {
-    // TODO: Remove this when login in implemented
     val defaultInstance by lazy {
       ServerEnumCollection(
         listOf(
@@ -250,25 +249,25 @@ value class ServerEnumCollection private constructor(
               ServerEnum.Entry(
                 id = 1,
                 code = "1",
-                name = "Macerated stilbirth",
+                name = "Macerated (antenatal) stillbirth",
                 listOrder = 10
               ),
               ServerEnum.Entry(
                 id = 2,
                 code = "2",
-                name = "Fresh stillbirth",
+                name = "Fresh (intrapartum) stillbirth",
                 listOrder = 20
               ),
               ServerEnum.Entry(
                 id = 3,
                 code = "3",
-                name = "Early neonatal death",
+                name = "Early neonatal death (1 - 7 days)",
                 listOrder = 30
               ),
               ServerEnum.Entry(
                 id = 4,
                 code = "4",
-                name = "Late neonatal death",
+                name = "Late neonatal death (8 - 28 days)",
                 listOrder = 40
               ),
             )
@@ -291,48 +290,94 @@ value class ServerEnumCollection private constructor(
               ServerEnum.Entry(
                 id = 3,
                 code = "3",
-                name = "Haemorrhage before or during labour",
+                name = "Antepartum haemorrhage e.g. placenta praevia",
                 listOrder = 30
               ),
               ServerEnum.Entry(
                 id = 4,
                 code = "4",
-                name = "Placental abruption",
+                name = "Antepartum haemorrhage e.g. placental abruption",
                 listOrder = 40
               ),
               ServerEnum.Entry(
                 id = 5,
                 code = "5",
-                name = "Preeclampsia/Eclampsia",
+                name = "Cord prolapse",
                 listOrder = 50
               ),
               ServerEnum.Entry(
                 id = 6,
                 code = "6",
-                name = "Cord prolapse",
+                name = "Genetic defect in the baby",
                 listOrder = 60
               ),
               ServerEnum.Entry(
                 id = 7,
                 code = "7",
-                name = "Genetic defect in the baby",
+                name = "Pregnancy-related infection",
                 listOrder = 70
               ),
               ServerEnum.Entry(
                 id = 8,
                 code = "8",
-                name = "Pregnancy related infection that also affected the baby",
-                listOrder = 80
-              ),
-              ServerEnum.Entry(
-                id = 9,
-                code = "9",
                 name = "Other",
-                listOrder = 90
+                listOrder = 99
               ),
             )
           ),
-        ).associateByTo(ArrayMap()) { it.type }
+          ServerEnum(
+            DropdownType.Birthweight,
+            listOf(
+              ServerEnum.Entry(
+                id = 1,
+                code = "1",
+                name = "Normal (>2500g)",
+                listOrder = 10,
+              ),
+              ServerEnum.Entry(
+                id = 2,
+                code = "2",
+                name = "Low birthweight (<2500g)",
+                listOrder = 20,
+              ),
+              ServerEnum.Entry(
+                id = 3,
+                code = "3",
+                name = "Very low birthweight (<1500g)",
+                listOrder = 30,
+              ),
+              ServerEnum.Entry(
+                id = 4,
+                code = "4",
+                name = "Extremely low birthweight (<1000g)",
+                listOrder = 40,
+              ),
+            ),
+          ),
+          ServerEnum(
+            DropdownType.AgeAtDelivery,
+            listOf(
+              ServerEnum.Entry(
+                id = 1,
+                code = "1",
+                name = "Term birth (>37 completed weeks)",
+                listOrder = 10,
+              ),
+              ServerEnum.Entry(
+                id = 2,
+                code = "2",
+                name = "Preterm birth (<37 weeks)",
+                listOrder = 20,
+              ),
+              ServerEnum.Entry(
+                id = 3,
+                code = "3",
+                name = "Very preterm birth (<34 weeks)",
+                listOrder = 30,
+              ),
+            ),
+          )
+        ).associateByTo(ArrayMap(DropdownType.values().size)) { it.type }
       )
     }
   }
@@ -345,7 +390,9 @@ enum class DropdownType(val serverLookupId: Int) {
   UnderlyingCauseOfMaternalDeath(17),
   TypeOfSurgicalManagement(18),
   PerinatalOutcome(19),
-  MaternalFactorsRelatedToPerinatalLoss(20);
+  MaternalFactorsRelatedToPerinatalLoss(20),
+  Birthweight(22),
+  AgeAtDelivery(23)
 }
 
 /**
