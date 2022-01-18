@@ -183,6 +183,7 @@ class AppValuesStore @Inject internal constructor(
       settings.toBuilder()
         .clearEnums()
         .addAllEnums(enums)
+        .setDefaultDropdownVersion(ServerEnumCollection.DROPDOWN_VERSION)
         .build()
     }
   }

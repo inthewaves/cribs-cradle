@@ -23,6 +23,12 @@ value class ServerEnumCollection private constructor(
   operator fun get(type: DropdownType): ServerEnum? = map[type]
 
   companion object {
+    /**
+     * The current version of the default instance. This is kept track of in order to force an
+     * update when the app updates.
+     */
+    const val DROPDOWN_VERSION = 1
+
     val defaultInstance by lazy {
       ServerEnumCollection(
         listOf(

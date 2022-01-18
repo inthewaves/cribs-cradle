@@ -30,6 +30,8 @@ message EncryptedSettings {
   optional string current_sync_id = 7;
   /* Last time the SyncWorker ran */
   optional int64 last_sync_completed_timestamp = 8;
+  /* The app's version for the default dropdown values */
+  optional int32 default_dropdown_version = 9;
 }
 
 message UserInfo {
