@@ -1,3 +1,5 @@
+import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
+
 // suppressing due to https://youtrack.jetbrains.com/issue/KTIJ-19369
 @Suppress("DSL_SCOPE_VIOLATION")
 plugins {
@@ -39,12 +41,20 @@ android {
     }
 
     signingConfigs {
-        // We use a bundled debug keystore, to allow debug builds from CI to be upgradable
         named("debug") {
-            storeFile = rootProject.file("debug.keystore")
+            storeFile = rootProject.file("debug.keystore.jks")
             storePassword = "android"
             keyAlias = "androiddebugkey"
             keyPassword = "android"
+        }
+
+        create("release") {
+            storeFile = rootProject.file("release.keystore.jks")
+            storePassword =
+                gradleLocalProperties(rootProject.rootDir).getProperty("cradle5AppKeystorePassword")
+            keyAlias = gradleLocalProperties(rootProject.rootDir).getProperty("cradle5AppKeyAlias")
+            keyPassword =
+                gradleLocalProperties(rootProject.rootDir).getProperty("cradle5AppKeyPassword")
         }
     }
 
@@ -58,22 +68,26 @@ android {
         }
 
         release {
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
+            
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
 
-            // TODO: Use main server when available
-            buildConfigField("String", "BASE_API_URL", "\"https://www.medscinet.com/Cradle5Test/api\"")
+            buildConfigField("String", "BASE_API_URL", "\"https://www.medscinet.com/Cradle5/api\"")
         }
 
         create("staging") {
-            initWith(getByName("release"))
+            initWith(getByName("debug"))
+            signingConfig = signingConfigs.getByName("debug")
             applicationIdSuffix = ".releaseStaging"
             versionNameSuffix = "-staging"
             isDebuggable = false
+
             isMinifyEnabled = true
             isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+
             matchingFallbacks += listOf("release")
 
             buildConfigField("String", "SERVER_URL", "\"https://www.medscinet.com/Cradle5Test/api\"")

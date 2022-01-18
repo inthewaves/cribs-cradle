@@ -2,6 +2,16 @@
 
 ## Development
 
+### Building
+
+Inside of `local.properties`, fill in these properties:
+
+```properties
+cradle5AppKeystorePassword=
+cradle5AppKeyAlias=
+cradle5AppKeyPassword=
+```
+
 ### Debugging stack traces
 
 Based on https://developer.android.com/studio/command-line/retrace
