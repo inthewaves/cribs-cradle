@@ -61,6 +61,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import org.welbodipartnership.cradle5.domain.auth.AuthRepository
 import org.welbodipartnership.cradle5.domain.auth.AuthState
 import org.welbodipartnership.cradle5.home.LoggedInHome
+import org.welbodipartnership.cradle5.ui.composables.PrivacyPolicyButton
 import org.welbodipartnership.cradle5.ui.composables.forms.BringIntoViewOutlinedTextField
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
 import org.welbodipartnership.cradle5.util.appinit.AppInitManager
@@ -351,6 +352,10 @@ private fun LoginForm(
         is LoginType.NewLogin -> Text(stringResource(R.string.login_button))
       }
     }
+
+    Spacer(Modifier.height(12.dp))
+
+    PrivacyPolicyButton(Modifier.align(Alignment.CenterHorizontally))
   }
 }
 

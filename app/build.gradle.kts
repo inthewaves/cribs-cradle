@@ -34,6 +34,8 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
+
+        buildConfigField("String", "PRIVACY_POLICY_URL", "\"https://docs.google.com/document/d/e/2PACX-1vSD9nLQwORfZff2LX72EgLyzas405yutCRUNbXY4XTzNcPnqfpiTymCw4bvqxiwdh0wvk9QS-ufnyRR/pub\"")
     }
 
     signingConfigs {

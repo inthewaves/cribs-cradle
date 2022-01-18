@@ -48,6 +48,7 @@ import androidx.compose.material.icons.filled.LocationCity
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material.icons.outlined.LocationCity
@@ -68,6 +69,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -85,6 +87,7 @@ import org.welbodipartnership.cradle5.LoggedInNavigation
 import org.welbodipartnership.cradle5.R
 import org.welbodipartnership.cradle5.Screen
 import org.welbodipartnership.cradle5.domain.auth.AuthState
+import org.welbodipartnership.cradle5.util.launchPrivacyPolicyWebIntent
 
 @Composable
 fun LoggedInHome(
@@ -148,6 +151,20 @@ fun LoggedInHome(
               start = textPadding,
               top = 0.dp,
               end = textPadding,
+              bottom = interTextPadding
+            )
+          )
+        }
+        item {
+          Text(
+            stringResource(
+              R.string.using_s_server_name,
+              BuildConfig.BASE_API_URL.removeSuffix("/api")
+            ),
+            modifier = Modifier.padding(
+              start = textPadding,
+              top = 0.dp,
+              end = textPadding,
               bottom = textPadding
             )
           )
@@ -185,11 +202,25 @@ fun LoggedInHome(
                   contentDescription = stringResource(R.string.bottom_sheet_logout_button)
                 )
               },
-              // TODO: add confirmation
               modifier = Modifier.clickable(onClick = { showLogoutConfirmDialog = true })
             )
           }
         }
+
+        item {
+          val context = LocalContext.current
+          ListItem(
+            text = { Text(stringResource(R.string.privacy_policy_button)) },
+            icon = {
+              Icon(
+                Icons.Default.OpenInNew,
+                contentDescription = stringResource(R.string.privacy_policy_button_cd)
+              )
+            },
+            modifier = Modifier.clickable(onClick = { context.launchPrivacyPolicyWebIntent() })
+          )
+        }
+
         item { Divider() }
         item {
           Text(
