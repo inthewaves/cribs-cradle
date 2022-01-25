@@ -32,6 +32,8 @@ message EncryptedSettings {
   optional int64 last_sync_completed_timestamp = 8;
   /* The app's version for the default dropdown values */
   optional int32 default_dropdown_version = 9;
+  /* A warning message to display that blocks the app until the user acknowledges the warning. */
+  optional string warning_message = 10;
 }
 
 message UserInfo {

@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import org.welbodipartnership.cradle5.data.settings.AppValuesStore
 import org.welbodipartnership.cradle5.domain.auth.AuthRepository
 import org.welbodipartnership.cradle5.domain.auth.AuthState
 import java.util.concurrent.CancellationException
@@ -26,6 +27,7 @@ import javax.inject.Inject
 class AuthViewModel @Inject constructor(
   @ApplicationContext private val context: Context,
   private val authRepository: AuthRepository,
+  private val appValuesStore: AppValuesStore,
 ) : ViewModel() {
 
   @Immutable
@@ -35,11 +37,11 @@ class AuthViewModel @Inject constructor(
     sealed class ActionNeeded : ScreenState() {
       abstract val errorMessage: String?
       @Immutable
-      class WaitingForTokenRefreshLogin(override val errorMessage: String?) : ActionNeeded()
+      data class WaitingForTokenRefreshLogin(override val errorMessage: String?) : ActionNeeded()
       @Immutable
-      class WaitingForLogin(override val errorMessage: String?) : ActionNeeded()
+      data class WaitingForLogin(override val errorMessage: String?) : ActionNeeded()
       @Immutable
-      class WaitingForReauth(override val errorMessage: String?) : ActionNeeded()
+      data class WaitingForReauth(override val errorMessage: String?) : ActionNeeded()
     }
     object Submitting : ScreenState()
   }
@@ -73,7 +75,7 @@ class AuthViewModel @Inject constructor(
           is AuthState.TokenExpired -> {
             ScreenState.ActionNeeded.WaitingForTokenRefreshLogin(submissionState.errorMessage)
           }
-          AuthState.Initializing -> ScreenState.Initializing
+          AuthState.Initializing, is AuthState.BlockingWarningMessage -> ScreenState.Initializing
         }
       }
       SubmissionState.Done -> ScreenState.Initializing
@@ -86,6 +88,7 @@ class AuthViewModel @Inject constructor(
     class Reauthenticate(val password: String, val forceTokenRefresh: Boolean) : ChannelAction()
     object Logout : ChannelAction()
     object Reset : ChannelAction()
+    object ClearWarning : ChannelAction()
   }
 
   private val _loginMessagesFlow: MutableStateFlow<String> = MutableStateFlow("")
@@ -152,6 +155,10 @@ class AuthViewModel @Inject constructor(
             Log.d(TAG, "action channel has reset")
             submissionState.value = SubmissionState.Waiting(null)
             _loginMessagesFlow.value = ""
+          }
+          ChannelAction.ClearWarning -> {
+            Log.d(TAG, "clearing warning")
+            appValuesStore.clearWarningMessage()
           }
         }
       } catch (e: Exception) {

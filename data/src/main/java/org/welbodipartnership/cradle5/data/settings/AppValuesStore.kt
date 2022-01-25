@@ -78,6 +78,16 @@ class AppValuesStore @Inject internal constructor(
     .distinctUntilChanged()
     .conflate()
 
+  val warningMessageFlow = encryptedSettings.encryptedSettingsFlow()
+    .map { settings ->
+      settings.warningMessage.takeIf { settings.hasWarningMessage() }
+    }
+    .map {
+      it?.ifBlank { null }
+    }
+    .distinctUntilChanged()
+    .conflate()
+
   /**
    * When login is successful, the server returns a [authToken].
    *
@@ -150,6 +160,22 @@ class AppValuesStore @Inject internal constructor(
     encryptedSettings.updateData { settings ->
       settings.toBuilder()
         .setToken(newerAuthToken)
+        .build()
+    }
+  }
+
+  suspend fun setWarningMessage(warningMessage: String) {
+    encryptedSettings.updateData { settings ->
+      settings.toBuilder()
+        .setWarningMessage(warningMessage)
+        .build()
+    }
+  }
+
+  suspend fun clearWarningMessage() {
+    encryptedSettings.updateData { settings ->
+      settings.toBuilder()
+        .clearWarningMessage()
         .build()
     }
   }

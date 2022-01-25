@@ -156,27 +156,61 @@ private fun MainApp(viewModel: MainActivityViewModel, onOpenSettingsForApp: () -
         }
 
         authState.let { currentAuthState ->
-          if (currentAuthState is AuthState.LoggedInUnlocked) {
-            val serverEnums by viewModel.serverEnumCollection.collectAsState()
-            val districtName by viewModel.districtName.collectAsState(initial = null)
-            CompositionLocalProvider(LocalServerEnumCollection provides serverEnums) {
-              LoggedInHome(
-                navController,
-                currentAuthState,
-                districtName,
-                onLogout = { viewModel.logout() },
-                onLock = { viewModel.forceLockScreen() },
-                onOpenSettingsForApp = onOpenSettingsForApp
-              )
+          when (currentAuthState) {
+            is AuthState.LoggedInUnlocked -> {
+              val serverEnums by viewModel.serverEnumCollection.collectAsState()
+              val districtName by viewModel.districtName.collectAsState(initial = null)
+              CompositionLocalProvider(LocalServerEnumCollection provides serverEnums) {
+                LoggedInHome(
+                  navController,
+                  currentAuthState,
+                  districtName,
+                  onLogout = { viewModel.logout() },
+                  onLock = { viewModel.forceLockScreen() },
+                  onOpenSettingsForApp = onOpenSettingsForApp
+                )
+              }
             }
-          } else {
-            LoginOrLockscreen(currentAuthState)
+            is AuthState.LoggedInLocked, AuthState.Initializing, AuthState.LoggedOut,
+            is AuthState.TokenExpired -> {
+              LoginOrLockscreen(currentAuthState)
+            }
+            is AuthState.BlockingWarningMessage -> {
+              val scrollState = rememberScrollState()
+              Surface {
+                Column(
+                  verticalArrangement = Arrangement.Center,
+                  horizontalAlignment = Alignment.Start,
+                  modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .navigationBarsWithImePadding()
+                    .widthIn(max = 600.dp)
+                    .padding(horizontal = 24.dp)
+                ) {
+                  Text(stringResource(R.string.warning_title), style = MaterialTheme.typography.h4)
+                  Spacer(Modifier.height(12.dp))
+
+                  Text(text = currentAuthState.warningMessage)
+                  Spacer(Modifier.height(24.dp))
+
+                  Button(
+                    onClick = viewModel::clearWarningMessage,
+                    modifier = Modifier.fillMaxWidth()
+                  ) {
+                    Text(stringResource(android.R.string.ok))
+                  }
+                }
+              }
+            }
           }
         }
       }
     }
   }
 }
+
+private const val MAX_LOCKSCREEN_ATTEMPTS_BEFORE_TRYING_SERVER = 2
 
 @Composable
 fun LoginOrLockscreen(authState: AuthState) {
@@ -239,8 +273,13 @@ fun LoginOrLockscreen(authState: AuthState) {
                 }
 
                 LoginType.Lockscreen { password ->
-                  val forceRefresh = isRefreshNeeded || attemptCount >= 1
-                  Log.d("MainActivity", "submitting lockscreen, attempt count = $attemptCount")
+                  val forceRefresh = isRefreshNeeded ||
+                    attemptCount > MAX_LOCKSCREEN_ATTEMPTS_BEFORE_TRYING_SERVER
+                  Log.d(
+                    "MainActivity",
+                    "submitting lockscreen, forceRefresh = $forceRefresh, " +
+                      "attempt count = $attemptCount"
+                  )
                   authViewModel.submitAction(
                     AuthViewModel.ChannelAction.Reauthenticate(
                       password,
@@ -259,6 +298,7 @@ fun LoginOrLockscreen(authState: AuthState) {
               password = password,
               onPasswordChange = setPassword,
               errorMessage = state.errorMessage,
+              currentAttempts = attemptCount,
               extraMessage = extraMessage
             )
           }
@@ -284,6 +324,7 @@ private fun LoginForm(
   password: String,
   onPasswordChange: (String) -> Unit,
   errorMessage: String?,
+  currentAttempts: Int,
   modifier: Modifier = Modifier,
   extraMessage: String? = null,
 ) {
@@ -334,7 +375,10 @@ private fun LoginForm(
     if (errorMessage != null) {
       Text(errorMessage, color = MaterialTheme.colors.error)
       Spacer(Modifier.height(12.dp))
-      if (loginType is LoginType.Lockscreen) {
+      if (
+        loginType is LoginType.Lockscreen &&
+        currentAttempts > MAX_LOCKSCREEN_ATTEMPTS_BEFORE_TRYING_SERVER
+      ) {
         Text(
           "If password has changed on MedSciNet, enter your new password instead",
           color = MaterialTheme.colors.error
@@ -407,6 +451,7 @@ fun LoginFormLockscreenPreview() {
         password = "password",
         onPasswordChange = {},
         errorMessage = "My error message",
+        currentAttempts = 0
       )
     }
   }
@@ -423,7 +468,8 @@ fun LoginFormNewLoginPreview() {
         onUsernameChange = {},
         password = "password",
         onPasswordChange = {},
-        errorMessage = "My error message"
+        errorMessage = "My error message",
+        currentAttempts = 0
       )
     }
   }

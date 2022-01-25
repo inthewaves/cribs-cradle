@@ -41,7 +41,8 @@ import kotlin.time.Duration.Companion.seconds
 private val AUTH_TIMEOUT: Duration = 1.days
 
 /**
- * The tokens expire in 14 days
+ * The tokens expire in 14 days. Note that we can bypass local authentication, as after 1 failed,
+ * the app will also start using the server as a source of truth.
  */
 private val AUTO_REFRESH_THRESHOLD: Duration = 1.days
 
@@ -79,8 +80,11 @@ class AuthRepository @Inject internal constructor(
     appValuesStore.authTokenFlow,
     appValuesStore.lastTimeAuthedFlow,
     appValuesStore.loginCompleteFlow,
-  ) { _, authToken, lastTimeAuthed, loginComplete ->
-    if (
+    appValuesStore.warningMessageFlow,
+  ) { _, authToken, lastTimeAuthed, loginComplete, warningMessage ->
+    if (!warningMessage.isNullOrBlank()) {
+      AuthState.BlockingWarningMessage(warningMessage)
+    } else if (
       authToken == null ||
       !authToken.isInitialized ||
       authToken == AuthToken.getDefaultInstance() ||
@@ -118,8 +122,18 @@ class AuthRepository @Inject internal constructor(
 
   sealed class LoginResult {
     object Success : LoginResult()
-    class Invalid(val errorMessage: String?, val errorCode: Int?) : LoginResult()
-    class Exception(val errorMessage: String?) : LoginResult()
+
+    /**
+     * Server sent non-successful HTTP response
+     */
+    data class Invalid(
+      val errorMessage: String?,
+      val errorCode: Int?,
+      val errorType: String? = null,
+    ) : LoginResult() {
+      val isFromBadCredentials: Boolean get() = errorCode == 400 && errorType == "bad_grant"
+    }
+    data class Exception(val errorMessage: String?) : LoginResult()
   }
 
   suspend fun login(
@@ -148,8 +162,9 @@ class AuthRepository @Inject internal constructor(
         is NetworkResult.Success -> loginResult.value
         is NetworkResult.Failure -> {
           return LoginResult.Invalid(
-            loginResult.errorValue?.errorDescription,
-            loginResult.statusCode
+            errorMessage = loginResult.errorValue?.errorDescription,
+            errorCode = loginResult.statusCode,
+            errorType = loginResult.errorValue?.error
           )
         }
         is NetworkResult.NetworkException -> {
@@ -281,29 +296,42 @@ class AuthRepository @Inject internal constructor(
     }
 
     eventMessagesChannel?.trySend("Verifying password")
-    val isPasswordMatch: Boolean = passwordHasher.verifyPassword(password, existingHash)
-    Log.d(TAG, "reauthForLockscreen(forceServerRefresh = $forceServerRefresh) -> $isPasswordMatch")
-    if (isPasswordMatch || forceServerRefresh) {
+    val isLocalPasswordMatch: Boolean = passwordHasher.verifyPassword(password, existingHash)
+    Log.d(
+      TAG,
+      "reauthForLockscreen(forceServerRefresh = $forceServerRefresh) -> $isLocalPasswordMatch"
+    )
+    if (isLocalPasswordMatch || forceServerRefresh) {
       if (forceServerRefresh) {
         Log.d(TAG, "doing forced token refresh")
         return refreshAuthTokenAndUserInfoAndFacilities(
-          password,
+          password = password,
           skipTimeChecks = true,
-          isLocalPasswordIncorrect = !isPasswordMatch,
+          isLocalPasswordIncorrect = !isLocalPasswordMatch,
           eventMessagesChannel = eventMessagesChannel,
         )
       } else {
         Log.d(TAG, "doing opportunistic token refresh")
-        refreshAuthTokenAndUserInfoAndFacilities(
-          password,
+
+        val result = refreshAuthTokenAndUserInfoAndFacilities(
+          password = password,
           skipTimeChecks = false,
-          isLocalPasswordIncorrect = !isPasswordMatch,
+          isLocalPasswordIncorrect = !isLocalPasswordMatch,
           eventMessagesChannel = eventMessagesChannel,
         )
+        Log.d(TAG, "opportunistic token refresh result: $result")
+
+        if (result is LoginResult.Invalid && result.isFromBadCredentials) {
+          // Don't let the user proceed if there are errors
+          return LoginResult.Invalid(
+            "Invalid password on MedSciNet",
+            errorCode = result.errorCode
+          )
+        }
       }
     }
 
-    return if (isPasswordMatch) {
+    return if (isLocalPasswordMatch) {
       LoginResult.Success
     } else {
       LoginResult.Invalid("Invalid password", errorCode = null)
@@ -348,8 +376,8 @@ class AuthRepository @Inject internal constructor(
     }
 
     if (!networkObserver.isNetworkAvailable()) {
-      Log.d(TAG, "refreshAuthToken(): network not available")
-      return LoginResult.Exception("Network not available")
+      Log.w(TAG, "refreshAuthToken(): network not available")
+      // return LoginResult.Exception("Network not available")
     }
 
     eventMessagesChannel?.trySend(

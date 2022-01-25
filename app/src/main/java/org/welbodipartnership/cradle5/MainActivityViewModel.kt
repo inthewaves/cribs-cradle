@@ -31,6 +31,10 @@ class MainActivityViewModel @Inject constructor(
 
   val districtName: Flow<String?> = appValuesStore.districtNameFlow
 
+  fun clearWarningMessage() {
+    applicationCoroutineScope.launch { appValuesStore.clearWarningMessage() }
+  }
+
   fun logout() {
     applicationCoroutineScope.launch {
       authRepository.logout()

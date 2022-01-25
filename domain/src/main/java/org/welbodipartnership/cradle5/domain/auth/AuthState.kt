@@ -14,4 +14,6 @@ sealed interface AuthState {
   class LoggedInUnlocked(val username: String) : AuthState
   @Immutable
   class LoggedInLocked(val username: String) : AuthState
+  @Immutable
+  class BlockingWarningMessage(val warningMessage: String) : AuthState
 }
