@@ -24,6 +24,7 @@ import org.welbodipartnership.cradle5.data.settings.PasswordHash
 import org.welbodipartnership.cradle5.domain.NetworkResult
 import org.welbodipartnership.cradle5.domain.ObjectId
 import org.welbodipartnership.cradle5.domain.RestApi
+import org.welbodipartnership.cradle5.domain.UrlProvider
 import org.welbodipartnership.cradle5.domain.enums.EnumRepository
 import org.welbodipartnership.cradle5.domain.facilities.FacilityRepository
 import org.welbodipartnership.cradle5.domain.sync.SyncRepository
@@ -41,8 +42,11 @@ import kotlin.time.Duration.Companion.seconds
 private val AUTH_TIMEOUT: Duration = 1.days
 
 /**
- * The tokens expire in 14 days. Note that we can bypass local authentication, as after 1 failed,
- * the app will also start using the server as a source of truth.
+ * If the time since the token was issued is less than this threshold, then we do not perform
+ * opportunistic token refreshes. Note: The tokens currently expire in 14 days.
+ *
+ * Note that after a certain number of failures, the app will also start using the server as a
+ * source of truth.
  */
 private val AUTO_REFRESH_THRESHOLD: Duration = 1.days
 
@@ -57,6 +61,7 @@ class AuthRepository @Inject internal constructor(
   private val syncRepository: SyncRepository,
   private val facilityRepository: FacilityRepository,
   private val enumRepository: EnumRepository,
+  private val urlProvider: UrlProvider,
   @ApplicationContext private val context: Context,
   @ApplicationCoroutineScope private val applicationCoroutineScope: CoroutineScope,
   appForegroundedObserver: AppForegroundedObserver
@@ -81,16 +86,17 @@ class AuthRepository @Inject internal constructor(
     appValuesStore.lastTimeAuthedFlow,
     appValuesStore.loginCompleteFlow,
     appValuesStore.warningMessageFlow,
-  ) { _, authToken, lastTimeAuthed, loginComplete, warningMessage ->
+  ) { _, authToken, lastTimeAuthed, isLoginComplete, warningMessage ->
+
     if (!warningMessage.isNullOrBlank()) {
       AuthState.BlockingWarningMessage(warningMessage)
     } else if (
       authToken == null ||
       !authToken.isInitialized ||
       authToken == AuthToken.getDefaultInstance() ||
-      !loginComplete
+      !isLoginComplete
     ) {
-      if (authToken != null && !loginComplete) {
+      if (authToken != null && !isLoginComplete) {
         Log.d(TAG, "authStateFlow: token present but login not complete")
       }
       AuthState.LoggedOut
@@ -131,7 +137,7 @@ class AuthRepository @Inject internal constructor(
       val errorCode: Int?,
       val errorType: String? = null,
     ) : LoginResult() {
-      val isFromBadCredentials: Boolean get() = errorCode == 400 && errorType == "bad_grant"
+      val isFromBadCredentials: Boolean get() = errorCode == 400 && errorType == "invalid_grant"
     }
     data class Exception(val errorMessage: String?) : LoginResult()
   }
@@ -322,11 +328,16 @@ class AuthRepository @Inject internal constructor(
         Log.d(TAG, "opportunistic token refresh result: $result")
 
         if (result is LoginResult.Invalid && result.isFromBadCredentials) {
-          // Don't let the user proceed if there are errors
-          return LoginResult.Invalid(
-            "Invalid password on MedSciNet",
-            errorCode = result.errorCode
-          )
+          if (isLocalPasswordMatch) {
+            appValuesStore.setWarningMessage(
+              "The password you entered was correct before, but the MedSciNet server " +
+                "returned the following error: ${result.errorMessage} (error code " +
+                "${result.errorCode}).\n\nYour password may have been changed or your account " +
+                "may have been disabled. Please try to login on the website " +
+                "(website link can be found in the settings in the top-right button) to check " +
+                "the account status."
+            )
+          }
         }
       }
     }
@@ -360,17 +371,36 @@ class AuthRepository @Inject internal constructor(
       Log.w(TAG, "refreshAuthToken(): trying to reauthenticate when there is no token")
       return LoginResult.Exception("No authentication token present")
     } else {
-      val expires = UnixTimestamp
-        .fromDateTimeString(token.expires, ApiAuthToken.dateTimeFormatter)
+      val issued = UnixTimestamp.fromDateTimeString(token.issued, ApiAuthToken.dateTimeFormatter)
+      val expires = UnixTimestamp.fromDateTimeString(token.expires, ApiAuthToken.dateTimeFormatter)
       val now = UnixTimestamp.now()
 
       if (now >= expires) {
         Log.w(TAG, "refreshAuthToken(): token already expired; forcing refresh")
       } else if (!skipTimeChecks) {
         val durationUntilExpiry = now durationBetween expires
-        if (durationUntilExpiry > AUTO_REFRESH_THRESHOLD) {
-          Log.d(TAG, "refreshAuthToken(): $durationUntilExpiry until token expires; ignoring")
-          return LoginResult.Exception("$durationUntilExpiry until token expires; not refreshing")
+        Log.d(
+          TAG,
+          "refreshAuthToken(): token expires at ${token.expires}; " +
+            "$durationUntilExpiry until token expires"
+        )
+        val durationSinceIssued = now durationBetween issued
+        Log.d(
+          TAG,
+          "refreshAuthToken(): token issued at ${token.issued}; " +
+            "$durationSinceIssued since the token was issued"
+        )
+
+        if (durationSinceIssued < AUTO_REFRESH_THRESHOLD) {
+          Log.d(
+            TAG,
+            "refreshAuthToken(): $durationSinceIssued since token was issued; this is less " +
+              "than the threshold of $AUTO_REFRESH_THRESHOLD, so ignoring refresh attempt"
+          )
+          return LoginResult.Exception(
+            "$durationSinceIssued since token was issued; less than $AUTO_REFRESH_THRESHOLD, " +
+              "so ignoring"
+          )
         }
       }
     }
