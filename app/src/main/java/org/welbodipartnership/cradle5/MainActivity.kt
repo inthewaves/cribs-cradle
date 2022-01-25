@@ -252,7 +252,6 @@ fun LoginOrLockscreen(authState: AuthState) {
             Text(loginInfo, textAlign = TextAlign.Center)
           }
           is AuthViewModel.ScreenState.ActionNeeded -> {
-
             val extraMessage: String?
             val loginType = when (state) {
               is AuthViewModel.ScreenState.ActionNeeded.WaitingForLogin -> {
@@ -264,15 +263,17 @@ fun LoginOrLockscreen(authState: AuthState) {
               }
               is AuthViewModel.ScreenState.ActionNeeded.WaitingForReauth,
               is AuthViewModel.ScreenState.ActionNeeded.WaitingForTokenRefreshLogin -> {
-                val isRefreshNeeded = state is
-                AuthViewModel.ScreenState.ActionNeeded.WaitingForTokenRefreshLogin
+                val isRefreshNeeded =
+                  state is AuthViewModel.ScreenState.ActionNeeded.WaitingForTokenRefreshLogin
                 extraMessage = if (isRefreshNeeded) {
                   "Internet access is required in order to refresh credentials with MedSciNet"
                 } else {
                   null
                 }
 
-                LoginType.Lockscreen { password ->
+                val currentUsername by authViewModel.usernameFlow.collectAsState(initial = null)
+
+                LoginType.Lockscreen(currentUsername ?: "") { password ->
                   val forceRefresh = isRefreshNeeded ||
                     attemptCount > MAX_LOCKSCREEN_ATTEMPTS_BEFORE_TRYING_SERVER
                   Log.d(
@@ -313,7 +314,10 @@ private sealed class LoginType {
   class NewLogin(
     val onSubmit: (username: String, password: String) -> Unit
   ) : LoginType()
-  class Lockscreen(val onSubmit: (password: String) -> Unit) : LoginType()
+  class Lockscreen(
+    val username: String,
+    val onSubmit: (password: String) -> Unit
+  ) : LoginType()
 }
 
 @Composable
@@ -369,6 +373,8 @@ private fun LoginForm(
 
     if (loginType is LoginType.Lockscreen) {
       Text(stringResource(R.string.lockscreen_title), style = MaterialTheme.typography.h5)
+      Spacer(Modifier.height(12.dp))
+      Text(stringResource(R.string.lockscreen_subtitle_logged_in_as_s, loginType.username))
       Spacer(Modifier.height(12.dp))
     }
 
@@ -445,7 +451,7 @@ fun LoginFormLockscreenPreview() {
   CradleTrialAppTheme {
     Surface {
       LoginForm(
-        loginType = LoginType.Lockscreen {},
+        loginType = LoginType.Lockscreen("TestUser") {},
         username = "",
         onUsernameChange = {},
         password = "password",

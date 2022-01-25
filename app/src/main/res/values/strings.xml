@@ -153,6 +153,7 @@
     <string name="privacy_policy_button">Privacy policy</string>
     <string name="privacy_policy_button_cd">Opens in web browser icon</string>
     <string name="warning_title">Warning</string>
+    <string name="lockscreen_subtitle_logged_in_as_s">Logged in as %1$s</string>
     <plurals name="patient_form_snackbar_failed_to_save_there_are_d_errors">
         <item quantity="one">Failed to save, as there is %1$d error.</item>
         <item quantity="other">Failed to save, as there are %1$d errors.</item>

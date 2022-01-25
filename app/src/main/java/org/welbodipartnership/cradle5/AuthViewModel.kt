@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.welbodipartnership.cradle5.data.settings.AppValuesStore
 import org.welbodipartnership.cradle5.domain.auth.AuthRepository
@@ -93,6 +94,9 @@ class AuthViewModel @Inject constructor(
 
   private val _loginMessagesFlow: MutableStateFlow<String> = MutableStateFlow("")
   val loginMessagesFlow: StateFlow<String> = _loginMessagesFlow
+
+  val usernameFlow: Flow<String?> = appValuesStore.authTokenFlow
+    .map { it?.username }
 
   private val authChannel = viewModelScope.actor<ChannelAction>(capacity = Channel.RENDEZVOUS) {
     for (action in channel) {
