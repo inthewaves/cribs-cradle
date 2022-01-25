@@ -36,6 +36,8 @@ value class ControlId(val id: String)
 
 @Singleton
 class UrlProvider @Inject constructor(@Named("baseApiUrl") val baseApiUrl: String) {
+  val userFriendlySiteUrl = baseApiUrl.removeSuffix("/api")
+
   val token =
     "$baseApiUrl/v0/token"
 

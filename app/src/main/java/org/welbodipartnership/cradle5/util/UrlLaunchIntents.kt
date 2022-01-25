@@ -11,3 +11,10 @@ fun Context.launchPrivacyPolicyWebIntent() {
       .setData(Uri.parse(BuildConfig.PRIVACY_POLICY_URL))
   )
 }
+
+fun Context.launchWebIntent(urlString: String) {
+  startActivity(
+    Intent(Intent.ACTION_VIEW)
+      .setData(Uri.parse(urlString))
+  )
+}

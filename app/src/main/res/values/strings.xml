@@ -152,7 +152,6 @@
     <string name="perinatal_death_additional_info_label">Additional information on reason for perinatal death</string>
     <string name="privacy_policy_button">Privacy policy</string>
     <string name="privacy_policy_button_cd">Opens in web browser icon</string>
-    <string name="using_s_server_name">Using %1$s</string>
     <string name="warning_title">Warning</string>
     <plurals name="patient_form_snackbar_failed_to_save_there_are_d_errors">
         <item quantity="one">Failed to save, as there is %1$d error.</item>
