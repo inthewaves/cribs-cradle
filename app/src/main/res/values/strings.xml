@@ -78,7 +78,7 @@
     <string name="discard_unsaved_changes_dialog_title">Discard unsaved changes?</string>
     <string name="discard_unsaved_changes_dialog_title_new_entry">Discard this new patient and outcomes?</string>
     <string name="cancel">Cancel</string>
-    <string name="login_error_error_code_format_s_s">$1%s (Error code $2%s)</string>
+    <string name="login_error_error_code_format_s_s">%1$s (HTTP error code %2$s)</string>
     <string name="bottom_drawer_logged_in_as_s">Logged in as %1$s</string>
     <string name="home_nav_bar_account_info_button_cd">Open account information sheet</string>
     <string name="bottom_sheet_logout_button">Delete local data and logout</string>

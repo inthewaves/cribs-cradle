@@ -187,7 +187,8 @@ class AuthRepository @Inject internal constructor(
       // redundantly?
       appValuesStore.insertLoginDetails(authToken = token, hash)
 
-      // Try to get the userId from the index menu items
+      // Try to get the userId from the index menu items. If we can't get it, we will fail,
+      // because certain forms (like GPS coordinates) require us to input a userId.
       loginEventMessagesChannel?.trySend("Getting user information")
       when (val indexResult = restApi.getIndexEntries()) {
         is NetworkResult.Success -> {
@@ -196,28 +197,40 @@ class AuthRepository @Inject internal constructor(
             userDataItem.url.substringAfterLast('/', "")
               .toIntOrNull()
               ?.let { userId -> appValuesStore.insertUserId(userId) }
-              ?: loginEventMessagesChannel?.trySend(
-                "Unable to get userId: ${userDataItem.url} doesn't end in a number"
-              )
+              ?: run {
+                val errorMessage =
+                  "Unable to get userId: ${userDataItem.url} from API index doesn't end in a number"
+                loginEventMessagesChannel?.apply {
+                  trySend(errorMessage)
+                  delay(2.seconds)
+                }
+                return LoginResult.Exception(errorMessage)
+              }
           } else {
-            loginEventMessagesChannel?.trySend(
-              "Unable to get userId: Missing user data index tab"
-            )
-            delay(800L)
+            val errorMessage =
+              "Unable to get userId: Missing user data index tab " +
+                "(available tabs: ${indexResult.value})"
+            loginEventMessagesChannel?.apply {
+              trySend(errorMessage)
+              delay(2.seconds)
+            }
+            return LoginResult.Exception(errorMessage)
           }
         }
         is NetworkResult.Failure -> {
           val message = indexResult.errorValue.decodeToString()
-          loginEventMessagesChannel?.trySend(
-            "Unable to get userId: HTTP ${indexResult.statusCode} error (message: $message)"
-          )
-          delay(800L)
+          val errorMessage = "Unable to get userId: HTTP ${indexResult.statusCode} error (message: $message)"
+          loginEventMessagesChannel?.apply {
+            trySend(errorMessage)
+            delay(800L)
+          }
+          return LoginResult.Invalid(errorMessage, errorCode = indexResult.statusCode)
         }
         is NetworkResult.NetworkException -> {
-          loginEventMessagesChannel?.trySend(
-            "Unable to get userId: ${indexResult.formatErrorMessage(context)}"
-          )
+          val errorMessage = "Unable to get userId: ${indexResult.formatErrorMessage(context)}"
+          loginEventMessagesChannel?.trySend(errorMessage)
           delay(800L)
+          return LoginResult.Exception(errorMessage)
         }
       }
 
@@ -232,6 +245,7 @@ class AuthRepository @Inject internal constructor(
             appValuesStore.setDistrictName(districtName)
           } else {
             loginEventMessagesChannel?.trySend("User not associated with a district")
+            delay(1.seconds)
           }
         }
         is NetworkResult.Failure -> {
