@@ -43,7 +43,7 @@ private val AUTH_TIMEOUT: Duration = 1.days
 /**
  * The tokens expire in 14 days
  */
-private val AUTO_REFRESH_THRESHOLD: Duration = 5.days
+private val AUTO_REFRESH_THRESHOLD: Duration = 1.days
 
 @Singleton
 class AuthRepository @Inject internal constructor(
@@ -92,7 +92,8 @@ class AuthRepository @Inject internal constructor(
       AuthState.LoggedOut
     } else {
       val username = authToken.username
-      // fall back to 0 to always force authentication if there is last authed time for some reason
+      // fall back to 0 to always force authentication if there is no last authed time for some
+      // reason
       val lastTimeAuthedForComparison = lastTimeAuthed ?: UnixTimestamp(0)
       val tokenExpiryTime: UnixTimestamp = UnixTimestamp
         .fromDateTimeString(authToken.expires, ApiAuthToken.dateTimeFormatter)
