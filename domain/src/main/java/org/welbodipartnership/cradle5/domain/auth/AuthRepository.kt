@@ -14,8 +14,6 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
-import kotlinx.coroutines.yield
 import org.welbodipartnership.api.ApiAuthToken
 import org.welbodipartnership.api.cradle5.HealthcareFacilitySummary
 import org.welbodipartnership.cradle5.data.cryptography.PasswordHasher
@@ -119,14 +117,15 @@ class AuthRepository @Inject internal constructor(
 
   sealed class LoginResult {
     object Success : LoginResult()
-    class Invalid(val errorMessage: String?, val errorCode: Int) : LoginResult()
+    class Invalid(val errorMessage: String?, val errorCode: Int?) : LoginResult()
     class Exception(val errorMessage: String?) : LoginResult()
   }
 
   suspend fun login(
     username: String,
     password: String,
-    loginEventMessagesChannel: SendChannel<String>?
+    loginEventMessagesChannel: SendChannel<String>?,
+    isForTokenRefresh: Boolean,
   ): LoginResult {
     /*
     if (!networkObserver.isNetworkAvailable()) {
@@ -135,8 +134,15 @@ class AuthRepository @Inject internal constructor(
     }
      */
 
+    appValuesStore.markLoginIncomplete()
     try {
-      loginEventMessagesChannel?.trySend("Submitting credentials to server")
+      loginEventMessagesChannel?.trySend(
+        if (isForTokenRefresh) {
+          "Checking credentials with server"
+        } else {
+          "Submitting credentials to server"
+        }
+      )
       val token: AuthToken = when (val loginResult = restApi.login(username, password)) {
         is NetworkResult.Success -> loginResult.value
         is NetworkResult.Failure -> {
@@ -150,10 +156,13 @@ class AuthRepository @Inject internal constructor(
         }
       }
       Log.d(TAG, "login(): successfully obtained token")
-
-      loginEventMessagesChannel?.trySend("Setting up lockscreen")
+      if (!isForTokenRefresh) {
+        loginEventMessagesChannel?.trySend("Setting up lockscreen")
+      }
       val hash = passwordHasher.hashPassword(password)
-      // We have to insert the token here for RestApi to be able to authenticate
+      // We have to insert the token here for RestApi to be able to authenticate.
+      // Note: This function is also used for token refreshes, so the hash will be updated
+      // redundantly?
       appValuesStore.insertLoginDetails(authToken = token, hash)
 
       // Try to get the userId from the index menu items
@@ -239,71 +248,122 @@ class AuthRepository @Inject internal constructor(
         }
       }
 
-      appValuesStore.markLoginComplete()
-
       return LoginResult.Success
     } finally {
+      appValuesStore.markLoginComplete()
       loginEventMessagesChannel?.close()
     }
   }
 
-  suspend fun reauthForLockscreen(password: String): Boolean {
+  suspend fun reauthForLockscreen(
+    password: String,
+    forceServerRefresh: Boolean,
+    eventMessagesChannel: SendChannel<String>?,
+  ): LoginResult {
+    val result = reauthForLockscreenInner(password, forceServerRefresh, eventMessagesChannel)
+    if (result is LoginResult.Success) {
+      Log.w(TAG, "reauth(): successful reauthentication; setting last auth time to now")
+      appValuesStore.setLastTimeAuthenticatedToNow()
+    }
+    return result
+  }
+
+  private suspend fun reauthForLockscreenInner(
+    password: String,
+    forceServerRefresh: Boolean,
+    eventMessagesChannel: SendChannel<String>?
+  ): LoginResult {
     val existingHash: PasswordHash? = appValuesStore.passwordHashFlow.firstOrNull()
     if (existingHash == null) {
       Log.w(TAG, "reauth(): trying to reauthenticate, but there is no stored hash")
-      return false
+      return LoginResult.Exception("Missing existing login details")
     }
 
-    val correctHash = passwordHasher.verifyPassword(password, existingHash)
-    Log.d(TAG, "reauthForLockscreen() -> $correctHash")
-    if (correctHash) {
-      appValuesStore.setLastTimeAuthenticatedToNow()
-      Log.d(TAG, "doing opportunistic token refresh")
-      withTimeoutOrNull(10.seconds) {
-        refreshAuthToken(password)
+    eventMessagesChannel?.trySend("Verifying password")
+    val isPasswordMatch: Boolean = passwordHasher.verifyPassword(password, existingHash)
+    Log.d(TAG, "reauthForLockscreen(forceServerRefresh = $forceServerRefresh) -> $isPasswordMatch")
+    if (isPasswordMatch || forceServerRefresh) {
+      if (forceServerRefresh) {
+        Log.d(TAG, "doing forced token refresh")
+        return refreshAuthTokenAndUserInfoAndFacilities(
+          password,
+          skipTimeChecks = true,
+          isLocalPasswordIncorrect = !isPasswordMatch,
+          eventMessagesChannel = eventMessagesChannel,
+        )
+      } else {
+        Log.d(TAG, "doing opportunistic token refresh")
+        refreshAuthTokenAndUserInfoAndFacilities(
+          password,
+          skipTimeChecks = false,
+          isLocalPasswordIncorrect = !isPasswordMatch,
+          eventMessagesChannel = eventMessagesChannel,
+        )
       }
     }
 
-    return correctHash
+    return if (isPasswordMatch) {
+      LoginResult.Success
+    } else {
+      LoginResult.Invalid("Invalid password", errorCode = null)
+    }
   }
 
   /**
-   * Refreshes the auth token. Since the API doesn't offer any refresh tokens, we require
-   * the user's password.
+   * Refreshes the auth token, user information, and facilities list. Since the API doesn't offer
+   * any refresh tokens, we require the user's password as user input.
    */
-  suspend fun refreshAuthToken(password: String, skipTimeChecks: Boolean = false): Boolean {
-    Log.d(TAG, "refreshAuthToken(): skipTimeChecks = $skipTimeChecks")
+  private suspend fun refreshAuthTokenAndUserInfoAndFacilities(
+    password: String,
+    skipTimeChecks: Boolean,
+    isLocalPasswordIncorrect: Boolean,
+    eventMessagesChannel: SendChannel<String>?,
+  ): LoginResult {
+    Log.d(
+      TAG,
+      "refreshAuthToken(): skipTimeChecks = $skipTimeChecks, " +
+        "isLocalPasswordIncorrect = $isLocalPasswordIncorrect"
+    )
     // try to login again
     val token = appValuesStore.authTokenFlow.firstOrNull()
     val username = token?.username
     if (token == null || username.isNullOrBlank()) {
       Log.w(TAG, "refreshAuthToken(): trying to reauthenticate when there is no token")
-      return false
+      return LoginResult.Exception("No authentication token present")
     } else {
       val expires = UnixTimestamp
         .fromDateTimeString(token.expires, ApiAuthToken.dateTimeFormatter)
       val now = UnixTimestamp.now()
-      if (!skipTimeChecks) {
-        if (now >= expires) {
-          Log.w(TAG, "refreshAuthToken(): token already expired")
-          return false
-        }
 
+      if (now >= expires) {
+        Log.w(TAG, "refreshAuthToken(): token already expired; forcing refresh")
+      } else if (!skipTimeChecks) {
         val durationUntilExpiry = now durationBetween expires
         if (durationUntilExpiry > AUTO_REFRESH_THRESHOLD) {
           Log.d(TAG, "refreshAuthToken(): $durationUntilExpiry until token expires; ignoring")
-          return false
+          return LoginResult.Exception("$durationUntilExpiry until token expires; not refreshing")
         }
       }
     }
 
     if (!networkObserver.isNetworkAvailable()) {
       Log.d(TAG, "refreshAuthToken(): network not available")
-      return false
+      return LoginResult.Exception("Network not available")
     }
 
-    yield()
+    eventMessagesChannel?.trySend(
+      "Preparing to re-verify credentials and user info with the server"
+    )
+    delay(1.seconds)
 
+    return login(
+      username = username,
+      password = password,
+      loginEventMessagesChannel = eventMessagesChannel,
+      isForTokenRefresh = true
+    )
+
+    /*
     val freshAuthToken: AuthToken = when (val loginResult = restApi.login(username, password)) {
       is NetworkResult.Success -> loginResult.value
       is NetworkResult.Failure -> {
@@ -325,7 +385,8 @@ class AuthRepository @Inject internal constructor(
 
     Log.d(TAG, "refreshAuthToken(): successful refresh; inserting fresh token into store")
     appValuesStore.insertFreshAuthToken(freshAuthToken)
-    return true
+
+     */
   }
 
   suspend fun forceLockscreen() {

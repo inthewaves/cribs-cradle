@@ -39,6 +39,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -150,6 +151,9 @@ private fun MainApp(viewModel: MainActivityViewModel, onOpenSettingsForApp: () -
         val navController = rememberAnimatedNavController()
 
         val authState by viewModel.authState.collectAsState(AuthState.Initializing)
+        LaunchedEffect(authState) {
+          Log.d("MainActivity", "New auth state: ${authState::class.java.simpleName}")
+        }
 
         authState.let { currentAuthState ->
           if (currentAuthState is AuthState.LoggedInUnlocked) {
@@ -195,6 +199,7 @@ fun LoginOrLockscreen(authState: AuthState) {
   val (password, setPassword) = rememberSaveable(authState is AuthState.LoggedOut) {
     mutableStateOf("")
   }
+  var attemptCount by rememberSaveable { mutableStateOf(0) }
 
   Surface {
     Column(
@@ -212,32 +217,50 @@ fun LoginOrLockscreen(authState: AuthState) {
             Spacer(Modifier.height(12.dp))
             Text(loginInfo, textAlign = TextAlign.Center)
           }
-          is AuthViewModel.ScreenState.WaitingForLogin -> {
+          is AuthViewModel.ScreenState.ActionNeeded -> {
+
+            val extraMessage: String?
+            val loginType = when (state) {
+              is AuthViewModel.ScreenState.ActionNeeded.WaitingForLogin -> {
+                extraMessage = null
+                LoginType.NewLogin { username, password ->
+                  authViewModel.submitAction(AuthViewModel.ChannelAction.Login(username, password))
+                  attemptCount++
+                }
+              }
+              is AuthViewModel.ScreenState.ActionNeeded.WaitingForReauth,
+              is AuthViewModel.ScreenState.ActionNeeded.WaitingForTokenRefreshLogin -> {
+                val isRefreshNeeded = state is
+                AuthViewModel.ScreenState.ActionNeeded.WaitingForTokenRefreshLogin
+                extraMessage = if (isRefreshNeeded) {
+                  "Internet access is required in order to refresh credentials with MedSciNet"
+                } else {
+                  null
+                }
+
+                LoginType.Lockscreen { password ->
+                  val forceRefresh = isRefreshNeeded || attemptCount >= 1
+                  Log.d("MainActivity", "submitting lockscreen, attempt count = $attemptCount")
+                  authViewModel.submitAction(
+                    AuthViewModel.ChannelAction.Reauthenticate(
+                      password,
+                      forceTokenRefresh = forceRefresh
+                    )
+                  )
+                  attemptCount++
+                }
+              }
+            }
+
             LoginForm(
-              LoginType.NewLogin { username, password ->
-                authViewModel.submitAction(AuthViewModel.ChannelAction.Login(username, password))
-              },
+              loginType = loginType,
               username = username,
               onUsernameChange = setUsername,
               password = password,
               onPasswordChange = setPassword,
-              errorMessage = state.errorMessage
+              errorMessage = state.errorMessage,
+              extraMessage = extraMessage
             )
-          }
-          is AuthViewModel.ScreenState.WaitingForReauth -> {
-            LoginForm(
-              LoginType.Lockscreen { password ->
-                authViewModel.submitAction(AuthViewModel.ChannelAction.Reauthenticate(password))
-              },
-              username = username,
-              onUsernameChange = setUsername,
-              password = password,
-              onPasswordChange = setPassword,
-              errorMessage = state.errorMessage
-            )
-          }
-          is AuthViewModel.ScreenState.WaitingForTokenRefreshLogin -> {
-            Text("AuthViewModel.ScreenState.WaitingForTokenRefreshLogin")
           }
         }
       }
@@ -262,6 +285,7 @@ private fun LoginForm(
   onPasswordChange: (String) -> Unit,
   errorMessage: String?,
   modifier: Modifier = Modifier,
+  extraMessage: String? = null,
 ) {
 
   val onSubmit: () -> Unit = {
@@ -309,6 +333,18 @@ private fun LoginForm(
 
     if (errorMessage != null) {
       Text(errorMessage, color = MaterialTheme.colors.error)
+      Spacer(Modifier.height(12.dp))
+      if (loginType is LoginType.Lockscreen) {
+        Text(
+          "If password has changed on MedSciNet, enter your new password instead",
+          color = MaterialTheme.colors.error
+        )
+        Spacer(Modifier.height(12.dp))
+      }
+    }
+
+    if (extraMessage != null) {
+      Text(extraMessage)
       Spacer(Modifier.height(12.dp))
     }
 
@@ -370,7 +406,7 @@ fun LoginFormLockscreenPreview() {
         onUsernameChange = {},
         password = "password",
         onPasswordChange = {},
-        errorMessage = "My error message"
+        errorMessage = "My error message",
       )
     }
   }

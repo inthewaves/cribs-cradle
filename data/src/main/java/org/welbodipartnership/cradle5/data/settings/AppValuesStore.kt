@@ -96,6 +96,14 @@ class AppValuesStore @Inject internal constructor(
     }
   }
 
+  suspend fun markLoginIncomplete() {
+    encryptedSettings.updateData { settings ->
+      settings.toBuilder()
+        .setIsLoginComplete(false)
+        .build()
+    }
+  }
+
   suspend fun markLoginComplete() {
     encryptedSettings.updateData { settings ->
       settings.toBuilder()

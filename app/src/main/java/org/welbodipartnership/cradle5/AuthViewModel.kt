@@ -2,11 +2,13 @@ package org.welbodipartnership.cradle5
 
 import android.content.Context
 import android.util.Log
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.coroutineScope
@@ -26,12 +28,19 @@ class AuthViewModel @Inject constructor(
   private val authRepository: AuthRepository,
 ) : ViewModel() {
 
+  @Immutable
   sealed class ScreenState {
     object Initializing : ScreenState()
     object Done : ScreenState()
-    class WaitingForTokenRefreshLogin(val errorMessage: String?) : ScreenState()
-    class WaitingForLogin(val errorMessage: String?) : ScreenState()
-    class WaitingForReauth(val errorMessage: String?) : ScreenState()
+    sealed class ActionNeeded : ScreenState() {
+      abstract val errorMessage: String?
+      @Immutable
+      class WaitingForTokenRefreshLogin(override val errorMessage: String?) : ActionNeeded()
+      @Immutable
+      class WaitingForLogin(override val errorMessage: String?) : ActionNeeded()
+      @Immutable
+      class WaitingForReauth(override val errorMessage: String?) : ActionNeeded()
+    }
     object Submitting : ScreenState()
   }
 
@@ -56,13 +65,13 @@ class AuthViewModel @Inject constructor(
             ScreenState.Done
           }
           is AuthState.LoggedInLocked -> {
-            ScreenState.WaitingForReauth(submissionState.errorMessage)
+            ScreenState.ActionNeeded.WaitingForReauth(submissionState.errorMessage)
           }
           AuthState.LoggedOut -> {
-            ScreenState.WaitingForLogin(submissionState.errorMessage)
+            ScreenState.ActionNeeded.WaitingForLogin(submissionState.errorMessage)
           }
           is AuthState.TokenExpired -> {
-            ScreenState.WaitingForTokenRefreshLogin(submissionState.errorMessage)
+            ScreenState.ActionNeeded.WaitingForTokenRefreshLogin(submissionState.errorMessage)
           }
           AuthState.Initializing -> ScreenState.Initializing
         }
@@ -74,7 +83,7 @@ class AuthViewModel @Inject constructor(
 
   sealed class ChannelAction {
     class Login(val username: String, val password: String) : ChannelAction()
-    class Reauthenticate(val password: String) : ChannelAction()
+    class Reauthenticate(val password: String, val forceTokenRefresh: Boolean) : ChannelAction()
     object Logout : ChannelAction()
     object Reset : ChannelAction()
   }
@@ -86,44 +95,57 @@ class AuthViewModel @Inject constructor(
     for (action in channel) {
       Log.d(TAG, "authChannel received an action")
       submissionState.value = SubmissionState.Submitting
+      val loginEventChannel: SendChannel<String> by lazy {
+        actor(capacity = Channel.CONFLATED) {
+          consumeEach {
+            Log.d(TAG, "Login action: $it")
+            _loginMessagesFlow.value = it
+          }
+        }
+      }
       try {
         when (action) {
           is ChannelAction.Login -> {
             val newValue = coroutineScope {
-              val loginEventChannel = actor<String>(capacity = Channel.CONFLATED) {
-                consumeEach {
-                  Log.d(TAG, "Login action: $it")
-                  _loginMessagesFlow.value = it
-                }
-              }
-
               when (
-                val loginResult = authRepository.login(action.username, action.password, loginEventChannel)
+                val loginResult = authRepository.login(
+                  action.username,
+                  action.password,
+                  loginEventChannel,
+                  isForTokenRefresh = false,
+                )
               ) {
                 is AuthRepository.LoginResult.Exception -> {
                   SubmissionState.Waiting(loginResult.errorMessage)
                 }
                 is AuthRepository.LoginResult.Invalid -> {
                   val errorMessage = context.getString(
-                    R.string.login_error_error_code_format_s_d,
+                    R.string.login_error_error_code_format_s_s,
                     loginResult.errorMessage ?: "",
-                    loginResult.errorCode
+                    loginResult.errorCode?.toString() ?: ""
                   )
-                  SubmissionState.Waiting(loginResult.errorMessage)
+                  SubmissionState.Waiting(errorMessage)
                 }
                 AuthRepository.LoginResult.Success -> SubmissionState.Done
-              }.also {
-                loginEventChannel.close()
               }
             }
             submissionState.value = newValue
           }
           is ChannelAction.Reauthenticate -> {
-            val authSuccess = authRepository.reauthForLockscreen(action.password)
-            submissionState.value = if (authSuccess) {
-              SubmissionState.Done
-            } else {
-              SubmissionState.Waiting("Wrong password")
+            submissionState.value = when (
+              val reauthResult = authRepository.reauthForLockscreen(
+                action.password,
+                forceServerRefresh = action.forceTokenRefresh,
+                eventMessagesChannel = loginEventChannel,
+              )
+            ) {
+              AuthRepository.LoginResult.Success -> {
+                SubmissionState.Done
+              }
+              is AuthRepository.LoginResult.Exception ->
+                SubmissionState.Waiting(reauthResult.errorMessage)
+              is AuthRepository.LoginResult.Invalid ->
+                SubmissionState.Waiting(reauthResult.errorMessage)
             }
           }
           ChannelAction.Logout, ChannelAction.Reset -> {
@@ -139,6 +161,7 @@ class AuthViewModel @Inject constructor(
           "Failed to handle authentication (${e::class.java.simpleName}): ${e.localizedMessage}"
         )
       } finally {
+        loginEventChannel.close()
         if (submissionState.value is SubmissionState.Submitting) {
           submissionState.value = SubmissionState.Waiting(null)
         }
