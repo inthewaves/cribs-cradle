@@ -569,7 +569,10 @@ private fun LoginForm(
 
     Spacer(Modifier.height(12.dp))
 
-    TextButton(onClick = onForgotPasswordClicked, modifier = Modifier.fillMaxWidth()) {
+    TextButton(
+      onClick = onForgotPasswordClicked,
+      modifier = Modifier.align(Alignment.CenterHorizontally)
+    ) {
       Text("Forgot password")
     }
 
