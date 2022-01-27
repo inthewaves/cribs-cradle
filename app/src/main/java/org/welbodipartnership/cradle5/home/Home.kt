@@ -72,9 +72,6 @@ import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -84,17 +81,15 @@ import androidx.navigation.NavHostController
 import com.google.accompanist.insets.LocalWindowInsets
 import com.google.accompanist.insets.rememberInsetsPaddingValues
 import com.google.accompanist.insets.ui.BottomNavigation
-import dagger.hilt.EntryPoints
 import org.welbodipartnership.cradle5.BuildConfig
 import org.welbodipartnership.cradle5.LeafScreen
 import org.welbodipartnership.cradle5.LoggedInNavigation
 import org.welbodipartnership.cradle5.R
 import org.welbodipartnership.cradle5.Screen
-import org.welbodipartnership.cradle5.di.UrlEntryPoint
 import org.welbodipartnership.cradle5.domain.auth.AuthState
-import org.welbodipartnership.cradle5.ui.composables.ClickableMaterialText
+import org.welbodipartnership.cradle5.ui.composables.LocalUrlProvider
+import org.welbodipartnership.cradle5.ui.composables.UsingServerText
 import org.welbodipartnership.cradle5.util.launchPrivacyPolicyWebIntent
-import org.welbodipartnership.cradle5.util.launchWebIntent
 
 @Composable
 fun LoggedInHome(
@@ -139,11 +134,6 @@ fun LoggedInHome(
       val textPadding = 16.dp
       val interTextPadding = 8.dp
 
-      val context = LocalContext.current
-      val urlProvider = remember {
-        EntryPoints.get(context.applicationContext, UrlEntryPoint::class.java).getUrlProvider()
-      }
-
       LazyColumn(contentPadding = padding) {
         item {
           Text(
@@ -169,27 +159,15 @@ fun LoggedInHome(
           )
         }
         item {
-          val annotated = buildAnnotatedString {
-            append("Using ")
-            pushStringAnnotation("serverUrl", urlProvider.userFriendlySiteUrl)
-            withStyle(style = SpanStyle(color = MaterialTheme.colors.primary)) {
-              append(urlProvider.userFriendlySiteUrl)
-            }
-          }
-
-          ClickableMaterialText(
-            annotated,
-            modifier = Modifier.padding(
+          UsingServerText(
+            LocalUrlProvider.current,
+            Modifier.padding(
               start = textPadding,
               top = 0.dp,
               end = textPadding,
               bottom = textPadding
             )
-          ) { offset ->
-            annotated.getStringAnnotations("serverUrl", start = offset, end = offset)
-              .firstOrNull()
-              ?.let { context.launchWebIntent(urlProvider.userFriendlySiteUrl) }
-          }
+          )
         }
         item { Divider() }
         item {
@@ -257,6 +235,7 @@ fun LoggedInHome(
         }
       }
     },
+    modifier = modifier,
     drawerState = drawerState,
     gesturesEnabled = drawerState.isOpen,
   ) {

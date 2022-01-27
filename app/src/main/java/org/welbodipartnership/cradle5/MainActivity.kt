@@ -38,12 +38,14 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -59,11 +61,16 @@ import com.google.accompanist.insets.ProvideWindowInsets
 import com.google.accompanist.insets.navigationBarsWithImePadding
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import dagger.hilt.EntryPoints
 import dagger.hilt.android.AndroidEntryPoint
+import org.welbodipartnership.cradle5.di.UrlEntryPoint
+import org.welbodipartnership.cradle5.domain.UrlProvider
 import org.welbodipartnership.cradle5.domain.auth.AuthRepository
 import org.welbodipartnership.cradle5.domain.auth.AuthState
 import org.welbodipartnership.cradle5.home.LoggedInHome
+import org.welbodipartnership.cradle5.ui.composables.LocalUrlProvider
 import org.welbodipartnership.cradle5.ui.composables.PrivacyPolicyButton
+import org.welbodipartnership.cradle5.ui.composables.UsingServerText
 import org.welbodipartnership.cradle5.ui.composables.forms.BringIntoViewOutlinedTextField
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
 import org.welbodipartnership.cradle5.util.appinit.AppInitManager
@@ -75,7 +82,7 @@ class MainActivity : AppCompatActivity() {
   private val viewModel by viewModels<MainActivityViewModel>()
 
   @Inject
-  lateinit var authRepository: AuthRepository
+  lateinit var urlProvider: UrlProvider
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -83,19 +90,21 @@ class MainActivity : AppCompatActivity() {
     WindowCompat.setDecorFitsSystemWindows(window, false)
 
     setContent {
-      ProvideWindowInsets(consumeWindowInsets = false, windowInsetsAnimationsEnabled = true) {
-        CradleTrialAppTheme {
-          MainApp(
-            viewModel,
-            onOpenSettingsForApp = {
-              startActivity(
-                Intent(
-                  Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                  Uri.fromParts("package", packageName, null)
+      CompositionLocalProvider(LocalUrlProvider provides urlProvider) {
+        ProvideWindowInsets(consumeWindowInsets = false, windowInsetsAnimationsEnabled = true) {
+          CradleTrialAppTheme {
+            MainApp(
+              viewModel,
+              onOpenSettingsForApp = {
+                startActivity(
+                  Intent(
+                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    Uri.fromParts("package", packageName, null)
+                  )
                 )
-              )
-            }
-          )
+              }
+            )
+          }
         }
       }
     }
@@ -398,6 +407,9 @@ private fun LoginForm(
       Text(extraMessage)
       Spacer(Modifier.height(12.dp))
     }
+
+    UsingServerText(LocalUrlProvider.current)
+    Spacer(Modifier.height(12.dp))
 
     if (loginType is LoginType.NewLogin) {
       BringIntoViewOutlinedTextField(
