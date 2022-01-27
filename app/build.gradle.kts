@@ -37,6 +37,9 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
 
+        // export NDK symbols for Play Store console
+        ndk.debugSymbolLevel = "FULL"
+
         buildConfigField("String", "PRIVACY_POLICY_URL", "\"https://docs.google.com/document/d/e/2PACX-1vSD9nLQwORfZff2LX72EgLyzas405yutCRUNbXY4XTzNcPnqfpiTymCw4bvqxiwdh0wvk9QS-ufnyRR/pub\"")
     }
 
@@ -78,19 +81,15 @@ android {
         }
 
         create("staging") {
-            initWith(getByName("debug"))
+            initWith(getByName("release"))
             signingConfig = signingConfigs.getByName("debug")
             applicationIdSuffix = ".releaseStaging"
             versionNameSuffix = "-staging"
             isDebuggable = false
 
-            isMinifyEnabled = true
-            isShrinkResources = true
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-
             matchingFallbacks += listOf("release")
 
-            buildConfigField("String", "SERVER_URL", "\"https://www.medscinet.com/Cradle5Test/api\"")
+            buildConfigField("String", "BASE_API_URL", "\"https://www.medscinet.com/Cradle5Test/api\"")
         }
         // getByName("...")
     }
