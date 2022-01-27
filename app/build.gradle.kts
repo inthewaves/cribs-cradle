@@ -82,7 +82,7 @@ android {
 
         create("staging") {
             initWith(getByName("release"))
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
             applicationIdSuffix = ".releaseStaging"
             versionNameSuffix = "-staging"
             isDebuggable = false
