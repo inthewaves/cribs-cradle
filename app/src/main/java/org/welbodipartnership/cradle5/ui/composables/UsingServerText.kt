@@ -22,11 +22,15 @@ fun UsingServerText(
   modifier: Modifier = Modifier
 ) {
   val serverUrl by urlProvider.userFriendlySiteUrlFlow.collectAsState()
+  val isOverrideActive by urlProvider.isOverrideActive.collectAsState()
   val annotated = buildAnnotatedString {
     append("Using ")
     pushStringAnnotation("serverUrl", serverUrl)
     withStyle(style = SpanStyle(color = MaterialTheme.colors.primary)) {
       append(urlProvider.userFriendlySiteUrl)
+    }
+    if (isOverrideActive) {
+      append(" (using override from login screen)")
     }
   }
 
@@ -47,5 +51,6 @@ val LocalUrlProvider: ProvidableCompositionLocal<IUrlProvider> = compositionLoca
     private val backingFlow = MutableStateFlow("https://exampleThisServerDoesntWork.com")
     override val userFriendlySiteUrl: String = backingFlow.value
     override val userFriendlySiteUrlFlow: StateFlow<String> = backingFlow
+    override val isOverrideActive: StateFlow<Boolean> = MutableStateFlow(false)
   }
 }

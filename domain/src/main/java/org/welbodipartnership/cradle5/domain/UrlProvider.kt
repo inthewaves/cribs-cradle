@@ -46,6 +46,7 @@ value class ControlId(val id: String)
 interface IUrlProvider {
   val userFriendlySiteUrl: String
   val userFriendlySiteUrlFlow: StateFlow<String>
+  val isOverrideActive: StateFlow<Boolean>
 }
 
 @Singleton
@@ -90,6 +91,19 @@ class UrlProvider @Inject constructor(
       appCoroutineScope,
       SharingStarted.WhileSubscribed(stopTimeoutMillis = 1000L),
       initialValue = _baseApiUrl.value.removeSuffix("/api")
+    )
+
+  override val isOverrideActive: StateFlow<Boolean> = appValuesStore.serverUrlOverrideFlow
+    .map {
+      when (it) {
+        ServerType.PRODUCTION, ServerType.TEST -> true
+        ServerType.UNSET, ServerType.UNRECOGNIZED, null -> false
+      }
+    }
+    .stateIn(
+      appCoroutineScope,
+      SharingStarted.WhileSubscribed(stopTimeoutMillis = 1000L),
+      initialValue = false
     )
 
   val token get() = "$baseApiUrl/v0/token"

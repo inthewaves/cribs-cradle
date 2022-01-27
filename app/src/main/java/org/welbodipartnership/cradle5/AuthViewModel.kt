@@ -80,6 +80,7 @@ class AuthViewModel @Inject constructor(
             ScreenState.UserInputNeeded.WaitingForTokenRefreshLogin(submissionState.errorMessage)
           }
           AuthState.Initializing, is AuthState.BlockingWarningMessage -> ScreenState.Initializing
+          AuthState.LoggingIn -> ScreenState.Submitting
         }
       }
       SubmissionState.Done -> ScreenState.Initializing
@@ -89,7 +90,10 @@ class AuthViewModel @Inject constructor(
 
   sealed class ChannelAction {
     class Login(val username: String, val password: String) : ChannelAction()
-    class Reauthenticate(val password: String, val forceTokenRefresh: Boolean) : ChannelAction()
+    class Reauthenticate(
+      val password: String,
+      val forceTokenRefresh: Boolean,
+    ) : ChannelAction()
     object Logout : ChannelAction()
     object Reset : ChannelAction()
     object ClearWarning : ChannelAction()

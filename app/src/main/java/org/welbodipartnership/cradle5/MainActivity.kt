@@ -82,6 +82,9 @@ import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
 import org.welbodipartnership.cradle5.util.appinit.AppInitManager
 import javax.inject.Inject
 
+private const val MAX_LOCKSCREEN_ATTEMPTS_BEFORE_TRYING_SERVER = 2
+private const val MAX_ICON_TAPS_BEFORE_SHOWING_SERVER_OVERRIDE_DIALOG = 10
+
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
@@ -188,7 +191,7 @@ private fun MainApp(viewModel: MainActivityViewModel, onOpenSettingsForApp: () -
               }
             }
             is AuthState.LoggedInLocked, AuthState.Initializing, AuthState.LoggedOut,
-            is AuthState.TokenExpired -> {
+            is AuthState.TokenExpired, AuthState.LoggingIn -> {
               LoginOrLockscreen(currentAuthState)
             }
             is AuthState.BlockingWarningMessage -> {
@@ -226,8 +229,6 @@ private fun MainApp(viewModel: MainActivityViewModel, onOpenSettingsForApp: () -
   }
 }
 
-private const val MAX_LOCKSCREEN_ATTEMPTS_BEFORE_TRYING_SERVER = 2
-
 @Composable
 fun LoginOrLockscreen(authState: AuthState) {
   val authViewModel: AuthViewModel = hiltViewModel()
@@ -243,16 +244,20 @@ fun LoginOrLockscreen(authState: AuthState) {
   }
 
   // use boolean as key to ensure these gets cleared if logging out from the lockscreen
-  val (username, setUsername) = rememberSaveable(authState is AuthState.LoggedOut) {
+  val (username, setUsername) = rememberSaveable(authState is AuthState.LoggedInUnlocked) {
     mutableStateOf("")
   }
-  val (password, setPassword) = rememberSaveable(authState is AuthState.LoggedOut) {
+  val (password, setPassword) = rememberSaveable(authState is AuthState.LoggedInUnlocked) {
     mutableStateOf("")
   }
   var attemptCount by rememberSaveable(authState is AuthState.LoggedOut) { mutableStateOf(0) }
   var iconTaps by rememberSaveable(authState is AuthState.LoggedOut) { mutableStateOf(0) }
 
-  var isServerDialogShowing by rememberSaveable(authState is AuthState.LoggedOut) {
+  var isServerDialogShowing by rememberSaveable(authState is AuthState.LoggedInUnlocked) {
+    mutableStateOf(false)
+  }
+
+  var hasClickedForgotPassword by rememberSaveable(authState is AuthState.LoggedInUnlocked) {
     mutableStateOf(false)
   }
 
@@ -338,7 +343,9 @@ fun LoginOrLockscreen(authState: AuthState) {
               is AuthViewModel.ScreenState.UserInputNeeded.WaitingForReauth,
               is AuthViewModel.ScreenState.UserInputNeeded.WaitingForTokenRefreshLogin -> {
                 val isRefreshNeeded =
-                  state is AuthViewModel.ScreenState.UserInputNeeded.WaitingForTokenRefreshLogin
+                  state is AuthViewModel.ScreenState.UserInputNeeded.WaitingForTokenRefreshLogin ||
+                    attemptCount > MAX_LOCKSCREEN_ATTEMPTS_BEFORE_TRYING_SERVER ||
+                    hasClickedForgotPassword
                 extraMessage = if (isRefreshNeeded) {
                   "Internet access is required in order to refresh credentials with MedSciNet"
                 } else {
@@ -348,22 +355,38 @@ fun LoginOrLockscreen(authState: AuthState) {
                 val currentUsername by authViewModel.usernameFlow.collectAsState(initial = null)
 
                 LoginType.Lockscreen(currentUsername ?: "") { password ->
-                  val forceRefresh = isRefreshNeeded ||
-                    attemptCount > MAX_LOCKSCREEN_ATTEMPTS_BEFORE_TRYING_SERVER
                   Log.d(
                     "MainActivity",
-                    "submitting lockscreen, forceRefresh = $forceRefresh, " +
+                    "submitting lockscreen, forceRefresh = $isRefreshNeeded, " +
                       "attempt count = $attemptCount"
                   )
                   authViewModel.submitAction(
                     AuthViewModel.ChannelAction.Reauthenticate(
                       password,
-                      forceTokenRefresh = forceRefresh
+                      forceTokenRefresh = isRefreshNeeded
                     )
                   )
                   attemptCount++
                 }
               }
+            }
+
+            var isForgotPasswordInfoDialogShowing by rememberSaveable { mutableStateOf(false) }
+            if (isForgotPasswordInfoDialogShowing) {
+              AlertDialog(
+                onDismissRequest = { isForgotPasswordInfoDialogShowing = false },
+                title = { Text("Forgot password") },
+                text = {
+                  Text(
+                    "Please contact the administrator to reset your password, and then try the new password with an internet connection. Alternatively, you can reset your password on the website if your account has an email associated with it.\n\nAdministrator email can be found on the website."
+                  )
+                },
+                confirmButton = {
+                  TextButton(onClick = { isForgotPasswordInfoDialogShowing = false }) {
+                    Text(stringResource(android.R.string.ok))
+                  }
+                }
+              )
             }
 
             LoginForm(
@@ -374,9 +397,14 @@ fun LoginOrLockscreen(authState: AuthState) {
               onPasswordChange = setPassword,
               onIconTap = {
                 iconTaps++
-                if (iconTaps >= 10) {
+                if (iconTaps >= MAX_ICON_TAPS_BEFORE_SHOWING_SERVER_OVERRIDE_DIALOG) {
                   isServerDialogShowing = true
                 }
+              },
+              hasClickedForgotPassword = hasClickedForgotPassword,
+              onForgotPasswordClicked = {
+                hasClickedForgotPassword = true
+                isForgotPasswordInfoDialogShowing = true
               },
               errorMessage = state.errorMessage,
               currentAttempts = attemptCount,
@@ -391,9 +419,12 @@ fun LoginOrLockscreen(authState: AuthState) {
 
 @Stable
 private sealed class LoginType {
+  @Stable
   class NewLogin(
     val onSubmit: (username: String, password: String) -> Unit
   ) : LoginType()
+
+  @Stable
   class Lockscreen(
     val username: String,
     val onSubmit: (password: String) -> Unit
@@ -408,6 +439,8 @@ private fun LoginForm(
   password: String,
   onPasswordChange: (String) -> Unit,
   onIconTap: () -> Unit,
+  hasClickedForgotPassword: Boolean,
+  onForgotPasswordClicked: () -> Unit,
   errorMessage: String?,
   currentAttempts: Int,
   modifier: Modifier = Modifier,
@@ -536,6 +569,12 @@ private fun LoginForm(
 
     Spacer(Modifier.height(12.dp))
 
+    TextButton(onClick = onForgotPasswordClicked, modifier = Modifier.fillMaxWidth()) {
+      Text("Forgot password")
+    }
+
+    Spacer(Modifier.height(2.dp))
+
     PrivacyPolicyButton(Modifier.align(Alignment.CenterHorizontally))
   }
 }
@@ -552,6 +591,8 @@ fun LoginFormLockscreenPreview() {
         password = "password",
         onPasswordChange = {},
         onIconTap = {},
+        hasClickedForgotPassword = true,
+        onForgotPasswordClicked = {},
         errorMessage = "My error message",
         currentAttempts = 0
       )
@@ -571,6 +612,8 @@ fun LoginFormNewLoginPreview() {
         password = "password",
         onPasswordChange = {},
         onIconTap = {},
+        hasClickedForgotPassword = false,
+        onForgotPasswordClicked = {},
         errorMessage = "My error message",
         currentAttempts = 0
       )

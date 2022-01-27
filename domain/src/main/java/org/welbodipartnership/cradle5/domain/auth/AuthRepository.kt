@@ -98,8 +98,10 @@ class AuthRepository @Inject internal constructor(
     ) {
       if (authToken != null && !isLoginComplete) {
         Log.d(TAG, "authStateFlow: token present but login not complete")
+        AuthState.LoggingIn
+      } else {
+        AuthState.LoggedOut
       }
-      AuthState.LoggedOut
     } else {
       val username = authToken.username
       // fall back to 0 to always force authentication if there is no last authed time for some

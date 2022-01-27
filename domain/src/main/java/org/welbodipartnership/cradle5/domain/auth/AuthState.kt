@@ -7,6 +7,8 @@ sealed interface AuthState {
   @Immutable
   object Initializing : AuthState
   @Immutable
+  object LoggingIn : AuthState
+  @Immutable
   object LoggedOut : AuthState
   @Immutable
   class TokenExpired(val username: String) : AuthState
