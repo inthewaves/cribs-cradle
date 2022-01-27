@@ -88,6 +88,13 @@ class AppValuesStore @Inject internal constructor(
     .distinctUntilChanged()
     .conflate()
 
+  val serverUrlOverrideFlow = encryptedSettings.encryptedSettingsFlow()
+    .map { settings ->
+      settings.serverOverride.takeIf { settings.hasServerOverride() }
+    }
+    .distinctUntilChanged()
+    .conflate()
+
   /**
    * When login is successful, the server returns a [authToken].
    *
@@ -177,6 +184,18 @@ class AppValuesStore @Inject internal constructor(
       settings.toBuilder()
         .clearWarningMessage()
         .build()
+    }
+  }
+
+  suspend fun setServerTypeOverride(serverTypeOverride: ServerType) {
+    encryptedSettings.updateData { settings ->
+      settings.toBuilder().apply {
+        if (serverTypeOverride == ServerType.UNSET) {
+          clearServerOverride()
+        } else {
+          serverOverride = serverTypeOverride
+        }
+      }.build()
     }
   }
 

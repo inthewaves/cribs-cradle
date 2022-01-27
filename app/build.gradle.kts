@@ -25,6 +25,9 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach 
     }
 }
 
+val PRODUCTION_URL = "https://www.medscinet.com/Cradle5/api"
+val TEST_URL = "https://www.medscinet.com/Cradle5Test/api"
+
 android {
     compileSdk = appconfig.versions.compileSdkVersion.get().toInt()
     defaultConfig {
@@ -41,6 +44,10 @@ android {
         ndk.debugSymbolLevel = "FULL"
 
         buildConfigField("String", "PRIVACY_POLICY_URL", "\"https://docs.google.com/document/d/e/2PACX-1vSD9nLQwORfZff2LX72EgLyzas405yutCRUNbXY4XTzNcPnqfpiTymCw4bvqxiwdh0wvk9QS-ufnyRR/pub\"")
+        buildConfigField("String", "PRODUCTION_API_URL", "\"$PRODUCTION_URL\"")
+        buildConfigField("String", "TEST_API_URL", "\"$TEST_URL\"")
+
+        buildConfigField("String", "DEFAULT_API_URL", "\"$PRODUCTION_URL\"")
     }
 
     signingConfigs {
@@ -67,7 +74,7 @@ android {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
 
-            buildConfigField("String", "BASE_API_URL", "\"https://www.medscinet.com/Cradle5Test/api\"")
+            buildConfigField("String", "DEFAULT_API_URL", "\"$TEST_URL\"")
         }
 
         release {
@@ -77,7 +84,7 @@ android {
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
 
-            buildConfigField("String", "BASE_API_URL", "\"https://www.medscinet.com/Cradle5/api\"")
+            buildConfigField("String", "DEFAULT_API_URL", "\"$PRODUCTION_URL\"")
         }
 
         create("staging") {
@@ -89,7 +96,7 @@ android {
 
             matchingFallbacks += listOf("release")
 
-            buildConfigField("String", "BASE_API_URL", "\"https://www.medscinet.com/Cradle5Test/api\"")
+            buildConfigField("String", "DEFAULT_API_URL", "\"$TEST_URL\"")
         }
         // getByName("...")
     }

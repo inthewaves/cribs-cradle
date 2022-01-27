@@ -9,9 +9,12 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,15 +23,20 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.RadioButton
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
+import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -45,9 +53,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -61,11 +69,9 @@ import com.google.accompanist.insets.ProvideWindowInsets
 import com.google.accompanist.insets.navigationBarsWithImePadding
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import dagger.hilt.EntryPoints
 import dagger.hilt.android.AndroidEntryPoint
-import org.welbodipartnership.cradle5.di.UrlEntryPoint
+import org.welbodipartnership.cradle5.data.settings.ServerType
 import org.welbodipartnership.cradle5.domain.UrlProvider
-import org.welbodipartnership.cradle5.domain.auth.AuthRepository
 import org.welbodipartnership.cradle5.domain.auth.AuthState
 import org.welbodipartnership.cradle5.home.LoggedInHome
 import org.welbodipartnership.cradle5.ui.composables.LocalUrlProvider
@@ -243,7 +249,65 @@ fun LoginOrLockscreen(authState: AuthState) {
   val (password, setPassword) = rememberSaveable(authState is AuthState.LoggedOut) {
     mutableStateOf("")
   }
-  var attemptCount by rememberSaveable { mutableStateOf(0) }
+  var attemptCount by rememberSaveable(authState is AuthState.LoggedOut) { mutableStateOf(0) }
+  var iconTaps by rememberSaveable(authState is AuthState.LoggedOut) { mutableStateOf(0) }
+
+  var isServerDialogShowing by rememberSaveable(authState is AuthState.LoggedOut) {
+    mutableStateOf(false)
+  }
+
+  if (isServerDialogShowing) {
+    val currentOption by authViewModel.serverUrlOption.collectAsState()
+    val (selectedOption, onOptionSelected) = remember { mutableStateOf(currentOption) }
+    AlertDialog(
+      onDismissRequest = { isServerDialogShowing = false },
+      confirmButton = {
+        TextButton(
+          onClick = {
+            isServerDialogShowing = false
+            authViewModel.setServerTypeOverride(selectedOption)
+          }
+        ) {
+          Text("Select")
+        }
+      },
+      title = { Text("Select a server") },
+      text = {
+        // https://developer.android.com/reference/kotlin/androidx/compose/material/package-summary#RadioButton(kotlin.Boolean,kotlin.Function0,androidx.compose.ui.Modifier,kotlin.Boolean,androidx.compose.foundation.interaction.MutableInteractionSource,androidx.compose.material.RadioButtonColors)
+        // Note that Modifier.selectableGroup() is essential to ensure correct accessibility behavior
+        Column(Modifier.selectableGroup()) {
+          listOf(ServerType.UNSET, ServerType.PRODUCTION, ServerType.TEST).forEach { currentOpt ->
+            Row(
+              Modifier
+                .fillMaxWidth()
+                .height(48.dp)
+                .selectable(
+                  selected = currentOpt == selectedOption,
+                  onClick = { onOptionSelected(currentOpt) },
+                  role = Role.RadioButton
+                )
+                .padding(horizontal = 16.dp),
+              verticalAlignment = Alignment.CenterVertically
+            ) {
+              RadioButton(
+                selected = currentOpt == selectedOption,
+                onClick = null // null recommended for accessibility with screen readers
+              )
+              Text(
+                text = when (currentOpt) {
+                  ServerType.PRODUCTION -> "Main / production server"
+                  ServerType.TEST -> "Test server"
+                  ServerType.UNRECOGNIZED, ServerType.UNSET -> "Default"
+                },
+                style = MaterialTheme.typography.body1.merge(),
+                modifier = Modifier.padding(start = 16.dp)
+              )
+            }
+          }
+        }
+      }
+    )
+  }
 
   Surface {
     Column(
@@ -261,20 +325,20 @@ fun LoginOrLockscreen(authState: AuthState) {
             Spacer(Modifier.height(12.dp))
             Text(loginInfo, textAlign = TextAlign.Center)
           }
-          is AuthViewModel.ScreenState.ActionNeeded -> {
+          is AuthViewModel.ScreenState.UserInputNeeded -> {
             val extraMessage: String?
             val loginType = when (state) {
-              is AuthViewModel.ScreenState.ActionNeeded.WaitingForLogin -> {
+              is AuthViewModel.ScreenState.UserInputNeeded.WaitingForLogin -> {
                 extraMessage = null
                 LoginType.NewLogin { username, password ->
                   authViewModel.submitAction(AuthViewModel.ChannelAction.Login(username, password))
                   attemptCount++
                 }
               }
-              is AuthViewModel.ScreenState.ActionNeeded.WaitingForReauth,
-              is AuthViewModel.ScreenState.ActionNeeded.WaitingForTokenRefreshLogin -> {
+              is AuthViewModel.ScreenState.UserInputNeeded.WaitingForReauth,
+              is AuthViewModel.ScreenState.UserInputNeeded.WaitingForTokenRefreshLogin -> {
                 val isRefreshNeeded =
-                  state is AuthViewModel.ScreenState.ActionNeeded.WaitingForTokenRefreshLogin
+                  state is AuthViewModel.ScreenState.UserInputNeeded.WaitingForTokenRefreshLogin
                 extraMessage = if (isRefreshNeeded) {
                   "Internet access is required in order to refresh credentials with MedSciNet"
                 } else {
@@ -308,6 +372,12 @@ fun LoginOrLockscreen(authState: AuthState) {
               onUsernameChange = setUsername,
               password = password,
               onPasswordChange = setPassword,
+              onIconTap = {
+                iconTaps++
+                if (iconTaps >= 10) {
+                  isServerDialogShowing = true
+                }
+              },
               errorMessage = state.errorMessage,
               currentAttempts = attemptCount,
               extraMessage = extraMessage
@@ -337,6 +407,7 @@ private fun LoginForm(
   onUsernameChange: (String) -> Unit,
   password: String,
   onPasswordChange: (String) -> Unit,
+  onIconTap: () -> Unit,
   errorMessage: String?,
   currentAttempts: Int,
   modifier: Modifier = Modifier,
@@ -372,6 +443,17 @@ private fun LoginForm(
         modifier = Modifier
           .fillMaxWidth()
           .heightIn(min = 200.dp)
+          .then(
+            if (loginType is LoginType.NewLogin) {
+              Modifier.clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onIconTap
+              )
+            } else {
+              Modifier
+            }
+          )
       )
       Text(
         stringResource(R.string.app_name), style = MaterialTheme.typography.h4,
@@ -469,6 +551,7 @@ fun LoginFormLockscreenPreview() {
         onUsernameChange = {},
         password = "password",
         onPasswordChange = {},
+        onIconTap = {},
         errorMessage = "My error message",
         currentAttempts = 0
       )
@@ -487,6 +570,7 @@ fun LoginFormNewLoginPreview() {
         onUsernameChange = {},
         password = "password",
         onPasswordChange = {},
+        onIconTap = {},
         errorMessage = "My error message",
         currentAttempts = 0
       )

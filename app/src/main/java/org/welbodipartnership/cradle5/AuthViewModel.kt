@@ -14,11 +14,14 @@ import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.welbodipartnership.cradle5.data.settings.AppValuesStore
+import org.welbodipartnership.cradle5.data.settings.ServerType
 import org.welbodipartnership.cradle5.domain.auth.AuthRepository
 import org.welbodipartnership.cradle5.domain.auth.AuthState
 import java.util.concurrent.CancellationException
@@ -35,14 +38,14 @@ class AuthViewModel @Inject constructor(
   sealed class ScreenState {
     object Initializing : ScreenState()
     object Done : ScreenState()
-    sealed class ActionNeeded : ScreenState() {
+    sealed class UserInputNeeded : ScreenState() {
       abstract val errorMessage: String?
       @Immutable
-      data class WaitingForTokenRefreshLogin(override val errorMessage: String?) : ActionNeeded()
+      data class WaitingForTokenRefreshLogin(override val errorMessage: String?) : UserInputNeeded()
       @Immutable
-      data class WaitingForLogin(override val errorMessage: String?) : ActionNeeded()
+      data class WaitingForLogin(override val errorMessage: String?) : UserInputNeeded()
       @Immutable
-      data class WaitingForReauth(override val errorMessage: String?) : ActionNeeded()
+      data class WaitingForReauth(override val errorMessage: String?) : UserInputNeeded()
     }
     object Submitting : ScreenState()
   }
@@ -68,13 +71,13 @@ class AuthViewModel @Inject constructor(
             ScreenState.Done
           }
           is AuthState.LoggedInLocked -> {
-            ScreenState.ActionNeeded.WaitingForReauth(submissionState.errorMessage)
+            ScreenState.UserInputNeeded.WaitingForReauth(submissionState.errorMessage)
           }
           AuthState.LoggedOut -> {
-            ScreenState.ActionNeeded.WaitingForLogin(submissionState.errorMessage)
+            ScreenState.UserInputNeeded.WaitingForLogin(submissionState.errorMessage)
           }
           is AuthState.TokenExpired -> {
-            ScreenState.ActionNeeded.WaitingForTokenRefreshLogin(submissionState.errorMessage)
+            ScreenState.UserInputNeeded.WaitingForTokenRefreshLogin(submissionState.errorMessage)
           }
           AuthState.Initializing, is AuthState.BlockingWarningMessage -> ScreenState.Initializing
         }
@@ -189,6 +192,20 @@ class AuthViewModel @Inject constructor(
   fun submitAction(action: ChannelAction) {
     authChannel.trySend(action).also {
       Log.d(TAG, "submitAction result for submitting ${action::class.java.simpleName}: $it")
+    }
+  }
+
+  val serverUrlOption: StateFlow<ServerType> = appValuesStore.serverUrlOverrideFlow
+    .map { it ?: ServerType.UNSET }
+    .stateIn(
+      viewModelScope,
+      SharingStarted.WhileSubscribed(stopTimeoutMillis = 3000L),
+      ServerType.UNSET
+    )
+
+  fun setServerTypeOverride(serverType: ServerType) {
+    viewModelScope.launch {
+      appValuesStore.setServerTypeOverride(serverType)
     }
   }
 

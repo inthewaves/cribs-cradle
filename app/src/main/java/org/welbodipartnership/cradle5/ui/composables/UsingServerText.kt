@@ -2,29 +2,29 @@ package org.welbodipartnership.cradle5.ui.composables
 
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ProvidableCompositionLocal
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.compositionLocalOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
-import dagger.hilt.EntryPoints
-import org.welbodipartnership.cradle5.BuildConfig
-import org.welbodipartnership.cradle5.di.UrlEntryPoint
-import org.welbodipartnership.cradle5.domain.UrlProvider
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import org.welbodipartnership.cradle5.domain.IUrlProvider
 import org.welbodipartnership.cradle5.util.launchWebIntent
 
 @Composable
 fun UsingServerText(
-  urlProvider: UrlProvider,
+  urlProvider: IUrlProvider,
   modifier: Modifier = Modifier
 ) {
+  val serverUrl by urlProvider.userFriendlySiteUrlFlow.collectAsState()
   val annotated = buildAnnotatedString {
     append("Using ")
-    pushStringAnnotation("serverUrl", urlProvider.userFriendlySiteUrl)
+    pushStringAnnotation("serverUrl", serverUrl)
     withStyle(style = SpanStyle(color = MaterialTheme.colors.primary)) {
       append(urlProvider.userFriendlySiteUrl)
     }
@@ -41,7 +41,11 @@ fun UsingServerText(
   }
 }
 
-val LocalUrlProvider: ProvidableCompositionLocal<UrlProvider> = compositionLocalOf {
+val LocalUrlProvider: ProvidableCompositionLocal<IUrlProvider> = compositionLocalOf {
   // the actual UrlProvider should be provided inside of MainActivity
-  UrlProvider("https://exampleThisServerDoesntWork.com")
+  object : IUrlProvider {
+    private val backingFlow = MutableStateFlow("https://exampleThisServerDoesntWork.com")
+    override val userFriendlySiteUrl: String = backingFlow.value
+    override val userFriendlySiteUrlFlow: StateFlow<String> = backingFlow
+  }
 }

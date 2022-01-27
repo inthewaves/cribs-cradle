@@ -1,6 +1,15 @@
 package org.welbodipartnership.cradle5.domain
 
+import android.util.Log
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import org.welbodipartnership.cradle5.data.settings.AppValuesStore
+import org.welbodipartnership.cradle5.data.settings.ServerType
+import org.welbodipartnership.cradle5.util.ApplicationCoroutineScope
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
@@ -34,14 +43,58 @@ value class LookupId(val id: Int)
 @JvmInline
 value class ControlId(val id: String)
 
+interface IUrlProvider {
+  val userFriendlySiteUrl: String
+  val userFriendlySiteUrlFlow: StateFlow<String>
+}
+
 @Singleton
-class UrlProvider @Inject constructor(@Named("baseApiUrl") val baseApiUrl: String) {
-  val userFriendlySiteUrl = baseApiUrl.removeSuffix("/api")
+class UrlProvider @Inject constructor(
+  @Named(DEFAULT_API_URL) val defaultApiUrl: String,
+  @Named(PRODUCTION_API_URL) val productionApiUrl: String,
+  @Named(TEST_API_URL) val testApiUrl: String,
+  @ApplicationCoroutineScope appCoroutineScope: CoroutineScope,
+  appValuesStore: AppValuesStore,
+) : IUrlProvider {
+  companion object {
+    private const val TAG = "UrlProvider"
 
-  val token =
-    "$baseApiUrl/v0/token"
+    const val DEFAULT_API_URL = "defaultApiUrl"
+    const val PRODUCTION_API_URL = "productionApiUrl"
+    const val TEST_API_URL = "testApiUrl"
+  }
 
-  val indexEndpoint = "$baseApiUrl/"
+  private val _baseApiUrl = appValuesStore.serverUrlOverrideFlow
+    .map { serverUrlType: ServerType? ->
+      serverUrlType?.let {
+        Log.d(TAG, "detected url override: $it")
+        when (it) {
+          ServerType.PRODUCTION -> productionApiUrl
+          ServerType.TEST -> testApiUrl
+          ServerType.UNRECOGNIZED, ServerType.UNSET -> defaultApiUrl
+        }
+      } ?: defaultApiUrl
+    }
+    .stateIn(
+      appCoroutineScope,
+      SharingStarted.WhileSubscribed(stopTimeoutMillis = 1000L),
+      initialValue = defaultApiUrl
+    )
+  private val baseApiUrl: String get() = _baseApiUrl.value
+
+  override val userFriendlySiteUrl: String get() = baseApiUrl.removeSuffix("/api")
+
+  override val userFriendlySiteUrlFlow: StateFlow<String> = _baseApiUrl
+    .map { it.removeSuffix("/api") }
+    .stateIn(
+      appCoroutineScope,
+      SharingStarted.WhileSubscribed(stopTimeoutMillis = 1000L),
+      initialValue = _baseApiUrl.value.removeSuffix("/api")
+    )
+
+  val token get() = "$baseApiUrl/v0/token"
+
+  val indexEndpoint get() = "$baseApiUrl/"
 
   fun forms(
     formId: FormId,

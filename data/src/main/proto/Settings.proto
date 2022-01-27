@@ -15,6 +15,12 @@ message UnencryptedSettings {
   optional AesGcmCiphertext wrapped_database_key = 2;
 }
 
+enum ServerType {
+  UNSET = 0;
+  PRODUCTION = 1;
+  TEST = 2;
+}
+
 message EncryptedSettings {
   /* The authentication token from the server. */
   optional AuthToken token = 1;
@@ -34,6 +40,8 @@ message EncryptedSettings {
   optional int32 default_dropdown_version = 9;
   /* A warning message to display that blocks the app until the user acknowledges the warning. */
   optional string warning_message = 10;
+  /* Server option; don't expect this to be used much */
+  optional ServerType server_override = 11;
 }
 
 message UserInfo {
