@@ -199,9 +199,13 @@ class AppValuesStore @Inject internal constructor(
     }
   }
 
-  suspend fun clearAllData() {
-    encryptedSettings.updateData {
-      EncryptedSettings.getDefaultInstance()
+  suspend fun clearAllDataExceptServerOverride() {
+    encryptedSettings.updateData { originalData ->
+      if (originalData.hasServerOverride()) {
+        encryptedSettings { serverOverride = originalData.serverOverride }
+      } else {
+        EncryptedSettings.getDefaultInstance()
+      }
     }
   }
 
