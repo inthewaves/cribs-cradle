@@ -347,7 +347,7 @@ fun LoginOrLockscreen(authState: AuthState) {
                     attemptCount > MAX_LOCKSCREEN_ATTEMPTS_BEFORE_TRYING_SERVER ||
                     hasClickedForgotPassword
                 extraMessage = if (isRefreshNeeded) {
-                  "Internet access is required in order to refresh credentials with MedSciNet"
+                  "The app will now check also check your password with MedSciNet. Internet access is required in order to refresh credentials with MedSciNet,"
                 } else {
                   null
                 }
