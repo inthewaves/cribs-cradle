@@ -12,12 +12,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 
 @Composable
 fun MoreInfoIconButton(
   moreInfoText: String,
+  modifier: Modifier = Modifier,
 ) {
   var showInfoDialog by rememberSaveable { mutableStateOf(false) }
   val focusManager = LocalFocusManager.current
@@ -38,7 +40,8 @@ fun MoreInfoIconButton(
     onClick = {
       focusManager.clearFocus()
       showInfoDialog = true
-    }
+    },
+    modifier = modifier
   ) {
     Icon(imageVector = Icons.Outlined.HelpOutline, contentDescription = "Help button icon")
   }

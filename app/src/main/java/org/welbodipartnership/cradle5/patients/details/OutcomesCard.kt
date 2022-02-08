@@ -1,16 +1,21 @@
 package org.welbodipartnership.cradle5.patients.details
 
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.welbodipartnership.cradle5.R
@@ -31,6 +36,7 @@ import org.welbodipartnership.cradle5.ui.composables.LabelAndValueForDropdownOrU
 import org.welbodipartnership.cradle5.ui.composables.LabelAndValueOrNone
 import org.welbodipartnership.cradle5.ui.composables.LabelAndValueOrUnknown
 import org.welbodipartnership.cradle5.ui.composables.ValueForDropdownOrUnknown
+import org.welbodipartnership.cradle5.ui.composables.forms.MoreInfoIconButton
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
 import org.welbodipartnership.cradle5.util.datetime.FormDate
 
@@ -43,7 +49,6 @@ fun OutcomesCard(
   BaseDetailsCard(title = stringResource(R.string.outcomes_card_title), modifier = modifier) {
     if (outcomes == null) {
       Text(stringResource(R.string.outcomes_card_no_outcomes))
-
       return@BaseDetailsCard
     }
 
@@ -81,8 +86,10 @@ fun OutcomesCard(
       Spacer(Modifier.height(categoryToCategorySpacerHeight))
     }
 
-    CategoryHeader(text = stringResource(R.string.outcomes_eclampsia_label))
-
+    CategoryHeader(
+      text = stringResource(R.string.outcomes_eclampsia_label),
+      moreInfoText = stringResource(R.string.outcomes_eclampsia_more_info),
+    )
     Spacer(Modifier.height(categoryToBodySpacerHeight))
     if (eclampsiaFit != null) {
       LabelAndValueOrUnknown(stringResource(R.string.form_date_label), eclampsiaFit.date?.toString())
@@ -105,7 +112,10 @@ fun OutcomesCard(
 
     Spacer(Modifier.height(categoryToCategorySpacerHeight))
 
-    CategoryHeader(text = stringResource(R.string.outcomes_hysterectomy_label))
+    CategoryHeader(
+      text = stringResource(R.string.outcomes_hysterectomy_label),
+      moreInfoText = stringResource(R.string.outcomes_hysterectomy_more_info),
+    )
     Spacer(Modifier.height(categoryToBodySpacerHeight))
     if (hysterectomy != null) {
       LabelAndValueOrUnknown(
@@ -131,7 +141,10 @@ fun OutcomesCard(
 
     Spacer(Modifier.height(categoryToCategorySpacerHeight))
 
-    CategoryHeader(text = stringResource(R.string.outcomes_admission_to_hdu_or_itu_label))
+    CategoryHeader(
+      text = stringResource(R.string.outcomes_admission_to_hdu_or_itu_label),
+      moreInfoText = stringResource(R.string.outcomes_admission_to_hdu_or_itu_more_info),
+    )
     Spacer(Modifier.height(categoryToBodySpacerHeight))
     if (hduOrItuAdmission != null) {
       LabelAndValueOrUnknown(
@@ -165,7 +178,10 @@ fun OutcomesCard(
 
     Spacer(Modifier.height(categoryToCategorySpacerHeight))
 
-    CategoryHeader(text = stringResource(R.string.outcomes_maternal_death_label))
+    CategoryHeader(
+      text = stringResource(R.string.outcomes_maternal_death_label),
+      moreInfoText = stringResource(R.string.outcomes_maternal_death_more_info),
+    )
     Spacer(Modifier.height(categoryToBodySpacerHeight))
     if (maternalDeath != null) {
       LabelAndValueOrUnknown(stringResource(R.string.form_date_label), maternalDeath.date?.toString())
@@ -194,7 +210,10 @@ fun OutcomesCard(
 
     Spacer(Modifier.height(categoryToCategorySpacerHeight))
 
-    CategoryHeader(text = stringResource(R.string.outcomes_surgical_management_label))
+    CategoryHeader(
+      text = stringResource(R.string.outcomes_surgical_management_label),
+      moreInfoText = stringResource(R.string.outcomes_surgical_management_more_info),
+    )
     Spacer(Modifier.height(categoryToBodySpacerHeight))
     if (surgicalManagement != null) {
       LabelAndValueOrNone(stringResource(R.string.form_date_label), surgicalManagement.date?.toString())
@@ -217,7 +236,10 @@ fun OutcomesCard(
 
     Spacer(Modifier.height(categoryToCategorySpacerHeight))
 
-    CategoryHeader(text = stringResource(R.string.outcomes_perinatal_death_label))
+    CategoryHeader(
+      text = stringResource(R.string.outcomes_perinatal_death_label),
+      moreInfoText = stringResource(R.string.outcomes_maternal_death_more_info),
+    )
     Spacer(Modifier.height(categoryToBodySpacerHeight))
     if (perinatalDeath != null) {
       LabelAndValueOrNone(stringResource(R.string.form_date_label), perinatalDeath.date?.toString())
@@ -271,15 +293,51 @@ fun OutcomesCard(
 }
 
 @Composable
-fun CategoryHeader(text: String, modifier: Modifier = Modifier) {
-  Text(
-    text = text,
-    style = MaterialTheme.typography.h6,
-    modifier = modifier,
-  )
+fun CategoryHeader(
+  text: String,
+  modifier: Modifier = Modifier,
+  moreInfoText: String? = null,
+  textModifier: Modifier = Modifier
+) {
+  Row(modifier, verticalAlignment = Alignment.CenterVertically) {
+    Text(
+      text = text,
+      style = MaterialTheme.typography.h6,
+      modifier = textModifier.weight(1f),
+    )
+    moreInfoText?.let {
+      MoreInfoIconButton(
+        moreInfoText = it,
+      )
+    }
+  }
 }
 
 @Preview
+@Composable
+fun CategoryHeaderPreview() {
+  CradleTrialAppTheme {
+    Surface {
+      Column {
+        CategoryHeader(
+          text = stringResource(R.string.outcomes_surgical_management_label),
+          moreInfoText = "More info"
+        )
+
+        CategoryHeader(
+          text = stringResource(R.string.outcomes_surgical_management_label),
+        )
+
+        CategoryHeader(
+          text = stringResource(R.string.outcomes_maternal_death_label),
+          moreInfoText = stringResource(R.string.outcomes_maternal_death_more_info),
+        )
+      }
+    }
+  }
+}
+
+@Preview(heightDp = 1000)
 @Composable
 fun OutcomesCardPreview() {
   CradleTrialAppTheme {

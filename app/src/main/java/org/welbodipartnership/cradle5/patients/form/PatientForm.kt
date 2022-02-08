@@ -700,10 +700,13 @@ fun HysterectomyForm(
   textFieldModifier: Modifier = Modifier,
 ) {
   Column(modifier) {
-    BooleanRadioButtonRow(
-      isTrue = isFormEnabled,
-      onBooleanChange = onFormEnabledChange,
-    )
+    Row {
+      BooleanRadioButtonRow(
+        isTrue = isFormEnabled,
+        onBooleanChange = onFormEnabledChange,
+      )
+      MoreInfoIconButton(stringResource(R.string.outcomes_hysterectomy_more_info))
+    }
 
     DateOutlinedTextField(
       text = dateState.stateValue,
@@ -751,10 +754,13 @@ fun AdmittedToHduItuForm(
   modifier: Modifier = Modifier,
 ) {
   Column(modifier) {
-    BooleanRadioButtonRow(
-      isTrue = isFormEnabled,
-      onBooleanChange = onFormEnabledChange,
-    )
+    Row {
+      BooleanRadioButtonRow(
+        isTrue = isFormEnabled,
+        onBooleanChange = onFormEnabledChange,
+      )
+      MoreInfoIconButton(stringResource(R.string.outcomes_admission_to_hdu_or_itu_more_info))
+    }
 
     DateOutlinedTextField(
       text = dateState.stateValue,
@@ -899,12 +905,15 @@ fun SurgicalManagementForm(
   surgicalManagementTypeState: EnumWithOtherState,
   modifier: Modifier = Modifier,
 ) {
-  BooleanRadioButtonRow(
-    isTrue = isFormEnabled,
-    onBooleanChange = onFormEnabledChange,
-  )
-
   Column(modifier) {
+    Row {
+      BooleanRadioButtonRow(
+        isTrue = isFormEnabled,
+        onBooleanChange = onFormEnabledChange,
+      )
+      MoreInfoIconButton(stringResource(R.string.outcomes_surgical_management_more_info))
+    }
+
     DateOutlinedTextField(
       text = dateState.stateValue,
       onValueChange = { dateState.stateValue = it },
