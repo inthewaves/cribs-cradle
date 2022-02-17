@@ -50,7 +50,7 @@ import javax.inject.Inject
 
 private const val PATIENT_MAX_INITIALS_LENGTH = 5
 
-private val AGE_RANGE = 10L..60L
+private val AGE_RANGE = 0L..60L
 
 private val VALID_LENGTH_OF_ITU_HDU_STAY = 1L..100L
 
