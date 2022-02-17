@@ -1,6 +1,11 @@
-# CRADLE5 trial app
+# CRIBS CRADLE (Cradle 5)
+
+An app developed specifically for the Cradle5 trial.
 
 ## Development
+
+This is an Android app written 100% in Kotlin using Jetpack Compose (UI). This was both rushed and
+also my first time working with Compose.
 
 ### Building
 
@@ -11,6 +16,8 @@ cradle5AppKeystorePassword=
 cradle5AppKeyAlias=
 cradle5AppKeyPassword=
 ```
+
+The encrypted release keystore has been checked into the Git repository.
 
 ### Debugging stack traces
 
