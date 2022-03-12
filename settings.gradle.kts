@@ -61,7 +61,7 @@ dependencyResolutionManagement {
             alias("androidx-hilt-work").to("androidx.hilt", "hilt-work").versionRef("androidxhilt")
             alias("androidx-hilt-compiler").to("androidx.hilt", "hilt-compiler").versionRef("androidxhilt")
 
-            alias("androidx-hilt-navigation-compose").to("androidx.hilt:hilt-navigation-compose:1.0.0-rc01")
+            alias("androidx-hilt-navigation-compose").to("androidx.hilt:hilt-navigation-compose:1.0.0")
 
             alias("dagger-compiler").to("com.google.dagger", "dagger-compiler").versionRef("hilt")
             alias("dagger-dagger").to("com.google.dagger", "dagger").versionRef("hilt")
@@ -71,10 +71,10 @@ dependencyResolutionManagement {
 
             version("androidxlifecycle", "2.4.0")
             alias("androidx-lifecycle-runtime").to("androidx.lifecycle", "lifecycle-runtime-ktx").versionRef("androidxlifecycle")
-            alias("androidx-lifecycle-viewmodel-compose").to("androidx.lifecycle:lifecycle-viewmodel-compose:2.4.0")
+            alias("androidx-lifecycle-viewmodel-compose").to("androidx.lifecycle:lifecycle-viewmodel-compose:2.4.1")
             alias("androidx-lifecycle-viewmodel-ktx").to("androidx.lifecycle", "lifecycle-viewmodel-ktx").versionRef("androidxlifecycle")
 
-            alias("androidx-navigation-compose").to("androidx.navigation:navigation-compose:2.4.0-rc01")
+            alias("androidx-navigation-compose").to("androidx.navigation:navigation-compose:2.4.1")
 
             version("room",  "2.4.0")
             alias("androidx-room-common").to("androidx.room", "room-common").versionRef("room")
@@ -84,7 +84,7 @@ dependencyResolutionManagement {
             alias("androidx-room-runtime").to("androidx.room", "room-runtime").versionRef("room")
             alias("androidx-room-testing").to("androidx.room", "room-testing").versionRef("room")
 
-            alias("sqlcipher").to("net.zetetic:android-database-sqlcipher:4.5.0")
+            alias("sqlcipher").to("net.zetetic:android-database-sqlcipher:4.5.1")
 
             version("paging", "3.1.0")
             alias("androidx-paging-common").to("androidx.paging", "paging-common-ktx").versionRef("paging")
