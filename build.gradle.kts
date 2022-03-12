@@ -5,7 +5,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath("com.android.tools.build:gradle:7.1.0")
+        classpath("com.android.tools.build:gradle:7.1.2")
         classpath(libs.kotlin.gradle.plugin)
         classpath(libs.kotlin.serialization.base)
 
