@@ -1,10 +1,13 @@
 package org.welbodipartnership.cradle5.data.database.entities
 
 import androidx.room.Embedded
+
+/**
+ * Note: These are stored in the database by ordinal.
+ */
 enum class TouchedState(
   /**
-   * The enabled state to use for a null @[Embedded] value for one of the nested fields for
-   * [Outcomes].
+   * The enabled state to use for a null @[Embedded] value for a nested field.
    */
   val nullEnabledState: Boolean?
 ) {

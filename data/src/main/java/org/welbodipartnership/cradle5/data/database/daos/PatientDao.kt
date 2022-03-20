@@ -14,7 +14,7 @@ import org.welbodipartnership.cradle5.data.database.entities.Patient
 import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
 import org.welbodipartnership.cradle5.data.database.resultentities.ListPatientAndOutcomeError
 import org.welbodipartnership.cradle5.data.database.resultentities.PatientAndOutcomes
-import org.welbodipartnership.cradle5.data.database.resultentities.PatientFacilityOutcomes
+import org.welbodipartnership.cradle5.data.database.resultentities.PatientFacilityDistrictOutcomes
 import org.welbodipartnership.cradle5.data.database.resultentities.PatientOtherInfo
 
 @Dao
@@ -80,7 +80,7 @@ abstract class PatientDao {
 
   @Transaction
   @Query("SELECT * FROM Patient WHERE id = :patientPk")
-  abstract fun getPatientAndOutcomesFlow(patientPk: Long): Flow<PatientFacilityOutcomes?>
+  abstract fun getPatientAndOutcomesFlow(patientPk: Long): Flow<PatientFacilityDistrictOutcomes?>
 
   @Query("SELECT initials FROM Patient WHERE id = :patientPk")
   abstract fun getPatientInitialsFlow(patientPk: Long): Flow<String?>
@@ -108,7 +108,7 @@ abstract class PatientDao {
 
   @Transaction
   @Query("SELECT * FROM Patient WHERE id = :patientPk")
-  abstract suspend fun getPatientFacilityAndOutcomes(patientPk: Long): PatientFacilityOutcomes?
+  abstract suspend fun getPatientFacilityAndOutcomes(patientPk: Long): PatientFacilityDistrictOutcomes?
 
   /**
    * @return the number of rows that were updated. Note that WHERE is set to the primary key,

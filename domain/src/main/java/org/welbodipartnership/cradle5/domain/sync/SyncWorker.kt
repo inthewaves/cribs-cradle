@@ -25,6 +25,7 @@ import org.welbodipartnership.cradle5.data.database.entities.LocationCheckIn
 import org.welbodipartnership.cradle5.data.database.resultentities.PatientOutcomePair
 import org.welbodipartnership.cradle5.data.settings.AppValuesStore
 import org.welbodipartnership.cradle5.domain.RestApi
+import org.welbodipartnership.cradle5.domain.districts.DistrictRepository
 import org.welbodipartnership.cradle5.domain.enums.EnumRepository
 import org.welbodipartnership.cradle5.domain.facilities.FacilityRepository
 import org.welbodipartnership.cradle5.domain.patients.PatientsManager
@@ -43,6 +44,7 @@ class SyncWorker @AssistedInject constructor(
   private val dbWrapper: CradleDatabaseWrapper,
   private val restApi: RestApi,
   private val facilityRepository: FacilityRepository,
+  private val districtRepository: DistrictRepository,
   private val enumRepository: EnumRepository,
 ) : CoroutineWorker(appContext, workerParams) {
 
@@ -88,14 +90,16 @@ class SyncWorker @AssistedInject constructor(
 
     coroutineScope {
       val logChannel = actor<String> {
-        consumeEach {
-          Log.d(TAG, it)
-        }
+        consumeEach { Log.d(TAG, it) }
       }
       try {
         Log.d(TAG, "downloading facilities")
         reportProgress(Stage.DOWNLOADING_FACILITIES)
         facilityRepository.downloadAndSaveFacilities(logChannel)
+
+        Log.d(TAG, "downloading districts")
+        reportProgress(Stage.DOWNLOADING_DISTRICTS)
+        districtRepository.downloadAndSaveDistricts(logChannel)
 
         Log.d(TAG, "downloading dropdown values")
         reportProgress(Stage.DOWNLOADING_DROPDOWN_VALUES)
@@ -253,6 +257,7 @@ class SyncWorker @AssistedInject constructor(
     UPLOADING_INCOMPLETE_OUTCOMES,
     UPLOADING_LOCATION_CHECK_INS,
     DOWNLOADING_FACILITIES,
+    DOWNLOADING_DISTRICTS,
     DOWNLOADING_DROPDOWN_VALUES,
   }
 

@@ -11,9 +11,16 @@ import org.welbodipartnership.cradle5.util.datetime.toUnixTimestamp
 fun Patient.toApiBody() = Registration(
   initials = initials,
   presentationDate = presentationDate,
-  birthdateDate = dateOfBirth,
-  age = if (dateOfBirth!!.isExact) null else dateOfBirth!!.getAgeInYearsFromNow().toInt(),
-  healthcareFacility = healthcareFacilityId!!.toInt()
+  age = dateOfBirth?.getAgeInYearsFromNow()?.toInt(),
+  ageUnknown = dateOfBirth == null,
+  address = address,
+  healthcareFacility = healthcareFacilityId!!.toInt(),
+
+  wasPatientReferral = referralInfo != null,
+  patientReferralFromDistrict = referralInfo?.fromDistrict?.toInt(),
+  patientReferralFromFacility = referralInfo?.fromFacility?.toInt(),
+  patientReferralToDistrict = referralInfo?.toDistrict?.toInt(),
+  patientReferralToFacility = referralInfo?.toFacility?.toInt(),
 )
 
 fun Outcomes.toApiBody() = Outcome(

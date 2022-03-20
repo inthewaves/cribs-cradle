@@ -9,6 +9,7 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import org.welbodipartnership.cradle5.data.R
+import org.welbodipartnership.cradle5.data.database.entities.embedded.EnumSelection
 import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
 import org.welbodipartnership.cradle5.data.verification.HasRequiredFields
 import org.welbodipartnership.cradle5.data.verification.Verifiable
@@ -38,11 +39,22 @@ data class Patient(
 
   val initials: String,
   val presentationDate: FormDate?,
+
   /**
-   * This also represents an approximate date if only the age was known at the time of entry.
+   * Note: The UI will only show age.
    */
   val dateOfBirth: FormDate?,
+  @ColumnInfo(defaultValue = "1")
+  val isAgeKnown: TouchedState,
+
+  val address: String?,
   val healthcareFacilityId: Long?,
+
+  @ColumnInfo(defaultValue = "1")
+  val referralInfoTouched: TouchedState,
+  @Embedded(prefix = "patient_referral_")
+  val referralInfo: PatientReferralInfo?,
+
   /**
    * A Unix timestamp of when this was last updated
    */
@@ -118,4 +130,15 @@ data class Patient(
       else -> Verifiable.Valid
     }
   }
+}
+
+@Immutable
+data class PatientReferralInfo(
+  @Required val fromDistrict: Long?,
+  @Required val fromFacility: Long?,
+  @Required val toDistrict: Long?,
+  @Required val toFacility: Long?,
+) : HasRequiredFields {
+  override fun requiredFieldsPresent() =
+    fromDistrict != null && fromFacility != null && toDistrict != null && toFacility != null
 }

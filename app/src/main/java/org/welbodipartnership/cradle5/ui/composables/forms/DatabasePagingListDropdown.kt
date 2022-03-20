@@ -23,7 +23,6 @@ import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,23 +40,17 @@ import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemsIndexed
 import kotlinx.coroutines.flow.Flow
-import kotlinx.parcelize.Parcelize
 import org.welbodipartnership.cradle5.R
-import org.welbodipartnership.cradle5.data.database.entities.Facility
 import org.welbodipartnership.cradle5.ui.composables.screenlists.ScreenListItem
 
-@Immutable
-@Parcelize
-data class FacilityAndPosition(
-  val facility: Facility,
-  val position: Int?
-) : Parcelable
-
 @Composable
-fun HealthcareFacilityDropdown(
-  facility: FacilityAndPosition?,
-  onFacilitySelected: (FacilityAndPosition) -> Unit,
-  facilityPagingItemsFlow: Flow<PagingData<Facility>>,
+fun <DatabaseType : Parcelable> DatabasePagingListDropdown(
+  selectedItem: DatabaseType?,
+  positionInList: Int?,
+  onItemSelected: (index: Int, item: DatabaseType) -> Unit,
+  pagingItemFlow: Flow<PagingData<DatabaseType>>,
+  formatTextForListItem: (DatabaseType) -> String?,
+  title: @Composable () -> Unit,
   modifier: Modifier = Modifier,
   textFieldModifier: Modifier = Modifier,
   enabled: Boolean = true,
@@ -66,9 +59,9 @@ fun HealthcareFacilityDropdown(
 ) {
   var showDialog by rememberSaveable { mutableStateOf(false) }
   if (showDialog) {
-    val lazyItems = facilityPagingItemsFlow.collectAsLazyPagingItems()
+    val lazyItems = pagingItemFlow.collectAsLazyPagingItems()
 
-    val listState = rememberLazyListState(initialFirstVisibleItemIndex = facility?.position ?: 0)
+    val listState = rememberLazyListState(initialFirstVisibleItemIndex = positionInList ?: 0)
     Dialog(onDismissRequest = { showDialog = false }) {
       Surface(
         modifier = Modifier
@@ -83,19 +76,16 @@ fun HealthcareFacilityDropdown(
         ) {
           CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.high) {
             Box(Modifier.align(Alignment.Start)) {
-              Text(
-                stringResource(R.string.patient_registration_health_facility_dialog_title),
-                style = MaterialTheme.typography.subtitle1
-              )
+              title()
             }
           }
 
           Spacer(Modifier.height(18.dp))
 
           LazyColumn(modifier = Modifier.fillMaxWidth(), listState) {
-            itemsIndexed(lazyItems) { idx, fac ->
-              if (fac != null) {
-                val isSelected = idx == facility?.position
+            itemsIndexed(lazyItems) { idx, item ->
+              if (item != null) {
+                val isSelected = item == selectedItem
                 ScreenListItem(
                   modifier = if (isSelected) {
                     Modifier.background(MaterialTheme.colors.surface.copy(0.24f))
@@ -104,12 +94,12 @@ fun HealthcareFacilityDropdown(
                   },
                   minHeight = 32.dp,
                   onClick = {
-                    onFacilitySelected(FacilityAndPosition(fac, idx))
+                    onItemSelected(idx, item)
                     showDialog = false
                   }
                 ) {
                   Text(
-                    fac.name ?: stringResource(R.string.unknown),
+                    formatTextForListItem(item) ?: stringResource(R.string.unknown),
                     fontWeight = if (isSelected) FontWeight.ExtraBold else null,
                   )
                 }
@@ -131,7 +121,7 @@ fun HealthcareFacilityDropdown(
 
   OutlinedTextFieldWithErrorHint(
     readOnly = true,
-    value = facility?.facility?.name ?: "",
+    value = selectedItem?.let { formatTextForListItem(it) } ?: "",
     onValueChange = {},
     label = label,
     maxLines = 2,

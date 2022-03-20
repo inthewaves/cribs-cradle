@@ -5,6 +5,7 @@ import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.SendChannel
 import org.welbodipartnership.api.lookups.LookupResult
+import org.welbodipartnership.cradle5.data.serverenums.ServerEnumCollection
 import org.welbodipartnership.cradle5.data.settings.AppValuesStore
 import org.welbodipartnership.cradle5.data.settings.DynamicServerEnum
 import org.welbodipartnership.cradle5.data.settings.dynamicServerEnum
@@ -62,9 +63,7 @@ class EnumRepository @Inject constructor(
         eventChannel?.trySend("Downloading dropdown values for ${entry.name}")
         val lookupId = LookupId(entry.id)
         when (val lookupGetResult = restApi.getLookupValues(lookupId)) {
-          is NetworkResult.Success -> {
-            add(lookupGetResult.value.toProtoDynamicServerEnum())
-          }
+          is NetworkResult.Success -> { add(lookupGetResult.value.toProtoDynamicServerEnum()) }
           else -> return lookupGetResult.castErrorToDownloadResult()
         }
       }

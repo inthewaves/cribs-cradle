@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import org.welbodipartnership.cradle5.LeafScreen
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
-import org.welbodipartnership.cradle5.data.database.resultentities.PatientFacilityOutcomes
+import org.welbodipartnership.cradle5.data.database.resultentities.PatientFacilityDistrictOutcomes
 import org.welbodipartnership.cradle5.domain.patients.PatientsManager
 import org.welbodipartnership.cradle5.domain.sync.SyncRepository
 import javax.inject.Inject
@@ -25,7 +25,7 @@ class PatientDetailsViewModel @Inject constructor(
 ) : ViewModel() {
   sealed class State {
     object Loading : State()
-    class Ready(val patientFacilityOutcomes: PatientFacilityOutcomes) : State()
+    class Ready(val patientFacilityOutcomes: PatientFacilityDistrictOutcomes) : State()
     object Failed : State()
   }
 

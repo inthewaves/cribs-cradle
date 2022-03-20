@@ -1,4 +1,4 @@
-package org.welbodipartnership.cradle5.domain.facilities
+package org.welbodipartnership.cradle5.domain.districts
 
 import android.content.Context
 import android.util.Log
@@ -8,6 +8,7 @@ import org.welbodipartnership.api.cradle5.Registration
 import org.welbodipartnership.api.forms.meta.DynamicLookupListEntry
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
 import org.welbodipartnership.cradle5.data.database.daos.FacilityDao
+import org.welbodipartnership.cradle5.data.database.entities.District
 import org.welbodipartnership.cradle5.domain.ControlId
 import org.welbodipartnership.cradle5.domain.DefaultNetworkResult
 import org.welbodipartnership.cradle5.domain.FormId
@@ -18,7 +19,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class FacilityRepository @Inject constructor(
+class DistrictRepository @Inject constructor(
   @ApplicationContext private val context: Context,
   private val restApi: RestApi,
   private val dbWrapper: CradleDatabaseWrapper
@@ -34,39 +35,37 @@ class FacilityRepository @Inject constructor(
   /**
    * TODO: Might be worth streaming this response from the server
    */
-  suspend fun downloadAndSaveFacilities(
+  suspend fun downloadAndSaveDistricts(
     eventMessagesChannel: SendChannel<String>?
   ): DownloadResult {
     when (
       val result: DefaultNetworkResult<List<DynamicLookupListEntry>> = restApi
         .getDynamicLookupData(
           DynamicLookupListEntry::class.java,
-          ControlId("Control2092"),
+          ControlId("Control2125"),
           FormId.fromAnnotationOrThrow<Registration>(),
           ObjectId.QUERIES
         )
     ) {
       is NetworkResult.Success -> {
-        Log.d(TAG, "facilities count: ${result.value.size}")
-        eventMessagesChannel?.trySend("Saving ${result.value.size} facilities")
+        Log.d(TAG, "districts count: ${result.value.size}")
+        eventMessagesChannel?.trySend("Saving ${result.value.size} districts")
         dbWrapper.withTransaction { db ->
-          val dao = db.facilitiesDao()
-          result.value.forEachIndexed { index, apiFacilityListItem ->
-            dao.upsert(
-              FacilityDao.FacilityUpdate(apiFacilityListItem.id, apiFacilityListItem.name, index)
-            )
+          val dao = db.districtDao()
+          result.value.forEachIndexed { _, apiFacilityListItem ->
+            dao.upsert(District(apiFacilityListItem.id, apiFacilityListItem.name))
           }
         }
       }
       is NetworkResult.Failure -> {
         val message = result.errorValue.decodeToString()
-        val error = "Unable to get facilities: HTTP ${result.statusCode} error (message: $message)"
+        val error = "Unable to get districts: HTTP ${result.statusCode} error (message: $message)"
         eventMessagesChannel?.trySend(error)
         return DownloadResult.Invalid(error, result.statusCode)
       }
       is NetworkResult.NetworkException -> {
         val formatted = result.formatErrorMessage(context)
-        eventMessagesChannel?.trySend("Unable to get facilities: $formatted")
+        eventMessagesChannel?.trySend("Unable to get districts: $formatted")
         return DownloadResult.Exception(result.cause, formatted)
       }
     }
@@ -75,6 +74,6 @@ class FacilityRepository @Inject constructor(
   }
 
   companion object {
-    private const val TAG = "FacilityRepository"
+    private const val TAG = "DistrictRepository"
   }
 }

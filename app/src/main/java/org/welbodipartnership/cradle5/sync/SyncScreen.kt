@@ -142,6 +142,9 @@ private fun ActiveSyncCard(
         SyncWorker.Stage.DOWNLOADING_FACILITIES -> {
           Text("Downloading facilities")
         }
+        SyncWorker.Stage.DOWNLOADING_DISTRICTS -> {
+          Text("Downloading districts")
+        }
         SyncWorker.Stage.DOWNLOADING_DROPDOWN_VALUES -> {
           Text("Downloading dropdown values")
         }

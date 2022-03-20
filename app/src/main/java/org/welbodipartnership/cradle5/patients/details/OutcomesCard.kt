@@ -31,6 +31,7 @@ import org.welbodipartnership.cradle5.data.database.entities.TouchedState
 import org.welbodipartnership.cradle5.data.database.entities.embedded.EnumSelection
 import org.welbodipartnership.cradle5.data.serverenums.DropdownType
 import org.welbodipartnership.cradle5.data.serverenums.ServerEnumCollection
+import org.welbodipartnership.cradle5.patients.PatientPreviewClasses
 import org.welbodipartnership.cradle5.ui.composables.LabelAndValueForDropdownOrUnknown
 import org.welbodipartnership.cradle5.ui.composables.LabelAndValueOrNone
 import org.welbodipartnership.cradle5.ui.composables.LabelAndValueOrUnknown
@@ -342,52 +343,9 @@ fun OutcomesCardPreview() {
   CradleTrialAppTheme {
     val scrollState = rememberScrollState()
     OutcomesCard(
-      outcomes = testOutcomes,
+      outcomes = PatientPreviewClasses.createTestOutcomes(),
       enumCollection = ServerEnumCollection.defaultInstance,
       modifier = Modifier.verticalScroll(scrollState)
     )
   }
 }
-
-val testOutcomes = Outcomes(
-  patientId = 5L,
-  serverInfo = null,
-  serverErrorMessage = "some error",
-  eclampsiaFitTouched = TouchedState.TOUCHED_ENABLED,
-  eclampsiaFit = EclampsiaFit(
-    date = FormDate(20, 4, 2019),
-    place = EnumSelection.IdOnly(2)
-  ),
-  hysterectomyTouched = TouchedState.TOUCHED_ENABLED,
-  hysterectomy = Hysterectomy(
-    date = FormDate.today(),
-    cause = EnumSelection.WithOther(4, "The other string"),
-  ),
-  hduOrItuAdmissionTouched = TouchedState.TOUCHED_ENABLED,
-  hduOrItuAdmission = HduOrItuAdmission(
-    date = FormDate.today(),
-    cause = EnumSelection.WithOther(4, "This is input for the `other` cause"),
-    stayInDays = 5,
-    additionalInfo = "Additional info here"
-  ),
-  maternalDeathTouched = TouchedState.TOUCHED_ENABLED,
-  maternalDeath = MaternalDeath(
-    date = FormDate.today(),
-    underlyingCause = EnumSelection.WithOther(6),
-    place = EnumSelection.IdOnly(2),
-  ),
-  surgicalManagementTouched = TouchedState.TOUCHED_ENABLED,
-  surgicalManagement = SurgicalManagementOfHaemorrhage(
-    date = FormDate.today(),
-    typeOfSurgicalManagement = EnumSelection.WithOther(3)
-  ),
-  perinatalDeathTouched = TouchedState.TOUCHED_ENABLED,
-  perinatalDeath = PerinatalDeath(
-    date = FormDate.today(),
-    outcome = EnumSelection.IdOnly(2),
-    relatedMaternalFactors = EnumSelection.WithOther(8),
-    additionalInfo = null,
-  ),
-  birthWeight = BirthWeight(EnumSelection.IdOnly(1)),
-  ageAtDelivery = AgeAtDelivery(EnumSelection.IdOnly(1))
-)

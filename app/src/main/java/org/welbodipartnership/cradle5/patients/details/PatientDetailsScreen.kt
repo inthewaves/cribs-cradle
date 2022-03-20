@@ -50,9 +50,9 @@ import org.welbodipartnership.cradle5.data.database.entities.Outcomes
 import org.welbodipartnership.cradle5.data.database.entities.Patient
 import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
 import org.welbodipartnership.cradle5.domain.sync.SyncRepository
+import org.welbodipartnership.cradle5.patients.PatientPreviewClasses
 import org.welbodipartnership.cradle5.ui.composables.AnimatedVisibilityFadingWrapper
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
-import org.welbodipartnership.cradle5.util.datetime.FormDate
 
 @Composable
 fun PatientDetailsScreen(
@@ -252,18 +252,9 @@ fun PatientDetailsScreenNotUploadedPreview() {
   CradleTrialAppTheme {
     Surface {
       PatientDetailsScreen(
-        patient = Patient(
-          initials = "AA",
-          serverInfo = null,
-          serverErrorMessage = null,
-          presentationDate = FormDate(day = 10, month = 2, year = 1995),
-          dateOfBirth = FormDate(day = 19, month = 8, year = 1989),
-          healthcareFacilityId = 50L,
-          lastUpdatedTimestamp = 162224953,
-          isDraft = true,
-        ),
+        patient = PatientPreviewClasses.createTestPatient(),
         facility = Facility(5L, "Test facility", 0, false, "My notes"),
-        outcomes = testOutcomes,
+        outcomes = PatientPreviewClasses.createTestOutcomes(),
         editState = SyncRepository.FormEditState.CAN_EDIT,
         onPatientEditPress = {},
         onPatientOtherInfoEditPress = {}
@@ -278,18 +269,9 @@ fun PatientDetailsScreenUploadedPreview() {
   CradleTrialAppTheme {
     Surface {
       PatientDetailsScreen(
-        patient = Patient(
-          initials = "AA",
-          serverInfo = ServerInfo(nodeId = 5L, objectId = null),
-          serverErrorMessage = null,
-          presentationDate = FormDate(day = 10, month = 2, year = 1995),
-          dateOfBirth = FormDate(day = 19, month = 8, year = 1989),
-          healthcareFacilityId = 50L,
-          lastUpdatedTimestamp = 162224953,
-          isDraft = true,
-        ),
+        patient = PatientPreviewClasses.createTestPatient(serverInfo = ServerInfo(nodeId = 5L, objectId = null)),
         facility = Facility(5L, "Test facility", 0, false, "My notes"),
-        outcomes = testOutcomes,
+        outcomes = PatientPreviewClasses.createTestOutcomes(),
         editState = SyncRepository.FormEditState.CAN_EDIT,
         onPatientEditPress = {},
         onPatientOtherInfoEditPress = {}
@@ -304,19 +286,10 @@ fun PatientDetailsScreenSyncingPreview() {
   CradleTrialAppTheme {
     Surface {
       PatientDetailsScreen(
-        patient = Patient(
-          initials = "AA",
-          serverInfo = null,
-          serverErrorMessage = null,
-          presentationDate = FormDate(day = 10, month = 2, year = 1995),
-          dateOfBirth = FormDate(day = 19, month = 8, year = 1989),
-          healthcareFacilityId = 50L,
-          lastUpdatedTimestamp = 162224953,
-          isDraft = true,
-        ),
+        patient = PatientPreviewClasses.createTestPatient(isDraft = true),
         facility = Facility(5L, "Test facility", 0, false, "My notes"),
-        outcomes = testOutcomes,
-        editState = SyncRepository.FormEditState.CAN_EDIT,
+        outcomes = PatientPreviewClasses.createTestOutcomes(),
+        editState = SyncRepository.FormEditState.CANT_EDIT_SYNC_IN_PROGRESS,
         onPatientEditPress = {},
         onPatientOtherInfoEditPress = {}
       )

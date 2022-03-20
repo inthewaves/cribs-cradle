@@ -96,6 +96,7 @@
     <string name="facility_list_header_name">Name</string>
     <string name="facility_list_header_id">ID</string>
     <string name="missing_healthcare_facility_error">Missing healthcare facility</string>
+    <string name="missing_district_error">Missing district</string>
     <string name="patient_registration_healthcare_facility_label">Healthcare facility</string>
     <string name="patient_registration_health_facility_dialog_title">Select a health facility</string>
     <string name="patient_registration_server_id_not_available">N/A (not yet uploaded)</string>
@@ -157,6 +158,12 @@
     <string name="outcomes_hysterectomy_more_info">Surgical removal of all or part of the womb.</string>
     <string name="outcomes_admission_to_hdu_or_itu_more_info">Admission or referral to a specific area of the hospital that provides the highest-level of care for pregnant women.</string>
     <string name="outcomes_surgical_management_more_info">Any woman who required an operation with pain relief to manage bleeding after delivery.</string>
+    <string name="patient_referral_info_labels">Patient referral info</string>
+    <string name="patient_referral_info_from_district_label">From district</string>
+    <string name="patient_referral_info_from_facility_label">From facility</string>
+    <string name="patient_referral_info_to_facility_label">To facility</string>
+    <string name="patient_referral_info_to_district_label">To district</string>
+    <string name="patient_registration_district_dialog_title">Select a district</string>
     <plurals name="patient_form_snackbar_failed_to_save_there_are_d_errors">
         <item quantity="one">Failed to save, as there is %1$d error.</item>
         <item quantity="other">Failed to save, as there are %1$d errors.</item>

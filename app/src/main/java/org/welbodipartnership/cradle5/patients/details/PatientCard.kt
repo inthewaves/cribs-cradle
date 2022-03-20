@@ -15,6 +15,10 @@ import androidx.compose.ui.unit.dp
 import org.welbodipartnership.cradle5.R
 import org.welbodipartnership.cradle5.data.database.entities.Facility
 import org.welbodipartnership.cradle5.data.database.entities.Patient
+import org.welbodipartnership.cradle5.data.database.entities.PatientReferralInfo
+import org.welbodipartnership.cradle5.data.database.entities.TouchedState
+import org.welbodipartnership.cradle5.data.database.entities.embedded.EnumSelection
+import org.welbodipartnership.cradle5.patients.PatientPreviewClasses
 import org.welbodipartnership.cradle5.ui.composables.LabelAndValueOrNone
 import org.welbodipartnership.cradle5.ui.composables.LabelAndValueOrUnknown
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
@@ -75,22 +79,11 @@ fun PatientCard(patient: Patient, facility: Facility?, modifier: Modifier = Modi
 @Composable
 fun PatientCardPreview() {
   CradleTrialAppTheme {
-    // Scaffold {
     val scrollState = rememberScrollState()
     PatientCard(
-      patient = Patient(
-        initials = "AA",
-        serverInfo = null,
-        serverErrorMessage = null,
-        presentationDate = FormDate(day = 10, month = 2, year = 1995),
-        dateOfBirth = FormDate(day = 19, month = 8, year = 1989),
-        healthcareFacilityId = 50L,
-        lastUpdatedTimestamp = 162224953,
-        isDraft = true,
-      ),
+      patient = PatientPreviewClasses.createTestPatient(),
       facility = null,
       modifier = Modifier.verticalScroll(scrollState)
     )
-    // }
   }
 }

@@ -1,7 +1,9 @@
 package org.welbodipartnership.cradle5.data.serverenums
 
+import android.util.Log
 import androidx.collection.ArrayMap
 import androidx.compose.runtime.Immutable
+import org.welbodipartnership.cradle5.data.database.TAG
 import org.welbodipartnership.cradle5.data.database.entities.embedded.EnumSelection
 import org.welbodipartnership.cradle5.data.settings.DynamicServerEnum
 
@@ -21,6 +23,8 @@ value class ServerEnumCollection private constructor(
   )
 
   operator fun get(type: DropdownType): ServerEnum? = map[type]
+
+  val keys get() = map.keys
 
   companion object {
     /**
@@ -478,7 +482,11 @@ class ServerEnum constructor(
  * Converts from the proto settings format
  */
 fun DynamicServerEnum.toAppServerEnumOrNull(): ServerEnum? {
-  val dropdownType = DropdownType.values().find { it.serverLookupId == this.id } ?: return null
+  val dropdownType = DropdownType.values().find { it.serverLookupId == this.id }
+  if (dropdownType == null) {
+    Log.w(TAG, "Encountered unknown dropdown: $this")
+    return null
+  }
 
   return ServerEnum(
     dropdownType,

@@ -25,6 +25,7 @@ import org.welbodipartnership.cradle5.domain.NetworkResult
 import org.welbodipartnership.cradle5.domain.ObjectId
 import org.welbodipartnership.cradle5.domain.RestApi
 import org.welbodipartnership.cradle5.domain.UrlProvider
+import org.welbodipartnership.cradle5.domain.districts.DistrictRepository
 import org.welbodipartnership.cradle5.domain.enums.EnumRepository
 import org.welbodipartnership.cradle5.domain.facilities.FacilityRepository
 import org.welbodipartnership.cradle5.domain.sync.SyncRepository
@@ -60,6 +61,7 @@ class AuthRepository @Inject internal constructor(
   private val dispatchers: AppCoroutineDispatchers,
   private val syncRepository: SyncRepository,
   private val facilityRepository: FacilityRepository,
+  private val districtRepository: DistrictRepository,
   private val enumRepository: EnumRepository,
   private val urlProvider: UrlProvider,
   @ApplicationContext private val context: Context,
@@ -271,6 +273,17 @@ class AuthRepository @Inject internal constructor(
           return LoginResult.Exception(result.errorMessage)
         }
         is FacilityRepository.DownloadResult.Invalid -> {
+          return LoginResult.Invalid(result.errorMessage, result.errorCode)
+        }
+      }
+
+      loginEventMessagesChannel?.trySend("Getting districts")
+      when (val result = districtRepository.downloadAndSaveDistricts(loginEventMessagesChannel)) {
+        DistrictRepository.DownloadResult.Success -> {}
+        is DistrictRepository.DownloadResult.Exception -> {
+          return LoginResult.Exception(result.errorMessage)
+        }
+        is DistrictRepository.DownloadResult.Invalid -> {
           return LoginResult.Invalid(result.errorMessage, result.errorCode)
         }
       }

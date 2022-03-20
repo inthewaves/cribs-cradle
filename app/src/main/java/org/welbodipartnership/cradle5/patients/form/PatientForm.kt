@@ -1,6 +1,7 @@
 package org.welbodipartnership.cradle5.patients.form
 
 import android.content.Context
+import android.os.Parcelable
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.foundation.horizontalScroll
@@ -33,6 +34,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.ReadOnlyComposable
@@ -56,13 +58,19 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.paging.PagingData
 import com.google.accompanist.insets.LocalWindowInsets
 import com.google.accompanist.insets.navigationBarsWithImePadding
 import com.google.accompanist.insets.rememberInsetsPaddingValues
 import com.google.accompanist.insets.ui.TopAppBar
+import kotlinx.coroutines.flow.Flow
+import kotlinx.parcelize.Parcelize
 import org.welbodipartnership.cradle5.R
+import org.welbodipartnership.cradle5.data.database.entities.District
+import org.welbodipartnership.cradle5.data.database.entities.Facility
 import org.welbodipartnership.cradle5.data.database.entities.embedded.EnumSelection
 import org.welbodipartnership.cradle5.data.serverenums.DropdownType
 import org.welbodipartnership.cradle5.data.serverenums.ServerEnum
@@ -75,9 +83,8 @@ import org.welbodipartnership.cradle5.ui.composables.forms.BringIntoViewOutlined
 import org.welbodipartnership.cradle5.ui.composables.forms.DateOutlinedTextField
 import org.welbodipartnership.cradle5.ui.composables.forms.EnumDropdownMenuIdOnly
 import org.welbodipartnership.cradle5.ui.composables.forms.EnumDropdownMenuWithOther
-import org.welbodipartnership.cradle5.ui.composables.forms.FacilityAndPosition
 import org.welbodipartnership.cradle5.ui.composables.forms.FieldState
-import org.welbodipartnership.cradle5.ui.composables.forms.HealthcareFacilityDropdown
+import org.welbodipartnership.cradle5.ui.composables.forms.DatabasePagingListDropdown
 import org.welbodipartnership.cradle5.ui.composables.forms.MoreInfoIconButton
 import org.welbodipartnership.cradle5.ui.composables.forms.OutlinedTextFieldWithErrorHint
 import org.welbodipartnership.cradle5.ui.composables.forms.TextFieldState
@@ -116,6 +123,20 @@ fun RequiredText(text: String, required: Boolean = true) {
     Text(text)
   }
 }
+
+@Immutable
+@Parcelize
+data class FacilityAndPosition(
+  val facility: Facility,
+  val position: Int?
+) : Parcelable
+
+@Immutable
+@Parcelize
+data class DistrictAndPosition(
+  val district: District,
+  val position: Int?
+) : Parcelable
 
 @Composable
 fun PatientForm(
@@ -219,7 +240,8 @@ fun PatientForm(
         },
         navigationIcon = {
           val backPressedDispatcher = requireNotNull(
-            LocalOnBackPressedDispatcherOwner.current!!, { "failed to get a back pressed dispatcher" }
+            LocalOnBackPressedDispatcherOwner.current!!,
+            { "failed to get a back pressed dispatcher" }
           ).onBackPressedDispatcher
           IconButton(onClick = backPressedDispatcher::onBackPressed) {
             Icon(
@@ -314,52 +336,11 @@ fun PatientForm(
 
           Spacer(Modifier.height(textFieldToTextFieldHeight))
 
-          DateOutlinedTextField(
-            text = patientFields.dateOfBirth.stateValue,
-            onValueChange = { input ->
-              patientFields.dateOfBirth.stateValue = input
-              val formDate = patientFields.dateOfBirth.dateFromStateOrNull()
-              if (formDate != null) {
-                patientFields.age.stateValue = formDate.getAgeInYearsFromNow()
-                  .coerceAtLeast(0)
-                  .toString()
-              }
-            },
-            timestampToDateStringMapper = timestampToFormDateMapper,
-            dateStringToTimestampMapper = formDateToTimestampMapper,
-            maxLength = FormDate.MAX_STRING_LEN_NO_SLASHES,
-            onPickerClose = {
-              patientFields.dateOfBirth.enableShowErrors(force = true)
-              patientFields.age.enableShowErrors(force = true)
-            },
-            label = {
-              RequiredText(stringResource(R.string.patient_registration_date_of_birth_label))
-            },
-            modifier = Modifier.fillMaxWidth(),
-            textFieldModifier = patientFields.dateOfBirth
-              .createFocusChangeModifier()
-              .fillMaxWidth(),
-            // textStyle = MaterialTheme.typography.body2,
-            errorHint = patientFields.dateOfBirth.getError(),
-            helpButtonText = "Please enter 00 for unknown part of the date e.g. 00/06/1986, 00/00/1986.",
-            keyboardOptions = KeyboardOptions.Default,
-            keyboardActions = KeyboardActions(
-              onDone = {
-                // onImeAction()
-              }
-            )
-          )
-
-          Spacer(Modifier.height(textFieldToTextFieldHeight))
-
           OutlinedTextFieldWithErrorHint(
             value = patientFields.age.stateValue,
             onValueChange = { newAge ->
               if (newAge.length <= 2) {
                 patientFields.age.stateValue = newAge
-                newAge.toIntOrNull()?.let {
-                  patientFields.dateOfBirth.setStateFromFormDate(FormDate.fromAgeFromNow(it))
-                }
               }
             },
             label = {
@@ -368,7 +349,6 @@ fun PatientForm(
             modifier = Modifier.fillMaxWidth(),
             textFieldModifier = patientFields.age
               .createFocusChangeModifier()
-              .then(patientFields.dateOfBirth.createFocusChangeModifier())
               .fillMaxWidth(),
             // textStyle = MaterialTheme.typography.body2,
             errorHint = patientFields.age.getError(),
@@ -383,10 +363,20 @@ fun PatientForm(
             )
           )
 
-          HealthcareFacilityDropdown(
-            facility = patientFields.healthcareFacility.stateValue,
-            onFacilitySelected = { patientFields.healthcareFacility.stateValue = it },
-            facilityPagingItemsFlow = viewModel.facilitiesPagerFlow,
+          DatabasePagingListDropdown(
+            selectedItem = patientFields.healthcareFacility.stateValue?.facility,
+            positionInList = patientFields.healthcareFacility.stateValue?.position,
+            onItemSelected = { idx, facility ->
+              patientFields.healthcareFacility.stateValue = FacilityAndPosition(facility, idx)
+            },
+            formatTextForListItem = Facility::name,
+            title = {
+              Text(
+                stringResource(R.string.patient_registration_health_facility_dialog_title),
+                style = MaterialTheme.typography.subtitle1
+              )
+            },
+            pagingItemFlow = viewModel.facilitiesPagerFlow,
             errorHint = patientFields.healthcareFacility.getError(),
             label = {
               RequiredText(stringResource(R.string.patient_registration_healthcare_facility_label))
@@ -395,6 +385,15 @@ fun PatientForm(
             textFieldModifier = Modifier
               .fillMaxWidth()
               .then(patientFields.healthcareFacility.createFocusChangeModifier())
+          )
+
+          Spacer(Modifier.height(textFieldToTextFieldHeight))
+
+          PatientReferralInfoForm(
+            referralInfoFields = patientFields.referralInfo,
+            districtPagingFlow = viewModel.districtsPagerFlow,
+            facilityPagingFlow = viewModel.facilitiesPagerFlow,
+            textFieldToTextFieldHeight = textFieldToTextFieldHeight,
           )
         }
       }
@@ -631,6 +630,132 @@ fun PatientForm(
         }
         else -> {}
       }
+    }
+  }
+}
+
+@Composable
+fun PatientReferralInfoForm(
+  referralInfoFields: PatientFormViewModel.PatientFields.ReferralInfoFields,
+  districtPagingFlow: Flow<PagingData<District>>,
+  facilityPagingFlow: Flow<PagingData<Facility>>,
+  textFieldToTextFieldHeight: Dp,
+  modifier: Modifier = Modifier,
+  textFieldModifier: Modifier = Modifier,
+) {
+  val (
+    isFormEnabledState,
+    fromDistrictState: DistrictState,
+    fromFacilityState: HealthcareFacilityState,
+    toDistrictState: DistrictState,
+    toFacilityState: HealthcareFacilityState
+  ) = referralInfoFields
+  val (isFormEnabled, onFormEnabledStateChange) = isFormEnabledState
+
+  Column(modifier) {
+    Row {
+      BooleanRadioButtonRow(isTrue = isFormEnabled, onBooleanChange = onFormEnabledStateChange)
+      MoreInfoIconButton(stringResource(R.string.outcomes_eclampsia_more_info))
+    }
+
+    if (isFormEnabled == true) {
+      DatabasePagingListDropdown(
+        selectedItem = fromDistrictState.stateValue?.district,
+        positionInList = fromDistrictState.stateValue?.position,
+        onItemSelected = { idx, district ->
+          fromDistrictState.stateValue = DistrictAndPosition(district, idx)
+        },
+        formatTextForListItem = District::name,
+        title = {
+          Text(
+            stringResource(R.string.patient_registration_district_dialog_title),
+            style = MaterialTheme.typography.subtitle1
+          )
+        },
+        pagingItemFlow = districtPagingFlow,
+        errorHint = fromDistrictState.getError(),
+        label = {
+          RequiredText(stringResource(R.string.patient_referral_info_from_district_label))
+        },
+        modifier = Modifier.fillMaxWidth(),
+        textFieldModifier = Modifier
+          .fillMaxWidth()
+          .then(fromDistrictState.createFocusChangeModifier())
+      )
+
+      Spacer(Modifier.height(textFieldToTextFieldHeight))
+
+      DatabasePagingListDropdown(
+        selectedItem = fromFacilityState.stateValue?.facility,
+        positionInList = fromFacilityState.stateValue?.position,
+        onItemSelected = { idx, facility ->
+          fromFacilityState.stateValue = FacilityAndPosition(facility, idx)
+        },
+        formatTextForListItem = Facility::name,
+        title = {
+          Text(
+            stringResource(R.string.patient_registration_health_facility_dialog_title),
+            style = MaterialTheme.typography.subtitle1
+          )
+        },
+        pagingItemFlow = facilityPagingFlow,
+        errorHint = fromDistrictState.getError(),
+        label = {
+          RequiredText(stringResource(R.string.patient_referral_info_from_facility_label))
+        },
+        modifier = Modifier.fillMaxWidth(),
+        textFieldModifier = Modifier
+          .fillMaxWidth()
+          .then(fromDistrictState.createFocusChangeModifier())
+      )
+
+      DatabasePagingListDropdown(
+        selectedItem = toDistrictState.stateValue?.district,
+        positionInList = toDistrictState.stateValue?.position,
+        onItemSelected = { idx, district ->
+          toDistrictState.stateValue = DistrictAndPosition(district, idx)
+        },
+        formatTextForListItem = District::name,
+        title = {
+          Text(
+            stringResource(R.string.patient_registration_district_dialog_title),
+            style = MaterialTheme.typography.subtitle1
+          )
+        },
+        pagingItemFlow = districtPagingFlow,
+        errorHint = toDistrictState.getError(),
+        label = {
+          RequiredText(stringResource(R.string.patient_referral_info_to_district_label))
+        },
+        modifier = Modifier.fillMaxWidth(),
+        textFieldModifier = Modifier
+          .fillMaxWidth()
+          .then(toDistrictState.createFocusChangeModifier())
+      )
+
+      DatabasePagingListDropdown(
+        selectedItem = toFacilityState.stateValue?.facility,
+        positionInList = toFacilityState.stateValue?.position,
+        onItemSelected = { idx, facility ->
+          toFacilityState.stateValue = FacilityAndPosition(facility, idx)
+        },
+        formatTextForListItem = Facility::name,
+        title = {
+          Text(
+            stringResource(R.string.patient_registration_health_facility_dialog_title),
+            style = MaterialTheme.typography.subtitle1
+          )
+        },
+        pagingItemFlow = facilityPagingFlow,
+        errorHint = toFacilityState.getError(),
+        label = {
+          RequiredText(stringResource(R.string.patient_referral_info_to_facility_label))
+        },
+        modifier = Modifier.fillMaxWidth(),
+        textFieldModifier = Modifier
+          .fillMaxWidth()
+          .then(toFacilityState.createFocusChangeModifier())
+      )
     }
   }
 }
@@ -1001,7 +1126,7 @@ fun PerinatalDeathForm(
     EnumDropdownMenuWithOther(
       currentSelection = maternalFactorsState.stateValue,
       onSelect = { maternalFactorsState.stateValue = it },
-      serverEnum = maternalFactorsState.enum!!,
+      serverEnum = requireNotNull(maternalFactorsState.enum) { "missing maternal factors enum" },
       label = { Text(stringResource(R.string.perinatal_death_related_maternal_factors_label)) },
       enabled = isFormEnabled == true,
       dropdownTextModifier = Modifier.fillMaxWidth(),
@@ -1110,6 +1235,32 @@ class HealthcareFacilityState(
     }
   },
   errorFor = { ctx, _ -> ctx.getString(R.string.missing_healthcare_facility_error) },
+  initialValue = null,
+  backingState = backingState,
+  isFormDraftState = isFormDraftState,
+  isMandatory = isMandatory,
+) {
+  override val showErrorOnInput: Boolean = true
+  override fun isMissing(): Boolean {
+    return stateValue == null
+  }
+}
+
+class DistrictState(
+  isMandatory: Boolean,
+  backingState: MutableState<DistrictAndPosition?>,
+  isFormDraftState: State<Boolean?>
+) : FieldState<DistrictAndPosition?>(
+  validator = { district ->
+    if (isFormDraftState.value == true && district == null) {
+      true
+    } else if (isMandatory) {
+      district != null
+    } else {
+      true
+    }
+  },
+  errorFor = { ctx, _ -> ctx.getString(R.string.missing_district_error) },
   initialValue = null,
   backingState = backingState,
   isFormDraftState = isFormDraftState,
