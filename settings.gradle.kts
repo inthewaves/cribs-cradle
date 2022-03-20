@@ -32,16 +32,19 @@ dependencyResolutionManagement {
 
             library("androidx-core-ktx", "androidx.core:core-ktx:1.7.0")
             library("androidx-appcompat", "androidx.appcompat:appcompat:1.4.1")
-            version("lifecycle", "2.4.0")
-            library("androidx-lifecycle-runtime-ktx", "androidx.lifecycle", "lifecycle-runtime-ktx").versionRef("lifecycle")
-            library("androidx-lifecycle-process", "androidx.lifecycle", "lifecycle-process").versionRef("lifecycle")
-            library("androidx-activity-compose", "androidx.activity:activity-compose:1.4.0")
+
+            version("androidxlifecycle", "2.4.1")
+            library("androidx-lifecycle-runtime-ktx", "androidx.lifecycle", "lifecycle-runtime-ktx").versionRef("androidxlifecycle")
+            library("androidx-lifecycle-process", "androidx.lifecycle", "lifecycle-process").versionRef("androidxlifecycle")
+            library("androidx-lifecycle-runtime", "androidx.lifecycle", "lifecycle-runtime-ktx").versionRef("androidxlifecycle")
+            library("androidx-lifecycle-viewmodel-compose", "androidx.lifecycle:lifecycle-viewmodel-compose:2.4.1")
+            library("androidx-lifecycle-viewmodel-ktx", "androidx.lifecycle", "lifecycle-viewmodel-ktx").versionRef("androidxlifecycle")
 
             library("androidx-work-runtime", "androidx.work:work-runtime-ktx:2.7.1")
 
             library("google-android-material", "com.google.android.material:material:1.5.0")
 
-            version("accompanist", "0.21.4-beta")
+            version("accompanist", "0.23.1")
             library("accompanist-navigation-animation", "com.google.accompanist", "accompanist-navigation-animation").versionRef("accompanist")
             library("accompanist-permissions", "com.google.accompanist", "accompanist-permissions").versionRef("accompanist")
             library("accompanist-systemuicontroller", "com.google.accompanist", "accompanist-systemuicontroller").versionRef("accompanist")
@@ -52,7 +55,7 @@ dependencyResolutionManagement {
 
             library("signal-argon2", "org.signal:argon2:13.1")
 
-            version("hilt", "2.40.5")
+            version("hilt", "2.41")
             library("dagger-android-gradlePlugin", "com.google.dagger", "hilt-android-gradle-plugin").versionRef("hilt")
             plugin("dagger-android-plugin", "dagger.hilt.android.plugin").versionRef("hilt")
             library("hilt-library", "com.google.dagger", "hilt-android").versionRef("hilt")
@@ -69,14 +72,9 @@ dependencyResolutionManagement {
             // ([^ ]*) = \{ module = "(.*):(.*)", version.ref = "(.*)" \} -> library("$1", "$2", "$3").versionRef("$4")
             // ([^ ]*) = "(.*)" -> library("$1", "$2")
 
-            version("androidxlifecycle", "2.4.0")
-            library("androidx-lifecycle-runtime", "androidx.lifecycle", "lifecycle-runtime-ktx").versionRef("androidxlifecycle")
-            library("androidx-lifecycle-viewmodel-compose", "androidx.lifecycle:lifecycle-viewmodel-compose:2.4.1")
-            library("androidx-lifecycle-viewmodel-ktx", "androidx.lifecycle", "lifecycle-viewmodel-ktx").versionRef("androidxlifecycle")
-
             library("androidx-navigation-compose", "androidx.navigation:navigation-compose:2.4.1")
 
-            version("room",  "2.4.0")
+            version("room",  "2.4.2")
             library("androidx-room-common", "androidx.room", "room-common").versionRef("room")
             library("androidx-room-ktx", "androidx.room", "room-ktx").versionRef("room")
             library("androidx-room-compiler", "androidx.room", "room-compiler").versionRef("room")
@@ -84,9 +82,11 @@ dependencyResolutionManagement {
             library("androidx-room-runtime", "androidx.room", "room-runtime").versionRef("room")
             library("androidx-room-testing", "androidx.room", "room-testing").versionRef("room")
 
+            library("androidx-activity-compose", "androidx.activity:activity-compose:1.4.0")
+
             library("sqlcipher", "net.zetetic:android-database-sqlcipher:4.5.1")
 
-            version("paging", "3.1.0")
+            version("paging", "3.1.1")
             library("androidx-paging-common", "androidx.paging", "paging-common-ktx").versionRef("paging")
             library("androidx-paging-runtime", "androidx.paging", "paging-runtime-ktx").versionRef("paging")
             library("androidx-paging-compose", "androidx.paging:paging-compose:1.0.0-alpha14")
@@ -114,7 +114,7 @@ dependencyResolutionManagement {
             library("moshi-adapters", "com.squareup.moshi", "moshi-adapters").versionRef("moshi")
             // library("valiktor", "org.valiktor:valiktor-core:0.12.0")
 
-            version("protobuf", "3.19.1")
+            version("protobuf", "3.19.4")
             library("protobuf-kotlin-lite", "com.google.protobuf", "protobuf-kotlin-lite").versionRef("protobuf")
             library("protobuf-compiler", "com.google.protobuf", "protoc").versionRef("protobuf")
             plugin("protobuf", "com.google.protobuf").version("0.8.18")
