@@ -114,7 +114,7 @@ android {
         compose = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.composecompiler.get()
+        kotlinCompilerExtensionVersion = libs.versions.compose.get()
     }
     packagingOptions {
         resources {

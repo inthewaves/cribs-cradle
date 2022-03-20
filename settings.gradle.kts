@@ -93,9 +93,7 @@ dependencyResolutionManagement {
 
             library("androidx-constraintlayout-compose", "androidx.constraintlayout:constraintlayout-compose:1.0.0")
 
-            version("compose", "1.1.0-rc01")
-            // TODO: Remove this when all other Compose deps use 1.1.0-rc02 or higher
-            version("composecompiler", "1.1.0-rc02")
+            version("compose", "1.1.1")
             library("compose-runtime", "androidx.compose.runtime", "runtime").versionRef("compose")
             library("compose-ui-ui", "androidx.compose.ui", "ui").versionRef("compose")
             library("compose-ui-util", "androidx.compose.ui", "ui-util").versionRef("compose")
