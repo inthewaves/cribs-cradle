@@ -91,30 +91,6 @@ private val MIGRATIONS = arrayOf(
       """.trimIndent()
     )
   },
-  MigrationCreator(9, 10) {
-    execSQL("ALTER TABLE `Patient` ADD COLUMN `address` TEXT DEFAULT NULL")
-    execSQL("ALTER TABLE `Patient` ADD COLUMN `isAgeUnknown` INTEGER NOT NULL DEFAULT 0")
-    execSQL("ALTER TABLE `Patient` ADD COLUMN `referralInfoTouched` INTEGER NOT NULL DEFAULT 1")
-    execSQL("ALTER TABLE `Patient` ADD COLUMN `patient_referral_toDistrict` INTEGER DEFAULT NULL")
-    execSQL("ALTER TABLE `Patient` ADD COLUMN `patient_referral_fromFacility` INTEGER DEFAULT NULL")
-    execSQL("ALTER TABLE `Patient` ADD COLUMN `patient_referral_toFacility` INTEGER DEFAULT NULL")
-    execSQL("ALTER TABLE `Patient` ADD COLUMN `patient_referral_fromDistrict` INTEGER DEFAULT NULL")
-    execSQL("CREATE TABLE IF NOT EXISTS `District` (`id` INTEGER NOT NULL, `name` TEXT, PRIMARY KEY(`id`))")
-    val defaultDistricts = listOf(
-      Pair(1, "1 - Bonthe"),
-      Pair(2, "2 - Falaba"),
-      Pair(3, "3 - Kailahun"),
-      Pair(4, "4 - Karene"),
-      Pair(5, "5 - Koinadugu"),
-      Pair(6, "6 - Kono"),
-      Pair(7, "7 - Moyamba"),
-      Pair(8, "8 - Tonkolili"),
-    )
-    for ((id, districtName) in defaultDistricts) {
-      Log.d(TAG, "migration 9 -> 10: Inserting district id $id, $districtName")
-      execSQL("""INSERT INTO District(id, name) VALUES ($id, "$districtName")""")
-    }
-  }
 )
 
 @Database(
@@ -135,7 +111,7 @@ private val MIGRATIONS = arrayOf(
     AutoMigration(from = 6, to = 7, spec = Cradle5Database.Version6To7::class),
     AutoMigration(from = 7, to = 8),
     AutoMigration(from = 8, to = 9),
-    AutoMigration(from = 9, to = 10),
+    AutoMigration(from = 9, to = 10, spec = Cradle5Database.Version9To10::class),
     AutoMigration(from = 10, to = 11, spec = Cradle5Database.Version10To11::class),
   ]
 )
@@ -143,6 +119,24 @@ private val MIGRATIONS = arrayOf(
 abstract class Cradle5Database : RoomDatabase() {
   @DeleteColumn(tableName = "Outcomes", columnName = "hysterectomy_additionalInfo")
   internal class Version6To7 : AutoMigrationSpec
+  internal class Version9To10 : AutoMigrationSpec {
+    override fun onPostMigrate(db: SupportSQLiteDatabase): Unit = db.run {
+      val defaultDistricts = listOf(
+        Pair(1, "1 - Bonthe"),
+        Pair(2, "2 - Falaba"),
+        Pair(3, "3 - Kailahun"),
+        Pair(4, "4 - Karene"),
+        Pair(5, "5 - Koinadugu"),
+        Pair(6, "6 - Kono"),
+        Pair(7, "7 - Moyamba"),
+        Pair(8, "8 - Tonkolili"),
+      )
+      for ((id, districtName) in defaultDistricts) {
+        Log.d(TAG, "Version9To10: Inserting district id $id, $districtName")
+        execSQL("""INSERT INTO District(id, name) VALUES ($id, "$districtName")""")
+      }
+    }
+  }
   @DeleteColumn(tableName = "Outcomes", columnName = "hdu_itu_admission_date")
   @DeleteColumn(tableName = "Outcomes", columnName = "hduOrItuAdmissionTouched")
   @DeleteColumn(tableName = "Outcomes", columnName = "hdu_itu_admission_additionalInfo")
