@@ -90,9 +90,9 @@ abstract class FacilityDao {
       """
         SELECT rowNum FROM (
           SELECT ROW_NUMBER () OVER ($DEFAULT_ORDER) rowNum, id FROM Facility WHERE districtId = ?
-        ) WHERE id = ? AND districtId = ?;
+        ) WHERE id = ?;
       """.trimIndent(),
-      arrayOf(districtId, facilityId, districtId)
+      arrayOf(districtId, facilityId)
     )
     // ROW_NUMBER is 1-based
     return getFacilityIndexWhenOrderedByName(query)?.let { (it - 1).coerceAtLeast(0L) }
