@@ -63,6 +63,11 @@ fun PatientCard(
       value = patient.initials,
     )
     Spacer(modifier = Modifier.height(spacerHeight))
+    LabelAndValueOrNone(
+      label = stringResource(R.string.patient_registration_registration_date_label),
+      value = patient.registrationDate.toString(),
+    )
+    Spacer(modifier = Modifier.height(spacerHeight))
     LabelAndValueOrUnknown(
       label = stringResource(R.string.patient_registration_presentation_date_label),
       value = patient.presentationDate?.toString(),

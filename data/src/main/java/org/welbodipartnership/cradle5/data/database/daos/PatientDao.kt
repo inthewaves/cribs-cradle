@@ -80,6 +80,18 @@ abstract class PatientDao {
   @Query("SELECT * FROM Patient WHERE nodeId IS NULL AND isDraft = 0 ORDER BY id DESC")
   abstract fun patientsPagingSourceFilterByNotUploadedAndNotDraft(): PagingSource<Int, ListPatientAndOutcomeError>
 
+  @RewriteQueriesToDropUnusedColumns
+  @Transaction
+  @Query("SELECT * FROM Patient WHERE healthcareFacilityId = :facilityId ORDER BY id DESC")
+  abstract fun patientsPagingSourceFilterByFacility(facilityId: Int): PagingSource<Int, ListPatientAndOutcomeError>
+
+  @RewriteQueriesToDropUnusedColumns
+  @Transaction
+  @Query("SELECT * FROM Patient WHERE CAST(SUBSTR(registrationDate, 4, 2) AS INT) = :monthOneBased ORDER BY id DESC")
+  abstract fun patientsPagingSourceFilterByRegistrationMonth(
+    monthOneBased: Int
+  ): PagingSource<Int, ListPatientAndOutcomeError>
+
   // ---- Patient + outcomes observations
 
   @Transaction

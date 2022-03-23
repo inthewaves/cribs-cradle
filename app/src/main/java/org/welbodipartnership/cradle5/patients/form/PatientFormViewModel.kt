@@ -624,6 +624,7 @@ class PatientFormViewModel @Inject constructor(
                 id = patientAndOutcomes?.patient?.id ?: 0L,
                 serverInfo = patientAndOutcomes?.patient?.serverInfo,
                 serverErrorMessage = null,
+                registrationDate = patientAndOutcomes?.patient?.registrationDate ?: FormDate.today(),
                 initials = initials.stateValue,
                 presentationDate = presentationDate.dateFromStateOrNull(),
                 dateOfBirth = parsedDob,

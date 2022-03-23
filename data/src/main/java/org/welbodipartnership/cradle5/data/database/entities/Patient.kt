@@ -35,6 +35,8 @@ data class Patient(
   @Embedded
   override val serverInfo: ServerInfo?,
   val serverErrorMessage: String?,
+  @ColumnInfo(defaultValue = "23/03/2022")
+  val registrationDate: FormDate = FormDate.today(),
 
   val initials: String,
   val presentationDate: FormDate?,

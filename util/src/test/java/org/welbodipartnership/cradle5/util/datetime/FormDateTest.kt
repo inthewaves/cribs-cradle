@@ -76,6 +76,7 @@ internal class FormDateTest {
       "20/02/1990" to FormDate(20, 2, 1990),
       "29/02/2000" to FormDate(29, 2, 2000),
       "28/02/2001" to FormDate(28, 2, 2001),
+      "22/12/2021" to FormDate(22, 12, 2021),
     ).map { (dateString, dateObject) -> Arguments.of(dateString, dateObject) }
       .asStream()
   }

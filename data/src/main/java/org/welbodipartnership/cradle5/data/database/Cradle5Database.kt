@@ -23,6 +23,7 @@ import org.welbodipartnership.cradle5.data.database.entities.Facility
 import org.welbodipartnership.cradle5.data.database.entities.LocationCheckIn
 import org.welbodipartnership.cradle5.data.database.entities.Outcomes
 import org.welbodipartnership.cradle5.data.database.entities.Patient
+import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -151,7 +152,28 @@ abstract class Cradle5Database : RoomDatabase() {
   @DeleteColumn(tableName = "Outcomes", columnName = "perinatal_death_maternalfactors_selectionId")
   @DeleteColumn(tableName = "Outcomes", columnName = "perinatal_death_maternalfactors_otherString")
   @DeleteColumn(tableName = "Outcomes", columnName = "eclampsia_date")
-  internal class Version10To11 : AutoMigrationSpec
+  internal class Version10To11 : AutoMigrationSpec {
+    override fun onPostMigrate(db: SupportSQLiteDatabase): Unit = db.run {
+      val now = LocalDate.now().let { localDate ->
+        fun StringBuilder.padInt(value: Int, length: Int) {
+          val strValue = value.toString()
+          for (i in length - strValue.length downTo 1) {
+            append('0')
+          }
+          append(strValue)
+        }
+        buildString {
+          padInt(localDate.dayOfMonth, 2)
+          append('/')
+          padInt(localDate.monthValue, 2)
+          append('/')
+          padInt(localDate.year, 4)
+        }
+      }
+      Log.d(TAG, "Version10To11: Setting all patient registration dates to $now")
+      execSQL("""UPDATE Patient SET registrationDate = ?""", arrayOf(now))
+    }
+  }
 
   abstract fun patientDao(): PatientDao
   abstract fun outcomesDao(): OutcomesDao

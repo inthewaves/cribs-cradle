@@ -1,6 +1,8 @@
 package org.welbodipartnership.cradle5.patients.list
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,6 +24,8 @@ import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
 import androidx.compose.material.Card
 import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.DropdownMenuItem
+import androidx.compose.material.ExposedDropdownMenuDefaults
 import androidx.compose.material.FloatingActionButton
 import androidx.compose.material.Icon
 import androidx.compose.material.LocalContentColor
@@ -31,6 +35,7 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
+import androidx.compose.material.TextFieldColors
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Error
@@ -41,6 +46,7 @@ import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -69,12 +75,17 @@ import com.google.accompanist.insets.rememberInsetsPaddingValues
 import com.google.accompanist.insets.ui.TopAppBar
 import org.welbodipartnership.cradle5.R
 import org.welbodipartnership.cradle5.compose.rememberFlowWithLifecycle
+import org.welbodipartnership.cradle5.data.database.entities.Facility
 import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
 import org.welbodipartnership.cradle5.data.database.resultentities.ListPatient
 import org.welbodipartnership.cradle5.data.database.resultentities.ListPatientAndOutcomeError
 import org.welbodipartnership.cradle5.home.AccountInfoButton
 import org.welbodipartnership.cradle5.ui.composables.AnimatedVisibilityFadingWrapper
 import org.welbodipartnership.cradle5.ui.composables.carousel.Carousel
+import org.welbodipartnership.cradle5.ui.composables.forms.DatabasePagingListDropdown
+import org.welbodipartnership.cradle5.ui.composables.forms.FixLongPressExposedDropdownMenuBox
+import org.welbodipartnership.cradle5.ui.composables.forms.OutlinedTextFieldWithErrorHint
+import org.welbodipartnership.cradle5.ui.composables.forms.darkerDisabledOutlinedTextFieldColors
 import org.welbodipartnership.cradle5.ui.composables.screenlists.ScreenListItem
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
 import org.welbodipartnership.cradle5.util.datetime.FormDate
@@ -134,16 +145,22 @@ private fun PatientsListScreen(
             showFilterDialog = false
             viewModel.filterOption.value = selectedOption
           }
-        ) {
-          Text(stringResource(R.string.filter_button_ok))
-        }
+        ) { Text(stringResource(R.string.filter_button_ok)) }
+      },
+      dismissButton = {
+        TextButton(
+          onClick = {
+            showFilterDialog = false
+            viewModel.filterOption.value = PatientsListViewModel.FilterOption.None
+          }
+        ) { Text(stringResource(R.string.filter_button_clear_filter)) }
       },
       title = { Text("Select a filtering option") },
       text = {
         // https://developer.android.com/reference/kotlin/androidx/compose/material/package-summary#RadioButton(kotlin.Boolean,kotlin.Function0,androidx.compose.ui.Modifier,kotlin.Boolean,androidx.compose.foundation.interaction.MutableInteractionSource,androidx.compose.material.RadioButtonColors)
         // Note that Modifier.selectableGroup() is essential to ensure correct accessibility behavior
         Column(Modifier.selectableGroup()) {
-          PatientsListViewModel.FilterOption.values().forEach { currentOpt ->
+          PatientsListViewModel.FilterOption.defaultButtonsList.forEach { currentOpt ->
             Row(
               Modifier
                 .fillMaxWidth()
@@ -174,6 +191,33 @@ private fun PatientsListScreen(
               }
             }
           }
+
+          DatabasePagingListDropdown(
+            selectedItem = (selectedOption as? PatientsListViewModel.FilterOption.ByFacility)
+              ?.facility,
+            positionInList = (selectedOption as? PatientsListViewModel.FilterOption.ByFacility)
+              ?.position,
+            onItemSelected = { idx, facility ->
+              onOptionSelected(PatientsListViewModel.FilterOption.ByFacility(facility, idx))
+            },
+            pagingItemFlow = viewModel.selfFacilityPagingFlow,
+            formatTextForListItem = Facility::name,
+            title = { Text(stringResource(R.string.patient_registration_district_dialog_title)) },
+            label = { Text(stringResource(R.string.patients_list_filter_option_facility)) },
+            errorHint = null
+          )
+
+          MonthDropdownMenu(
+            currentMonthNumber = (selectedOption as? PatientsListViewModel.FilterOption.Month)
+              ?.monthOneBased,
+            onSelect = { selectedMonthNumber ->
+              if (selectedMonthNumber != null) {
+                onOptionSelected(PatientsListViewModel.FilterOption.Month(selectedMonthNumber))
+              }
+            },
+            label = { Text(stringResource(R.string.patients_list_filter_option_month)) },
+            errorHint = null
+          )
         }
       }
     )
@@ -219,12 +263,24 @@ private fun PatientsListScreen(
       Row {
         Button(onClick = { showFilterDialog = true }) {
           val currentFilterOption by viewModel.filterOption.collectAsState()
-          Text(
-            stringResource(
-              R.string.facilities_list_filter_by_s_button,
-              stringResource(currentFilterOption.selectionStringResId)
+          currentFilterOption.let { nowOption -> // smart casting
+            Text(
+              stringResource(
+                R.string.facilities_list_filter_by_s_button,
+                when (nowOption) {
+                  is PatientsListViewModel.FilterOption.Month -> stringResource(
+                    R.string.patients_list_filter_by_month_s,
+                    getMonthNameFromNumber(nowOption.monthOneBased)
+                  )
+                  is PatientsListViewModel.FilterOption.ByFacility -> stringResource(
+                    R.string.patients_list_filter_by_facility_s,
+                    nowOption.facility.name ?: "ID ${nowOption.facility.id}"
+                  )
+                  else -> stringResource(currentFilterOption.selectionStringResId)
+                }
+              )
             )
-          )
+          }
         }
       }
       PatientListHeader()
@@ -277,6 +333,102 @@ private fun PatientsListScreen(
           )
         }
       }
+    }
+  }
+}
+
+fun getMonthNameFromNumber(monthNumber: Int?) = when (monthNumber) {
+  1 -> "January"
+  2 -> "February"
+  3 -> "March"
+  4 -> "April"
+  5 -> "May"
+  6 -> "June"
+  7 -> "July"
+  8 -> "August"
+  9 -> "September"
+  10 -> "October"
+  11 -> "November"
+  12 -> "December"
+  else -> ""
+}
+
+@Composable
+private fun MonthDropdownMenu(
+  currentMonthNumber: Int?,
+  onSelect: (Int?) -> Unit,
+  modifier: Modifier = Modifier,
+  dropdownTextModifier: Modifier = Modifier,
+  label: @Composable () -> Unit,
+  errorHint: String?,
+  enabled: Boolean = true,
+  dropdownColors: TextFieldColors = darkerDisabledOutlinedTextFieldColors(),
+) {
+  var expanded by remember { mutableStateOf(false) }
+
+  val onClick = {
+    expanded = if (enabled) {
+      // ensure that tapping on the menu again closes it
+      !expanded
+    } else {
+      expanded
+    }
+  }
+  FixLongPressExposedDropdownMenuBox(
+    expanded = enabled && expanded,
+    onExpandedChange = {
+      // ensure that tapping on the menu again closes it
+      expanded = if (expanded) false else it
+    },
+    enabled = enabled,
+    modifier = modifier,
+  ) {
+    OutlinedTextFieldWithErrorHint(
+      readOnly = true,
+      value = getMonthNameFromNumber(currentMonthNumber),
+      onValueChange = {},
+      label = label,
+      maxLines = 2,
+      enabled = enabled,
+      trailingIcon = {
+        ExposedDropdownMenuDefaults.TrailingIcon(
+          expanded = enabled && expanded,
+          onIconClick = onClick
+        )
+      },
+      errorHint = errorHint,
+      colors = dropdownColors,
+      textFieldModifier = dropdownTextModifier,
+      interactionSource = remember { MutableInteractionSource() }
+        .also { interactionSource ->
+          if (enabled) {
+            LaunchedEffect(interactionSource) {
+              interactionSource.interactions.collect {
+                if (it is PressInteraction.Release) {
+                  onClick()
+                }
+              }
+            }
+          }
+        }
+    )
+    ExposedDropdownMenu(
+      expanded = enabled && expanded,
+      onDismissRequest = { expanded = false },
+      modifier = dropdownTextModifier,
+    ) {
+      generateSequence(1) { it + 1 }
+        .takeWhile { it in 1..12 }
+        .forEach { monthNumber ->
+          DropdownMenuItem(
+            onClick = {
+              expanded = false
+              onSelect(monthNumber)
+            },
+          ) {
+            Text(text = getMonthNameFromNumber(monthNumber))
+          }
+        }
     }
   }
 }

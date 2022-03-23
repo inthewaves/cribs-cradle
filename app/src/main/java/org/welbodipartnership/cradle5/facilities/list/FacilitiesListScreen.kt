@@ -94,6 +94,14 @@ private fun FacilitiesListScreen(
           Text(stringResource(R.string.filter_button_ok))
         }
       },
+      dismissButton = {
+        TextButton(
+          onClick = {
+            showFilterDialog = false
+            viewModel.filterOption.value = FacilitiesListViewModel.FilterOption.NONE
+          }
+        ) { Text(stringResource(R.string.filter_button_clear_filter)) }
+      },
       title = { Text("Select a filtering option") },
       text = {
         // https://developer.android.com/reference/kotlin/androidx/compose/material/package-summary#RadioButton(kotlin.Boolean,kotlin.Function0,androidx.compose.ui.Modifier,kotlin.Boolean,androidx.compose.foundation.interaction.MutableInteractionSource,androidx.compose.material.RadioButtonColors)

@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 11,
-    "identityHash": "bec81468b3a31f18553056d927e1083c",
+    "identityHash": "0757300ce7107b487d56093aed97d49b",
     "entities": [
       {
         "tableName": "Patient",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `serverErrorMessage` TEXT, `initials` TEXT NOT NULL, `presentationDate` TEXT, `dateOfBirth` TEXT, `isAgeUnknown` INTEGER NOT NULL DEFAULT 0, `address` TEXT, `healthcareFacilityId` INTEGER, `referralInfoTouched` INTEGER NOT NULL DEFAULT 1, `lastUpdatedTimestamp` INTEGER NOT NULL, `localNotes` TEXT, `isDraft` INTEGER NOT NULL DEFAULT 0, `nodeId` INTEGER, `objectId` INTEGER, `patient_referral_fromDistrict` INTEGER, `patient_referral_fromFacility` INTEGER, `patient_referral_toDistrict` INTEGER, `patient_referral_toFacility` INTEGER)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `serverErrorMessage` TEXT, `registrationDate` TEXT NOT NULL DEFAULT '23/03/2022', `initials` TEXT NOT NULL, `presentationDate` TEXT, `dateOfBirth` TEXT, `isAgeUnknown` INTEGER NOT NULL DEFAULT 0, `address` TEXT, `healthcareFacilityId` INTEGER, `referralInfoTouched` INTEGER NOT NULL DEFAULT 1, `lastUpdatedTimestamp` INTEGER NOT NULL, `localNotes` TEXT, `isDraft` INTEGER NOT NULL DEFAULT 0, `nodeId` INTEGER, `objectId` INTEGER, `patient_referral_fromDistrict` INTEGER, `patient_referral_fromFacility` INTEGER, `patient_referral_toDistrict` INTEGER, `patient_referral_toFacility` INTEGER)",
         "fields": [
           {
             "fieldPath": "id",
@@ -19,6 +19,13 @@
             "columnName": "serverErrorMessage",
             "affinity": "TEXT",
             "notNull": false
+          },
+          {
+            "fieldPath": "registrationDate",
+            "columnName": "registrationDate",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'23/03/2022'"
           },
           {
             "fieldPath": "initials",
@@ -564,7 +571,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'bec81468b3a31f18553056d927e1083c')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '0757300ce7107b487d56093aed97d49b')"
     ]
   }
 }
