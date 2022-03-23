@@ -42,6 +42,8 @@ message EncryptedSettings {
   optional string warning_message = 10;
   /* Server option; don't expect this to be used much */
   optional ServerType server_override = 11;
+  optional int32 last_app_migration_version = 12;
+  optional bool force_reauth = 13;
 }
 
 message UserInfo {

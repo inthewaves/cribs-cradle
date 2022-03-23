@@ -95,7 +95,7 @@ class AppValuesStore @Inject internal constructor(
     .distinctUntilChanged()
     .conflate()
 
-  val warningMessageFlow = encryptedSettings.encryptedSettingsFlow()
+  val warningMessageFlow: Flow<String?> = encryptedSettings.encryptedSettingsFlow()
     .map { settings ->
       settings.warningMessage.takeIf { settings.hasWarningMessage() }
     }
@@ -108,6 +108,20 @@ class AppValuesStore @Inject internal constructor(
   val serverUrlOverrideFlow = encryptedSettings.encryptedSettingsFlow()
     .map { settings ->
       settings.serverOverride.takeIf { settings.hasServerOverride() }
+    }
+    .distinctUntilChanged()
+    .conflate()
+
+  val lastAppVersionFlow = encryptedSettings.encryptedSettingsFlow()
+    .map { settings ->
+      settings.lastAppMigrationVersion.takeIf { settings.hasLastAppMigrationVersion() }
+    }
+    .distinctUntilChanged()
+    .conflate()
+
+  val forceReauthFlow: Flow<Boolean> = encryptedSettings.encryptedSettingsFlow()
+    .map { settings ->
+      settings.forceReauth.takeIf { settings.hasForceReauth() } ?: false
     }
     .distinctUntilChanged()
     .conflate()
@@ -186,6 +200,10 @@ class AppValuesStore @Inject internal constructor(
     encryptedSettings.updateData { settings ->
       settings.toBuilder().setLastTimeAuthenticated(newTimestamp.timestamp).build()
     }
+  }
+
+  suspend fun setForceReauth(forceReauth: Boolean) {
+    encryptedSettings.updateData { settings -> settings.toBuilder().setForceReauth(forceReauth).build() }
   }
 
   suspend fun insertFreshAuthToken(newerAuthToken: AuthToken) {
@@ -271,6 +289,12 @@ class AppValuesStore @Inject internal constructor(
         .addAllEnums(enums)
         .setDefaultDropdownVersion(ServerEnumCollection.DROPDOWN_VERSION)
         .build()
+    }
+  }
+
+  suspend fun setLastAppMigrationVersion(currentVersion: Int) {
+    encryptedSettings.updateData { settings ->
+      settings.toBuilder().setLastAppMigrationVersion(currentVersion).build()
     }
   }
 }

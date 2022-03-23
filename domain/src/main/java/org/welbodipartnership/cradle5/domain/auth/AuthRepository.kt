@@ -87,12 +87,19 @@ class AuthRepository @Inject internal constructor(
    */
   val authStateFlow: Flow<AuthState> = combine(
     // Put this here so that it is refreshed when the app's foreground state changes. We want
-    appForegroundedObserver.isForegrounded,
-    appValuesStore.authTokenFlow,
-    appValuesStore.lastTimeAuthedFlow,
-    appValuesStore.loginCompleteFlow,
-    appValuesStore.warningMessageFlow,
-  ) { _, authToken, lastTimeAuthed, isLoginComplete, warningMessage ->
+    appForegroundedObserver.isForegrounded as Flow<Boolean>,
+    appValuesStore.authTokenFlow as Flow<AuthToken?>,
+    appValuesStore.lastTimeAuthedFlow as Flow<UnixTimestamp?>,
+    appValuesStore.loginCompleteFlow as Flow<Boolean>,
+    appValuesStore.warningMessageFlow as Flow<String?>,
+    appValuesStore.forceReauthFlow as Flow<Boolean>,
+  ) { args ->
+    var i = 1
+    val authToken: AuthToken? = args[i++] as AuthToken?
+    val lastTimeAuthed: UnixTimestamp? = args[i++] as UnixTimestamp?
+    val isLoginComplete: Boolean = args[i++] as Boolean
+    val warningMessage: String? = args[i++] as String?
+    val forceReauthFlow: Boolean = args[i++] as Boolean
 
     if (!warningMessage.isNullOrBlank()) {
       AuthState.BlockingWarningMessage(warningMessage)
@@ -118,7 +125,7 @@ class AuthRepository @Inject internal constructor(
       val now = UnixTimestamp.now()
 
       when {
-        now >= tokenExpiryTime -> AuthState.TokenExpired(username)
+        now >= tokenExpiryTime || forceReauthFlow -> AuthState.TokenExpired(username)
         lastTimeAuthedForComparison durationBetween now >= AUTH_TIMEOUT -> {
           AuthState.LoggedInLocked(username)
         }
@@ -349,6 +356,8 @@ class AuthRepository @Inject internal constructor(
     } finally {
       if (!success) {
         appValuesStore.clearAuthToken()
+      } else {
+        appValuesStore.setForceReauth(false)
       }
       appValuesStore.markLoginComplete()
       loginEventMessagesChannel?.close()
@@ -363,7 +372,10 @@ class AuthRepository @Inject internal constructor(
     val result = reauthForLockscreenInner(password, forceServerRefresh, eventMessagesChannel)
     if (result is LoginResult.Success) {
       Log.w(TAG, "reauth(): successful reauthentication; setting last auth time to now")
-      appValuesStore.setLastTimeAuthenticatedToNow()
+      appValuesStore.apply {
+        setLastTimeAuthenticatedToNow()
+        setForceReauth(false)
+      }
     }
     return result
   }

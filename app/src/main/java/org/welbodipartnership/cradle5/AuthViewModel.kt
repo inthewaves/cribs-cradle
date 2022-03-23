@@ -76,7 +76,7 @@ class AuthViewModel @Inject constructor(
           AuthState.LoggedOut -> {
             ScreenState.UserInputNeeded.WaitingForLogin(submissionState.errorMessage)
           }
-          is AuthState.TokenExpired -> {
+          is AuthState.TokenExpired, is AuthState.ForcedRelogin -> {
             ScreenState.UserInputNeeded.WaitingForTokenRefreshLogin(submissionState.errorMessage)
           }
           AuthState.Initializing, is AuthState.BlockingWarningMessage -> ScreenState.Initializing
