@@ -74,7 +74,19 @@ class AppValuesStore @Inject internal constructor(
     .conflate()
 
   val districtIdFlow = encryptedSettings.encryptedSettingsFlow()
-    .map { settings -> settings.userInfo.districtId.takeIf { settings.hasUserInfo() } }
+    .map { settings ->
+      if (settings.hasUserInfo()) {
+        settings.userInfo.districtId.takeIf { it != 0 }
+          ?: settings.userInfo.districtName
+            ?.ifBlank { null }
+            ?.split(' ')
+            ?.firstOrNull()
+            ?.trim()
+            ?.toIntOrNull()
+      } else {
+        null
+      }
+    }
     .distinctUntilChanged()
     .conflate()
 

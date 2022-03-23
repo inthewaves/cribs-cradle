@@ -18,17 +18,17 @@ abstract class FacilityDao {
    * A partial version of [Facility] so that the user notes don't get overwritten.
    */
   data class FacilityUpdate(
-    val id: Long,
+    val id: Int,
     val name: String?,
     val districtId: Int,
     val listOrder: Int,
   )
 
   @Query("SELECT * FROM Facility WHERE id = :facilityPk")
-  abstract fun getFacilityFlow(facilityPk: Long): Flow<Facility?>
+  abstract fun getFacilityFlow(facilityPk: Int): Flow<Facility?>
 
   @Query("SELECT * FROM Facility WHERE id = :facilityPk")
-  abstract suspend fun getFacility(facilityPk: Long): Facility?
+  abstract suspend fun getFacility(facilityPk: Int): Facility?
 
   /**
    * Updates the [facility] or inserts it into the database if the [facility] doesn't yet exist.
@@ -45,13 +45,13 @@ abstract class FacilityDao {
 
   @Query("UPDATE Facility SET hasVisited = :hasVisited, localNotes = :localNotes WHERE id = :facilityPk")
   protected abstract suspend fun updateFacilityOtherInfoInner(
-    facilityPk: Long,
+    facilityPk: Int,
     hasVisited: Boolean,
     localNotes: String?
   ): Int
 
   suspend fun updateFacilityOtherInfo(
-    facilityPk: Long,
+    facilityPk: Int,
     hasVisited: Boolean,
     localNotes: String?
   ): Boolean = updateFacilityOtherInfoInner(facilityPk, hasVisited, localNotes) == 1
@@ -81,15 +81,18 @@ abstract class FacilityDao {
    * Gets the index of the facility with the given [facilityId] when the facilities are sorted
    * by ascending order of name.
    */
-  suspend fun getFacilityIndexWhenOrderedByName(facilityId: Long): Long? {
+  suspend fun getFacilityIndexWhenOrderedByName(
+    facilityId: Int,
+    districtId: Int = Facility.DEFAULT_DISTRICT_ID
+  ): Long? {
     // Room doesn't support this type of query
     val query = SimpleSQLiteQuery(
       """
         SELECT rowNum FROM (
-          SELECT ROW_NUMBER () OVER ($DEFAULT_ORDER) rowNum, id FROM Facility
-        ) WHERE id = ?;
+          SELECT ROW_NUMBER () OVER ($DEFAULT_ORDER) rowNum, id FROM Facility WHERE districtId = ?
+        ) WHERE id = ? AND districtId = ?;
       """.trimIndent(),
-      arrayOf(facilityId)
+      arrayOf(districtId, facilityId, districtId)
     )
     // ROW_NUMBER is 1-based
     return getFacilityIndexWhenOrderedByName(query)?.let { (it - 1).coerceAtLeast(0L) }

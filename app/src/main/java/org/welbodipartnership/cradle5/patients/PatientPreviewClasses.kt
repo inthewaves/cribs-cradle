@@ -17,10 +17,10 @@ import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
 import org.welbodipartnership.cradle5.util.datetime.FormDate
 
 object PatientPreviewClasses {
-  const val FROM_DISTRICT_ID = 2L
-  const val FROM_FACILITY_ID = 34L
-  const val TO_DISTRICT_ID = 3L
-  const val TO_FACILITY_ID = 145L
+  const val FROM_DISTRICT_ID = 2
+  const val FROM_FACILITY_ID = 34
+  const val TO_DISTRICT_ID = 3
+  const val TO_FACILITY_ID = 145
 
   fun createTestReferralInfo() = PatientReferralInfo(
     fromDistrict = FROM_DISTRICT_ID,
@@ -41,7 +41,7 @@ object PatientPreviewClasses {
     dateOfBirth = FormDate(day = 19, month = 8, year = 1989),
     isAgeUnknown = false,
     address = "Test address",
-    healthcareFacilityId = 50L,
+    healthcareFacilityId = 50,
     lastUpdatedTimestamp = 162224953,
     isDraft = isDraft,
     referralInfoTouched = TouchedState.TOUCHED,

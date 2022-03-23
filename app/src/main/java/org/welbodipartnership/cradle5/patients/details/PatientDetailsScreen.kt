@@ -255,7 +255,7 @@ fun PatientDetailsScreenNotUploadedPreview() {
       PatientDetailsScreen(
         PatientFacilityDistrictOutcomes(
           patient = PatientPreviewClasses.createTestPatient(),
-          facility = Facility(5L, "Test facility", 0, 2, false, "My notes"),
+          facility = Facility(5, "Test facility", 0, 2, false, "My notes"),
           referralFromDistrict = null,
           referralFromFacility = null,
           referralToDistrict = null,
@@ -278,7 +278,7 @@ fun PatientDetailsScreenUploadedPreview() {
       PatientDetailsScreen(
         PatientFacilityDistrictOutcomes(
           patient = PatientPreviewClasses.createTestPatient(serverInfo = ServerInfo(nodeId = 5L, objectId = null)),
-          facility = Facility(5L, "Test facility", 0, 2, false, "My notes"),
+          facility = Facility(5, "Test facility", 0, 2, false, "My notes"),
           outcomes = PatientPreviewClasses.createTestOutcomes(),
           referralFromDistrict = District(PatientPreviewClasses.FROM_DISTRICT_ID, "Test 'from' district"),
           referralFromFacility = Facility(
@@ -306,7 +306,7 @@ fun PatientDetailsScreenSyncingPreview() {
       PatientDetailsScreen(
         PatientFacilityDistrictOutcomes(
           patient = PatientPreviewClasses.createTestPatient(isDraft = false),
-          facility = Facility(5L, "Test facility", 0, 2, false, "My notes"),
+          facility = Facility(5, "Test facility", 0, 2, false, "My notes"),
           outcomes = PatientPreviewClasses.createTestOutcomes(),
           referralFromDistrict = District(PatientPreviewClasses.FROM_DISTRICT_ID, "Test 'from' district"),
           referralFromFacility = Facility(

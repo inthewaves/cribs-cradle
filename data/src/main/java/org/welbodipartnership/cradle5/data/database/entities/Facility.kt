@@ -16,7 +16,7 @@ import kotlinx.parcelize.Parcelize
 data class Facility(
   @PrimaryKey
   @ColumnInfo(name = "id")
-  val id: Long,
+  val id: Int,
   val name: String?,
   @ColumnInfo(defaultValue = DEFAULT_DISTRICT_ID_STRING)
   val districtId: Int = DEFAULT_DISTRICT_ID,

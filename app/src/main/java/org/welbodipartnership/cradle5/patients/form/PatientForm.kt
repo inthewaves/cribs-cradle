@@ -416,7 +416,7 @@ fun PatientForm(
 
           FacilityListDropdown(
             state = patientFields.healthcareFacility,
-            pagingItemFlow = viewModel.facilitiesPagerFlow,
+            pagingItemFlow = viewModel.facilitiesForSelfDistrictPagerFlow,
             label = {
               RequiredText(stringResource(R.string.patient_registration_healthcare_facility_label))
             },
@@ -431,7 +431,7 @@ fun PatientForm(
           PatientReferralInfoForm(
             referralInfoFields = patientFields.referralInfo,
             districtPagingFlow = viewModel.districtsPagerFlow,
-            facilityPagingFlow = viewModel.facilitiesPagerFlow,
+            facilityPagingFlowGetter = { viewModel.getFacilitiesPagingDataForDistrict(it) },
             textFieldToTextFieldHeight = textFieldToTextFieldHeight,
           )
         }
@@ -650,7 +650,7 @@ fun PatientForm(
 fun PatientReferralInfoForm(
   referralInfoFields: PatientFormViewModel.PatientFields.ReferralInfoFields,
   districtPagingFlow: Flow<PagingData<District>>,
-  facilityPagingFlow: Flow<PagingData<Facility>>,
+  facilityPagingFlowGetter: (District?) -> Flow<PagingData<Facility>>,
   textFieldToTextFieldHeight: Dp,
   modifier: Modifier = Modifier,
   textFieldModifier: Modifier = Modifier,
@@ -680,14 +680,19 @@ fun PatientReferralInfoForm(
         modifier = Modifier.fillMaxWidth(),
         textFieldModifier = Modifier
           .fillMaxWidth()
-          .then(fromDistrictState.createFocusChangeModifier())
+          .then(fromDistrictState.createFocusChangeModifier()),
+        extraOnItemSelected = { old, new -> if (old != new) fromFacilityState.reset() }
       )
 
       Spacer(Modifier.height(textFieldToTextFieldHeight))
 
+      val fromFacilityFlow = remember(fromDistrictState.stateValue) {
+        facilityPagingFlowGetter(fromDistrictState.stateValue?.district)
+      }
+
       FacilityListDropdown(
         state = fromFacilityState,
-        pagingItemFlow = facilityPagingFlow,
+        pagingItemFlow = fromFacilityFlow,
         label = { RequiredText(stringResource(R.string.patient_referral_info_from_facility_label)) },
         modifier = Modifier.fillMaxWidth(),
         textFieldModifier = Modifier
@@ -704,14 +709,19 @@ fun PatientReferralInfoForm(
         modifier = Modifier.fillMaxWidth(),
         textFieldModifier = Modifier
           .fillMaxWidth()
-          .then(toDistrictState.createFocusChangeModifier())
+          .then(toDistrictState.createFocusChangeModifier()),
+        extraOnItemSelected = { old, new -> if (old != new) toFacilityState.reset() }
       )
 
       Spacer(Modifier.height(textFieldToTextFieldHeight))
 
+      val toFacilityFlow = remember(toDistrictState.stateValue) {
+        facilityPagingFlowGetter(toDistrictState.stateValue?.district)
+      }
+
       FacilityListDropdown(
         state = toFacilityState,
-        pagingItemFlow = facilityPagingFlow,
+        pagingItemFlow = toFacilityFlow,
         label = {
           RequiredText(stringResource(R.string.patient_referral_info_to_facility_label))
         },
@@ -1287,10 +1297,16 @@ fun DistrictListDropdown(
   textFieldModifier: Modifier = Modifier,
   enabled: Boolean = true,
   label: @Composable (() -> Unit)? = null,
+  extraOnItemSelected: (previous: District?, new: District) -> Unit = { _, _ -> }
 ) = DatabasePagingListDropdown(
   selectedItem = state.stateValue?.district,
   positionInList = state.stateValue?.position,
-  onItemSelected = { idx, district -> state.stateValue = DistrictAndPosition(district, idx) },
+  onItemSelected = { idx, district ->
+    val old = state.stateValue?.district
+    val new = DistrictAndPosition(district, idx)
+    state.stateValue = new
+    extraOnItemSelected(old, district)
+  },
   formatTextForListItem = District::name,
   title = {
     Text(

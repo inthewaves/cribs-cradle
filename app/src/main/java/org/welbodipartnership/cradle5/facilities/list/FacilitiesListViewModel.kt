@@ -45,10 +45,8 @@ class FacilitiesListViewModel @Inject constructor(
   val facilitiesPagerFlow: Flow<PagingData<Facility>> = combine(
     filterOption,
     appValuesStore.districtIdFlow,
-    appValuesStore.districtNameFlow
-  ) { opt, id, name ->
-    val districtId = id ?: name?.split(' ')?.firstOrNull()?.trim()?.toIntOrNull()
-    districtId?.let { FilterConfig(opt, districtId)  }
+  ) { opt, districtId ->
+    districtId?.let { FilterConfig(opt, it) }
   }.filterNotNull()
     .distinctUntilChanged()
     .flatMapLatest { (filterOption, districtId) ->

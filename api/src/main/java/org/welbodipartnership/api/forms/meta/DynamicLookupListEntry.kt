@@ -10,7 +10,7 @@ import com.squareup.moshi.JsonClass
 @JsonClass(generateAdapter = true)
 data class DynamicLookupListEntry(
   @Json(name = "Id")
-  val id: Long,
+  val id: Int,
   @Json(name = "Name")
   val name: String
 )

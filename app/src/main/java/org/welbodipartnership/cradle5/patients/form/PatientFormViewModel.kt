@@ -22,7 +22,10 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import org.welbodipartnership.cradle5.LeafScreen
@@ -66,7 +69,7 @@ class PatientFormViewModel @Inject constructor(
   private val handle: SavedStateHandle,
   private val valuesStore: AppValuesStore,
   private val appCoroutineDispatchers: AppCoroutineDispatchers,
-  dbWrapper: CradleDatabaseWrapper
+  private val dbWrapper: CradleDatabaseWrapper
 ) : ViewModel() {
   companion object {
     private const val TAG = "PatientFormViewModel"
@@ -89,11 +92,24 @@ class PatientFormViewModel @Inject constructor(
     .flow
     .cachedIn(viewModelScope)
 
-  val facilitiesPagerFlow: Flow<PagingData<Facility>> = Pager(
-    PagingConfig(pageSize = 60, enablePlaceholders = true, maxSize = 200)
-  ) { dbWrapper.facilitiesDao().facilitiesPagingSource() }
-    .flow
-    .cachedIn(viewModelScope)
+  val facilitiesForSelfDistrictPagerFlow: Flow<PagingData<Facility>> = valuesStore.districtIdFlow
+    .flatMapLatest { districtId ->
+      Pager(PagingConfig(pageSize = 60, enablePlaceholders = true, maxSize = 200)) {
+        if (districtId != null) {
+          dbWrapper.facilitiesDao().facilitiesPagingSource(districtId)
+        } else {
+          dbWrapper.facilitiesDao().facilitiesPagingSource()
+        }
+      }.flow
+    }.cachedIn(viewModelScope)
+
+  fun getFacilitiesPagingDataForDistrict(district: District?): Flow<PagingData<Facility>> {
+    district ?: return emptyFlow()
+
+    return Pager(PagingConfig(pageSize = 60, enablePlaceholders = true, maxSize = 200)) {
+      dbWrapper.facilitiesDao().facilitiesPagingSource(districtId = district.id)
+    }.flow
+  }
 
   sealed class FormState {
     val isForPatientEdit get() = (this as? Ready)?.existingInfo != null
@@ -302,7 +318,12 @@ class PatientFormViewModel @Inject constructor(
             address.value = patient.address ?: ""
 
             val facilityPosition = facility?.id
-              ?.let { database.facilitiesDao().getFacilityIndexWhenOrderedByName(it) }
+              ?.let { facilityId ->
+                database.facilitiesDao().getFacilityIndexWhenOrderedByName(
+                  facilityId = facilityId,
+                  districtId = valuesStore.districtIdFlow.firstOrNull() ?: Facility.DEFAULT_DISTRICT_ID
+                )
+              }
               ?.toInt()
               ?.coerceAtLeast(0)
             healthcareFacility.stateValue = facility?.let {

@@ -25,7 +25,7 @@ class FacilityDetailsViewModel @Inject constructor(
     object Failed : State()
   }
 
-  private val facilityPrimaryKey: Long? =
+  private val facilityPrimaryKey: Int? =
     savedStateHandle[LeafScreen.FacilityDetails.ARG_FACILITY_PRIMARY_KEY]
 
   val facilityStateFlow: StateFlow<State> =

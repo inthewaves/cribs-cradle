@@ -55,7 +55,7 @@ abstract class DistrictDao {
    * Gets the index of the district with the given [districtId] when the facilities are sorted
    * by ascending order of name.
    */
-  suspend fun getDistrictIndexWhenOrderedById(districtId: Long): Long? {
+  suspend fun getDistrictIndexWhenOrderedById(districtId: Int): Long? {
     // Room doesn't support this type of query
     val query = SimpleSQLiteQuery(
       """
