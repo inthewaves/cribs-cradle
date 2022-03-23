@@ -243,8 +243,9 @@ private fun PatientDetailsScreen(
         }
 
         AnimatedVisibilityFadingWrapper(
-          visible = editState?.canEdit == false && !patient.isUploadedToServer
+          visible = editState?.canEdit == false && (!patient.isUploadedToServer || outcomes?.isUploadedToServer == false)
         ) {
+          Spacer(Modifier.width(4.dp))
           CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
             val text = when (editState) {
               SyncRepository.FormEditState.CANT_EDIT_SYNC_ENQUEUED -> {
