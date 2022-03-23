@@ -18,7 +18,6 @@ import org.welbodipartnership.cradle5.domain.RestApi
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.math.exp
 
 @Singleton
 class EnumRepository @Inject constructor(

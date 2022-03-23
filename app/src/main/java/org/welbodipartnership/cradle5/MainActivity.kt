@@ -70,7 +70,6 @@ import com.google.accompanist.insets.navigationBarsWithImePadding
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import dagger.hilt.android.AndroidEntryPoint
-import org.welbodipartnership.cradle5.data.serverenums.DropdownType
 import org.welbodipartnership.cradle5.data.settings.AppValuesStore
 import org.welbodipartnership.cradle5.data.settings.ServerType
 import org.welbodipartnership.cradle5.domain.UrlProvider
@@ -102,9 +101,6 @@ class MainActivity : AppCompatActivity() {
     super.onCreate(savedInstanceState)
 
     WindowCompat.setDecorFitsSystemWindows(window, false)
-
-    Log.d("MainActivity", "Enum for ${DropdownType.MaternalFactorsRelatedToPerinatalLoss}: ${viewModel.serverEnumCollection.value[DropdownType.MaternalFactorsRelatedToPerinatalLoss]}")
-
 
     setContent {
       CompositionLocalProvider(LocalUrlProvider provides urlProvider) {

@@ -12,7 +12,7 @@ fun Patient.toApiBody() = Registration(
   initials = initials,
   presentationDate = presentationDate,
   age = dateOfBirth?.getAgeInYearsFromNow()?.toInt(),
-  ageUnknown = dateOfBirth == null,
+  ageUnknown = isAgeUnknown || dateOfBirth == null,
   address = address,
   healthcareFacility = healthcareFacilityId!!.toInt(),
 
@@ -24,21 +24,33 @@ fun Patient.toApiBody() = Registration(
 )
 
 fun Outcomes.toApiBody() = Outcome(
+  hadPerinatalDeath = perinatalDeath != null,
+  perinatalDeathDate = perinatalDeath?.date,
+  perinatalOutcome = perinatalDeath?.outcome?.selectionId,
+  perinatalCauseOfStillBirth = perinatalDeath?.causeOfStillbirth?.selectionId,
+  perinatalNeonatalDeathRespDistressSyndrome = perinatalDeath?.causesOfNeonatalDeath?.respiratoryDistressSyndrome ?: false,
+  perinatalNeonatalDeathBirthAsphyxia = perinatalDeath?.causesOfNeonatalDeath?.birthAsphyxia ?: false,
+  perinatalNeonatalDeathSepsis = perinatalDeath?.causesOfNeonatalDeath?.sepsis ?: false,
+  perinatalNeonatalDeathPneumonia = perinatalDeath?.causesOfNeonatalDeath?.pneumonia ?: false,
+  perinatalNeonatalDeathMeningitis = perinatalDeath?.causesOfNeonatalDeath?.meningitis ?: false,
+  perinatalNeonatalDeathMalaria = perinatalDeath?.causesOfNeonatalDeath?.malaria ?: false,
+  perinatalNeonatalDeathMajorCongenitalMalformation = perinatalDeath?.causesOfNeonatalDeath?.majorCongenitialMalformation ?: false,
+  perinatalNeonatalDeathPrematurity = perinatalDeath?.causesOfNeonatalDeath?.prematurity ?: false,
+  perinatalNeonatalDeathCauseNotEstablished = perinatalDeath?.causesOfNeonatalDeath?.causeNotEstablished ?: false,
+  perinatalNeonatalDeathNotReported = perinatalDeath?.causesOfNeonatalDeath?.notReported ?: false,
+  perinatalAdditionalInfo = perinatalDeath?.additionalInfo?.ifBlank { null },
+
+  birthWeight = birthWeight?.birthWeight?.selectionId,
+  ageAtDelivery = ageAtDelivery?.ageAtDelivery?.selectionId,
+
   hadFirstEclampsiaFit = eclampsiaFit != null,
-  eclampsiaFitDate = eclampsiaFit?.date,
+  eclampsiaDidTheWomanFit = eclampsiaFit?.didTheWomanFit,
   eclampsiaFitLocation = eclampsiaFit?.place?.selectionId,
 
   hasHysterectomy = hysterectomy != null,
   hysterectomyDate = hysterectomy?.date,
   hysterectomyCause = hysterectomy?.cause?.selectionId,
   hysterectomyOtherCause = hysterectomy?.cause?.otherString?.ifBlank { null },
-
-  isAdmittedToHduOrItu = hduOrItuAdmission != null,
-  hduOrItuAdmissionDate = hduOrItuAdmission?.date,
-  hduOrItuAdmissionCause = hduOrItuAdmission?.cause?.selectionId,
-  hduOrItuAdmissionOtherCause = hduOrItuAdmission?.cause?.otherString?.ifBlank { null },
-  hduOrItuStayDays = hduOrItuAdmission?.stayInDays,
-  hduOrItuAdditionalInfo = hduOrItuAdmission?.additionalInfo,
 
   hasMaternalDeath = maternalDeath != null,
   maternalDeathDate = maternalDeath?.date,
@@ -50,17 +62,6 @@ fun Outcomes.toApiBody() = Outcome(
   surgicalManagementDate = surgicalManagement?.date,
   surgicalManagementType = surgicalManagement?.typeOfSurgicalManagement?.selectionId,
   surgicalManagementOtherType = surgicalManagement?.typeOfSurgicalManagement?.otherString?.ifBlank { null },
-
-  hadPerinatalDeath = perinatalDeath != null,
-  perinatalDeathDate = perinatalDeath?.date,
-  perinatalOutcome = perinatalDeath?.outcome?.selectionId,
-  perinatalMaternalFactors = perinatalDeath?.relatedMaternalFactors?.selectionId,
-  perinatalOtherMaternalFactors = perinatalDeath?.relatedMaternalFactors?.otherString,
-  perinatalAdditionalInfo = perinatalDeath?.additionalInfo?.ifBlank { null },
-
-  birthWeight = birthWeight?.birthWeight?.selectionId,
-
-  ageAtDelivery = ageAtDelivery?.ageAtDelivery?.selectionId,
 )
 
 fun LocationCheckIn.toApiBody(userId: Int) = GpsForm(

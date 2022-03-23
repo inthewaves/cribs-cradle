@@ -28,7 +28,7 @@ import javax.inject.Singleton
 
 const val TAG = "Cradle5Database"
 
-const val DATABASE_VERSION = 10
+const val DATABASE_VERSION = 11
 const val DATABASE_NAME = "cradle5.db"
 
 @Singleton
@@ -135,12 +135,23 @@ private val MIGRATIONS = arrayOf(
     AutoMigration(from = 7, to = 8),
     AutoMigration(from = 8, to = 9),
     AutoMigration(from = 9, to = 10),
+    AutoMigration(from = 10, to = 11, spec = Cradle5Database.Version10To11::class),
   ]
 )
 @TypeConverters(DbTypeConverters::class)
 abstract class Cradle5Database : RoomDatabase() {
   @DeleteColumn(tableName = "Outcomes", columnName = "hysterectomy_additionalInfo")
   internal class Version6To7 : AutoMigrationSpec
+  @DeleteColumn(tableName = "Outcomes", columnName = "hdu_itu_admission_date")
+  @DeleteColumn(tableName = "Outcomes", columnName = "hduOrItuAdmissionTouched")
+  @DeleteColumn(tableName = "Outcomes", columnName = "hdu_itu_admission_additionalInfo")
+  @DeleteColumn(tableName = "Outcomes", columnName = "hdu_itu_admission_cause_otherString")
+  @DeleteColumn(tableName = "Outcomes", columnName = "hdu_itu_admission_cause_selectionId")
+  @DeleteColumn(tableName = "Outcomes", columnName = "hdu_itu_admission_stayInDays")
+  @DeleteColumn(tableName = "Outcomes", columnName = "perinatal_death_maternalfactors_selectionId")
+  @DeleteColumn(tableName = "Outcomes", columnName = "perinatal_death_maternalfactors_otherString")
+  @DeleteColumn(tableName = "Outcomes", columnName = "eclampsia_date")
+  internal class Version10To11 : AutoMigrationSpec
 
   abstract fun patientDao(): PatientDao
   abstract fun outcomesDao(): OutcomesDao
@@ -148,7 +159,6 @@ abstract class Cradle5Database : RoomDatabase() {
   abstract fun locationCheckInDao(): LocationCheckInDao
   abstract fun districtDao(): DistrictDao
 }
-
 
 /**
  * Creates [Migration] from [startVersion] to [endVersion] that runs [migrate] to perform

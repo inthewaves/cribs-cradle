@@ -16,15 +16,11 @@ import org.welbodipartnership.cradle5.R
 import org.welbodipartnership.cradle5.data.database.entities.District
 import org.welbodipartnership.cradle5.data.database.entities.Facility
 import org.welbodipartnership.cradle5.data.database.entities.Patient
-import org.welbodipartnership.cradle5.data.database.entities.PatientReferralInfo
-import org.welbodipartnership.cradle5.data.database.entities.TouchedState
-import org.welbodipartnership.cradle5.data.database.entities.embedded.EnumSelection
 import org.welbodipartnership.cradle5.data.database.resultentities.PatientFacilityDistrictOutcomes
 import org.welbodipartnership.cradle5.patients.PatientPreviewClasses
 import org.welbodipartnership.cradle5.ui.composables.LabelAndValueOrNone
 import org.welbodipartnership.cradle5.ui.composables.LabelAndValueOrUnknown
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
-import org.welbodipartnership.cradle5.util.datetime.FormDate
 
 /**
  * Shows the details for a [Patient]

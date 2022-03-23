@@ -17,5 +17,4 @@ sealed class FieldsWithCheckbox : BaseFields() {
    * means no selection).
    */
   abstract fun clearFormsAndSetCheckbox(newEnabledState: Boolean?)
-
 }

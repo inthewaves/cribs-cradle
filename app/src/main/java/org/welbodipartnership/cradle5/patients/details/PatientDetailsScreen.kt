@@ -282,8 +282,7 @@ fun PatientDetailsScreenUploadedPreview() {
           outcomes = PatientPreviewClasses.createTestOutcomes(),
           referralFromDistrict = District(PatientPreviewClasses.FROM_DISTRICT_ID, "Test 'from' district"),
           referralFromFacility = Facility(
-            PatientPreviewClasses.FROM_FACILITY_ID, "Test 'from' facility"
-            , hasVisited = false, listOrder = 1,
+            PatientPreviewClasses.FROM_FACILITY_ID, "Test 'from' facility", hasVisited = false, listOrder = 1,
           ),
           referralToDistrict = District(PatientPreviewClasses.TO_DISTRICT_ID, "Test 'to' district"),
           referralToFacility = Facility(
@@ -311,8 +310,7 @@ fun PatientDetailsScreenSyncingPreview() {
           outcomes = PatientPreviewClasses.createTestOutcomes(),
           referralFromDistrict = District(PatientPreviewClasses.FROM_DISTRICT_ID, "Test 'from' district"),
           referralFromFacility = Facility(
-            PatientPreviewClasses.FROM_FACILITY_ID, "Test 'from' facility"
-            , hasVisited = false, listOrder = 1,
+            PatientPreviewClasses.FROM_FACILITY_ID, "Test 'from' facility", hasVisited = false, listOrder = 1,
           ),
           referralToDistrict = District(PatientPreviewClasses.TO_DISTRICT_ID, "Test 'to' district"),
           referralToFacility = Facility(

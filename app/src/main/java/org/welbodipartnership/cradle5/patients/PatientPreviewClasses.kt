@@ -2,8 +2,8 @@ package org.welbodipartnership.cradle5.patients
 
 import org.welbodipartnership.cradle5.data.database.entities.AgeAtDelivery
 import org.welbodipartnership.cradle5.data.database.entities.BirthWeight
+import org.welbodipartnership.cradle5.data.database.entities.CausesOfNeonatalDeath
 import org.welbodipartnership.cradle5.data.database.entities.EclampsiaFit
-import org.welbodipartnership.cradle5.data.database.entities.HduOrItuAdmission
 import org.welbodipartnership.cradle5.data.database.entities.Hysterectomy
 import org.welbodipartnership.cradle5.data.database.entities.MaternalDeath
 import org.welbodipartnership.cradle5.data.database.entities.Outcomes
@@ -22,7 +22,7 @@ object PatientPreviewClasses {
   const val TO_DISTRICT_ID = 3L
   const val TO_FACILITY_ID = 145L
 
-  fun createTestReferralInfo() =PatientReferralInfo(
+  fun createTestReferralInfo() = PatientReferralInfo(
     fromDistrict = FROM_DISTRICT_ID,
     fromFacility = FROM_FACILITY_ID,
     toDistrict = TO_DISTRICT_ID,
@@ -54,20 +54,13 @@ object PatientPreviewClasses {
     serverErrorMessage = "some error",
     eclampsiaFitTouched = TouchedState.TOUCHED_ENABLED,
     eclampsiaFit = EclampsiaFit(
-      date = FormDate(20, 4, 2019),
+      didTheWomanFit = true,
       place = EnumSelection.IdOnly(2)
     ),
     hysterectomyTouched = TouchedState.TOUCHED_ENABLED,
     hysterectomy = Hysterectomy(
       date = FormDate.today(),
       cause = EnumSelection.WithOther(4, "The other string"),
-    ),
-    hduOrItuAdmissionTouched = TouchedState.TOUCHED_ENABLED,
-    hduOrItuAdmission = HduOrItuAdmission(
-      date = FormDate.today(),
-      cause = EnumSelection.WithOther(4, "This is input for the `other` cause"),
-      stayInDays = 5,
-      additionalInfo = "Additional info here"
     ),
     maternalDeathTouched = TouchedState.TOUCHED_ENABLED,
     maternalDeath = MaternalDeath(
@@ -84,7 +77,8 @@ object PatientPreviewClasses {
     perinatalDeath = PerinatalDeath(
       date = FormDate.today(),
       outcome = EnumSelection.IdOnly(2),
-      relatedMaternalFactors = EnumSelection.WithOther(8),
+      causeOfStillbirth = EnumSelection.IdOnly(4),
+      causesOfNeonatalDeath = CausesOfNeonatalDeath(respiratoryDistressSyndrome = true),
       additionalInfo = null,
     ),
     birthWeight = BirthWeight(EnumSelection.IdOnly(1)),

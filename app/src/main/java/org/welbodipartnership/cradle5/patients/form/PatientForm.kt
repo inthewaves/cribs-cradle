@@ -4,8 +4,9 @@ import android.content.Context
 import android.os.Parcelable
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -24,11 +25,12 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Checkbox
+import androidx.compose.material.ContentAlpha
 import androidx.compose.material.Divider
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
+import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.RadioButton
 import androidx.compose.material.Scaffold
 import androidx.compose.material.SnackbarHostState
 import androidx.compose.material.Text
@@ -37,6 +39,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -72,6 +75,7 @@ import com.google.accompanist.insets.ui.TopAppBar
 import kotlinx.coroutines.flow.Flow
 import kotlinx.parcelize.Parcelize
 import org.welbodipartnership.cradle5.R
+import org.welbodipartnership.cradle5.data.database.entities.CausesOfNeonatalDeath
 import org.welbodipartnership.cradle5.data.database.entities.District
 import org.welbodipartnership.cradle5.data.database.entities.Facility
 import org.welbodipartnership.cradle5.data.database.entities.embedded.EnumSelection
@@ -81,13 +85,14 @@ import org.welbodipartnership.cradle5.data.serverenums.ServerEnumCollection
 import org.welbodipartnership.cradle5.patients.details.BaseDetailsCard
 import org.welbodipartnership.cradle5.patients.details.CategoryHeader
 import org.welbodipartnership.cradle5.ui.composables.LabelAndValueOrNone
+import org.welbodipartnership.cradle5.ui.composables.forms.AnimatedErrorHint
 import org.welbodipartnership.cradle5.ui.composables.forms.BooleanRadioButtonRow
 import org.welbodipartnership.cradle5.ui.composables.forms.BringIntoViewOutlinedTextField
+import org.welbodipartnership.cradle5.ui.composables.forms.DatabasePagingListDropdown
 import org.welbodipartnership.cradle5.ui.composables.forms.DateOutlinedTextField
 import org.welbodipartnership.cradle5.ui.composables.forms.EnumDropdownMenuIdOnly
 import org.welbodipartnership.cradle5.ui.composables.forms.EnumDropdownMenuWithOther
 import org.welbodipartnership.cradle5.ui.composables.forms.FieldState
-import org.welbodipartnership.cradle5.ui.composables.forms.DatabasePagingListDropdown
 import org.welbodipartnership.cradle5.ui.composables.forms.MoreInfoIconButton
 import org.welbodipartnership.cradle5.ui.composables.forms.OutlinedTextFieldWithErrorHint
 import org.welbodipartnership.cradle5.ui.composables.forms.TextFieldState
@@ -119,11 +124,19 @@ fun String.withRequiredStar() = buildAnnotatedString {
 }
 
 @Composable
-fun RequiredText(text: String, required: Boolean = true) {
-  if (required) {
-    Text(text.withRequiredStar())
-  } else {
-    Text(text)
+fun RequiredText(
+  text: String,
+  modifier: Modifier = Modifier,
+  required: Boolean = true,
+  enabled: Boolean = true
+) {
+  val previous = LocalContentAlpha.current
+  CompositionLocalProvider(LocalContentAlpha provides if (enabled) previous else ContentAlpha.disabled) {
+    if (required && enabled) {
+      Text(text.withRequiredStar(), modifier = modifier)
+    } else {
+      Text(text, modifier = modifier)
+    }
   }
 }
 
@@ -434,8 +447,31 @@ fun PatientForm(
             Spacer(Modifier.height(categoryToCategorySpacerHeight))
           }
 
-          CategoryHeader(stringResource(R.string.outcomes_eclampsia_label))
+          CategoryHeader(stringResource(R.string.outcomes_perinatal_death_label))
+          val perinatalDeath = viewModel.formFields.perinatalDeath
+          PerinatalDeathForm(
+            isFormEnabled = perinatalDeath.isEnabled.value,
+            onFormEnabledChange = {
+              perinatalDeath.isEnabled.value = it
+              if (!it) perinatalDeath.clearFormsAndSetCheckbox(newEnabledState = false)
+            },
+            dateState = perinatalDeath.date,
+            outcomeState = perinatalDeath.outcome,
+            causeOfStillbirth = perinatalDeath.causeOfStillBirth,
+            causesOfNeonatalDeathState = perinatalDeath.causeOfNeonatalDeath,
+            additionalInfo = perinatalDeath.additionalInfo.value ?: "",
+            onAdditionalInfoChanged = { perinatalDeath.additionalInfo.value = it }
+          )
+          Spacer(Modifier.height(categoryToCategorySpacerHeight))
+          CategoryHeader(stringResource(R.string.outcomes_birthweight_label))
+          BirthWeightForm(birthWeightState = viewModel.formFields.birthWeight.birthWeight)
+          Spacer(Modifier.height(categoryToCategorySpacerHeight))
+          CategoryHeader(stringResource(R.string.outcomes_age_at_delivery_label))
+          AgeAtDeliveryForm(ageAtDeliveryState = viewModel.formFields.ageAtDelivery.ageAtDelivery)
 
+          Spacer(Modifier.height(categoryToCategorySpacerHeight))
+
+          CategoryHeader(stringResource(R.string.outcomes_eclampsia_label))
           val eclampsia = viewModel.formFields.eclampsia
           EclampsiaForm(
             isFormEnabled = eclampsia.isEnabled.value,
@@ -443,7 +479,7 @@ fun PatientForm(
               eclampsia.isEnabled.value = it
               if (!it) eclampsia.clearFormsAndSetCheckbox(newEnabledState = false)
             },
-            dateState = eclampsia.date,
+            didTheWomanFitState = eclampsia.didTheWomanFit,
             placeOfFirstFitState = eclampsia.placeOfFirstFit,
             serverEnumCollection = serverEnumCollection,
             textFieldModifier = Modifier.bringIntoViewRequester(bringIntoViewRequester)
@@ -451,8 +487,22 @@ fun PatientForm(
 
           Spacer(Modifier.height(categoryToCategorySpacerHeight))
 
-          CategoryHeader(stringResource(R.string.outcomes_hysterectomy_label))
+          CategoryHeader(stringResource(R.string.outcomes_maternal_death_label))
+          val maternalDeath = viewModel.formFields.maternalDeath
+          MaternalDeathForm(
+            isFormEnabled = maternalDeath.isEnabled.value,
+            onFormEnabledChange = {
+              maternalDeath.isEnabled.value = it
+              if (!it) maternalDeath.clearFormsAndSetCheckbox(newEnabledState = false)
+            },
+            dateState = maternalDeath.date,
+            underlyingCauseState = maternalDeath.underlyingCause,
+            placeOfDeathState = maternalDeath.placeOfDeath,
+          )
 
+          Spacer(Modifier.height(categoryToCategorySpacerHeight))
+
+          CategoryHeader(stringResource(R.string.outcomes_hysterectomy_label))
           val hysterectomy = viewModel.formFields.hysterectomy
           HysterectomyForm(
             isFormEnabled = hysterectomy.isEnabled.value,
@@ -479,42 +529,7 @@ fun PatientForm(
 
           Spacer(Modifier.height(categoryToCategorySpacerHeight))
 
-          CategoryHeader(stringResource(R.string.outcomes_admission_to_hdu_or_itu_label))
-
-          val hduItuAdmission = viewModel.formFields.hduItuAdmission
-          AdmittedToHduItuForm(
-            isFormEnabled = hduItuAdmission.isEnabled.value,
-            onFormEnabledChange = {
-              hduItuAdmission.isEnabled.value = it
-              if (!it) hduItuAdmission.clearFormsAndSetCheckbox(newEnabledState = false)
-            },
-            dateState = hduItuAdmission.date,
-            causeState = hduItuAdmission.cause,
-            lengthOfStayInDaysState = hduItuAdmission.hduItuStayLengthInDays,
-            additionalInfo = hduItuAdmission.additionalInfo.value ?: "",
-            onAdditionalInfoChanged = { hduItuAdmission.additionalInfo.value = it }
-          )
-
-          Spacer(Modifier.height(categoryToCategorySpacerHeight))
-
-          CategoryHeader(stringResource(R.string.outcomes_maternal_death_label))
-
-          val maternalDeath = viewModel.formFields.maternalDeath
-          MaternalDeathForm(
-            isFormEnabled = maternalDeath.isEnabled.value,
-            onFormEnabledChange = {
-              maternalDeath.isEnabled.value = it
-              if (!it) maternalDeath.clearFormsAndSetCheckbox(newEnabledState = false)
-            },
-            dateState = maternalDeath.date,
-            underlyingCauseState = maternalDeath.underlyingCause,
-            placeOfDeathState = maternalDeath.placeOfDeath,
-          )
-
-          Spacer(Modifier.height(categoryToCategorySpacerHeight))
-
           CategoryHeader(stringResource(R.string.outcomes_surgical_management_label))
-
           val surgicalManagement = viewModel.formFields.surgicalManagement
           SurgicalManagementForm(
             isFormEnabled = surgicalManagement.isEnabled.value,
@@ -525,36 +540,6 @@ fun PatientForm(
             dateState = surgicalManagement.date,
             surgicalManagementTypeState = surgicalManagement.type,
           )
-
-          Spacer(Modifier.height(categoryToCategorySpacerHeight))
-
-          CategoryHeader(stringResource(R.string.outcomes_perinatal_death_label))
-
-          val perinatalDeath = viewModel.formFields.perinatalDeath
-          PerinatalDeathForm(
-            isFormEnabled = perinatalDeath.isEnabled.value,
-            onFormEnabledChange = {
-              perinatalDeath.isEnabled.value = it
-              if (!it) perinatalDeath.clearFormsAndSetCheckbox(newEnabledState = false)
-            },
-            dateState = perinatalDeath.date,
-            outcomeState = perinatalDeath.outcome,
-            maternalFactorsState = perinatalDeath.relatedMaternalFactors,
-            additionalInfo = perinatalDeath.additionalInfo.value ?: "",
-            onAdditionalInfoChanged = { perinatalDeath.additionalInfo.value = it }
-          )
-
-          Spacer(Modifier.height(categoryToCategorySpacerHeight))
-
-          CategoryHeader(stringResource(R.string.outcomes_birthweight_label))
-
-          BirthWeightForm(birthWeightState = viewModel.formFields.birthWeight.birthWeight)
-
-          Spacer(Modifier.height(categoryToCategorySpacerHeight))
-
-          CategoryHeader(stringResource(R.string.outcomes_age_at_delivery_label))
-
-          AgeAtDeliveryForm(ageAtDeliveryState = viewModel.formFields.ageAtDelivery.ageAtDelivery)
         }
       }
 
@@ -743,7 +728,7 @@ fun PatientReferralInfoForm(
 fun EclampsiaForm(
   isFormEnabled: Boolean?,
   onFormEnabledStateChange: (newState: Boolean) -> Unit,
-  dateState: NoFutureDateState,
+  didTheWomanFitState: NullableToggleState,
   placeOfFirstFitState: EnumIdOnlyState,
   serverEnumCollection: ServerEnumCollection,
   modifier: Modifier = Modifier,
@@ -758,36 +743,29 @@ fun EclampsiaForm(
       MoreInfoIconButton(stringResource(R.string.outcomes_eclampsia_more_info))
     }
 
+    RequiredText(
+      text = stringResource(R.string.outcomes_eclampsia_did_woman_fit_label),
+      enabled = isFormEnabled == true
+    )
+    BooleanRadioButtonRow(
+      isTrue = didTheWomanFitState.stateValue,
+      onBooleanChange = {
+        didTheWomanFitState.stateValue = it
+        if (!it) placeOfFirstFitState.stateValue = null
+      },
+      enabled = isFormEnabled == true
+    )
+    AnimatedErrorHint(errorHint = didTheWomanFitState.getError(), enabled = isFormEnabled == true)
+
     val serverEnum = requireNotNull(serverEnumCollection[DropdownType.Place]) {
       "missing Place lookup values from the server"
     }
-    DateOutlinedTextField(
-      text = dateState.stateValue,
-      onValueChange = { dateState.stateValue = it },
-      dateStringToTimestampMapper = formDateToTimestampMapper,
-      timestampToDateStringMapper = timestampToFormDateMapper,
-      maxLength = FormDate.MAX_STRING_LEN_NO_SLASHES,
-      onPickerClose = { dateState.enableShowErrors(force = true) },
-      label = {
-        RequiredText(text = stringResource(R.string.form_date_label), isFormEnabled == true)
-      },
-      enabled = isFormEnabled == true,
-      modifier = Modifier.fillMaxWidth(),
-      textFieldModifier = textFieldModifier
-        .fillMaxWidth()
-        .then(dateState.createFocusChangeModifier()),
-      errorHint = dateState.getError(),
-      keyboardOptions = KeyboardOptions.Default,
-    )
-
     EnumDropdownMenuIdOnly(
       currentSelection = placeOfFirstFitState.stateValue,
-      onSelect = {
-        placeOfFirstFitState.stateValue = it
-      },
+      onSelect = { placeOfFirstFitState.stateValue = it },
       serverEnum = serverEnum,
       label = { Text(stringResource(R.string.place_of_first_eclamptic_fit_label)) },
-      enabled = isFormEnabled == true,
+      enabled = isFormEnabled == true && didTheWomanFitState.stateValue == true,
       errorHint = placeOfFirstFitState.getError(),
       textModifier = textFieldModifier.fillMaxWidth()
     )
@@ -820,7 +798,7 @@ fun HysterectomyForm(
       maxLength = FormDate.MAX_STRING_LEN_NO_SLASHES,
       onPickerClose = { dateState.enableShowErrors(force = true) },
       label = {
-        RequiredText(text = stringResource(R.string.form_date_label), isFormEnabled == true)
+        RequiredText(text = stringResource(R.string.form_date_label), required = isFormEnabled == true)
       },
       enabled = isFormEnabled == true,
       modifier = Modifier.fillMaxWidth(),
@@ -842,93 +820,6 @@ fun HysterectomyForm(
         .fillMaxWidth()
         .then(causeState.createFocusChangeModifier()),
       errorHint = causeState.getError()
-    )
-  }
-}
-
-@Composable
-fun AdmittedToHduItuForm(
-  isFormEnabled: Boolean?,
-  onFormEnabledChange: (newState: Boolean) -> Unit,
-  dateState: NoFutureDateState,
-  causeState: EnumWithOtherState,
-  lengthOfStayInDaysState: LimitedHduItuState,
-  additionalInfo: String,
-  onAdditionalInfoChanged: (String) -> Unit,
-  modifier: Modifier = Modifier,
-) {
-  Column(modifier) {
-    Row {
-      BooleanRadioButtonRow(
-        isTrue = isFormEnabled,
-        onBooleanChange = onFormEnabledChange,
-      )
-      MoreInfoIconButton(stringResource(R.string.outcomes_admission_to_hdu_or_itu_more_info))
-    }
-
-    DateOutlinedTextField(
-      text = dateState.stateValue,
-      onValueChange = { dateState.stateValue = it },
-      dateStringToTimestampMapper = formDateToTimestampMapper,
-      timestampToDateStringMapper = timestampToFormDateMapper,
-      maxLength = FormDate.MAX_STRING_LEN_NO_SLASHES,
-      onPickerClose = { dateState.enableShowErrors(force = true) },
-      label = {
-        RequiredText(stringResource(id = R.string.form_date_label), isFormEnabled == true)
-      },
-      enabled = isFormEnabled == true,
-      modifier = Modifier.fillMaxWidth(),
-      textFieldModifier = Modifier
-        .fillMaxWidth()
-        .then(dateState.createFocusChangeModifier()),
-      errorHint = dateState.getError(),
-      keyboardOptions = KeyboardOptions.Default,
-    )
-
-    // mandatory
-    EnumDropdownMenuWithOther(
-      currentSelection = causeState.stateValue,
-      onSelect = { causeState.stateValue = it },
-      serverEnum = causeState.enum!!,
-      label = {
-        RequiredText(
-          text = stringResource(R.string.hdu_or_idu_admission_cause_label),
-          required = isFormEnabled == true && causeState.isMandatory
-        )
-      },
-      enabled = isFormEnabled == true,
-      dropdownTextModifier = Modifier.fillMaxWidth(),
-      showErrorHintOnOtherField = causeState.stateValue != null,
-      otherTextModifier = Modifier
-        .fillMaxWidth()
-        .then(causeState.createFocusChangeModifier()),
-      errorHint = causeState.getError()
-    )
-
-    OutlinedTextFieldWithErrorHint(
-      value = lengthOfStayInDaysState.stateValue,
-      onValueChange = { lengthOfStayInDaysState.stateValue = it },
-      label = {
-        Text(stringResource(id = R.string.hdu_or_idu_admission_length_stay_days_if_known_label))
-      },
-      enabled = isFormEnabled == true,
-      modifier = Modifier.fillMaxWidth(),
-      textFieldModifier = lengthOfStayInDaysState
-        .createFocusChangeModifier()
-        .fillMaxWidth(),
-      errorHint = lengthOfStayInDaysState.getError(),
-      keyboardOptions = KeyboardOptions.Default.copy(
-        imeAction = ImeAction.Next,
-        keyboardType = KeyboardType.Number
-      ),
-    )
-    BringIntoViewOutlinedTextField(
-      value = additionalInfo,
-      onValueChange = onAdditionalInfoChanged,
-      modifier = Modifier.fillMaxWidth(),
-      label = { Text(stringResource(R.string.hdu_or_idu_admission_additional_info)) },
-      enabled = isFormEnabled == true,
-      colors = darkerDisabledOutlinedTextFieldColors()
     )
   }
 }
@@ -959,7 +850,7 @@ fun MaternalDeathForm(
       maxLength = FormDate.MAX_STRING_LEN_NO_SLASHES,
       onPickerClose = { dateState.enableShowErrors(force = true) },
       label = {
-        RequiredText(text = stringResource(R.string.form_date_label), isFormEnabled == true)
+        RequiredText(text = stringResource(R.string.form_date_label), required = isFormEnabled == true)
       },
       enabled = isFormEnabled == true,
       modifier = Modifier.fillMaxWidth(),
@@ -1026,7 +917,7 @@ fun SurgicalManagementForm(
       maxLength = FormDate.MAX_STRING_LEN_NO_SLASHES,
       onPickerClose = { dateState.enableShowErrors(force = true) },
       label = {
-        RequiredText(text = stringResource(R.string.form_date_label), isFormEnabled == true)
+        RequiredText(text = stringResource(R.string.form_date_label), required = isFormEnabled == true)
       },
       enabled = isFormEnabled == true,
       modifier = Modifier.fillMaxWidth(),
@@ -1059,7 +950,8 @@ fun PerinatalDeathForm(
   onFormEnabledChange: (newState: Boolean) -> Unit,
   dateState: NoFutureDateState,
   outcomeState: EnumIdOnlyState,
-  maternalFactorsState: EnumWithOtherState,
+  causeOfStillbirth: EnumIdOnlyState,
+  causesOfNeonatalDeathState: MutableState<CausesOfNeonatalDeath?>,
   additionalInfo: String,
   onAdditionalInfoChanged: (String) -> Unit,
   modifier: Modifier = Modifier,
@@ -1081,7 +973,7 @@ fun PerinatalDeathForm(
       maxLength = FormDate.MAX_STRING_LEN_NO_SLASHES,
       onPickerClose = { dateState.enableShowErrors(force = true) },
       label = {
-        RequiredText(text = stringResource(R.string.form_date_label), isFormEnabled == true)
+        RequiredText(text = stringResource(R.string.form_date_label), required = isFormEnabled == true)
       },
       enabled = isFormEnabled == true,
       modifier = Modifier.fillMaxWidth(),
@@ -1092,9 +984,35 @@ fun PerinatalDeathForm(
       keyboardOptions = KeyboardOptions.Default,
     )
 
+    // don't really know what the server will do in the future, so just do string matching
+    fun EnumSelection.IdOnly?.isStillbirth(serverEnum: ServerEnum) =
+      this?.let(serverEnum::get)?.name?.contains("stillbirth", ignoreCase = true) == true
+
+    fun EnumSelection.IdOnly?.isNeonatalDeath(serverEnum: ServerEnum) =
+      this?.let(serverEnum::get)?.name?.contains("neonatal", ignoreCase = true) == true
+
     EnumDropdownMenuIdOnly(
       currentSelection = outcomeState.stateValue,
-      onSelect = { outcomeState.stateValue = it },
+      onSelect = { newState ->
+        val oldState = outcomeState.stateValue
+        outcomeState.stateValue = newState
+        if (oldState != newState) {
+          if (newState.isStillbirth(outcomeState.enum!!)) {
+            if (!oldState.isStillbirth(outcomeState.enum)) {
+              causeOfStillbirth.stateValue = null
+              causesOfNeonatalDeathState.value = null
+            }
+          } else if (newState.isNeonatalDeath(outcomeState.enum)) {
+            if (!oldState.isNeonatalDeath(outcomeState.enum)) {
+              causeOfStillbirth.stateValue = null
+              causesOfNeonatalDeathState.value = null
+            }
+          } else if (newState == null) { // empty option selected
+            causeOfStillbirth.stateValue = null
+            causesOfNeonatalDeathState.value = null
+          }
+        }
+      },
       serverEnum = outcomeState.enum!!,
       label = { Text(stringResource(R.string.perinatal_death_outcome_label)) },
       enabled = isFormEnabled == true,
@@ -1102,19 +1020,29 @@ fun PerinatalDeathForm(
       textModifier = Modifier.fillMaxWidth()
     )
 
-    EnumDropdownMenuWithOther(
-      currentSelection = maternalFactorsState.stateValue,
-      onSelect = { maternalFactorsState.stateValue = it },
-      serverEnum = requireNotNull(maternalFactorsState.enum) { "missing maternal factors enum" },
-      label = { Text(stringResource(R.string.perinatal_death_related_maternal_factors_label)) },
-      enabled = isFormEnabled == true,
-      dropdownTextModifier = Modifier.fillMaxWidth(),
-      showErrorHintOnOtherField = maternalFactorsState.stateValue != null,
-      otherTextModifier = Modifier
-        .fillMaxWidth()
-        .then(maternalFactorsState.createFocusChangeModifier()),
-      errorHint = maternalFactorsState.getError()
-    )
+    var causesOfNeonatalDeath by causesOfNeonatalDeathState
+    if (
+      causeOfStillbirth.stateValue != null ||
+      outcomeState.stateValue.isStillbirth(outcomeState.enum)
+    ) {
+      EnumDropdownMenuIdOnly(
+        currentSelection = causeOfStillbirth.stateValue,
+        onSelect = { causeOfStillbirth.stateValue = it },
+        serverEnum = requireNotNull(causeOfStillbirth.enum) { "missing stillbirth cause enum" },
+        label = { Text(stringResource(R.string.perinatal_death_cause_of_stillbirth_label)) },
+        enabled = isFormEnabled == true,
+        errorHint = causeOfStillbirth.getError(),
+        textModifier = Modifier.fillMaxWidth()
+      )
+    } else if (
+      (causesOfNeonatalDeath?.areAllFieldsFalse == false) ||
+      outcomeState.stateValue.isNeonatalDeath(outcomeState.enum)
+    ) {
+      PerinatalNeonatalDeathList(
+        causesOfNeonatalDeath,
+        onCausesChanged = { causesOfNeonatalDeath = it }
+      )
+    }
 
     BringIntoViewOutlinedTextField(
       value = additionalInfo,
@@ -1123,6 +1051,158 @@ fun PerinatalDeathForm(
       label = { Text(stringResource(R.string.perinatal_death_additional_info_label)) },
       enabled = isFormEnabled == true,
       colors = darkerDisabledOutlinedTextFieldColors()
+    )
+  }
+}
+
+@Composable
+fun PerinatalNeonatalDeathList(
+  causesOfNeonatalDeath: CausesOfNeonatalDeath?,
+  onCausesChanged: (newCauses: CausesOfNeonatalDeath) -> Unit,
+  modifier: Modifier = Modifier,
+  enabled: Boolean = true,
+) {
+  Column(modifier) {
+    @Composable
+    fun CheckboxTextRow(
+      label: String,
+      checked: Boolean,
+      onCheckedChange: (Boolean) -> Unit,
+      modifier: Modifier = Modifier,
+      enabled: Boolean = true,
+    ) = Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
+      val interactionSource = remember { MutableInteractionSource() }
+      Checkbox(
+        checked = checked,
+        onCheckedChange = onCheckedChange,
+        interactionSource = interactionSource,
+        enabled = enabled,
+      )
+      Text(
+        label,
+        Modifier
+          .clickable(
+            indication = null,
+            interactionSource = interactionSource,
+            enabled = enabled
+          ) { onCheckedChange(!checked) }
+          .fillMaxWidth()
+      )
+    }
+
+    // refactoring this is a bit pointless without reflection
+    CheckboxTextRow(
+      checked = causesOfNeonatalDeath?.respiratoryDistressSyndrome == true,
+      onCheckedChange = {
+        onCausesChanged(
+          causesOfNeonatalDeath?.copy(respiratoryDistressSyndrome = it) ?: CausesOfNeonatalDeath(respiratoryDistressSyndrome = it)
+        )
+      },
+      label = "Respiratory distress syndrome",
+      enabled = enabled,
+    )
+    CheckboxTextRow(
+      checked = causesOfNeonatalDeath?.birthAsphyxia == true,
+      onCheckedChange = {
+        onCausesChanged(
+          causesOfNeonatalDeath?.copy(birthAsphyxia = it) ?: CausesOfNeonatalDeath(birthAsphyxia = it)
+        )
+      },
+      label = "Birth asphyxia",
+      enabled = enabled,
+    )
+
+    CheckboxTextRow(
+      checked = causesOfNeonatalDeath?.sepsis == true,
+      onCheckedChange = {
+        onCausesChanged(
+          causesOfNeonatalDeath?.copy(sepsis = it) ?: CausesOfNeonatalDeath(sepsis = it)
+        )
+      },
+      label = "Sepsis",
+      enabled = enabled,
+    )
+
+    CheckboxTextRow(
+      checked = causesOfNeonatalDeath?.pneumonia == true,
+      onCheckedChange = {
+        onCausesChanged(causesOfNeonatalDeath?.copy(pneumonia = it) ?: CausesOfNeonatalDeath(pneumonia = it))
+      },
+      label = "Pneumonia",
+      enabled = enabled,
+    )
+
+    CheckboxTextRow(
+      checked = causesOfNeonatalDeath?.meningitis == true,
+      onCheckedChange = {
+        onCausesChanged(causesOfNeonatalDeath?.copy(meningitis = it) ?: CausesOfNeonatalDeath(meningitis = it))
+      },
+      label = "Meningitis",
+      enabled = enabled,
+    )
+
+    CheckboxTextRow(
+      checked = causesOfNeonatalDeath?.malaria == true,
+      onCheckedChange = {
+        onCausesChanged(
+          causesOfNeonatalDeath?.copy(malaria = it) ?: CausesOfNeonatalDeath(malaria = it)
+        )
+      },
+      label = "Malaria",
+      enabled = enabled,
+    )
+
+    CheckboxTextRow(
+      checked = causesOfNeonatalDeath?.majorCongenitialMalformation == true,
+      onCheckedChange = {
+        onCausesChanged(
+          causesOfNeonatalDeath?.copy(majorCongenitialMalformation = it) ?: CausesOfNeonatalDeath(majorCongenitialMalformation = it)
+        )
+      },
+      label = "Major congenital malformation",
+      enabled = enabled,
+    )
+    CheckboxTextRow(
+      checked = causesOfNeonatalDeath?.prematurity == true,
+      onCheckedChange = {
+        onCausesChanged(
+          causesOfNeonatalDeath?.copy(prematurity = it) ?: CausesOfNeonatalDeath(prematurity = it)
+        )
+      },
+      label = "Prematurity",
+      enabled = enabled,
+    )
+    CheckboxTextRow(
+      checked = causesOfNeonatalDeath?.causeNotEstablished == true,
+      onCheckedChange = {
+        onCausesChanged(
+          causesOfNeonatalDeath?.copy(causeNotEstablished = it)
+            ?: CausesOfNeonatalDeath(causeNotEstablished = it)
+        )
+      },
+      label = "Cause not established",
+      enabled = enabled,
+    )
+
+    CheckboxTextRow(
+      checked = causesOfNeonatalDeath?.other == true,
+      onCheckedChange = {
+        onCausesChanged(
+          causesOfNeonatalDeath?.copy(other = it) ?: CausesOfNeonatalDeath(other = it)
+        )
+      },
+      label = "Other",
+      enabled = enabled,
+    )
+
+    CheckboxTextRow(
+      checked = causesOfNeonatalDeath?.notReported == true,
+      onCheckedChange = {
+        // don't copy to clear out everything else
+        onCausesChanged(CausesOfNeonatalDeath(notReported = it))
+      },
+      label = "Not reported",
+      enabled = enabled,
     )
   }
 }
@@ -1173,10 +1253,10 @@ fun EclampsiaFormPreview() {
       EclampsiaForm(
         isFormEnabled = false,
         onFormEnabledStateChange = {},
-        dateState = NoFutureDateState(
-          isMandatory = true,
-          areApproximateDatesAcceptable = true,
-          isFormDraftState = draft,
+        didTheWomanFitState = NullableToggleState(
+          remember { mutableStateOf(true) },
+          remember { mutableStateOf(null) },
+          true
         ),
         placeOfFirstFitState = EnumIdOnlyState(
           defaultEnums[DropdownType.Place],
@@ -1528,31 +1608,21 @@ class LimitedAgeIntState(
   isMandatory = isMandatory
 )
 
-class LimitedHduItuState(
+class NullableToggleState(
+  backingState: MutableState<Boolean?> = mutableStateOf(null),
+  isFormDraftState: State<Boolean?>,
   isMandatory: Boolean,
-  val limit: LongRange,
-  backingState: MutableState<String> = mutableStateOf(""),
-  isFormDraftState: State<Boolean?>
-) : TextFieldState(
-  validator = { stay ->
-    run {
-      // optional
-      if (stay.isBlank()) return@run true
-      val stayAsInt = stay.toIntOrNull() ?: return@run false
-      stayAsInt in limit
-    }
-  },
-  errorFor = { ctx, _ ->
-    ctx.getString(
-      R.string.length_of_stay_in_itu_hdu_must_be_in_range_d_and_d_days,
-      limit.first,
-      limit.last
-    )
-  },
+) : FieldState<Boolean?>(
+  validator = { it != null },
+  errorFor = { ctx, _ -> ctx.getString(R.string.selection_required_error) },
   backingState = backingState,
+  initialValue = null,
   isFormDraftState = isFormDraftState,
   isMandatory = isMandatory
-)
+) {
+  override val showErrorOnInput: Boolean = false
+  override fun isMissing(): Boolean = stateValue == null
+}
 
 class EnumIdOnlyState(
   val enum: ServerEnum?,
@@ -1605,7 +1675,7 @@ class EnumWithOtherState(
     if (entry == otherSelection && selection?.otherString.isNullOrBlank()) {
       ctx.getString(R.string.server_enum_other_selection_missing_error)
     } else if (entry == null && isMandatory) {
-      ctx.getString(R.string.server_enum_selection_required_error)
+      ctx.getString(R.string.selection_required_error)
     } else {
       ctx.getString(R.string.server_enum_unknown_selection_error)
     }

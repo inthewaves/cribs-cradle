@@ -230,7 +230,7 @@ fun EnumDropdownMenuPreview() {
 fun EnumDropdownMenuWithOtherPreview() {
   CradleTrialAppTheme {
     Surface {
-      val enum = ServerEnumCollection.defaultInstance[DropdownType.CauseForHduOrItuAdmission]!!
+      val enum = ServerEnumCollection.defaultInstance[DropdownType.PerinatalOutcome]!!
       var selection: EnumSelection.WithOther? by remember {
         mutableStateOf(
           EnumSelection.WithOther(

@@ -31,7 +31,7 @@ value class ServerEnumCollection private constructor(
      * The current version of the default instance. This is kept track of in order to force an
      * update when the app updates.
      */
-    const val DROPDOWN_VERSION = 1
+    const val DROPDOWN_VERSION = 2
 
     val defaultInstance by lazy {
       ServerEnumCollection(
@@ -86,64 +86,82 @@ value class ServerEnumCollection private constructor(
                 name = "Other",
                 listOrder = 99
               ),
+              ServerEnum.Entry(
+                id = 5,
+                code = "5",
+                name = "Unknown",
+                listOrder = 100
+              ),
             )
           ),
           ServerEnum(
-            DropdownType.CauseForHduOrItuAdmission,
+            DropdownType.CauseOfStillbirth,
             listOf(
               ServerEnum.Entry(
                 id = 1,
                 code = "1",
-                name = "Hypertensive disorders e.g. preeclampsia / eclampsia",
-                listOrder = 1
+                name = "Maternal hypertensive disorder e.g. preeclampsia / eclampsia",
+                listOrder = 10,
               ),
               ServerEnum.Entry(
                 id = 2,
                 code = "2",
-                name = "Antepartum haemorrhage e.g. placenta praevia",
-                listOrder = 2
+                name = "Placental insufficiency",
+                listOrder = 20,
               ),
               ServerEnum.Entry(
                 id = 3,
                 code = "3",
-                name = "Antepartum haemorrhage e.g. placental abruption",
-                listOrder = 3
+                name = "Antepartum haemorrhage e.g. placenta praevia",
+                listOrder = 30,
               ),
               ServerEnum.Entry(
                 id = 4,
                 code = "4",
-                name = "Postpartum haemorrhage",
-                listOrder = 4
+                name = "Antepartum haemorrhage e.g. placental abruption",
+                listOrder = 40,
               ),
               ServerEnum.Entry(
                 id = 5,
                 code = "5",
-                name = "Pregnancy-related infection",
-                listOrder = 5
+                name = "Cord Prolapse",
+                listOrder = 50,
               ),
               ServerEnum.Entry(
                 id = 6,
                 code = "6",
-                name = "Other source of sepsis",
-                listOrder = 6
+                name = "Birth defects in the baby",
+                listOrder = 60,
               ),
               ServerEnum.Entry(
                 id = 7,
                 code = "7",
-                name = "Stroke",
-                listOrder = 7
+                name = "Pregnancy related infection / sepsis",
+                listOrder = 70,
               ),
               ServerEnum.Entry(
                 id = 8,
                 code = "8",
-                name = "Complications of abortive pregnancy outcome",
-                listOrder = 8
+                name = "Prolonged / obstructed labour",
+                listOrder = 80,
               ),
               ServerEnum.Entry(
                 id = 9,
                 code = "9",
-                name = "Other",
-                listOrder = 99
+                name = "Birth asphyxia",
+                listOrder = 90,
+              ),
+              ServerEnum.Entry(
+                id = 10,
+                code = "10",
+                name = "IUFD (please select only if no other cause given)",
+                listOrder = 100,
+              ),
+              ServerEnum.Entry(
+                id = 11,
+                code = "11",
+                name = "Not reported",
+                listOrder = 110,
               ),
             )
           ),
@@ -177,7 +195,7 @@ value class ServerEnumCollection private constructor(
               ServerEnum.Entry(
                 id = 5,
                 code = "5",
-                name = "Pregnancy-related infection",
+                name = "Pregnancy related infection / sepsi",
                 listOrder = 5
               ),
               ServerEnum.Entry(
@@ -259,13 +277,13 @@ value class ServerEnumCollection private constructor(
               ServerEnum.Entry(
                 id = 1,
                 code = "1",
-                name = "Macerated (antenatal) stillbirth",
+                name = "Macerated (antenatal) stillbirth - between 24 weeks and delivery",
                 listOrder = 10
               ),
               ServerEnum.Entry(
                 id = 2,
                 code = "2",
-                name = "Fresh (intrapartum) stillbirth",
+                name = "Fresh (intrapartum) stillbirth - between 24 weeks and delivery",
                 listOrder = 20
               ),
               ServerEnum.Entry(
@@ -283,59 +301,6 @@ value class ServerEnumCollection private constructor(
             )
           ),
           ServerEnum(
-            DropdownType.MaternalFactorsRelatedToPerinatalLoss,
-            listOf(
-              ServerEnum.Entry(
-                id = 1,
-                code = "1",
-                name = "Maternal hypertensive disorders e.g. preeclampsia/eclampsia",
-                listOrder = 10
-              ),
-              ServerEnum.Entry(
-                id = 2,
-                code = "2",
-                name = "Placental insufficiency",
-                listOrder = 20
-              ),
-              ServerEnum.Entry(
-                id = 3,
-                code = "3",
-                name = "Antepartum haemorrhage e.g. placenta praevia",
-                listOrder = 30
-              ),
-              ServerEnum.Entry(
-                id = 4,
-                code = "4",
-                name = "Antepartum haemorrhage e.g. placental abruption",
-                listOrder = 40
-              ),
-              ServerEnum.Entry(
-                id = 5,
-                code = "5",
-                name = "Cord prolapse",
-                listOrder = 50
-              ),
-              ServerEnum.Entry(
-                id = 6,
-                code = "6",
-                name = "Genetic defect in the baby",
-                listOrder = 60
-              ),
-              ServerEnum.Entry(
-                id = 7,
-                code = "7",
-                name = "Pregnancy-related infection",
-                listOrder = 70
-              ),
-              ServerEnum.Entry(
-                id = 8,
-                code = "8",
-                name = "Other",
-                listOrder = 99
-              ),
-            )
-          ),
-          ServerEnum(
             DropdownType.Birthweight,
             listOf(
               ServerEnum.Entry(
@@ -347,13 +312,13 @@ value class ServerEnumCollection private constructor(
               ServerEnum.Entry(
                 id = 2,
                 code = "2",
-                name = "Low birthweight (<2500g)",
+                name = "Low birthweight (1500 - 2499g)",
                 listOrder = 20,
               ),
               ServerEnum.Entry(
                 id = 3,
                 code = "3",
-                name = "Very low birthweight (<1500g)",
+                name = "Very low birthweight (1000g - 1499g)",
                 listOrder = 30,
               ),
               ServerEnum.Entry(
@@ -370,20 +335,26 @@ value class ServerEnumCollection private constructor(
               ServerEnum.Entry(
                 id = 1,
                 code = "1",
-                name = "Term birth (>37 completed weeks)",
+                name = "Term birth (>=37 completed weeks)",
                 listOrder = 10,
               ),
               ServerEnum.Entry(
                 id = 2,
                 code = "2",
-                name = "Preterm birth (<37 weeks)",
+                name = "Preterm birth (between 32 and <37 weeks)",
                 listOrder = 20,
               ),
               ServerEnum.Entry(
                 id = 3,
                 code = "3",
-                name = "Very preterm birth (<34 weeks)",
+                name = "Very preterm birth (between 28 weeks and <32 weeks)",
                 listOrder = 30,
+              ),
+              ServerEnum.Entry(
+                id = 4,
+                code = "4",
+                name = "Extreme preterm birth (between 24 weeks and <28 weeks)",
+                listOrder = 40,
               ),
             ),
           )
@@ -396,11 +367,10 @@ value class ServerEnumCollection private constructor(
 enum class DropdownType(val serverLookupId: Int, val expectedServerName: String) {
   Place(14, "Place"),
   CauseOfHysterectomy(15, "Cause of hysterectomy"),
-  CauseForHduOrItuAdmission(16, "Cause for HDU / ITU admission"),
+  CauseOfStillbirth(16, "Cause of stillbirth (macerated / fresh)"),
   UnderlyingCauseOfMaternalDeath(17, "Underlying cause of death"),
   TypeOfSurgicalManagement(18, "Type of surgical management"),
   PerinatalOutcome(19, "Perinatal outcome"),
-  MaternalFactorsRelatedToPerinatalLoss(20, "Maternal factors related to perinatal loss"),
   Birthweight(22, "Birthweight"),
   AgeAtDelivery(23, "Age at delivery")
 }

@@ -9,17 +9,13 @@
     <string name="patient_registration_card_id_label">ID</string>
     <string name="patient_registration_initials_label">Initials</string>
     <string name="patient_registration_presentation_date_label">Presentation date (dd/mm/yyyy)</string>
-    <string name="outcomes_eclampsia_label">Eclampsia (first fit)</string>
+    <string name="outcomes_eclampsia_label">Pre-eclampsia/severe pre-eclampsia/eclampsia</string>
     <string name="none">None</string>
     <string name="form_date_label">Date (dd/mm/yyyy)</string>
-    <string name="place_of_first_eclamptic_fit_label">Place of first eclamptic fit</string>
+    <string name="place_of_first_eclamptic_fit_label">Reported place of first eclamptic fit</string>
     <string name="unknown_dropdown_value_d">Unknown (selection Id: %1$d)</string>
-    <string name="outcomes_hysterectomy_label">Hysterectomy</string>
+    <string name="outcomes_hysterectomy_label">Hysterectomy/Sub-total hysterectomy</string>
     <string name="hysterectomy_cause_label">Cause of hysterectomy</string>
-    <string name="outcomes_admission_to_hdu_or_itu_label">Admitted to HDU / ITU</string>
-    <string name="hdu_or_idu_admission_cause_label">Cause for HDU / ITU admission</string>
-    <string name="hdu_or_idu_admission_length_stay_days_if_known_label">Length of stay in ITU / HDU in days (if known)</string>
-    <string name="hdu_or_idu_admission_additional_info">Additional information on reason for admission to ITU/HDU</string>
     <string name="unknown">Unknown</string>
     <string name="no">No</string>
     <string name="outcomes_surgical_management_label">Surgical management of postpartum haemorrhage requiring anaesthesia</string>
@@ -27,7 +23,7 @@
     <string name="outcomes_maternal_death_label">Maternal death</string>
     <string name="outcomes_perinatal_death_label">Perinatal death</string>
     <string name="perinatal_death_outcome_label">Perinatal outcome</string>
-    <string name="perinatal_death_related_maternal_factors_label">Maternal factors related to perinatal loss</string>
+    <string name="perinatal_death_cause_of_stillbirth_label">Cause of stillbirth (macerated / fresh)</string>
     <string name="maternal_death_underlying_cause_label">Underlying cause of death</string>
     <string name="maternal_death_place_label">Place of death</string>
     <string name="outcomes_card_title">Outcomes</string>
@@ -59,7 +55,7 @@
     <string name="yes">Yes</string>
     <string name="length_of_stay_in_itu_hdu_must_be_in_range_d_and_d_days">Length of stay in ITU / HDU in days must be in range %1$d to %2$d days</string>
     <string name="other_enum_label">If Other, please specify</string>
-    <string name="server_enum_selection_required_error">A selection is required</string>
+    <string name="selection_required_error">A selection is required</string>
     <string name="patient_form_save_new_patient_button">Save new patient</string>
     <string name="outcomes_eclampsia_not_selected_error">Missing eclampsia radio button selection</string>
     <string name="outcomes_hysterectomy_not_selected_error">Missing hysterectomy radio button selection</string>
@@ -167,6 +163,8 @@
     <string name="patient_referral_checkbox_label">Was this patient a referral?</string>
     <string name="patient_referral_checkbox_missing_error">Patient referral checkbox required</string>
     <string name="patient_address_label">Patient address</string>
+    <string name="perinatal_death_cause_of_neonatal_death_label">Cause of neonatal death</string>
+    <string name="outcomes_eclampsia_did_woman_fit_label">Did the woman fit?</string>
     <plurals name="patient_form_snackbar_failed_to_save_there_are_d_errors">
         <item quantity="one">Failed to save, as there is %1$d error.</item>
         <item quantity="other">Failed to save, as there are %1$d errors.</item>

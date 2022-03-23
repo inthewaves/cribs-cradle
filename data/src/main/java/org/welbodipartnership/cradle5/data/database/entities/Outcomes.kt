@@ -1,12 +1,15 @@
 package org.welbodipartnership.cradle5.data.database.entities
 
 import android.content.Context
+import android.os.Parcelable
 import androidx.compose.runtime.Immutable
 import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Entity
+import androidx.room.Ignore
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import kotlinx.parcelize.Parcelize
 import org.welbodipartnership.cradle5.data.database.entities.embedded.EnumSelection
 import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
 import org.welbodipartnership.cradle5.data.verification.HasRequiredFields
@@ -42,11 +45,6 @@ data class Outcomes(
   val hysterectomy: Hysterectomy?,
 
   @ColumnInfo(defaultValue = "1")
-  val hduOrItuAdmissionTouched: TouchedState,
-  @Embedded(prefix = "hdu_itu_admission_")
-  val hduOrItuAdmission: HduOrItuAdmission?,
-
-  @ColumnInfo(defaultValue = "1")
   val maternalDeathTouched: TouchedState,
   @Embedded(prefix = "maternal_death_")
   val maternalDeath: MaternalDeath?,
@@ -72,7 +70,6 @@ data class Outcomes(
     return when {
       eclampsiaFit?.requiredFieldsPresent() == false ||
         hysterectomy?.requiredFieldsPresent() == false ||
-        hduOrItuAdmission?.requiredFieldsPresent() == false ||
         maternalDeath?.requiredFieldsPresent() == false ||
         surgicalManagement?.requiredFieldsPresent() == false ||
         perinatalDeath?.requiredFieldsPresent() == false -> false
@@ -90,18 +87,17 @@ data class Outcomes(
 }
 
 /**
- * Represents the first eclampsia fit
+ * Represents Pre-eclampsia/severe pre-eclampsia/ eclampsia
  */
 @Immutable
 data class EclampsiaFit(
-  @Required
-  val date: FormDate?,
+  val didTheWomanFit: Boolean?,
   /**
    * The server provides enums for location starting at 1
    */
   val place: EnumSelection.IdOnly?,
 ) : HasRequiredFields {
-  override fun requiredFieldsPresent() = date != null
+  override fun requiredFieldsPresent() = didTheWomanFit != null
 }
 
 /**
@@ -118,22 +114,6 @@ data class Hysterectomy(
   val cause: EnumSelection.WithOther?,
 ) : HasRequiredFields {
   override fun requiredFieldsPresent() = date != null
-}
-
-@Immutable
-data class HduOrItuAdmission(
-  @Required
-  val date: FormDate?,
-  /**
-   * The server provides enums for `cause` starting at 1
-   */
-  @Required
-  @Embedded(prefix = "cause_")
-  val cause: EnumSelection.WithOther?,
-  val stayInDays: Int?,
-  val additionalInfo: String?
-) : HasRequiredFields {
-  override fun requiredFieldsPresent() = date != null && cause != null
 }
 
 @Immutable
@@ -175,11 +155,35 @@ data class PerinatalDeath(
   @Required
   val date: FormDate?,
   val outcome: EnumSelection.IdOnly?,
-  @Embedded(prefix = "maternalfactors_")
-  val relatedMaternalFactors: EnumSelection.WithOther?,
+  @Embedded(prefix = "cause_of_stillbirth_")
+  val causeOfStillbirth: EnumSelection.IdOnly?,
+  @Embedded(prefix = "cause_of_neonatal_death_")
+  val causesOfNeonatalDeath: CausesOfNeonatalDeath?,
   val additionalInfo: String?
 ) : HasRequiredFields {
   override fun requiredFieldsPresent() = date != null
+}
+
+@Immutable
+@Parcelize
+data class CausesOfNeonatalDeath(
+  @ColumnInfo(defaultValue = "0") val respiratoryDistressSyndrome: Boolean = false,
+  @ColumnInfo(defaultValue = "0") val birthAsphyxia: Boolean = false,
+  @ColumnInfo(defaultValue = "0") val sepsis: Boolean = false,
+  @ColumnInfo(defaultValue = "0") val pneumonia: Boolean = false,
+  @ColumnInfo(defaultValue = "0") val meningitis: Boolean = false,
+  @ColumnInfo(defaultValue = "0") val malaria: Boolean = false,
+  @ColumnInfo(defaultValue = "0") val majorCongenitialMalformation: Boolean = false,
+  @ColumnInfo(defaultValue = "0") val prematurity: Boolean = false,
+  @ColumnInfo(defaultValue = "0") val causeNotEstablished: Boolean = false,
+  @ColumnInfo(defaultValue = "0") val other: Boolean = false,
+  @ColumnInfo(defaultValue = "0") val notReported: Boolean = false
+) : Parcelable {
+  @Ignore
+  val areAllFieldsFalse = !respiratoryDistressSyndrome &&
+    !birthAsphyxia &&
+    !sepsis && !pneumonia && !meningitis && !malaria && !majorCongenitialMalformation &&
+    !prematurity && !causeNotEstablished && !other && !notReported
 }
 
 @Immutable

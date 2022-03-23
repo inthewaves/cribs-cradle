@@ -7,7 +7,6 @@ import kotlinx.coroutines.channels.SendChannel
 import org.welbodipartnership.api.cradle5.Registration
 import org.welbodipartnership.api.forms.meta.DynamicLookupListEntry
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
-import org.welbodipartnership.cradle5.data.database.daos.FacilityDao
 import org.welbodipartnership.cradle5.data.database.entities.District
 import org.welbodipartnership.cradle5.domain.ControlId
 import org.welbodipartnership.cradle5.domain.DefaultNetworkResult
