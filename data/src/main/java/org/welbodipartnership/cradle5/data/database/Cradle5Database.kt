@@ -92,10 +92,10 @@ private val MIGRATIONS = arrayOf(
   },
   MigrationCreator(9, 10) {
     execSQL("ALTER TABLE `Patient` ADD COLUMN `address` TEXT DEFAULT NULL")
+    execSQL("ALTER TABLE `Patient` ADD COLUMN `isAgeUnknown` INTEGER NOT NULL DEFAULT 0")
     execSQL("ALTER TABLE `Patient` ADD COLUMN `referralInfoTouched` INTEGER NOT NULL DEFAULT 1")
     execSQL("ALTER TABLE `Patient` ADD COLUMN `patient_referral_toDistrict` INTEGER DEFAULT NULL")
     execSQL("ALTER TABLE `Patient` ADD COLUMN `patient_referral_fromFacility` INTEGER DEFAULT NULL")
-    execSQL("ALTER TABLE `Patient` ADD COLUMN `isAgeKnown` INTEGER NOT NULL DEFAULT 1")
     execSQL("ALTER TABLE `Patient` ADD COLUMN `patient_referral_toFacility` INTEGER DEFAULT NULL")
     execSQL("ALTER TABLE `Patient` ADD COLUMN `patient_referral_fromDistrict` INTEGER DEFAULT NULL")
     execSQL("CREATE TABLE IF NOT EXISTS `District` (`id` INTEGER NOT NULL, `name` TEXT, PRIMARY KEY(`id`))")

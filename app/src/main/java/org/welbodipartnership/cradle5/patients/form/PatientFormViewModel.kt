@@ -12,7 +12,6 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import androidx.room.Relation
 import androidx.room.withTransaction
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -153,7 +152,7 @@ class PatientFormViewModel @Inject constructor(
         handle.createMutableState("patientAge", ""),
         isFormDraftState = isFormDraftState,
       ),
-      isAgeKnown = enabledState("isAgeUnknown"),
+      isAgeUnknown = nonNullBooleanState("isAgeUnknown", false),
       address = handle.createMutableState("patientAddress", ""),
       healthcareFacility = HealthcareFacilityState(
         isMandatory = true,
@@ -319,8 +318,9 @@ class PatientFormViewModel @Inject constructor(
           with(formFields.patientFields) {
             initials.backingState.value = patient.initials
             presentationDate.setStateFromFormDate(patient.presentationDate)
-            age.backingState.value = patient.dateOfBirth?.getAgeInYearsFromNow()?.toString() ?: ""
-
+            val parsedAge = patient.dateOfBirth?.getAgeInYearsFromNow()?.toString()
+            age.backingState.value = parsedAge ?: ""
+            isAgeUnknown.value = parsedAge == null && patient.isAgeUnknown
             address.value = patient.address ?: ""
 
             val facilityPosition = facility?.id
@@ -334,8 +334,8 @@ class PatientFormViewModel @Inject constructor(
               )
             }
 
-            with(referralInfo) {
-              patient.referralInfo?.let {
+            with(referralInfo) { // field
+              patient.referralInfo?.let { // previous info
                 isEnabled.value = true
                 referralFromDistrict?.let { district ->
                   fromDistrict.stateValue = DistrictAndPosition(
@@ -355,7 +355,7 @@ class PatientFormViewModel @Inject constructor(
                       ?.coerceAtLeast(0)
                   )
                 }
-                referralFromDistrict?.let { district ->
+                referralToDistrict?.let { district ->
                   toDistrict.stateValue = DistrictAndPosition(
                     district,
                     district.id
@@ -364,7 +364,7 @@ class PatientFormViewModel @Inject constructor(
                       ?.coerceAtLeast(0)
                   )
                 }
-                referralFromFacility?.let { facility ->
+                referralToFacility?.let { facility ->
                   toFacility.stateValue = FacilityAndPosition(
                     facility,
                     facility.id
@@ -373,7 +373,9 @@ class PatientFormViewModel @Inject constructor(
                       ?.coerceAtLeast(0)
                   )
                 }
-              }
+              } ?: clearFormsAndSetCheckbox(
+                newEnabledState = patient.referralInfoTouched.nullEnabledState
+              )
             }
 
             localNotes.value = patient.localNotes ?: ""
@@ -528,11 +530,15 @@ class PatientFormViewModel @Inject constructor(
               )
             }
             if (!age.isValid) {
-              fieldToErrorMap.addFieldError(
-                R.string.patient_registration_card_title,
-                R.string.patient_registration_age_label,
-                age.errorFor(context, age.stateValue)
-              )
+              if (age.stateValue.isBlank() && isAgeUnknown.value) {
+                // do nothing
+              } else {
+                fieldToErrorMap.addFieldError(
+                  R.string.patient_registration_card_title,
+                  R.string.patient_registration_age_label,
+                  age.errorFor(context, age.stateValue)
+                )
+              }
             }
             if (!healthcareFacility.isValid) {
               fieldToErrorMap.addFieldError(
@@ -543,7 +549,16 @@ class PatientFormViewModel @Inject constructor(
             }
             val referralInfoResult: Result<PatientReferralInfo>? = with(referralInfo) {
               when (isEnabled.value) {
-                null -> null
+                null -> {
+                  if (!isDraft) {
+                    fieldToErrorMap.addFieldError(
+                      getCategoryStringRes(),
+                      R.string.patient_referral_checkbox_label,
+                      context.getString(R.string.patient_referral_checkbox_missing_error)
+                    )
+                  }
+                  null
+                }
                 true -> {
                   if (!fromDistrict.isValid) {
                     fieldToErrorMap.addFieldError(
@@ -582,27 +597,24 @@ class PatientFormViewModel @Inject constructor(
                     )
                   }
                 }
-                else -> null
+                false -> null
               }
             }
 
             runCatching {
+              val parsedDob = if (isDraft || isAgeUnknown.value) {
+                age.stateValue.toIntOrNull()?.let(FormDate::fromAgeFromNow)
+              } else {
+                age.stateValue.toInt().let(FormDate::fromAgeFromNow)
+              }
               Patient(
                 id = patientAndOutcomes?.patient?.id ?: 0L,
                 serverInfo = patientAndOutcomes?.patient?.serverInfo,
                 serverErrorMessage = null,
                 initials = initials.stateValue,
                 presentationDate = presentationDate.dateFromStateOrNull(),
-                dateOfBirth = if (isDraft) {
-                  age.stateValue.toIntOrNull()?.let(FormDate::fromAgeFromNow)
-                } else {
-                  FormDate.fromAgeFromNow(age.stateValue.toInt())
-                },
-                isAgeKnown = when (isAgeKnown.value) {
-                  true -> TouchedState.TOUCHED_ENABLED
-                  false -> TouchedState.TOUCHED
-                  null -> TouchedState.NOT_TOUCHED
-                },
+                dateOfBirth = parsedDob,
+                isAgeUnknown = parsedDob == null && isAgeUnknown.value,
                 address = address.value,
                 healthcareFacilityId = if (isDraft) {
                   healthcareFacility.stateValue?.facility?.id
@@ -983,6 +995,9 @@ class PatientFormViewModel @Inject constructor(
   private fun enabledState(key: String): SavedStateMutableState<Boolean?> =
     handle.createMutableState(key, null)
 
+  private fun nonNullBooleanState(key: String, defaultValue: Boolean): SavedStateMutableState<Boolean> =
+    handle.createMutableState(key, defaultValue)
+
   private fun dateState(
     key: String,
     isMandatory: Boolean,
@@ -1056,7 +1071,7 @@ class PatientFormViewModel @Inject constructor(
     val initials: InitialsState,
     val presentationDate: NoFutureDateState,
     val age: LimitedAgeIntState,
-    val isAgeKnown: MutableState<Boolean?>,
+    val isAgeUnknown: MutableState<Boolean>,
     val address: MutableState<String>,
     val referralInfo: ReferralInfoFields,
     val healthcareFacility: HealthcareFacilityState,
@@ -1072,6 +1087,7 @@ class PatientFormViewModel @Inject constructor(
       val toFacility: HealthcareFacilityState,
     ) : FieldsWithCheckbox() {
       override fun clearFormsAndSetCheckbox(newEnabledState: Boolean?) {
+        isEnabled.value = newEnabledState
         fromDistrict.reset()
         fromFacility.reset()
         toDistrict.reset()
@@ -1093,6 +1109,7 @@ class PatientFormViewModel @Inject constructor(
       presentationDate.enableShowErrors(force = true)
       age.enableShowErrors(force = true)
       healthcareFacility.enableShowErrors(force = true)
+      referralInfo.forceShowErrors()
     }
   }
 

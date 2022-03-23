@@ -13,11 +13,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.welbodipartnership.cradle5.R
+import org.welbodipartnership.cradle5.data.database.entities.District
 import org.welbodipartnership.cradle5.data.database.entities.Facility
 import org.welbodipartnership.cradle5.data.database.entities.Patient
 import org.welbodipartnership.cradle5.data.database.entities.PatientReferralInfo
 import org.welbodipartnership.cradle5.data.database.entities.TouchedState
 import org.welbodipartnership.cradle5.data.database.entities.embedded.EnumSelection
+import org.welbodipartnership.cradle5.data.database.resultentities.PatientFacilityDistrictOutcomes
 import org.welbodipartnership.cradle5.patients.PatientPreviewClasses
 import org.welbodipartnership.cradle5.ui.composables.LabelAndValueOrNone
 import org.welbodipartnership.cradle5.ui.composables.LabelAndValueOrUnknown
@@ -28,9 +30,21 @@ import org.welbodipartnership.cradle5.util.datetime.FormDate
  * Shows the details for a [Patient]
  */
 @Composable
-fun PatientCard(patient: Patient, facility: Facility?, modifier: Modifier = Modifier) {
+fun PatientCard(
+  patientAndRelatedInfo: PatientFacilityDistrictOutcomes,
+  modifier: Modifier = Modifier
+) {
+  val (
+    patient: Patient,
+    facility: Facility?,
+    referralFromDistrict: District?,
+    referralFromFacility: Facility?,
+    referralToDistrict: District?,
+    referralToFacility: Facility?,
+  ) = patientAndRelatedInfo
+
   BaseDetailsCard(title = stringResource(R.string.patient_registration_card_title), modifier = modifier) {
-    val spacerHeight = 4.dp
+    val spacerHeight = 6.dp
     Spacer(modifier = Modifier.height(spacerHeight))
     val serverErrorMessage = patient.serverErrorMessage
     if (serverErrorMessage != null) {
@@ -59,19 +73,50 @@ fun PatientCard(patient: Patient, facility: Facility?, modifier: Modifier = Modi
     )
     Spacer(modifier = Modifier.height(spacerHeight))
     LabelAndValueOrUnknown(
-      label = stringResource(R.string.patient_registration_date_of_birth_label),
-      value = patient.dateOfBirth?.toString(),
+      label = stringResource(R.string.patient_registration_age_label),
+      value = patient.dateOfBirth?.getAgeInYearsFromNow()?.toString(),
     )
     Spacer(modifier = Modifier.height(spacerHeight))
     LabelAndValueOrUnknown(
-      label = stringResource(R.string.patient_registration_age_label),
-      value = patient.dateOfBirth?.getAgeInYearsFromNow()?.toString(),
+      label = stringResource(R.string.patient_address_label),
+      value = patient.address?.ifBlank { null },
     )
     Spacer(modifier = Modifier.height(spacerHeight))
     LabelAndValueOrUnknown(
       label = stringResource(R.string.patient_registration_healthcare_facility_label),
       value = facility?.name,
     )
+    Spacer(modifier = Modifier.height(spacerHeight))
+    LabelAndValueOrUnknown(
+      label = stringResource(R.string.patient_referral_checkbox_label),
+      value = stringResource(
+        if (
+          patient.referralInfo != null || patient.referralInfoTouched.nullEnabledState == true
+        ) R.string.yes else R.string.no
+      ),
+    )
+    if (patient.referralInfo != null || patient.referralInfoTouched.nullEnabledState == true) {
+      Spacer(modifier = Modifier.height(spacerHeight))
+      LabelAndValueOrUnknown(
+        label = stringResource(R.string.patient_referral_info_from_district_label),
+        value = referralFromDistrict?.name,
+      )
+      Spacer(modifier = Modifier.height(spacerHeight))
+      LabelAndValueOrUnknown(
+        label = stringResource(R.string.patient_referral_info_from_facility_label),
+        value = referralFromFacility?.name,
+      )
+      Spacer(modifier = Modifier.height(spacerHeight))
+      LabelAndValueOrUnknown(
+        label = stringResource(R.string.patient_referral_info_to_district_label),
+        value = referralToDistrict?.name,
+      )
+      Spacer(modifier = Modifier.height(spacerHeight))
+      LabelAndValueOrUnknown(
+        label = stringResource(R.string.patient_referral_info_to_facility_label),
+        value = referralToFacility?.name,
+      )
+    }
   }
 }
 
@@ -81,8 +126,15 @@ fun PatientCardPreview() {
   CradleTrialAppTheme {
     val scrollState = rememberScrollState()
     PatientCard(
-      patient = PatientPreviewClasses.createTestPatient(),
-      facility = null,
+      PatientFacilityDistrictOutcomes(
+        PatientPreviewClasses.createTestPatient(),
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ),
       modifier = Modifier.verticalScroll(scrollState)
     )
   }

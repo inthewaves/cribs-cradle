@@ -45,10 +45,12 @@ import com.google.accompanist.insets.rememberInsetsPaddingValues
 import com.google.accompanist.insets.ui.TopAppBar
 import org.welbodipartnership.cradle5.LocalServerEnumCollection
 import org.welbodipartnership.cradle5.R
+import org.welbodipartnership.cradle5.data.database.entities.District
 import org.welbodipartnership.cradle5.data.database.entities.Facility
 import org.welbodipartnership.cradle5.data.database.entities.Outcomes
 import org.welbodipartnership.cradle5.data.database.entities.Patient
 import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
+import org.welbodipartnership.cradle5.data.database.resultentities.PatientFacilityDistrictOutcomes
 import org.welbodipartnership.cradle5.domain.sync.SyncRepository
 import org.welbodipartnership.cradle5.patients.PatientPreviewClasses
 import org.welbodipartnership.cradle5.ui.composables.AnimatedVisibilityFadingWrapper
@@ -93,9 +95,7 @@ fun PatientDetailsScreen(
       when (patientState) {
         is PatientDetailsViewModel.State.Ready -> {
           PatientDetailsScreen(
-            patientState.patientFacilityOutcomes.patient,
-            patientState.patientFacilityOutcomes.facility,
-            patientState.patientFacilityOutcomes.outcomes,
+            patientState.patientFacilityOutcomes,
             editState = editState,
             onPatientEditPress = onPatientEdit,
             onPatientOtherInfoEditPress = onPatientOtherInfoEditPress,
@@ -125,15 +125,16 @@ fun PatientDetailsScreen(
 
 @Composable
 private fun PatientDetailsScreen(
-  patient: Patient,
-  facility: Facility?,
-  outcomes: Outcomes?,
+  patientAndRelatedInfo: PatientFacilityDistrictOutcomes,
   editState: SyncRepository.FormEditState?,
   onPatientEditPress: (patientPrimaryKey: Long) -> Unit,
   onPatientOtherInfoEditPress: (patientPrimaryKey: Long) -> Unit,
   modifier: Modifier = Modifier,
   contentPadding: PaddingValues = PaddingValues()
 ) {
+  val patient: Patient = patientAndRelatedInfo.patient
+  val outcomes: Outcomes? = patientAndRelatedInfo.outcomes
+
   LazyColumn(modifier = modifier, contentPadding = contentPadding) {
     item {
       BaseDetailsCard(title = null, modifier = modifier) {
@@ -231,7 +232,7 @@ private fun PatientDetailsScreen(
     item { Spacer(Modifier.height(8.dp)) }
 
     item {
-      PatientCard(patient = patient, facility = facility, modifier = Modifier.padding(16.dp))
+      PatientCard(patientAndRelatedInfo, modifier = Modifier.padding(16.dp))
     }
 
     item { Spacer(Modifier.height(8.dp)) }
@@ -239,7 +240,7 @@ private fun PatientDetailsScreen(
     item {
       OutcomesCard(
         outcomes = outcomes,
-        LocalServerEnumCollection.current,
+        enumCollection = LocalServerEnumCollection.current,
         modifier = Modifier.padding(16.dp)
       )
     }
@@ -252,9 +253,15 @@ fun PatientDetailsScreenNotUploadedPreview() {
   CradleTrialAppTheme {
     Surface {
       PatientDetailsScreen(
-        patient = PatientPreviewClasses.createTestPatient(),
-        facility = Facility(5L, "Test facility", 0, false, "My notes"),
-        outcomes = PatientPreviewClasses.createTestOutcomes(),
+        PatientFacilityDistrictOutcomes(
+          patient = PatientPreviewClasses.createTestPatient(),
+          facility = Facility(5L, "Test facility", 0, false, "My notes"),
+          referralFromDistrict = null,
+          referralFromFacility = null,
+          referralToDistrict = null,
+          referralToFacility = null,
+          outcomes = PatientPreviewClasses.createTestOutcomes(),
+        ),
         editState = SyncRepository.FormEditState.CAN_EDIT,
         onPatientEditPress = {},
         onPatientOtherInfoEditPress = {}
@@ -269,9 +276,21 @@ fun PatientDetailsScreenUploadedPreview() {
   CradleTrialAppTheme {
     Surface {
       PatientDetailsScreen(
-        patient = PatientPreviewClasses.createTestPatient(serverInfo = ServerInfo(nodeId = 5L, objectId = null)),
-        facility = Facility(5L, "Test facility", 0, false, "My notes"),
-        outcomes = PatientPreviewClasses.createTestOutcomes(),
+        PatientFacilityDistrictOutcomes(
+          patient = PatientPreviewClasses.createTestPatient(serverInfo = ServerInfo(nodeId = 5L, objectId = null)),
+          facility = Facility(5L, "Test facility", 0, false, "My notes"),
+          outcomes = PatientPreviewClasses.createTestOutcomes(),
+          referralFromDistrict = District(PatientPreviewClasses.FROM_DISTRICT_ID, "Test 'from' district"),
+          referralFromFacility = Facility(
+            PatientPreviewClasses.FROM_FACILITY_ID, "Test 'from' facility"
+            , hasVisited = false, listOrder = 1,
+          ),
+          referralToDistrict = District(PatientPreviewClasses.TO_DISTRICT_ID, "Test 'to' district"),
+          referralToFacility = Facility(
+            PatientPreviewClasses.TO_FACILITY_ID, "Test 'to' facility",
+            hasVisited = false, listOrder = 1,
+          ),
+        ),
         editState = SyncRepository.FormEditState.CAN_EDIT,
         onPatientEditPress = {},
         onPatientOtherInfoEditPress = {}
@@ -286,9 +305,21 @@ fun PatientDetailsScreenSyncingPreview() {
   CradleTrialAppTheme {
     Surface {
       PatientDetailsScreen(
-        patient = PatientPreviewClasses.createTestPatient(isDraft = true),
-        facility = Facility(5L, "Test facility", 0, false, "My notes"),
-        outcomes = PatientPreviewClasses.createTestOutcomes(),
+        PatientFacilityDistrictOutcomes(
+          patient = PatientPreviewClasses.createTestPatient(isDraft = false),
+          facility = Facility(5L, "Test facility", 0, false, "My notes"),
+          outcomes = PatientPreviewClasses.createTestOutcomes(),
+          referralFromDistrict = District(PatientPreviewClasses.FROM_DISTRICT_ID, "Test 'from' district"),
+          referralFromFacility = Facility(
+            PatientPreviewClasses.FROM_FACILITY_ID, "Test 'from' facility"
+            , hasVisited = false, listOrder = 1,
+          ),
+          referralToDistrict = District(PatientPreviewClasses.TO_DISTRICT_ID, "Test 'to' district"),
+          referralToFacility = Facility(
+            PatientPreviewClasses.TO_FACILITY_ID, "Test 'to' facility",
+            hasVisited = false, listOrder = 1,
+          ),
+        ),
         editState = SyncRepository.FormEditState.CANT_EDIT_SYNC_IN_PROGRESS,
         onPatientEditPress = {},
         onPatientOtherInfoEditPress = {}

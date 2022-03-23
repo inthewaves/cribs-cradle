@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 10,
-    "identityHash": "0f93b7357216ff403df9ca73f924882b",
+    "identityHash": "2d73e4c06ca3f676c418dbd45c3f5ce9",
     "entities": [
       {
         "tableName": "Patient",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `serverErrorMessage` TEXT, `initials` TEXT NOT NULL, `presentationDate` TEXT, `dateOfBirth` TEXT, `isAgeKnown` INTEGER NOT NULL DEFAULT 1, `address` TEXT, `healthcareFacilityId` INTEGER, `referralInfoTouched` INTEGER NOT NULL DEFAULT 1, `lastUpdatedTimestamp` INTEGER NOT NULL, `localNotes` TEXT, `isDraft` INTEGER NOT NULL DEFAULT 0, `nodeId` INTEGER, `objectId` INTEGER, `patient_referral_fromDistrict` INTEGER, `patient_referral_fromFacility` INTEGER, `patient_referral_toDistrict` INTEGER, `patient_referral_toFacility` INTEGER)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `serverErrorMessage` TEXT, `initials` TEXT NOT NULL, `presentationDate` TEXT, `dateOfBirth` TEXT, `isAgeUnknown` INTEGER NOT NULL DEFAULT 0, `address` TEXT, `healthcareFacilityId` INTEGER, `referralInfoTouched` INTEGER NOT NULL DEFAULT 1, `lastUpdatedTimestamp` INTEGER NOT NULL, `localNotes` TEXT, `isDraft` INTEGER NOT NULL DEFAULT 0, `nodeId` INTEGER, `objectId` INTEGER, `patient_referral_fromDistrict` INTEGER, `patient_referral_fromFacility` INTEGER, `patient_referral_toDistrict` INTEGER, `patient_referral_toFacility` INTEGER)",
         "fields": [
           {
             "fieldPath": "id",
@@ -39,11 +39,11 @@
             "notNull": false
           },
           {
-            "fieldPath": "isAgeKnown",
-            "columnName": "isAgeKnown",
+            "fieldPath": "isAgeUnknown",
+            "columnName": "isAgeUnknown",
             "affinity": "INTEGER",
             "notNull": true,
-            "defaultValue": "1"
+            "defaultValue": "0"
           },
           {
             "fieldPath": "address",
@@ -96,25 +96,25 @@
             "notNull": false
           },
           {
-            "fieldPath": "patientReferralInfo.fromDistrict",
+            "fieldPath": "referralInfo.fromDistrict",
             "columnName": "patient_referral_fromDistrict",
             "affinity": "INTEGER",
             "notNull": false
           },
           {
-            "fieldPath": "patientReferralInfo.fromFacility",
+            "fieldPath": "referralInfo.fromFacility",
             "columnName": "patient_referral_fromFacility",
             "affinity": "INTEGER",
             "notNull": false
           },
           {
-            "fieldPath": "patientReferralInfo.toDistrict",
+            "fieldPath": "referralInfo.toDistrict",
             "columnName": "patient_referral_toDistrict",
             "affinity": "INTEGER",
             "notNull": false
           },
           {
-            "fieldPath": "patientReferralInfo.toFacility",
+            "fieldPath": "referralInfo.toFacility",
             "columnName": "patient_referral_toFacility",
             "affinity": "INTEGER",
             "notNull": false
@@ -511,7 +511,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '0f93b7357216ff403df9ca73f924882b')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '2d73e4c06ca3f676c418dbd45c3f5ce9')"
     ]
   }
 }

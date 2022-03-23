@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Parcelable
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -22,10 +23,12 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.AlertDialog
+import androidx.compose.material.Checkbox
 import androidx.compose.material.Divider
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.RadioButton
 import androidx.compose.material.Scaffold
 import androidx.compose.material.SnackbarHostState
 import androidx.compose.material.Text
@@ -336,48 +339,71 @@ fun PatientForm(
 
           Spacer(Modifier.height(textFieldToTextFieldHeight))
 
-          OutlinedTextFieldWithErrorHint(
-            value = patientFields.age.stateValue,
-            onValueChange = { newAge ->
-              if (newAge.length <= 2) {
-                patientFields.age.stateValue = newAge
-              }
-            },
-            label = {
-              RequiredText(stringResource(id = R.string.patient_registration_age_label))
-            },
-            modifier = Modifier.fillMaxWidth(),
-            textFieldModifier = patientFields.age
-              .createFocusChangeModifier()
-              .fillMaxWidth(),
-            // textStyle = MaterialTheme.typography.body2,
-            errorHint = patientFields.age.getError(),
-            keyboardOptions = KeyboardOptions.Default.copy(
-              imeAction = ImeAction.Next,
-              keyboardType = KeyboardType.Number
-            ),
-            keyboardActions = KeyboardActions(
-              onDone = {
-                focusRequester.requestFocus()
-              }
+          Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+          ) {
+            var isAgeUnknown by patientFields.isAgeUnknown
+            OutlinedTextFieldWithErrorHint(
+              value = patientFields.age.stateValue,
+              onValueChange = { newAge ->
+                if (newAge.length <= 2) {
+                  patientFields.age.stateValue = newAge
+                  patientFields.isAgeUnknown.value = false
+                }
+              },
+              enabled = !isAgeUnknown,
+              label = {
+                if (isAgeUnknown) {
+                  Text(stringResource(id = R.string.patient_registration_age_label))
+                } else {
+                  RequiredText(stringResource(id = R.string.patient_registration_age_label))
+                }
+              },
+              modifier = Modifier.weight(1f),
+              textFieldModifier = patientFields.age
+                .createFocusChangeModifier()
+                .fillMaxWidth(),
+              // textStyle = MaterialTheme.typography.body2,
+              errorHint = patientFields.age.getError(),
+              keyboardOptions = KeyboardOptions.Default.copy(
+                imeAction = ImeAction.Next,
+                keyboardType = KeyboardType.Number
+              ),
+              keyboardActions = KeyboardActions(
+                onDone = {
+                  focusRequester.requestFocus()
+                }
+              )
             )
+
+            val focusManager = LocalFocusManager.current
+            Checkbox(
+              checked = isAgeUnknown,
+              onCheckedChange = { newState ->
+                isAgeUnknown = newState
+                focusManager.clearFocus()
+                if (newState) {
+                  patientFields.age.stateValue = ""
+                }
+              },
+            )
+
+            Text(stringResource(R.string.unknown))
+          }
+
+          val (address, onAddressChange) = patientFields.address
+          BringIntoViewOutlinedTextField(
+            value = address,
+            onValueChange = onAddressChange,
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text(stringResource(R.string.patient_address_label)) },
+            colors = darkerDisabledOutlinedTextFieldColors()
           )
 
-          DatabasePagingListDropdown(
-            selectedItem = patientFields.healthcareFacility.stateValue?.facility,
-            positionInList = patientFields.healthcareFacility.stateValue?.position,
-            onItemSelected = { idx, facility ->
-              patientFields.healthcareFacility.stateValue = FacilityAndPosition(facility, idx)
-            },
-            formatTextForListItem = Facility::name,
-            title = {
-              Text(
-                stringResource(R.string.patient_registration_health_facility_dialog_title),
-                style = MaterialTheme.typography.subtitle1
-              )
-            },
+          FacilityListDropdown(
+            state = patientFields.healthcareFacility,
             pagingItemFlow = viewModel.facilitiesPagerFlow,
-            errorHint = patientFields.healthcareFacility.getError(),
             label = {
               RequiredText(stringResource(R.string.patient_registration_healthcare_facility_label))
             },
@@ -650,30 +676,18 @@ fun PatientReferralInfoForm(
     toDistrictState: DistrictState,
     toFacilityState: HealthcareFacilityState
   ) = referralInfoFields
-  val (isFormEnabled, onFormEnabledStateChange) = isFormEnabledState
-
+  var isFormEnabled by isFormEnabledState
   Column(modifier) {
-    Row {
-      BooleanRadioButtonRow(isTrue = isFormEnabled, onBooleanChange = onFormEnabledStateChange)
-      MoreInfoIconButton(stringResource(R.string.outcomes_eclampsia_more_info))
-    }
+    RequiredText(text = stringResource(R.string.patient_referral_checkbox_label))
+    BooleanRadioButtonRow(isTrue = isFormEnabled, onBooleanChange = {
+      isFormEnabled = it
+      if (!it) referralInfoFields.clearFormsAndSetCheckbox(newEnabledState = false)
+    })
 
     if (isFormEnabled == true) {
-      DatabasePagingListDropdown(
-        selectedItem = fromDistrictState.stateValue?.district,
-        positionInList = fromDistrictState.stateValue?.position,
-        onItemSelected = { idx, district ->
-          fromDistrictState.stateValue = DistrictAndPosition(district, idx)
-        },
-        formatTextForListItem = District::name,
-        title = {
-          Text(
-            stringResource(R.string.patient_registration_district_dialog_title),
-            style = MaterialTheme.typography.subtitle1
-          )
-        },
+      DistrictListDropdown(
+        state = fromDistrictState,
         pagingItemFlow = districtPagingFlow,
-        errorHint = fromDistrictState.getError(),
         label = {
           RequiredText(stringResource(R.string.patient_referral_info_from_district_label))
         },
@@ -685,69 +699,33 @@ fun PatientReferralInfoForm(
 
       Spacer(Modifier.height(textFieldToTextFieldHeight))
 
-      DatabasePagingListDropdown(
-        selectedItem = fromFacilityState.stateValue?.facility,
-        positionInList = fromFacilityState.stateValue?.position,
-        onItemSelected = { idx, facility ->
-          fromFacilityState.stateValue = FacilityAndPosition(facility, idx)
-        },
-        formatTextForListItem = Facility::name,
-        title = {
-          Text(
-            stringResource(R.string.patient_registration_health_facility_dialog_title),
-            style = MaterialTheme.typography.subtitle1
-          )
-        },
+      FacilityListDropdown(
+        state = fromFacilityState,
         pagingItemFlow = facilityPagingFlow,
-        errorHint = fromDistrictState.getError(),
-        label = {
-          RequiredText(stringResource(R.string.patient_referral_info_from_facility_label))
-        },
+        label = { RequiredText(stringResource(R.string.patient_referral_info_from_facility_label)) },
         modifier = Modifier.fillMaxWidth(),
         textFieldModifier = Modifier
           .fillMaxWidth()
-          .then(fromDistrictState.createFocusChangeModifier())
+          .then(fromFacilityState.createFocusChangeModifier())
       )
 
-      DatabasePagingListDropdown(
-        selectedItem = toDistrictState.stateValue?.district,
-        positionInList = toDistrictState.stateValue?.position,
-        onItemSelected = { idx, district ->
-          toDistrictState.stateValue = DistrictAndPosition(district, idx)
-        },
-        formatTextForListItem = District::name,
-        title = {
-          Text(
-            stringResource(R.string.patient_registration_district_dialog_title),
-            style = MaterialTheme.typography.subtitle1
-          )
-        },
+      Spacer(Modifier.height(textFieldToTextFieldHeight))
+
+      DistrictListDropdown(
+        state = toDistrictState,
         pagingItemFlow = districtPagingFlow,
-        errorHint = toDistrictState.getError(),
-        label = {
-          RequiredText(stringResource(R.string.patient_referral_info_to_district_label))
-        },
+        label = { RequiredText(stringResource(R.string.patient_referral_info_to_district_label)) },
         modifier = Modifier.fillMaxWidth(),
         textFieldModifier = Modifier
           .fillMaxWidth()
           .then(toDistrictState.createFocusChangeModifier())
       )
 
-      DatabasePagingListDropdown(
-        selectedItem = toFacilityState.stateValue?.facility,
-        positionInList = toFacilityState.stateValue?.position,
-        onItemSelected = { idx, facility ->
-          toFacilityState.stateValue = FacilityAndPosition(facility, idx)
-        },
-        formatTextForListItem = Facility::name,
-        title = {
-          Text(
-            stringResource(R.string.patient_registration_health_facility_dialog_title),
-            style = MaterialTheme.typography.subtitle1
-          )
-        },
+      Spacer(Modifier.height(textFieldToTextFieldHeight))
+
+      FacilityListDropdown(
+        state = toFacilityState,
         pagingItemFlow = facilityPagingFlow,
-        errorHint = toFacilityState.getError(),
         label = {
           RequiredText(stringResource(R.string.patient_referral_info_to_facility_label))
         },
@@ -1219,6 +1197,60 @@ fun PatientFormPreview() {
     }
   }
 }
+
+@Composable
+fun DistrictListDropdown(
+  state: DistrictState,
+  pagingItemFlow: Flow<PagingData<District>>,
+  modifier: Modifier = Modifier,
+  textFieldModifier: Modifier = Modifier,
+  enabled: Boolean = true,
+  label: @Composable (() -> Unit)? = null,
+) = DatabasePagingListDropdown(
+  selectedItem = state.stateValue?.district,
+  positionInList = state.stateValue?.position,
+  onItemSelected = { idx, district -> state.stateValue = DistrictAndPosition(district, idx) },
+  formatTextForListItem = District::name,
+  title = {
+    Text(
+      stringResource(R.string.patient_registration_district_dialog_title),
+      style = MaterialTheme.typography.subtitle1
+    )
+  },
+  pagingItemFlow = pagingItemFlow,
+  errorHint = state.getError(),
+  enabled = enabled,
+  label = label,
+  modifier = modifier,
+  textFieldModifier = textFieldModifier
+)
+
+@Composable
+fun FacilityListDropdown(
+  state: HealthcareFacilityState,
+  pagingItemFlow: Flow<PagingData<Facility>>,
+  modifier: Modifier = Modifier,
+  textFieldModifier: Modifier = Modifier,
+  enabled: Boolean = true,
+  label: @Composable (() -> Unit)? = null,
+) = DatabasePagingListDropdown(
+  selectedItem = state.stateValue?.facility,
+  positionInList = state.stateValue?.position,
+  onItemSelected = { idx, district -> state.stateValue = FacilityAndPosition(district, idx) },
+  formatTextForListItem = Facility::name,
+  title = {
+    Text(
+      stringResource(R.string.patient_registration_health_facility_dialog_title),
+      style = MaterialTheme.typography.subtitle1
+    )
+  },
+  pagingItemFlow = pagingItemFlow,
+  errorHint = state.getError(),
+  enabled = enabled,
+  label = label,
+  modifier = modifier,
+  textFieldModifier = textFieldModifier
+)
 
 class HealthcareFacilityState(
   isMandatory: Boolean,

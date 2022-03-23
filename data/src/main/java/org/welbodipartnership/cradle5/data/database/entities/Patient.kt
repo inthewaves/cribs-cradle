@@ -44,8 +44,8 @@ data class Patient(
    * Note: The UI will only show age.
    */
   val dateOfBirth: FormDate?,
-  @ColumnInfo(defaultValue = "1")
-  val isAgeKnown: TouchedState,
+  @ColumnInfo(defaultValue = "0")
+  val isAgeUnknown: Boolean,
 
   val address: String?,
   val healthcareFacilityId: Long?,
