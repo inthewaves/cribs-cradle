@@ -155,17 +155,24 @@ class UrlProvider @Inject constructor(
   /**
    * Returns the values of a dynamic lookup for forms that may not be in the patient’s
    */
-  fun dynamicLookups(controlId: ControlId, formId: FormId, objectId: ObjectId, page: Int) =
-    "$baseApiUrl/v0/lookups/dynamic/${controlId.id}/${formId.id}/${objectId.id}".let {
-      if (page > 1) {
-        it.toHttpUrl().newBuilder()
-          .addQueryParameter("page", page.toString())
-          .build()
-          .toString()
-      } else {
-        it
-      }
+  fun dynamicLookups(
+    controlId: ControlId,
+    formId: FormId,
+    objectId: ObjectId,
+    page: Int,
+    masterValues: List<String>
+  ) = "$baseApiUrl/v0/lookups/dynamic/${controlId.id}/${formId.id}/${objectId.id}".let {
+    if (page == 1 && masterValues.isEmpty()) return it
+    val urlBuilder = it.toHttpUrl().newBuilder()
+    if (page > 1) {
+      urlBuilder.addQueryParameter("page", page.toString())
     }
+    // TODO: Figure out the right way to actually encode string array for API
+    for (value in masterValues) {
+      urlBuilder.addQueryParameter("masterValues", value)
+    }
+    urlBuilder.build().toString()
+  }
 
   fun dynamicLookups(controlId: ControlId, nodeId: NodeId) =
     "$baseApiUrl/v0/lookups/dynamic/${controlId.id}/${nodeId.id}"

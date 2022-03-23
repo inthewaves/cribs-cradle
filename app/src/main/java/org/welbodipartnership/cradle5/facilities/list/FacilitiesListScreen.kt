@@ -320,6 +320,7 @@ fun FacilityListItemPreview() {
             id = 50,
             name = "CHC Test Facility",
             listOrder = 0,
+            districtId = 2,
             hasVisited = false
           ),
           onClick = {}

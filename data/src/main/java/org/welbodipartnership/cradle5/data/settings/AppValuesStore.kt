@@ -73,6 +73,11 @@ class AppValuesStore @Inject internal constructor(
     .distinctUntilChanged()
     .conflate()
 
+  val districtIdFlow = encryptedSettings.encryptedSettingsFlow()
+    .map { settings -> settings.userInfo.districtId.takeIf { settings.hasUserInfo() } }
+    .distinctUntilChanged()
+    .conflate()
+
   val userIdFlow = encryptedSettings.encryptedSettingsFlow()
     .map { settings -> settings.userInfo.userId.takeIf { settings.hasUserInfo() } }
     .distinctUntilChanged()
@@ -153,6 +158,14 @@ class AppValuesStore @Inject internal constructor(
     }
   }
 
+  suspend fun setDistrictId(id: Int) {
+    encryptedSettings.updateData { settings ->
+      settings.toBuilder()
+        .setUserInfo(settings.userInfo.toBuilder().setDistrictId(id).build())
+        .build()
+    }
+  }
+
   suspend fun setLastTimeAuthenticatedToNow() {
     setLastTimeAuthenticated(UnixTimestamp.now())
   }
@@ -169,6 +182,10 @@ class AppValuesStore @Inject internal constructor(
         .setToken(newerAuthToken)
         .build()
     }
+  }
+
+  suspend fun clearAuthToken() {
+    encryptedSettings.updateData { settings -> settings.toBuilder().clearToken().build() }
   }
 
   suspend fun setWarningMessage(warningMessage: String) {

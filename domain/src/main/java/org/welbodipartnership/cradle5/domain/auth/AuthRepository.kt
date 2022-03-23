@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.withContext
 import org.welbodipartnership.api.ApiAuthToken
 import org.welbodipartnership.api.cradle5.HealthcareFacilitySummary
@@ -29,11 +30,13 @@ import org.welbodipartnership.cradle5.domain.districts.DistrictRepository
 import org.welbodipartnership.cradle5.domain.enums.EnumRepository
 import org.welbodipartnership.cradle5.domain.facilities.FacilityRepository
 import org.welbodipartnership.cradle5.domain.sync.SyncRepository
+import org.welbodipartnership.cradle5.domain.util.launchWithPermit
 import org.welbodipartnership.cradle5.util.ApplicationCoroutineScope
 import org.welbodipartnership.cradle5.util.coroutines.AppCoroutineDispatchers
 import org.welbodipartnership.cradle5.util.datetime.UnixTimestamp
 import org.welbodipartnership.cradle5.util.foreground.AppForegroundedObserver
 import org.welbodipartnership.cradle5.util.net.NetworkObserver
+import java.lang.Exception
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.time.Duration
@@ -64,6 +67,7 @@ class AuthRepository @Inject internal constructor(
   private val districtRepository: DistrictRepository,
   private val enumRepository: EnumRepository,
   private val urlProvider: UrlProvider,
+  private val appCoroutineDispatchers: AppCoroutineDispatchers,
   @ApplicationContext private val context: Context,
   @ApplicationCoroutineScope private val applicationCoroutineScope: CoroutineScope,
   appForegroundedObserver: AppForegroundedObserver
@@ -160,6 +164,7 @@ class AuthRepository @Inject internal constructor(
      */
 
     appValuesStore.markLoginIncomplete()
+    var success = false
     try {
       loginEventMessagesChannel?.trySend(
         if (isForTokenRefresh) {
@@ -240,40 +245,31 @@ class AuthRepository @Inject internal constructor(
 
       // Try to get the user's district
       loginEventMessagesChannel?.trySend("Getting user district")
-      when (
+      val districtName: String? = when (
         val result = restApi.getFormData<HealthcareFacilitySummary>(objectId = ObjectId.QUERIES)
       ) {
         is NetworkResult.Success -> {
-          val districtName = result.value.districtName
-          if (districtName != null) {
-            appValuesStore.setDistrictName(districtName)
+          val name = result.value.districtName
+          if (name != null) {
+            appValuesStore.setDistrictName(name)
           } else {
             loginEventMessagesChannel?.trySend("User not associated with a district")
             delay(1.seconds)
           }
+          name
         }
         is NetworkResult.Failure -> {
           val message = result.errorValue.decodeToString()
           loginEventMessagesChannel?.trySend(
             "Unable to get district: HTTP ${result.statusCode} error (message: $message)"
           )
+          null
         }
         is NetworkResult.NetworkException -> {
           loginEventMessagesChannel?.trySend(
             "Unable to get district: ${result.formatErrorMessage(context)}"
           )
-        }
-      }
-
-      // Try to get the facilities associated with this district
-      loginEventMessagesChannel?.trySend("Getting facilities")
-      when (val result = facilityRepository.downloadAndSaveFacilities(loginEventMessagesChannel)) {
-        FacilityRepository.DownloadResult.Success -> {}
-        is FacilityRepository.DownloadResult.Exception -> {
-          return LoginResult.Exception(result.errorMessage)
-        }
-        is FacilityRepository.DownloadResult.Invalid -> {
-          return LoginResult.Invalid(result.errorMessage, result.errorCode)
+          null
         }
       }
 
@@ -288,6 +284,55 @@ class AuthRepository @Inject internal constructor(
         }
       }
 
+      districtName
+        ?.let { dbWrapper.districtDao().getDistrictByName(districtName).firstOrNull() }
+        ?.let { district ->
+          appValuesStore.setDistrictId(district.id.toInt())
+          district.id.toInt()
+        }
+
+      // Try to get the facilities associated with this district
+      loginEventMessagesChannel?.trySend("Getting facilities for our district")
+      when (val result = facilityRepository.downloadAndSaveFacilities(loginEventMessagesChannel)) {
+        FacilityRepository.DownloadResult.Success -> {}
+        is FacilityRepository.DownloadResult.Exception -> {
+          return LoginResult.Exception(result.errorMessage)
+        }
+        is FacilityRepository.DownloadResult.Invalid -> {
+          return LoginResult.Invalid(result.errorMessage, result.errorCode)
+        }
+      }
+
+      val workSemaphore = Semaphore(permits = 3)
+      try {
+        withContext(appCoroutineDispatchers.io.limitedParallelism(3)) {
+          dbWrapper.districtDao().getAllDistricts().forEach { district ->
+            launchWithPermit(workSemaphore) {
+              loginEventMessagesChannel?.trySend("Getting facilities for district ${district.name}")
+              when (
+                val result = facilityRepository.downloadAndSaveFacilities(
+                  loginEventMessagesChannel,
+                  districtId = district.id.toInt()
+                )
+              ) {
+                FacilityRepository.DownloadResult.Success -> {}
+                is FacilityRepository.DownloadResult.Exception -> {
+                  throw FacilityParallelDownloadException(LoginResult.Exception(result.errorMessage))
+                }
+                is FacilityRepository.DownloadResult.Invalid -> {
+                  throw FacilityParallelDownloadException(
+                    LoginResult.Invalid(result.errorMessage, result.errorCode)
+                  )
+                }
+              }
+            }
+          }
+        }
+      } catch (e: FacilityParallelDownloadException) {
+        Log.e(TAG, "Facility download failed: ${e.result}")
+        return e.result
+      }
+
       loginEventMessagesChannel?.trySend("Getting dropdown values")
       when (val result = enumRepository.downloadAndSaveEnumsFromServer(loginEventMessagesChannel)) {
         EnumRepository.DownloadResult.Success -> {}
@@ -299,8 +344,12 @@ class AuthRepository @Inject internal constructor(
         }
       }
 
+      success = true
       return LoginResult.Success
     } finally {
+      if (!success) {
+        appValuesStore.clearAuthToken()
+      }
       appValuesStore.markLoginComplete()
       loginEventMessagesChannel?.close()
     }

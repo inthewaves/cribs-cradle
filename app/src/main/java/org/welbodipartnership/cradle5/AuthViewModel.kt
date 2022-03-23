@@ -110,7 +110,7 @@ class AuthViewModel @Inject constructor(
       Log.d(TAG, "authChannel received an action")
       submissionState.value = SubmissionState.Submitting
       val loginEventChannel: SendChannel<String> by lazy {
-        actor(capacity = Channel.CONFLATED) {
+        actor(capacity = Channel.UNLIMITED) {
           consumeEach {
             Log.d(TAG, "Login action: $it")
             _loginMessagesFlow.value = it

@@ -20,16 +20,25 @@ import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.withContext
+import org.welbodipartnership.api.cradle5.HealthcareFacilitySummary
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
 import org.welbodipartnership.cradle5.data.database.entities.LocationCheckIn
 import org.welbodipartnership.cradle5.data.database.resultentities.PatientOutcomePair
 import org.welbodipartnership.cradle5.data.settings.AppValuesStore
+import org.welbodipartnership.cradle5.domain.NetworkResult
+import org.welbodipartnership.cradle5.domain.ObjectId
 import org.welbodipartnership.cradle5.domain.RestApi
+import org.welbodipartnership.cradle5.domain.auth.AuthRepository
+import org.welbodipartnership.cradle5.domain.auth.FacilityParallelDownloadException
 import org.welbodipartnership.cradle5.domain.districts.DistrictRepository
 import org.welbodipartnership.cradle5.domain.enums.EnumRepository
 import org.welbodipartnership.cradle5.domain.facilities.FacilityRepository
 import org.welbodipartnership.cradle5.domain.patients.PatientsManager
 import org.welbodipartnership.cradle5.domain.toApiBody
+import org.welbodipartnership.cradle5.domain.util.launchWithPermit
+import org.welbodipartnership.cradle5.util.coroutines.AppCoroutineDispatchers
 import java.security.SecureRandom
 import javax.annotation.concurrent.Immutable
 import kotlin.random.asKotlinRandom
@@ -46,6 +55,7 @@ class SyncWorker @AssistedInject constructor(
   private val facilityRepository: FacilityRepository,
   private val districtRepository: DistrictRepository,
   private val enumRepository: EnumRepository,
+  private val appCoroutineDispatchers: AppCoroutineDispatchers,
 ) : CoroutineWorker(appContext, workerParams) {
 
   private val secureRandom = SecureRandom()
@@ -93,13 +103,86 @@ class SyncWorker @AssistedInject constructor(
         consumeEach { Log.d(TAG, it) }
       }
       try {
-        Log.d(TAG, "downloading facilities")
-        reportProgress(Stage.DOWNLOADING_FACILITIES)
-        facilityRepository.downloadAndSaveFacilities(logChannel)
+        // Try to get the user's district
+        logChannel.trySend("Getting user district")
+        val districtName: String? = when (
+          val result = restApi.getFormData<HealthcareFacilitySummary>(objectId = ObjectId.QUERIES)
+        ) {
+          is NetworkResult.Success -> {
+            val name = result.value.districtName
+            if (name != null) {
+              appValuesStore.setDistrictName(name)
+            } else {
+              logChannel.trySend("User not associated with a district")
+            }
+            name
+          }
+          is NetworkResult.Failure -> {
+            val message = result.errorValue.decodeToString()
+            logChannel.trySend(
+              "Unable to get district: HTTP ${result.statusCode} error (message: $message)"
+            )
+            null
+          }
+          is NetworkResult.NetworkException -> {
+            logChannel.trySend(
+              "Unable to get district: ${result.formatErrorMessage(applicationContext)}"
+            )
+            null
+          }
+        }
+
+        logChannel.trySend("Getting districts")
+        when (val result = districtRepository.downloadAndSaveDistricts(logChannel)) {
+          DistrictRepository.DownloadResult.Success -> {}
+          is DistrictRepository.DownloadResult.Exception -> {
+          }
+          is DistrictRepository.DownloadResult.Invalid -> {}
+        }
+
+        districtName
+          ?.let { dbWrapper.districtDao().getDistrictByName(districtName).firstOrNull() }
+          ?.let { district ->
+            appValuesStore.setDistrictId(district.id.toInt())
+            district.id.toInt()
+          }
 
         Log.d(TAG, "downloading districts")
         reportProgress(Stage.DOWNLOADING_DISTRICTS)
         districtRepository.downloadAndSaveDistricts(logChannel)
+
+        Log.d(TAG, "downloading facilities")
+        reportProgress(Stage.DOWNLOADING_FACILITIES)
+        facilityRepository.downloadAndSaveFacilities(logChannel)
+
+        val workSemaphore = Semaphore(permits = 3)
+        try {
+          withContext(appCoroutineDispatchers.io.limitedParallelism(3)) {
+            dbWrapper.districtDao().getAllDistricts().forEach { district ->
+              launchWithPermit(workSemaphore) {
+                logChannel.trySend("Getting facilities for district ${district.name}")
+                when (
+                  val result = facilityRepository.downloadAndSaveFacilities(
+                    logChannel,
+                    districtId = district.id.toInt()
+                  )
+                ) {
+                  FacilityRepository.DownloadResult.Success -> {}
+                  is FacilityRepository.DownloadResult.Exception -> {
+                    throw FacilityParallelDownloadException(AuthRepository.LoginResult.Exception(result.errorMessage))
+                  }
+                  is FacilityRepository.DownloadResult.Invalid -> {
+                    throw FacilityParallelDownloadException(
+                      AuthRepository.LoginResult.Invalid(result.errorMessage, result.errorCode)
+                    )
+                  }
+                }
+              }
+            }
+          }
+        } catch (e: FacilityParallelDownloadException) {
+          Log.e(TAG, "Facility download failed: ${e.result}")
+        }
 
         Log.d(TAG, "downloading dropdown values")
         reportProgress(Stage.DOWNLOADING_DROPDOWN_VALUES)

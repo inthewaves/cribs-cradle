@@ -20,6 +20,12 @@ abstract class DistrictDao {
   @Query("SELECT * FROM District WHERE id = :districtPk")
   abstract suspend fun getDistrict(districtPk: Long): District?
 
+  @Query("SELECT * FROM District WHERE name = :name")
+  abstract suspend fun getDistrictByName(name: String): List<District>
+
+  @Query("SELECT * FROM District")
+  abstract suspend fun getAllDistricts(): List<District>
+
   /**
    * Updates the [district] or inserts it into the database if the [district] doesn't yet exist.
    */

@@ -255,7 +255,7 @@ fun PatientDetailsScreenNotUploadedPreview() {
       PatientDetailsScreen(
         PatientFacilityDistrictOutcomes(
           patient = PatientPreviewClasses.createTestPatient(),
-          facility = Facility(5L, "Test facility", 0, false, "My notes"),
+          facility = Facility(5L, "Test facility", 0, 2, false, "My notes"),
           referralFromDistrict = null,
           referralFromFacility = null,
           referralToDistrict = null,
@@ -278,16 +278,16 @@ fun PatientDetailsScreenUploadedPreview() {
       PatientDetailsScreen(
         PatientFacilityDistrictOutcomes(
           patient = PatientPreviewClasses.createTestPatient(serverInfo = ServerInfo(nodeId = 5L, objectId = null)),
-          facility = Facility(5L, "Test facility", 0, false, "My notes"),
+          facility = Facility(5L, "Test facility", 0, 2, false, "My notes"),
           outcomes = PatientPreviewClasses.createTestOutcomes(),
           referralFromDistrict = District(PatientPreviewClasses.FROM_DISTRICT_ID, "Test 'from' district"),
           referralFromFacility = Facility(
-            PatientPreviewClasses.FROM_FACILITY_ID, "Test 'from' facility", hasVisited = false, listOrder = 1,
+            PatientPreviewClasses.FROM_FACILITY_ID, "Test 'from' facility", districtId = 2, hasVisited = false, listOrder = 1,
           ),
           referralToDistrict = District(PatientPreviewClasses.TO_DISTRICT_ID, "Test 'to' district"),
           referralToFacility = Facility(
             PatientPreviewClasses.TO_FACILITY_ID, "Test 'to' facility",
-            hasVisited = false, listOrder = 1,
+            districtId = 2, hasVisited = false, listOrder = 1,
           ),
         ),
         editState = SyncRepository.FormEditState.CAN_EDIT,
@@ -306,16 +306,17 @@ fun PatientDetailsScreenSyncingPreview() {
       PatientDetailsScreen(
         PatientFacilityDistrictOutcomes(
           patient = PatientPreviewClasses.createTestPatient(isDraft = false),
-          facility = Facility(5L, "Test facility", 0, false, "My notes"),
+          facility = Facility(5L, "Test facility", 0, 2, false, "My notes"),
           outcomes = PatientPreviewClasses.createTestOutcomes(),
           referralFromDistrict = District(PatientPreviewClasses.FROM_DISTRICT_ID, "Test 'from' district"),
           referralFromFacility = Facility(
-            PatientPreviewClasses.FROM_FACILITY_ID, "Test 'from' facility", hasVisited = false, listOrder = 1,
+            PatientPreviewClasses.FROM_FACILITY_ID, "Test 'from' facility",
+            hasVisited = false, districtId = 2, listOrder = 1,
           ),
           referralToDistrict = District(PatientPreviewClasses.TO_DISTRICT_ID, "Test 'to' district"),
           referralToFacility = Facility(
             PatientPreviewClasses.TO_FACILITY_ID, "Test 'to' facility",
-            hasVisited = false, listOrder = 1,
+            hasVisited = false, districtId = 2, listOrder = 1,
           ),
         ),
         editState = SyncRepository.FormEditState.CANT_EDIT_SYNC_IN_PROGRESS,

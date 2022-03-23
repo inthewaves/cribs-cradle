@@ -6,12 +6,12 @@ import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runInterruptible
-import kotlinx.coroutines.withContext
 import okhttp3.FormBody
 import okhttp3.Headers
 import okio.BufferedSource
@@ -139,23 +139,24 @@ class RestApi @Inject internal constructor(
     controlId: ControlId,
     formId: FormId,
     objectId: ObjectId,
-  ): DefaultNetworkResult<List<T>> {
-
+    masterValues: List<String> = emptyList(),
+  ): DefaultNetworkResult<List<T>> = coroutineScope {
     val firstPageRes: DefaultNetworkResult<DynamicLookupBody<T>> = getPageForDynamicLookup(
       valuesClass,
       controlId,
       formId,
       objectId,
       page = 1,
+      masterValues,
     )
-
     if (firstPageRes !is NetworkResult.Success) {
-      return firstPageRes.castError()
+      return@coroutineScope firstPageRes.castError()
     }
     if (firstPageRes.value.pageNumber >= firstPageRes.value.totalNumberOfPages) {
       // fast path: avoid allocating an new list and just returned the (mapped) result
-      return firstPageRes.mapSuccess { it.results }
+      return@coroutineScope firstPageRes.mapSuccess { it.results }
     }
+    ensureActive()
     Log.d(
       TAG,
       "Dynamic lookup $controlId, $formId, $objectId " +
@@ -164,7 +165,7 @@ class RestApi @Inject internal constructor(
     )
     // copy and pasted code, but we're optimizing by not creating this list builder if there's
     // only one page
-    return firstPageRes.mapSuccess {
+    firstPageRes.mapSuccess {
       buildList<T>(capacity = firstPageRes.value.totalNumberOfRecords) {
         addAll(firstPageRes.value.results)
 
@@ -174,6 +175,7 @@ class RestApi @Inject internal constructor(
           firstPageRes
         do {
           val pageNow = currentPageResult.value.pageNumber + 1
+          ensureActive()
           val thisPageResult: DefaultNetworkResult<DynamicLookupBody<T>> =
             getPageForDynamicLookup(
               valuesClass,
@@ -181,9 +183,11 @@ class RestApi @Inject internal constructor(
               formId,
               objectId,
               page = pageNow,
+              masterValues,
             )
+          ensureActive()
           if (thisPageResult !is NetworkResult.Success) {
-            return thisPageResult.castError()
+            return@coroutineScope thisPageResult.castError()
           }
 
           addAll(thisPageResult.value.results)
@@ -210,12 +214,13 @@ class RestApi @Inject internal constructor(
     controlId: ControlId,
     formId: FormId,
     objectId: ObjectId,
-    page: Int
+    page: Int,
+    masterValues: List<String> = emptyList(),
   ): DefaultNetworkResult<DynamicLookupBody<T>> {
     require(page >= 1) { "page should be a positive integer" }
     return httpClient.makeRequest(
       method = HttpClient.Method.GET,
-      url = urlProvider.dynamicLookups(controlId, formId, objectId, page),
+      url = urlProvider.dynamicLookups(controlId, formId, objectId, page, masterValues),
       headers = defaultHeadersFlow.first(),
       failureReader = { src, _ ->
         runInterruptible { src.readByteArray() }

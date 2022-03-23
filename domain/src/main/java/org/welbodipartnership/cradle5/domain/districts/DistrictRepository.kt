@@ -34,9 +34,7 @@ class DistrictRepository @Inject constructor(
   /**
    * TODO: Might be worth streaming this response from the server
    */
-  suspend fun downloadAndSaveDistricts(
-    eventMessagesChannel: SendChannel<String>?
-  ): DownloadResult {
+  suspend fun downloadAndSaveDistricts(eventMessagesChannel: SendChannel<String>?): DownloadResult {
     when (
       val result: DefaultNetworkResult<List<DynamicLookupListEntry>> = restApi
         .getDynamicLookupData(

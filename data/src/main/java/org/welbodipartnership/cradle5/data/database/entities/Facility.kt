@@ -18,6 +18,8 @@ data class Facility(
   @ColumnInfo(name = "id")
   val id: Long,
   val name: String?,
+  @ColumnInfo(defaultValue = DEFAULT_DISTRICT_ID_STRING)
+  val districtId: Int = DEFAULT_DISTRICT_ID,
   @ColumnInfo(defaultValue = "0")
   val listOrder: Int,
   @ColumnInfo(defaultValue = "0")
@@ -26,4 +28,9 @@ data class Facility(
    * Local notes the user may have saved for the patient. This is not uploaded to the server.
    */
   val localNotes: String? = null
-) : Parcelable
+) : Parcelable {
+  companion object {
+    const val DEFAULT_DISTRICT_ID = -1
+    private const val DEFAULT_DISTRICT_ID_STRING = "$DEFAULT_DISTRICT_ID"
+  }
+}

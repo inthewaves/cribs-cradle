@@ -20,6 +20,7 @@ abstract class FacilityDao {
   data class FacilityUpdate(
     val id: Long,
     val name: String?,
+    val districtId: Int,
     val listOrder: Int,
   )
 
@@ -59,13 +60,16 @@ abstract class FacilityDao {
   protected abstract suspend fun insert(facility: FacilityUpdate): Long
 
   @Transaction
-  @Query("SELECT * FROM Facility $DEFAULT_ORDER")
-  abstract fun facilitiesPagingSource(): PagingSource<Int, Facility>
+  @Query("SELECT * FROM Facility WHERE districtId = :districtId $DEFAULT_ORDER")
+  abstract fun facilitiesPagingSource(
+    districtId: Int = Facility.DEFAULT_DISTRICT_ID
+  ): PagingSource<Int, Facility>
 
   @Transaction
-  @Query("SELECT * FROM Facility WHERE hasVisited = :visited $DEFAULT_ORDER")
+  @Query("SELECT * FROM Facility WHERE hasVisited = :visited AND districtId = :districtId $DEFAULT_ORDER")
   abstract fun facilitiesPagingSourceFilterByVisited(
-    visited: Boolean
+    visited: Boolean,
+    districtId: Int = Facility.DEFAULT_DISTRICT_ID
   ): PagingSource<Int, Facility>
 
   @RawQuery

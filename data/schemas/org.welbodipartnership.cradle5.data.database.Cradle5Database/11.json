@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 11,
-    "identityHash": "fdab13602a377fdaaf7ba6e24947d30c",
+    "identityHash": "92fd3f2002812ae5619c88e2690750e3",
     "entities": [
       {
         "tableName": "Patient",
@@ -415,7 +415,7 @@
       },
       {
         "tableName": "Facility",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `name` TEXT, `listOrder` INTEGER NOT NULL DEFAULT 0, `hasVisited` INTEGER NOT NULL DEFAULT 0, `localNotes` TEXT, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `name` TEXT, `districtId` INTEGER NOT NULL DEFAULT -1, `listOrder` INTEGER NOT NULL DEFAULT 0, `hasVisited` INTEGER NOT NULL DEFAULT 0, `localNotes` TEXT, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -428,6 +428,13 @@
             "columnName": "name",
             "affinity": "TEXT",
             "notNull": false
+          },
+          {
+            "fieldPath": "districtId",
+            "columnName": "districtId",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "-1"
           },
           {
             "fieldPath": "listOrder",
@@ -545,7 +552,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'fdab13602a377fdaaf7ba6e24947d30c')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '92fd3f2002812ae5619c88e2690750e3')"
     ]
   }
 }
