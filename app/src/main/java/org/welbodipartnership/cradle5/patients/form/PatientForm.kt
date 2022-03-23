@@ -1531,7 +1531,7 @@ class EnumIdOnlyState(
     when {
       selection == null -> !isMandatory || (isMandatory && isFormDraftState.value == true)
       enum == null -> true
-      else -> enum.getValueFromId(selection.selectionId) != null
+      else -> enum.get(selection.selectionId) != null
     }
   },
   errorFor = { ctx, _, -> ctx.getString(R.string.server_enum_unknown_selection_error) },
@@ -1556,7 +1556,7 @@ class EnumWithOtherState(
       selection == null -> !isMandatory || (isMandatory && isFormDraftState.value == true)
       enum == null -> true
       else -> {
-        val entry = selection.let { enum.getValueFromId(it.selectionId) }
+        val entry = selection.let { enum.get(it.selectionId) }
         if (entry == null) {
           false
         } else if (entry == otherSelection && selection.otherString.isNullOrBlank()) {
@@ -1568,7 +1568,7 @@ class EnumWithOtherState(
     }
   },
   errorFor = { ctx, selection, ->
-    val entry = selection?.let { enum?.getValueFromId(it.selectionId) }
+    val entry = selection?.let { enum?.get(it.selectionId) }
     if (entry == otherSelection && selection?.otherString.isNullOrBlank()) {
       ctx.getString(R.string.server_enum_other_selection_missing_error)
     } else if (entry == null && isMandatory) {

@@ -393,16 +393,16 @@ value class ServerEnumCollection private constructor(
   }
 }
 
-enum class DropdownType(val serverLookupId: Int) {
-  Place(14),
-  CauseOfHysterectomy(15),
-  CauseForHduOrItuAdmission(16),
-  UnderlyingCauseOfMaternalDeath(17),
-  TypeOfSurgicalManagement(18),
-  PerinatalOutcome(19),
-  MaternalFactorsRelatedToPerinatalLoss(20),
-  Birthweight(22),
-  AgeAtDelivery(23)
+enum class DropdownType(val serverLookupId: Int, val expectedServerName: String) {
+  Place(14, "Place"),
+  CauseOfHysterectomy(15, "Cause of hysterectomy"),
+  CauseForHduOrItuAdmission(16, "Cause for HDU / ITU admission"),
+  UnderlyingCauseOfMaternalDeath(17, "Underlying cause of death"),
+  TypeOfSurgicalManagement(18, "Type of surgical management"),
+  PerinatalOutcome(19, "Perinatal outcome"),
+  MaternalFactorsRelatedToPerinatalLoss(20, "Maternal factors related to perinatal loss"),
+  Birthweight(22, "Birthweight"),
+  AgeAtDelivery(23, "Age at delivery")
 }
 
 /**
@@ -420,11 +420,12 @@ class ServerEnum constructor(
   val sortedValuesWithEmptyResponse: Sequence<EntryType>
     get() = sequenceOf(EmptyResponseEntry) + validSortedValues
 
-  val otherEntry: Entry? = validSortedValues.asReversed().find { it.name.trim() == "Other" }
+  val otherEntry: Entry? = validSortedValues.asReversed()
+    .find { it.name.trim().equals("other", ignoreCase = true) }
 
-  fun getValueFromId(id: Int): Entry? = validSortedValues.find { it.id == id }
+  operator fun get(id: Int): Entry? = validSortedValues.find { it.id == id }
 
-  fun getValueFromId(id: EnumSelection): Entry? = getValueFromId(id.selectionId)
+  operator fun get(id: EnumSelection): Entry? = get(id.selectionId)
 
   fun toDynamicServerEnum(): DynamicServerEnum = DynamicServerEnum.newBuilder()
     .setId(type.serverLookupId)

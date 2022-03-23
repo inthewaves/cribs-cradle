@@ -130,7 +130,7 @@ private fun <T : EnumSelection> BaseEnumDropdownMenu(
   extraContent: @Composable (ColumnScope.(currentEntry: ServerEnum.Entry?) -> Unit)? = null,
 ) {
   var expanded by remember { mutableStateOf(false) }
-  val currentEntry = currentSelection?.selectionId?.let { serverEnum.getValueFromId(it) }
+  val currentEntry = currentSelection?.selectionId?.let { serverEnum.get(it) }
 
   Column(modifier) {
 

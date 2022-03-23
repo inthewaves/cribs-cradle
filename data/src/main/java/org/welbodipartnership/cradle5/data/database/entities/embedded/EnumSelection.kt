@@ -13,7 +13,7 @@ sealed class EnumSelection : Parcelable {
   abstract val selectionId: Int
 
   fun getSelection(serverEnum: ServerEnum): ServerEnum.Entry? =
-    serverEnum.getValueFromId(selectionId)
+    serverEnum.get(selectionId)
 
   @Immutable
   @Parcelize
@@ -24,7 +24,7 @@ sealed class EnumSelection : Parcelable {
     inline fun getSelectionString(
       serverEnum: ServerEnum?,
       unknownFormatter: (unknownSelectionId: Int) -> String
-    ): String = serverEnum?.getValueFromId(selectionId)?.name
+    ): String = serverEnum?.get(selectionId)?.name
       ?: unknownFormatter(selectionId)
   }
 
@@ -52,7 +52,7 @@ sealed class EnumSelection : Parcelable {
       serverEnum: ServerEnum?,
       unknownFormatter: (unknownSelectionId: Int) -> String
     ): String = otherString
-      ?: serverEnum?.getValueFromId(selectionId)?.name
+      ?: serverEnum?.get(selectionId)?.name
       ?: unknownFormatter(selectionId)
   }
 }

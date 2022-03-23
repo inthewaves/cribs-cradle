@@ -1,10 +1,12 @@
 package org.welbodipartnership.cradle5.domain.enums
 
 import android.content.Context
+import android.util.ArraySet
 import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.SendChannel
 import org.welbodipartnership.api.lookups.LookupResult
+import org.welbodipartnership.cradle5.data.serverenums.DropdownType
 import org.welbodipartnership.cradle5.data.serverenums.ServerEnumCollection
 import org.welbodipartnership.cradle5.data.settings.AppValuesStore
 import org.welbodipartnership.cradle5.data.settings.DynamicServerEnum
@@ -16,6 +18,7 @@ import org.welbodipartnership.cradle5.domain.RestApi
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.math.exp
 
 @Singleton
 class EnumRepository @Inject constructor(
@@ -58,7 +61,7 @@ class EnumRepository @Inject constructor(
 
     Log.d(TAG, "received ${lookupsList.size} lookups / enums from the server")
 
-    val enumsList: List<DynamicServerEnum> = buildList {
+    val enumsListFromServer: List<DynamicServerEnum> = buildList {
       for (entry in lookupsList) {
         eventChannel?.trySend("Downloading dropdown values for ${entry.name}")
         val lookupId = LookupId(entry.id)
@@ -67,10 +70,48 @@ class EnumRepository @Inject constructor(
           else -> return lookupGetResult.castErrorToDownloadResult()
         }
       }
+
+      DropdownType.values().forEach { dropdownType ->
+        val matchingEnumFromServer = this.find { it.id == dropdownType.serverLookupId }
+        val defaultEnum = ServerEnumCollection.defaultInstance[dropdownType]
+        if (matchingEnumFromServer == null) {
+          if (defaultEnum != null) {
+            Log.w(TAG, "Server is missing enum $dropdownType, id = ${dropdownType.serverLookupId}. Inserting fake entry.")
+            add(defaultEnum.toDynamicServerEnum())
+          } else {
+            Log.w(TAG, "Server is missing enum $dropdownType, id = ${dropdownType.serverLookupId}. Failed to find local entry!")
+          }
+        } else {
+          val serverName = matchingEnumFromServer.name
+          val expectedName = dropdownType.expectedServerName
+          if (
+            serverName != expectedName &&
+            !serverName.lowercase().contains(expectedName) &&
+            !expectedName.lowercase().contains(serverName)
+          ) {
+            Log.w(TAG, "Enum $dropdownType has mismatched name! (Expected name: \"${dropdownType.expectedServerName}\". New name from server: \"${matchingEnumFromServer.name}\"")
+          }
+
+          if (defaultEnum != null) {
+            val mappedNames = matchingEnumFromServer.valuesList
+              .asSequence()
+              .map { it.name }
+              .toCollection(ArraySet(matchingEnumFromServer.valuesCount))
+
+            val anyOfTheOptionsMatch = defaultEnum.validSortedValues.any { thisDefault ->
+              (thisDefault.name in mappedNames && !thisDefault.name.equals("other", ignoreCase = true))
+            }
+
+            if (!anyOfTheOptionsMatch) {
+              Log.w(TAG, "Enum $dropdownType does not have any of the options from the default instance!")
+            }
+          }
+        }
+      }
     }
 
     try {
-      appValuesStore.replaceEnums(enumsList)
+      appValuesStore.replaceEnums(enumsListFromServer)
     } catch (e: IOException) {
       return DownloadResult.Exception(e, e.localizedMessage)
     }
