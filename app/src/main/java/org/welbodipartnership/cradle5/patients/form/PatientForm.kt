@@ -566,7 +566,8 @@ fun PatientForm(
                 for ((section, errors) in currentFormState.errorsBySectionStringId) {
                   CategoryHeader(stringResource(section))
                   for (error in errors) {
-                    Text(error.errorMessage)
+                    val fieldTitle = stringResource(error.fieldTitle)
+                    Text("$fieldTitle: ${error.errorMessage}")
                   }
                 }
               }
