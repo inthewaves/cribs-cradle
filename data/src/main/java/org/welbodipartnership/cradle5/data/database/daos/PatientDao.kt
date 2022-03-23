@@ -2,6 +2,7 @@ package org.welbodipartnership.cradle5.data.database.daos
 
 import androidx.paging.PagingSource
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -53,6 +54,9 @@ abstract class PatientDao {
    */
   @Insert(onConflict = OnConflictStrategy.IGNORE)
   protected abstract suspend fun insert(patient: Patient): Long
+
+  @Delete
+  abstract suspend fun delete(patient: Patient): Int
 
   // ---- Patients paging
 

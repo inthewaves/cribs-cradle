@@ -1,6 +1,7 @@
 package org.welbodipartnership.cradle5.data.database.daos
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Transaction
@@ -36,6 +37,9 @@ abstract class OutcomesDao {
     outcomesId: Long,
     serverErrorMessage: String?
   )
+
+  @Delete
+  abstract suspend fun delete(outcomes: Outcomes): Int
 
   /**
    * @return the number of rows that were updated. Note that WHERE is set to the primary key,

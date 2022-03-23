@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.AlertDialog
+import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.Icon
@@ -22,6 +24,7 @@ import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
+import androidx.compose.material.TextButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Error
@@ -33,6 +36,9 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -99,6 +105,13 @@ fun PatientDetailsScreen(
             editState = editState,
             onPatientEditPress = onPatientEdit,
             onPatientOtherInfoEditPress = onPatientOtherInfoEditPress,
+            onPatientDeletePress = {
+              viewModel.deletePatient(
+                patientState.patientFacilityOutcomes.patient,
+                patientState.patientFacilityOutcomes.outcomes
+              )
+              onBackPressed()
+            },
             contentPadding = padding
           )
         }
@@ -129,11 +142,34 @@ private fun PatientDetailsScreen(
   editState: SyncRepository.FormEditState?,
   onPatientEditPress: (patientPrimaryKey: Long) -> Unit,
   onPatientOtherInfoEditPress: (patientPrimaryKey: Long) -> Unit,
+  onPatientDeletePress: (patientPrimaryKey: Long) -> Unit,
   modifier: Modifier = Modifier,
   contentPadding: PaddingValues = PaddingValues()
 ) {
   val patient: Patient = patientAndRelatedInfo.patient
   val outcomes: Outcomes? = patientAndRelatedInfo.outcomes
+
+  var isDeleteConfirmDialogShowing by rememberSaveable { mutableStateOf(false) }
+  if (isDeleteConfirmDialogShowing) {
+    AlertDialog(
+      onDismissRequest = { isDeleteConfirmDialogShowing = false },
+      title = { Text(stringResource(id = R.string.delete_info_dialog_title)) },
+      text = { Text(stringResource(id = R.string.delete_info_dialog_body)) },
+      confirmButton = {
+        TextButton(
+          onClick = { onPatientDeletePress(patient.id) },
+          colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colors.error)
+        ) {
+          Text(stringResource(id = R.string.delete_info_dialog_confirm_button))
+        }
+      },
+      dismissButton = {
+        TextButton(onClick = { isDeleteConfirmDialogShowing = false }) {
+          Text(stringResource(id = R.string.cancel))
+        }
+      }
+    )
+  }
 
   LazyColumn(modifier = modifier, contentPadding = contentPadding) {
     item {
@@ -156,6 +192,14 @@ private fun PatientDetailsScreen(
               }
             )
           )
+        }
+
+        OutlinedButton(
+          enabled = !patient.isUploadedToServer && editState?.canEdit == true,
+          onClick = { isDeleteConfirmDialogShowing = true },
+          colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colors.error),
+        ) {
+          Text(stringResource(R.string.delete_info_button))
         }
 
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -264,7 +308,8 @@ fun PatientDetailsScreenNotUploadedPreview() {
         ),
         editState = SyncRepository.FormEditState.CAN_EDIT,
         onPatientEditPress = {},
-        onPatientOtherInfoEditPress = {}
+        onPatientOtherInfoEditPress = {},
+        onPatientDeletePress = {}
       )
     }
   }
@@ -292,7 +337,8 @@ fun PatientDetailsScreenUploadedPreview() {
         ),
         editState = SyncRepository.FormEditState.CAN_EDIT,
         onPatientEditPress = {},
-        onPatientOtherInfoEditPress = {}
+        onPatientOtherInfoEditPress = {},
+        onPatientDeletePress = {}
       )
     }
   }
@@ -321,7 +367,8 @@ fun PatientDetailsScreenSyncingPreview() {
         ),
         editState = SyncRepository.FormEditState.CANT_EDIT_SYNC_IN_PROGRESS,
         onPatientEditPress = {},
-        onPatientOtherInfoEditPress = {}
+        onPatientOtherInfoEditPress = {},
+        onPatientDeletePress = {},
       )
     }
   }
