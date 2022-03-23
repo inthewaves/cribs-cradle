@@ -35,7 +35,7 @@ android {
         minSdk = appconfig.versions.minSdkVersion.get().toInt()
         targetSdk = appconfig.versions.targetSdkVersion.get().toInt()
         versionCode = 15
-        versionName = "0.9.0-SNAPSHOT"
+        versionName = "0.9.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
