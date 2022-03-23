@@ -35,7 +35,6 @@ import org.welbodipartnership.cradle5.ui.composables.LabelAndValueForDropdownOrU
 import org.welbodipartnership.cradle5.ui.composables.LabelAndValueOrNone
 import org.welbodipartnership.cradle5.ui.composables.LabelAndValueOrUnknown
 import org.welbodipartnership.cradle5.ui.composables.ValueForDropdownOrDefault
-import org.welbodipartnership.cradle5.ui.composables.ValueForDropdownOrUnknown
 import org.welbodipartnership.cradle5.ui.composables.forms.MoreInfoIconButton
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
 
@@ -194,35 +193,6 @@ fun OutcomesCard(
     Spacer(Modifier.height(categoryToCategorySpacerHeight))
 
     CategoryHeader(
-      text = stringResource(R.string.outcomes_hysterectomy_label),
-      moreInfoText = stringResource(R.string.outcomes_hysterectomy_more_info),
-    )
-    Spacer(Modifier.height(categoryToBodySpacerHeight))
-    if (hysterectomy != null) {
-      LabelAndValueOrUnknown(
-        stringResource(R.string.form_date_label),
-        hysterectomy.date?.toString()
-      )
-      LabelAndValueForDropdownOrUnknown(
-        dropdownType = DropdownType.CauseOfHysterectomy,
-        label = stringResource(R.string.hysterectomy_cause_label),
-        enumValue = hysterectomy.cause,
-        enumCollection = enumCollection
-      )
-    } else {
-      Text(
-        text = if (hysterectomyTouched == TouchedState.TOUCHED_ENABLED) {
-          stringResource(R.string.outcomes_card_enabled_but_missing_details_from_draft)
-        } else {
-          stringResource(R.string.none)
-        },
-        style = MaterialTheme.typography.body2,
-      )
-    }
-
-    Spacer(Modifier.height(categoryToCategorySpacerHeight))
-
-    CategoryHeader(
       text = stringResource(R.string.outcomes_maternal_death_label),
       moreInfoText = stringResource(R.string.outcomes_maternal_death_more_info),
     )
@@ -244,6 +214,35 @@ fun OutcomesCard(
     } else {
       Text(
         text = if (maternalDeathTouched == TouchedState.TOUCHED_ENABLED) {
+          stringResource(R.string.outcomes_card_enabled_but_missing_details_from_draft)
+        } else {
+          stringResource(R.string.none)
+        },
+        style = MaterialTheme.typography.body2,
+      )
+    }
+
+    Spacer(Modifier.height(categoryToCategorySpacerHeight))
+
+    CategoryHeader(
+      text = stringResource(R.string.outcomes_hysterectomy_label),
+      moreInfoText = stringResource(R.string.outcomes_hysterectomy_more_info),
+    )
+    Spacer(Modifier.height(categoryToBodySpacerHeight))
+    if (hysterectomy != null) {
+      LabelAndValueOrUnknown(
+        stringResource(R.string.form_date_label),
+        hysterectomy.date?.toString()
+      )
+      LabelAndValueForDropdownOrUnknown(
+        dropdownType = DropdownType.CauseOfHysterectomy,
+        label = stringResource(R.string.hysterectomy_cause_label),
+        enumValue = hysterectomy.cause,
+        enumCollection = enumCollection
+      )
+    } else {
+      Text(
+        text = if (hysterectomyTouched == TouchedState.TOUCHED_ENABLED) {
           stringResource(R.string.outcomes_card_enabled_but_missing_details_from_draft)
         } else {
           stringResource(R.string.none)

@@ -40,11 +40,6 @@ data class Outcome(
   @Json(name = "Control2141")
   val perinatalNeonatalDeathCauseOther: Boolean? = null,
   /**
-   * If this is true, set all other neonatal fields to false
-   */
-  @Json(name = "Control2141")
-  val perinatalNeonatalDeathNotReported: Boolean? = null,
-  /**
    * Additional information on reason for perinatal death
    */
   @Json(name = "Control2104")

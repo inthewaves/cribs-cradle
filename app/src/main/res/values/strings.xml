@@ -145,7 +145,7 @@
     <string name="birthweight_selection_label">Birthweight</string>
     <string name="age_at_delivery_selection_label">Age at delivery</string>
     <string name="outcomes_birthweight_label">Birthweight</string>
-    <string name="outcomes_age_at_delivery_label">Age at delivery</string>
+    <string name="outcomes_age_at_delivery_label">Gestational age at delivery</string>
     <string name="perinatal_death_additional_info_label">Additional information on reason for perinatal death</string>
     <string name="privacy_policy_button">Privacy policy</string>
     <string name="privacy_policy_button_cd">Opens in web browser icon</string>

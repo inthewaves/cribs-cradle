@@ -9,6 +9,7 @@ import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import org.welbodipartnership.cradle5.data.database.entities.embedded.EnumSelection
 import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
@@ -179,11 +180,12 @@ data class CausesOfNeonatalDeath(
   @ColumnInfo(defaultValue = "0") val other: Boolean = false,
   @ColumnInfo(defaultValue = "0") val notReported: Boolean = false
 ) : Parcelable {
+  @IgnoredOnParcel
   @Ignore
   val areAllFieldsFalse = !respiratoryDistressSyndrome &&
     !birthAsphyxia &&
     !sepsis && !pneumonia && !meningitis && !malaria && !majorCongenitialMalformation &&
-    !prematurity && !causeNotEstablished && !other && !notReported
+    !prematurity && !causeNotEstablished && !other
 }
 
 @Immutable

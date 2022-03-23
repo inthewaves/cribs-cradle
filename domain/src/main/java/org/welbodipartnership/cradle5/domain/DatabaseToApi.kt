@@ -37,7 +37,6 @@ fun Outcomes.toApiBody() = Outcome(
   perinatalNeonatalDeathMajorCongenitalMalformation = perinatalDeath?.causesOfNeonatalDeath?.majorCongenitialMalformation ?: false,
   perinatalNeonatalDeathPrematurity = perinatalDeath?.causesOfNeonatalDeath?.prematurity ?: false,
   perinatalNeonatalDeathCauseNotEstablished = perinatalDeath?.causesOfNeonatalDeath?.causeNotEstablished ?: false,
-  perinatalNeonatalDeathNotReported = perinatalDeath?.causesOfNeonatalDeath?.notReported ?: false,
   perinatalNeonatalDeathCauseOther = perinatalDeath?.causesOfNeonatalDeath?.other ?: false,
   perinatalAdditionalInfo = perinatalDeath?.additionalInfo?.ifBlank { null },
 
