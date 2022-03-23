@@ -188,12 +188,14 @@ data class CausesOfNeonatalDeath(
 
 @Immutable
 data class BirthWeight(
-  val birthWeight: EnumSelection.IdOnly,
+  val birthWeight: EnumSelection.IdOnly?,
+  val isNotReported: Boolean = false,
 )
 
 @Immutable
 data class AgeAtDelivery(
-  val ageAtDelivery: EnumSelection.IdOnly,
+  val ageAtDelivery: EnumSelection.IdOnly?,
+  val isNotReported: Boolean = false,
 )
 
 sealed class Location(val serverId: Long) {

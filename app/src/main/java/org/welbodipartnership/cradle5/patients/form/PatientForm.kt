@@ -464,11 +464,16 @@ fun PatientForm(
           )
           Spacer(Modifier.height(categoryToCategorySpacerHeight))
           CategoryHeader(stringResource(R.string.outcomes_birthweight_label))
-          BirthWeightForm(birthWeightState = viewModel.formFields.birthWeight.birthWeight)
+          BirthWeightForm(
+            birthWeightState = viewModel.formFields.birthWeight.birthWeight,
+            isNotReported = viewModel.formFields.birthWeight.isNotReported,
+          )
           Spacer(Modifier.height(categoryToCategorySpacerHeight))
           CategoryHeader(stringResource(R.string.outcomes_age_at_delivery_label))
-          AgeAtDeliveryForm(ageAtDeliveryState = viewModel.formFields.ageAtDelivery.ageAtDelivery)
-
+          AgeAtDeliveryForm(
+            ageAtDeliveryState = viewModel.formFields.ageAtDelivery.ageAtDelivery,
+            isNotReported = viewModel.formFields.ageAtDelivery.isNotReported,
+          )
           Spacer(Modifier.height(categoryToCategorySpacerHeight))
 
           CategoryHeader(stringResource(R.string.outcomes_eclampsia_label))
@@ -1220,6 +1225,7 @@ fun PerinatalNeonatalDeathList(
 @Composable
 fun BirthWeightForm(
   birthWeightState: EnumIdOnlyState,
+  isNotReported: MutableState<Boolean>,
   modifier: Modifier = Modifier,
 ) {
   Column(modifier) {
@@ -1227,17 +1233,34 @@ fun BirthWeightForm(
       currentSelection = birthWeightState.stateValue,
       onSelect = { birthWeightState.stateValue = it },
       serverEnum = birthWeightState.enum!!,
-      label = { Text(stringResource(R.string.birthweight_selection_label)) },
-      enabled = true,
+      label = { RequiredText(stringResource(R.string.birthweight_selection_label), required = birthWeightState.isMandatory) },
+      enabled = !isNotReported.value,
       errorHint = birthWeightState.getError(),
       textModifier = Modifier.fillMaxWidth()
     )
+
+    Row(
+      verticalAlignment = Alignment.CenterVertically,
+      modifier = Modifier.fillMaxWidth()
+    ) {
+      Checkbox(
+        checked = isNotReported.value,
+        onCheckedChange = { newState ->
+          isNotReported.value = newState
+          if (newState) {
+            birthWeightState.stateValue = null
+          }
+        },
+      )
+      Text(stringResource(R.string.outcomes_not_reported))
+    }
   }
 }
 
 @Composable
 fun AgeAtDeliveryForm(
   ageAtDeliveryState: EnumIdOnlyState,
+  isNotReported: MutableState<Boolean>,
   modifier: Modifier = Modifier,
 ) {
   Column(modifier) {
@@ -1245,11 +1268,29 @@ fun AgeAtDeliveryForm(
       currentSelection = ageAtDeliveryState.stateValue,
       onSelect = { ageAtDeliveryState.stateValue = it },
       serverEnum = ageAtDeliveryState.enum!!,
-      label = { Text(stringResource(R.string.age_at_delivery_selection_label)) },
-      enabled = true,
+      label = {
+        RequiredText(stringResource(R.string.age_at_delivery_selection_label), required = ageAtDeliveryState.isMandatory)
+      },
+      enabled = !isNotReported.value,
       errorHint = ageAtDeliveryState.getError(),
       textModifier = Modifier.fillMaxWidth()
     )
+
+    Row(
+      verticalAlignment = Alignment.CenterVertically,
+      modifier = Modifier.fillMaxWidth()
+    ) {
+      Checkbox(
+        checked = isNotReported.value,
+        onCheckedChange = { newState ->
+          isNotReported.value = newState
+          if (newState) {
+            ageAtDeliveryState.stateValue = null
+          }
+        },
+      )
+      Text(stringResource(R.string.outcomes_not_reported))
+    }
   }
 }
 
@@ -1653,7 +1694,14 @@ class EnumIdOnlyState(
       else -> enum.get(selection.selectionId) != null
     }
   },
-  errorFor = { ctx, _, -> ctx.getString(R.string.server_enum_unknown_selection_error) },
+  errorFor = { ctx, selection, ->
+    val entry = selection?.let { enum?.get(it.selectionId) }
+    if (entry == null && isMandatory) {
+      ctx.getString(R.string.selection_required_error)
+    } else {
+      ctx.getString(R.string.server_enum_unknown_selection_error)
+    }
+  },
   initialValue = null,
   backingState = backingState,
   isFormDraftState = isFormDraftState,

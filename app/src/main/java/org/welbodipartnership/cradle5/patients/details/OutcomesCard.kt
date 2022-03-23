@@ -34,6 +34,7 @@ import org.welbodipartnership.cradle5.patients.form.PerinatalNeonatalDeathList
 import org.welbodipartnership.cradle5.ui.composables.LabelAndValueForDropdownOrUnknown
 import org.welbodipartnership.cradle5.ui.composables.LabelAndValueOrNone
 import org.welbodipartnership.cradle5.ui.composables.LabelAndValueOrUnknown
+import org.welbodipartnership.cradle5.ui.composables.ValueForDropdownOrDefault
 import org.welbodipartnership.cradle5.ui.composables.ValueForDropdownOrUnknown
 import org.welbodipartnership.cradle5.ui.composables.forms.MoreInfoIconButton
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
@@ -138,20 +139,22 @@ fun OutcomesCard(
 
     CategoryHeader(text = stringResource(R.string.outcomes_birthweight_label))
     Spacer(Modifier.height(categoryToBodySpacerHeight))
-    ValueForDropdownOrUnknown(
+    ValueForDropdownOrDefault(
       dropdownType = DropdownType.Birthweight,
       enumValue = birthWeight?.birthWeight,
-      enumCollection = enumCollection
+      enumCollection = enumCollection,
+      default = stringResource(if (birthWeight?.isNotReported == true) R.string.outcomes_not_reported else R.string.unknown)
     )
 
     Spacer(Modifier.height(categoryToCategorySpacerHeight))
 
     CategoryHeader(text = stringResource(R.string.outcomes_age_at_delivery_label))
     Spacer(Modifier.height(categoryToBodySpacerHeight))
-    ValueForDropdownOrUnknown(
+    ValueForDropdownOrDefault(
       dropdownType = DropdownType.AgeAtDelivery,
       enumValue = ageAtDelivery?.ageAtDelivery,
-      enumCollection = enumCollection
+      enumCollection = enumCollection,
+      stringResource(if (ageAtDelivery?.isNotReported == true) R.string.outcomes_not_reported else R.string.unknown)
     )
 
     Spacer(Modifier.height(categoryToCategorySpacerHeight))

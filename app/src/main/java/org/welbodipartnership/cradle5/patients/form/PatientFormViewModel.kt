@@ -259,17 +259,19 @@ class PatientFormViewModel @Inject constructor(
       additionalInfo = handle.createMutableState("perinatalDeathAdditionalInfo", null)
     ),
     birthWeight = OutcomeFieldsWithoutCheckbox.BirthWeight(
+      isNotReported = nonNullBooleanState("birthWeightNotReported", false),
       birthWeight = enumIdOnlyState(
         "birthWeight",
         DropdownType.Birthweight,
-        isMandatory = false,
+        isMandatory = true,
       )
     ),
     ageAtDelivery = OutcomeFieldsWithoutCheckbox.AgeAtDelivery(
+      isNotReported = nonNullBooleanState("ageAtDeliveryNotReported", false),
       ageAtDelivery = enumIdOnlyState(
         "ageAtDelivery",
         DropdownType.AgeAtDelivery,
-        isMandatory = false,
+        isMandatory = true,
       )
     )
   )
@@ -445,13 +447,25 @@ class PatientFormViewModel @Inject constructor(
 
           with(formFields.birthWeight) {
             outcomes?.birthWeight?.let {
-              birthWeight.backingState.value = it.birthWeight
+              if (it.isNotReported) {
+                birthWeight.backingState.value = null
+                isNotReported.value = true
+              } else {
+                birthWeight.backingState.value = it.birthWeight
+                isNotReported.value = false
+              }
             } ?: clearForms()
           }
 
           with(formFields.ageAtDelivery) {
             outcomes?.ageAtDelivery?.let {
-              ageAtDelivery.backingState.value = it.ageAtDelivery
+              if (it.isNotReported) {
+                ageAtDelivery.backingState.value = null
+                isNotReported.value = true
+              } else {
+                ageAtDelivery.backingState.value = it.ageAtDelivery
+                isNotReported.value = false
+              }
             } ?: clearForms()
           }
 
@@ -482,13 +496,15 @@ class PatientFormViewModel @Inject constructor(
       formFields.forceAllErrors()
 
       val fieldToErrorMap = linkedMapOf<Int, List<FieldError>>()
-      fun FieldsWithCheckbox.getCategoryStringRes() = when (this) {
+      fun BaseFields.getCategoryStringRes() = when (this) {
         is OutcomeFieldsWithCheckbox.Eclampsia -> R.string.outcomes_eclampsia_label
         is OutcomeFieldsWithCheckbox.Hysterectomy -> R.string.outcomes_hysterectomy_label
         is OutcomeFieldsWithCheckbox.MaternalDeath -> R.string.outcomes_maternal_death_label
         is OutcomeFieldsWithCheckbox.PerinatalDeath -> R.string.outcomes_perinatal_death_label
         is OutcomeFieldsWithCheckbox.SurgicalManagement -> R.string.outcomes_surgical_management_label
         is PatientFields.ReferralInfoFields -> R.string.patient_referral_info_labels
+        is OutcomeFieldsWithoutCheckbox.AgeAtDelivery -> R.string.outcomes_age_at_delivery_label
+        is OutcomeFieldsWithoutCheckbox.BirthWeight -> R.string.outcomes_birthweight_label
         else -> R.string.unknown
       }
       fun LinkedHashMap<Int, List<FieldError>>.addFieldError(
@@ -848,11 +864,33 @@ class PatientFormViewModel @Inject constructor(
         }
 
         val birthWeight: BirthWeight? = with(formFields.birthWeight) {
-          birthWeight.stateValue?.let { BirthWeight(it) }
+          if (isNotReported.value) {
+            BirthWeight(birthWeight = null, isNotReported = true)
+          } else {
+            if (!birthWeight.isValid) {
+              fieldToErrorMap.addFieldError(
+                getCategoryStringRes(),
+                R.string.outcomes_birthweight_label,
+                birthWeight.errorFor(context, birthWeight.stateValue)
+              )
+            }
+            birthWeight.stateValue?.let { BirthWeight(it, isNotReported = false) }
+          }
         }
 
         val ageAtDelivery: AgeAtDelivery? = with(formFields.ageAtDelivery) {
-          ageAtDelivery.stateValue?.let { AgeAtDelivery(it) }
+          if (isNotReported.value) {
+            AgeAtDelivery(ageAtDelivery = null, isNotReported = true)
+          } else {
+            if (!ageAtDelivery.isValid) {
+              fieldToErrorMap.addFieldError(
+                getCategoryStringRes(),
+                R.string.outcomes_age_at_delivery_label,
+                ageAtDelivery.errorFor(context, ageAtDelivery.stateValue)
+              )
+            }
+            ageAtDelivery.stateValue?.let { AgeAtDelivery(it, isNotReported = false) }
+          }
         }
 
         with(formFields.patientFields) {
@@ -1064,13 +1102,16 @@ class PatientFormViewModel @Inject constructor(
     }
   }
 
+  sealed interface OutcomeField
+
   @Stable
-  sealed class OutcomeFieldsWithoutCheckbox : BaseFields() {
+  sealed class OutcomeFieldsWithoutCheckbox : BaseFields(), OutcomeField {
     abstract fun clearForms()
 
     @Stable
     data class BirthWeight(
       val birthWeight: EnumIdOnlyState,
+      val isNotReported: MutableState<Boolean>,
     ) : OutcomeFieldsWithoutCheckbox() {
       override fun forceShowErrors() {
         birthWeight.enableShowErrors(force = true)
@@ -1078,12 +1119,14 @@ class PatientFormViewModel @Inject constructor(
 
       override fun clearForms() {
         birthWeight.stateValue = null
+        isNotReported.value = false
       }
     }
 
     @Stable
     data class AgeAtDelivery(
       val ageAtDelivery: EnumIdOnlyState,
+      val isNotReported: MutableState<Boolean>,
     ) : OutcomeFieldsWithoutCheckbox() {
       override fun forceShowErrors() {
         ageAtDelivery.enableShowErrors(force = true)
@@ -1091,12 +1134,13 @@ class PatientFormViewModel @Inject constructor(
 
       override fun clearForms() {
         ageAtDelivery.stateValue = null
+        isNotReported.value = false
       }
     }
   }
 
   @Stable
-  sealed class OutcomeFieldsWithCheckbox : BaseFields() {
+  sealed class OutcomeFieldsWithCheckbox : BaseFields(), OutcomeField {
     @Stable
     data class Eclampsia(
       override val isEnabled: MutableState<Boolean?>,

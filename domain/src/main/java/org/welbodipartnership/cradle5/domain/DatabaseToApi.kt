@@ -41,8 +41,8 @@ fun Outcomes.toApiBody() = Outcome(
   perinatalNeonatalDeathCauseOther = perinatalDeath?.causesOfNeonatalDeath?.other ?: false,
   perinatalAdditionalInfo = perinatalDeath?.additionalInfo?.ifBlank { null },
 
-  birthWeight = birthWeight?.birthWeight?.selectionId,
-  ageAtDelivery = ageAtDelivery?.ageAtDelivery?.selectionId,
+  birthWeight = if (birthWeight?.isNotReported == true) null else birthWeight?.birthWeight?.selectionId,
+  ageAtDelivery = if (ageAtDelivery?.isNotReported == true) null else ageAtDelivery?.ageAtDelivery?.selectionId,
 
   hadFirstEclampsiaFit = eclampsiaFit != null,
   eclampsiaDidTheWomanFit = eclampsiaFit?.didTheWomanFit,

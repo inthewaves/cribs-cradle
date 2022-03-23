@@ -46,9 +46,16 @@ fun LabelAndValueOrUnknown(
 fun ValueOrUnknown(
   value: String?,
   modifier: Modifier = Modifier,
+) = ValueOrDefault(value = value, default = stringResource(R.string.unknown), modifier)
+
+@Composable
+fun ValueOrDefault(
+  value: String?,
+  default: String,
+  modifier: Modifier = Modifier,
 ) {
   Text(
-    text = value ?: stringResource(R.string.unknown),
+    text = value ?: default,
     style = MaterialTheme.typography.body1,
     modifier = modifier
   )
@@ -107,6 +114,21 @@ fun ValueForDropdownOrUnknown(
   enumValue: EnumSelection?,
   enumCollection: ServerEnumCollection,
   modifier: Modifier = Modifier,
+) = ValueForDropdownOrDefault(
+  dropdownType = dropdownType,
+  enumValue = enumValue,
+  enumCollection = enumCollection,
+  default = stringResource(R.string.unknown),
+  modifier = modifier
+)
+
+@Composable
+fun ValueForDropdownOrDefault(
+  dropdownType: DropdownType,
+  enumValue: EnumSelection?,
+  enumCollection: ServerEnumCollection,
+  default: String,
+  modifier: Modifier = Modifier,
 ) {
   val value: String? = when (enumValue) {
     is EnumSelection.IdOnly -> {
@@ -117,8 +139,9 @@ fun ValueForDropdownOrUnknown(
     }
     null -> null
   }
-  ValueOrUnknown(
+  ValueOrDefault(
     value = value,
+    default = default,
     modifier = modifier,
   )
 }

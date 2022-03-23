@@ -165,6 +165,7 @@
     <string name="patient_address_label">Patient address</string>
     <string name="perinatal_death_cause_of_neonatal_death_label">Cause of neonatal death</string>
     <string name="outcomes_eclampsia_did_woman_fit_label">Did the woman fit?</string>
+    <string name="outcomes_not_reported">Not reported</string>
     <plurals name="patient_form_snackbar_failed_to_save_there_are_d_errors">
         <item quantity="one">Failed to save, as there is %1$d error.</item>
         <item quantity="other">Failed to save, as there are %1$d errors.</item>
