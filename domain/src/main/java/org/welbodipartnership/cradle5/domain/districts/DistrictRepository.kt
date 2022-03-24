@@ -62,8 +62,9 @@ class DistrictRepository @Inject constructor(
       }
       is NetworkResult.NetworkException -> {
         val formatted = result.formatErrorMessage(context)
-        eventMessagesChannel?.trySend("Unable to get districts: $formatted")
-        return DownloadResult.Exception(result.cause, formatted)
+        val errorMessage = "Unable to get districts: $formatted"
+        eventMessagesChannel?.trySend(errorMessage)
+        return DownloadResult.Exception(result.cause, errorMessage)
       }
     }
 

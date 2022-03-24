@@ -104,8 +104,9 @@ class FacilityRepository @Inject constructor(
       }
       is NetworkResult.NetworkException -> {
         val formatted = result.formatErrorMessage(context)
-        eventMessagesChannel?.trySend("Unable to get facilities: $formatted")
-        return DownloadResult.Exception(result.cause, formatted)
+        val errorMessage = "Unable to get facilities: $formatted"
+        eventMessagesChannel?.trySend(errorMessage)
+        return DownloadResult.Exception(result.cause, errorMessage)
       }
     }
 
