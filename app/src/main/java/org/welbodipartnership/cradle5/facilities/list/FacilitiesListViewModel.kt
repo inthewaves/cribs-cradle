@@ -25,7 +25,7 @@ class FacilitiesListViewModel @Inject constructor(
 ) : ViewModel() {
   private data class FilterConfig(
     val filterOption: FilterOption,
-    val districtId: Int,
+    val districtId: Long,
   )
 
   enum class FilterOption(@StringRes val selectionStringResId: Int) {
@@ -53,11 +53,11 @@ class FacilitiesListViewModel @Inject constructor(
       Pager(pagingConfig) {
         when (filterOption) {
           FilterOption.NONE -> dbWrapper.facilitiesDao()
-            .facilitiesPagingSource(districtId = districtId)
+            .facilitiesPagingSource(districtId = districtId.toLong())
           FilterOption.VISITED -> dbWrapper.facilitiesDao()
-            .facilitiesPagingSourceFilterByVisited(visited = true, districtId = districtId)
+            .facilitiesPagingSourceFilterByVisited(visited = true, districtId = districtId.toLong())
           FilterOption.NOT_VISITED -> dbWrapper.facilitiesDao()
-            .facilitiesPagingSourceFilterByVisited(visited = false, districtId = districtId)
+            .facilitiesPagingSourceFilterByVisited(visited = false, districtId = districtId.toLong())
         }
       }.flow
     }

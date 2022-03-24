@@ -33,7 +33,7 @@ class FacilityOtherInfoFormViewModel @Inject constructor(
     class Error(val errorMessage: String) : FormState()
   }
 
-  private val existingFacilityPrimaryKey: Int = requireNotNull(
+  private val existingFacilityPrimaryKey: Long = requireNotNull(
     handle[LeafScreen.FacilityDetails.ARG_FACILITY_PRIMARY_KEY]
   ) { "missing existingFacilityPrimaryKey" }
 

@@ -143,8 +143,8 @@ class SyncWorker @AssistedInject constructor(
         districtName
           ?.let { dbWrapper.districtDao().getDistrictByName(districtName).firstOrNull() }
           ?.let { district ->
-            appValuesStore.setDistrictId(district.id.toInt())
-            district.id.toInt()
+            appValuesStore.setDistrictId(district.id)
+            district.id
           }
 
         Log.d(TAG, "downloading districts")
@@ -164,7 +164,7 @@ class SyncWorker @AssistedInject constructor(
                 when (
                   val result = facilityRepository.downloadAndSaveFacilities(
                     logChannel,
-                    districtId = district.id.toInt()
+                    districtId = district.id
                   )
                 ) {
                   FacilityRepository.DownloadResult.Success -> {}

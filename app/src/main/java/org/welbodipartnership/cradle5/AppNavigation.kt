@@ -121,7 +121,7 @@ internal sealed class LeafScreen(private val route: String) {
   object FacilityDetails : LeafScreen("facilities/view/{facilityPk}") {
     const val ARG_FACILITY_PRIMARY_KEY = "facilityPk"
     override val matchRegex = createRouteMatcherWithOneNumericalArg()
-    fun createRoute(root: Screen, facilityPrimaryKey: Int): String {
+    fun createRoute(root: Screen, facilityPrimaryKey: Long): String {
       return "${root.route}/facilities/view/$facilityPrimaryKey"
     }
   }
@@ -130,7 +130,7 @@ internal sealed class LeafScreen(private val route: String) {
   ) {
     const val ARG_FACILITY_PRIMARY_KEY = "facilityPk"
     override val matchRegex = createRouteMatcherWithOneNumericalArg()
-    fun createRoute(root: Screen, facilityEditPk: Int): String {
+    fun createRoute(root: Screen, facilityEditPk: Long): String {
       return "${root.route}/facilities/other_info/edit/$facilityEditPk"
     }
   }

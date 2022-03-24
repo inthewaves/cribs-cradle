@@ -49,7 +49,7 @@ data class Patient(
   val isAgeUnknown: Boolean,
 
   val address: String?,
-  val healthcareFacilityId: Int?,
+  val healthcareFacilityId: Long?,
 
   @ColumnInfo(defaultValue = "1")
   val referralInfoTouched: TouchedState,
@@ -135,10 +135,10 @@ data class Patient(
 
 @Immutable
 data class PatientReferralInfo(
-  @Required val fromDistrict: Int?,
-  @Required val fromFacility: Int?,
-  @Required val toDistrict: Int?,
-  @Required val toFacility: Int?,
+  @Required val fromDistrict: Long?,
+  @Required val fromFacility: Long?,
+  @Required val toDistrict: Long?,
+  @Required val toFacility: Long?,
 ) : HasRequiredFields {
   override fun requiredFieldsPresent() =
     fromDistrict != null && fromFacility != null && toDistrict != null && toFacility != null

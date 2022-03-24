@@ -83,7 +83,7 @@ abstract class PatientDao {
   @RewriteQueriesToDropUnusedColumns
   @Transaction
   @Query("SELECT * FROM Patient WHERE healthcareFacilityId = :facilityId ORDER BY id DESC")
-  abstract fun patientsPagingSourceFilterByFacility(facilityId: Int): PagingSource<Int, ListPatientAndOutcomeError>
+  abstract fun patientsPagingSourceFilterByFacility(facilityId: Long): PagingSource<Int, ListPatientAndOutcomeError>
 
   @RewriteQueriesToDropUnusedColumns
   @Transaction

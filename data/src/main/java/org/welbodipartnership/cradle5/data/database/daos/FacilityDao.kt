@@ -18,17 +18,17 @@ abstract class FacilityDao {
    * A partial version of [Facility] so that the user notes don't get overwritten.
    */
   data class FacilityUpdate(
-    val id: Int,
+    val id: Long,
     val name: String?,
-    val districtId: Int,
+    val districtId: Long,
     val listOrder: Int,
   )
 
   @Query("SELECT * FROM Facility WHERE id = :facilityPk")
-  abstract fun getFacilityFlow(facilityPk: Int): Flow<Facility?>
+  abstract fun getFacilityFlow(facilityPk: Long): Flow<Facility?>
 
   @Query("SELECT * FROM Facility WHERE id = :facilityPk")
-  abstract suspend fun getFacility(facilityPk: Int): Facility?
+  abstract suspend fun getFacility(facilityPk: Long): Facility?
 
   /**
    * Updates the [facility] or inserts it into the database if the [facility] doesn't yet exist.
@@ -45,13 +45,13 @@ abstract class FacilityDao {
 
   @Query("UPDATE Facility SET hasVisited = :hasVisited, localNotes = :localNotes WHERE id = :facilityPk")
   protected abstract suspend fun updateFacilityOtherInfoInner(
-    facilityPk: Int,
+    facilityPk: Long,
     hasVisited: Boolean,
     localNotes: String?
   ): Int
 
   suspend fun updateFacilityOtherInfo(
-    facilityPk: Int,
+    facilityPk: Long,
     hasVisited: Boolean,
     localNotes: String?
   ): Boolean = updateFacilityOtherInfoInner(facilityPk, hasVisited, localNotes) == 1
@@ -62,14 +62,14 @@ abstract class FacilityDao {
   @Transaction
   @Query("SELECT * FROM Facility WHERE districtId = :districtId $DEFAULT_ORDER")
   abstract fun facilitiesPagingSource(
-    districtId: Int = Facility.DEFAULT_DISTRICT_ID
+    districtId: Long = Facility.DEFAULT_DISTRICT_ID
   ): PagingSource<Int, Facility>
 
   @Transaction
   @Query("SELECT * FROM Facility WHERE hasVisited = :visited AND districtId = :districtId $DEFAULT_ORDER")
   abstract fun facilitiesPagingSourceFilterByVisited(
     visited: Boolean,
-    districtId: Int = Facility.DEFAULT_DISTRICT_ID
+    districtId: Long = Facility.DEFAULT_DISTRICT_ID
   ): PagingSource<Int, Facility>
 
   @RawQuery
@@ -82,8 +82,8 @@ abstract class FacilityDao {
    * by ascending order of name.
    */
   suspend fun getFacilityIndexWhenOrderedByName(
-    facilityId: Int,
-    districtId: Int = Facility.DEFAULT_DISTRICT_ID
+    facilityId: Long,
+    districtId: Long = Facility.DEFAULT_DISTRICT_ID
   ): Long? {
     // Room doesn't support this type of query
     val query = SimpleSQLiteQuery(

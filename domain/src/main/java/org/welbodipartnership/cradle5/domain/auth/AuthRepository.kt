@@ -344,7 +344,7 @@ class AuthRepository @Inject internal constructor(
               when (
                 val result = facilityRepository.downloadAndSaveFacilities(
                   loginEventMessagesChannel,
-                  districtId = district.id.toInt()
+                  districtId = district.id
                 )
               ) {
                 FacilityRepository.DownloadResult.Success -> {}

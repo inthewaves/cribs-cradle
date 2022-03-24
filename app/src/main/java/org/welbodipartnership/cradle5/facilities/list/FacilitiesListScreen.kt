@@ -64,7 +64,7 @@ import org.welbodipartnership.cradle5.ui.composables.screenlists.ScreenListItem
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
 
 @Composable
-fun FacilitiesListScreen(onOpenFacilityDetails: (facilityPk: Int) -> Unit,) {
+fun FacilitiesListScreen(onOpenFacilityDetails: (facilityPk: Long) -> Unit,) {
   FacilitiesListScreen(
     viewModel = hiltViewModel(),
     onOpenFacilityDetails
@@ -74,7 +74,7 @@ fun FacilitiesListScreen(onOpenFacilityDetails: (facilityPk: Int) -> Unit,) {
 @Composable
 private fun FacilitiesListScreen(
   viewModel: FacilitiesListViewModel,
-  onOpenFacilityDetails: (facilityPk: Int) -> Unit,
+  onOpenFacilityDetails: (facilityPk: Long) -> Unit,
 ) {
 
   var showFilterDialog by rememberSaveable { mutableStateOf(false) }

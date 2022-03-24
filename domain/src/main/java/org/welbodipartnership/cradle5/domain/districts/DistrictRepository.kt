@@ -50,7 +50,7 @@ class DistrictRepository @Inject constructor(
         dbWrapper.withTransaction { db ->
           val dao = db.districtDao()
           result.value.forEachIndexed { _, apiFacilityListItem ->
-            dao.upsert(District(apiFacilityListItem.id, apiFacilityListItem.name))
+            dao.upsert(District(apiFacilityListItem.id.toLong(), apiFacilityListItem.name))
           }
         }
       }

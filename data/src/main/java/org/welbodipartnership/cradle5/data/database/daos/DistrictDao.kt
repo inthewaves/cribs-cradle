@@ -49,13 +49,13 @@ abstract class DistrictDao {
   @RawQuery
   protected abstract suspend fun getDistrictIndexWhenOrderedById(
     query: SupportSQLiteQuery
-  ): Long?
+  ): Int?
 
   /**
    * Gets the index of the district with the given [districtId] when the facilities are sorted
    * by ascending order of name.
    */
-  suspend fun getDistrictIndexWhenOrderedById(districtId: Int): Long? {
+  suspend fun getDistrictIndexWhenOrderedById(districtId: Long): Int? {
     // Room doesn't support this type of query
     val query = SimpleSQLiteQuery(
       """
@@ -66,7 +66,7 @@ abstract class DistrictDao {
       arrayOf(districtId)
     )
     // ROW_NUMBER is 1-based
-    return getDistrictIndexWhenOrderedById(query)?.let { (it - 1).coerceAtLeast(0L) }
+    return getDistrictIndexWhenOrderedById(query)?.let { (it - 1).coerceAtLeast(0) }
   }
 
   @Query("SELECT COUNT(*) FROM District")

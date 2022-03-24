@@ -16,10 +16,10 @@ import kotlinx.parcelize.Parcelize
 data class Facility(
   @PrimaryKey
   @ColumnInfo(name = "id")
-  val id: Int,
+  val id: Long,
   val name: String?,
   @ColumnInfo(defaultValue = DEFAULT_DISTRICT_ID_STRING)
-  val districtId: Int = DEFAULT_DISTRICT_ID,
+  val districtId: Long = DEFAULT_DISTRICT_ID,
   @ColumnInfo(defaultValue = "0")
   val listOrder: Int,
   @ColumnInfo(defaultValue = "0")
@@ -30,7 +30,7 @@ data class Facility(
   val localNotes: String? = null
 ) : Parcelable {
   companion object {
-    const val DEFAULT_DISTRICT_ID = -1
+    const val DEFAULT_DISTRICT_ID = -1L
     private const val DEFAULT_DISTRICT_ID_STRING = "$DEFAULT_DISTRICT_ID"
   }
 }

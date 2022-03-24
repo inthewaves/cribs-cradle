@@ -343,7 +343,6 @@ class PatientFormViewModel @Inject constructor(
                     district,
                     district.id
                       .let { id -> dbWrapper.districtDao().getDistrictIndexWhenOrderedById(id) }
-                      ?.toInt()
                       ?.coerceAtLeast(0)
                   )
                 }

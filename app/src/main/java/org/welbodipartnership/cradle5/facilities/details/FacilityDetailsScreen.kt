@@ -33,7 +33,7 @@ import org.welbodipartnership.cradle5.data.database.entities.Facility
 @Composable
 fun FacilityDetailsScreen(
   onBackPressed: () -> Unit,
-  onFacilityOtherInfoEditPress: (facilityPrimaryKey: Int) -> Unit,
+  onFacilityOtherInfoEditPress: (facilityPrimaryKey: Long) -> Unit,
   viewModel: FacilityDetailsViewModel = hiltViewModel()
 ) {
   Scaffold(
@@ -93,7 +93,7 @@ fun FacilityDetailsScreen(
 @Composable
 private fun FacilityDetailsScreen(
   facility: Facility,
-  onFacilityOtherInfoEditPress: (facilityPrimaryKey: Int) -> Unit,
+  onFacilityOtherInfoEditPress: (facilityPrimaryKey: Long) -> Unit,
   modifier: Modifier = Modifier,
   contentPadding: PaddingValues = PaddingValues()
 ) {

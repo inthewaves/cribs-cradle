@@ -73,16 +73,16 @@ class AppValuesStore @Inject internal constructor(
     .distinctUntilChanged()
     .conflate()
 
-  val districtIdFlow = encryptedSettings.encryptedSettingsFlow()
+  val districtIdFlow: Flow<Long?> = encryptedSettings.encryptedSettingsFlow()
     .map { settings ->
       if (settings.hasUserInfo()) {
-        settings.userInfo.districtId.takeIf { it != 0 }
+        settings.userInfo.districtId.takeIf { it != 0 }?.toLong()
           ?: settings.userInfo.districtName
             ?.ifBlank { null }
             ?.split(' ')
             ?.firstOrNull()
             ?.trim()
-            ?.toIntOrNull()
+            ?.toLongOrNull()
       } else {
         null
       }
@@ -184,10 +184,10 @@ class AppValuesStore @Inject internal constructor(
     }
   }
 
-  suspend fun setDistrictId(id: Int) {
+  suspend fun setDistrictId(id: Long) {
     encryptedSettings.updateData { settings ->
       settings.toBuilder()
-        .setUserInfo(settings.userInfo.toBuilder().setDistrictId(id).build())
+        .setUserInfo(settings.userInfo.toBuilder().setDistrictId(id.toInt()).build())
         .build()
     }
   }

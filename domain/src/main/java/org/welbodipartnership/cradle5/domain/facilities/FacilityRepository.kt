@@ -41,7 +41,7 @@ class FacilityRepository @Inject constructor(
    */
   suspend fun downloadAndSaveFacilities(
     eventMessagesChannel: SendChannel<String>?,
-    districtId: Int? = null
+    districtId: Long? = null
   ): DownloadResult {
     val selfDistrictId = appValuesStore.districtIdFlow.firstOrNull()
     if (districtId == null && selfDistrictId == null) {
@@ -79,16 +79,16 @@ class FacilityRepository @Inject constructor(
           result.value.forEachIndexed { index, apiFacilityListItem ->
             val update = if (districtId == null) {
               FacilityDao.FacilityUpdate(
-                id = apiFacilityListItem.id,
+                id = apiFacilityListItem.id.toLong(),
                 name = apiFacilityListItem.name,
-                districtId = requireNotNull(selfDistrictId),
+                districtId = requireNotNull(selfDistrictId).toLong(),
                 listOrder = index
               )
             } else {
               FacilityDao.FacilityUpdate(
-                id = apiFacilityListItem.id,
+                id = apiFacilityListItem.id.toLong(),
                 name = apiFacilityListItem.name,
-                districtId = districtId,
+                districtId = districtId.toLong(),
                 listOrder = index
               )
             }
