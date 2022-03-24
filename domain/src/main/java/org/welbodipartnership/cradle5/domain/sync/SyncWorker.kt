@@ -169,11 +169,11 @@ class SyncWorker @AssistedInject constructor(
                 ) {
                   FacilityRepository.DownloadResult.Success -> {}
                   is FacilityRepository.DownloadResult.Exception -> {
-                    throw FacilityParallelDownloadException(AuthRepository.LoginResult.Exception(result.errorMessage))
+                    throw FacilityParallelDownloadException(AuthRepository.LoginResult.Exception(true, result.errorMessage))
                   }
                   is FacilityRepository.DownloadResult.Invalid -> {
                     throw FacilityParallelDownloadException(
-                      AuthRepository.LoginResult.Invalid(result.errorMessage, result.errorCode)
+                      AuthRepository.LoginResult.Invalid(true, result.errorMessage, result.errorCode)
                     )
                   }
                 }

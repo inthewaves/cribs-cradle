@@ -2,6 +2,7 @@ package org.welbodipartnership.cradle5.domain.auth
 
 import android.content.Context
 import android.util.Log
+import androidx.compose.runtime.Immutable
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.SendChannel
@@ -36,7 +37,6 @@ import org.welbodipartnership.cradle5.util.coroutines.AppCoroutineDispatchers
 import org.welbodipartnership.cradle5.util.datetime.UnixTimestamp
 import org.welbodipartnership.cradle5.util.foreground.AppForegroundedObserver
 import org.welbodipartnership.cradle5.util.net.NetworkObserver
-import java.lang.Exception
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.time.Duration
@@ -141,20 +141,37 @@ class AuthRepository @Inject internal constructor(
     AuthState.Initializing
   )
 
+  @Immutable
   sealed class LoginResult {
-    object Success : LoginResult()
+    /**
+     * Whether in the login process, we reached the point where we were able to store a fresh
+     * auth token from the server. If logging in for the first time, the auth token is not
+     * guaranteed to be stored.
+     *
+     * If this is true but the result is not a [Success], this means something went wrong during
+     * the facility, districts, enums download.
+     */
+    abstract val gotTokenFromServer: Boolean
+
+    object Success : LoginResult() {
+      override val gotTokenFromServer: Boolean = true
+    }
 
     /**
      * Server sent non-successful HTTP response
      */
     data class Invalid(
+      override val gotTokenFromServer: Boolean,
       val errorMessage: String?,
       val errorCode: Int?,
       val errorType: String? = null,
     ) : LoginResult() {
       val isFromBadCredentials: Boolean get() = errorCode == 400 && errorType == "invalid_grant"
     }
-    data class Exception(val errorMessage: String?) : LoginResult()
+    data class Exception(
+      override val gotTokenFromServer: Boolean,
+      val errorMessage: String?
+    ) : LoginResult()
   }
 
   suspend fun login(
@@ -184,13 +201,17 @@ class AuthRepository @Inject internal constructor(
         is NetworkResult.Success -> loginResult.value
         is NetworkResult.Failure -> {
           return LoginResult.Invalid(
+            gotTokenFromServer = false,
             errorMessage = loginResult.errorValue?.errorDescription,
             errorCode = loginResult.statusCode,
             errorType = loginResult.errorValue?.error
           )
         }
         is NetworkResult.NetworkException -> {
-          return LoginResult.Exception(loginResult.formatErrorMessage(context))
+          return LoginResult.Exception(
+            gotTokenFromServer = false,
+            loginResult.formatErrorMessage(context)
+          )
         }
       }
       Log.d(TAG, "login(): successfully obtained token")
@@ -220,7 +241,7 @@ class AuthRepository @Inject internal constructor(
                   trySend(errorMessage)
                   delay(2.seconds)
                 }
-                return LoginResult.Exception(errorMessage)
+                return LoginResult.Exception(gotTokenFromServer = true, errorMessage)
               }
           } else {
             val errorMessage =
@@ -230,7 +251,7 @@ class AuthRepository @Inject internal constructor(
               trySend(errorMessage)
               delay(2.seconds)
             }
-            return LoginResult.Exception(errorMessage)
+            return LoginResult.Exception(gotTokenFromServer = true, errorMessage)
           }
         }
         is NetworkResult.Failure -> {
@@ -240,13 +261,17 @@ class AuthRepository @Inject internal constructor(
             trySend(errorMessage)
             delay(800L)
           }
-          return LoginResult.Invalid(errorMessage, errorCode = indexResult.statusCode)
+          return LoginResult.Invalid(
+            gotTokenFromServer = true,
+            errorMessage,
+            indexResult.statusCode
+          )
         }
         is NetworkResult.NetworkException -> {
           val errorMessage = "Unable to get userId: ${indexResult.formatErrorMessage(context)}"
           loginEventMessagesChannel?.trySend(errorMessage)
           delay(800L)
-          return LoginResult.Exception(errorMessage)
+          return LoginResult.Exception(gotTokenFromServer = true, errorMessage)
         }
       }
 
@@ -284,18 +309,18 @@ class AuthRepository @Inject internal constructor(
       when (val result = districtRepository.downloadAndSaveDistricts(loginEventMessagesChannel)) {
         DistrictRepository.DownloadResult.Success -> {}
         is DistrictRepository.DownloadResult.Exception -> {
-          return LoginResult.Exception(result.errorMessage)
+          return LoginResult.Exception(gotTokenFromServer = true, result.errorMessage)
         }
         is DistrictRepository.DownloadResult.Invalid -> {
-          return LoginResult.Invalid(result.errorMessage, result.errorCode)
+          return LoginResult.Invalid(gotTokenFromServer = true, result.errorMessage, result.errorCode)
         }
       }
 
       districtName
         ?.let { dbWrapper.districtDao().getDistrictByName(districtName).firstOrNull() }
         ?.let { district ->
-          appValuesStore.setDistrictId(district.id.toInt())
-          district.id.toInt()
+          appValuesStore.setDistrictId(district.id)
+          district.id
         }
 
       // Try to get the facilities associated with this district
@@ -303,10 +328,10 @@ class AuthRepository @Inject internal constructor(
       when (val result = facilityRepository.downloadAndSaveFacilities(loginEventMessagesChannel)) {
         FacilityRepository.DownloadResult.Success -> {}
         is FacilityRepository.DownloadResult.Exception -> {
-          return LoginResult.Exception(result.errorMessage)
+          return LoginResult.Exception(gotTokenFromServer = true, result.errorMessage)
         }
         is FacilityRepository.DownloadResult.Invalid -> {
-          return LoginResult.Invalid(result.errorMessage, result.errorCode)
+          return LoginResult.Invalid(gotTokenFromServer = true, result.errorMessage, result.errorCode)
         }
       }
 
@@ -324,11 +349,17 @@ class AuthRepository @Inject internal constructor(
               ) {
                 FacilityRepository.DownloadResult.Success -> {}
                 is FacilityRepository.DownloadResult.Exception -> {
-                  throw FacilityParallelDownloadException(LoginResult.Exception(result.errorMessage))
+                  throw FacilityParallelDownloadException(
+                    LoginResult.Exception(gotTokenFromServer = true, result.errorMessage)
+                  )
                 }
                 is FacilityRepository.DownloadResult.Invalid -> {
                   throw FacilityParallelDownloadException(
-                    LoginResult.Invalid(result.errorMessage, result.errorCode)
+                    LoginResult.Invalid(
+                      gotTokenFromServer = true,
+                      result.errorMessage,
+                      result.errorCode
+                    )
                   )
                 }
               }
@@ -344,10 +375,10 @@ class AuthRepository @Inject internal constructor(
       when (val result = enumRepository.downloadAndSaveEnumsFromServer(loginEventMessagesChannel)) {
         EnumRepository.DownloadResult.Success -> {}
         is EnumRepository.DownloadResult.Exception -> {
-          return LoginResult.Exception(result.errorMessage)
+          return LoginResult.Exception(gotTokenFromServer = true, result.errorMessage)
         }
         is EnumRepository.DownloadResult.Invalid -> {
-          return LoginResult.Invalid(result.errorMessage, result.errorCode)
+          return LoginResult.Invalid(gotTokenFromServer = true, result.errorMessage, result.errorCode)
         }
       }
 
@@ -355,7 +386,9 @@ class AuthRepository @Inject internal constructor(
       return LoginResult.Success
     } finally {
       if (!success) {
-        appValuesStore.clearAuthToken()
+        if (!isForTokenRefresh) {
+          appValuesStore.clearAuthToken()
+        }
       } else {
         appValuesStore.setForceReauth(false)
       }
@@ -370,11 +403,37 @@ class AuthRepository @Inject internal constructor(
     eventMessagesChannel: SendChannel<String>?,
   ): LoginResult {
     val result = reauthForLockscreenInner(password, forceServerRefresh, eventMessagesChannel)
-    if (result is LoginResult.Success) {
-      Log.w(TAG, "reauth(): successful reauthentication; setting last auth time to now")
-      appValuesStore.apply {
-        setLastTimeAuthenticatedToNow()
-        setForceReauth(false)
+    when (result) {
+      LoginResult.Success -> {
+        Log.w(TAG, "reauth(): successful reauthentication; setting last auth time to now")
+        appValuesStore.apply {
+          setLastTimeAuthenticatedToNow()
+          setForceReauth(false)
+        }
+      }
+      is LoginResult.Exception -> {
+        if (!result.gotTokenFromServer) {
+          appValuesStore.setWarningMessage(
+            "Got an issue during reauthentication with the server: ${result.errorMessage}"
+          )
+        }
+      }
+      is LoginResult.Invalid -> {
+        if (!result.gotTokenFromServer) {
+          appValuesStore.setWarningMessage(
+            buildString {
+              append("Got an issue during reauthentication with the server ")
+              append("(error code ${result.errorCode ?: "unknown"}, ")
+              append("error type ${result.errorType ?: "unknown"})")
+              if (!result.errorMessage.isNullOrBlank()) {
+                append(":")
+                appendLine()
+                appendLine()
+                append(result.errorMessage)
+              }
+            }
+          )
+        }
       }
     }
     return result
@@ -385,10 +444,11 @@ class AuthRepository @Inject internal constructor(
     forceServerRefresh: Boolean,
     eventMessagesChannel: SendChannel<String>?
   ): LoginResult {
+
     val existingHash: PasswordHash? = appValuesStore.passwordHashFlow.firstOrNull()
     if (existingHash == null) {
       Log.w(TAG, "reauth(): trying to reauthenticate, but there is no stored hash")
-      return LoginResult.Exception("Missing existing login details")
+      return LoginResult.Exception(gotTokenFromServer = false, "Missing existing login details")
     }
 
     eventMessagesChannel?.trySend("Verifying password")
@@ -435,7 +495,7 @@ class AuthRepository @Inject internal constructor(
     return if (isLocalPasswordMatch) {
       LoginResult.Success
     } else {
-      LoginResult.Invalid("Invalid password", errorCode = null)
+      LoginResult.Invalid(gotTokenFromServer = false, "Invalid password", errorCode = null)
     }
   }
 
@@ -459,7 +519,7 @@ class AuthRepository @Inject internal constructor(
     val username = token?.username
     if (token == null || username.isNullOrBlank()) {
       Log.w(TAG, "refreshAuthToken(): trying to reauthenticate when there is no token")
-      return LoginResult.Exception("No authentication token present")
+      return LoginResult.Exception(gotTokenFromServer = false, "No authentication token present")
     } else {
       val issued = UnixTimestamp.fromDateTimeString(token.issued, ApiAuthToken.dateTimeFormatter)
       val expires = UnixTimestamp.fromDateTimeString(token.expires, ApiAuthToken.dateTimeFormatter)
@@ -488,6 +548,7 @@ class AuthRepository @Inject internal constructor(
               "than the threshold of $AUTO_REFRESH_THRESHOLD, so ignoring refresh attempt"
           )
           return LoginResult.Exception(
+            gotTokenFromServer = false,
             "$durationSinceIssued since token was issued; less than $AUTO_REFRESH_THRESHOLD, " +
               "so ignoring"
           )
