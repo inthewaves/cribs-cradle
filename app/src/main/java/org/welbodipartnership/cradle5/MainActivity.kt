@@ -195,7 +195,7 @@ private fun MainApp(viewModel: MainActivityViewModel, onOpenSettingsForApp: () -
               }
             }
             is AuthState.LoggedInLocked, AuthState.Initializing, AuthState.LoggedOut,
-            is AuthState.TokenExpired, AuthState.LoggingIn -> {
+            is AuthState.TokenExpired, AuthState.LoggingIn, is AuthState.ForcedRelogin -> {
               LoginOrLockscreen(currentAuthState)
             }
             is AuthState.BlockingWarningMessage -> {

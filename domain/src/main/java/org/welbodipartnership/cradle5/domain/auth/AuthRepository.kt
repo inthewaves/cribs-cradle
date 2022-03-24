@@ -99,7 +99,7 @@ class AuthRepository @Inject internal constructor(
     val lastTimeAuthed: UnixTimestamp? = args[i++] as UnixTimestamp?
     val isLoginComplete: Boolean = args[i++] as Boolean
     val warningMessage: String? = args[i++] as String?
-    val forceReauthFlow: Boolean = args[i++] as Boolean
+    val forceReauth: Boolean = args[i++] as Boolean
 
     if (!warningMessage.isNullOrBlank()) {
       AuthState.BlockingWarningMessage(warningMessage)
@@ -125,7 +125,8 @@ class AuthRepository @Inject internal constructor(
       val now = UnixTimestamp.now()
 
       when {
-        now >= tokenExpiryTime || forceReauthFlow -> AuthState.TokenExpired(username)
+        forceReauth -> AuthState.ForcedRelogin(username)
+        now >= tokenExpiryTime -> AuthState.TokenExpired(username)
         lastTimeAuthedForComparison durationBetween now >= AUTH_TIMEOUT -> {
           AuthState.LoggedInLocked(username)
         }
