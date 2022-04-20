@@ -49,6 +49,8 @@ data class Outcome(
   val hadFirstEclampsiaFit: Boolean = false,
   @Json(name = "Control2129")
   val eclampsiaDidTheWomanFit: Boolean? = false,
+  @Json(name = "Control2157")
+  val eclampsiaWhenWasFirstFit: Int? = null,
   @Json(name = "Control1551")
   val eclampsiaFitLocation: Int? = null,
 
@@ -71,18 +73,8 @@ data class Outcome(
   val maternalDeathOtherCause: String? = null,
   @Json(name = "Control1559")
   val maternalDeathPlace: Int? = null,
-
-  /**
-   * Surgical management of postpartum haemorrhage requiring anaesthesia
-   */
-  @Json(name = "Control1925")
-  val hadSurgicalMgmtOfPostpartumHaemorrhageAndAnaesthesia: Boolean = false,
-  @Json(name = "Control1924")
-  val surgicalManagementDate: FormDate? = null,
-  @Json(name = "Control1926")
-  val surgicalManagementType: Int? = null,
-  @Json(name = "Control1927")
-  val surgicalManagementOtherType: String? = null,
+  @Json(name = "Control2158")
+  val maternalDeathMdsrFindingsSummary: String? = null,
 
   @Json(name = "Control2106")
   val birthWeight: Int?,
@@ -101,6 +93,8 @@ data class Outcome(
 
       put("Control1378", "Eclampsia fit present")
       put("Control1541", "Eclampsia fit date")
+      put("Control2129", "Eclampsia fit: did the woman fit")
+      put("Control2157", "Eclampsia fit place")
       put("Control1551", "Eclampsia fit location")
 
       put("Control1545", "Hysterectomy present")
@@ -113,11 +107,7 @@ data class Outcome(
       put("Control1557", "Maternal death underlying cause")
       put("Control1558", "Maternal death other cause")
       put("Control1559", "Maternal death place")
-
-      put("Control1925", "Surgical management present")
-      put("Control1924", "Surgical management date")
-      put("Control1926", "Surgical management type")
-      put("Control1927", "Surgical management other cause")
+      put("Control2158", "Maternal death MDSR findings summary")
 
       put("Control2106", "Birthweight")
       put("Control2107", "Age at delivery")

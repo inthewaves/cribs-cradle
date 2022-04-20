@@ -357,7 +357,24 @@ value class ServerEnumCollection private constructor(
                 listOrder = 40,
               ),
             ),
-          )
+          ),
+          ServerEnum(
+            DropdownType.EclampticFitTime,
+            listOf(
+              ServerEnum.Entry(
+                id = 1,
+                code = "1",
+                name = "Before delivery",
+                listOrder = 10,
+              ),
+              ServerEnum.Entry(
+                id = 2,
+                code = "2",
+                name = "After delivery",
+                listOrder = 20,
+              ),
+            ),
+          ),
         ).associateByTo(ArrayMap(DropdownType.values().size)) { it.type }
       )
     }
@@ -372,7 +389,8 @@ enum class DropdownType(val serverLookupId: Int, val expectedServerName: String)
   TypeOfSurgicalManagement(18, "Type of surgical management"),
   PerinatalOutcome(19, "Perinatal outcome"),
   Birthweight(22, "Birthweight"),
-  AgeAtDelivery(23, "Age at delivery")
+  AgeAtDelivery(23, "Age at delivery"),
+  EclampticFitTime(25, "Eclamptic fit time"),
 }
 
 /**

@@ -32,11 +32,25 @@ data class Registration(
   /** This is a dynamic lookup value */
   @Json(name = "Control2126")
   val patientReferralFromFacility: Int?,
+  /**
+   * Custom facility for when the district is set to "OTHER". This is non-null and non-empty if and
+   * only if [patientReferralToFacility] is null and [patientReferralToDistrict] corresponds to
+   * "OTHER"
+   */
+  @Json(name = "Control2155")
+  val patientReferralFromFacilityCustom: String?,
   @Json(name = "Control2127")
   val patientReferralToDistrict: Int?,
   /** This is a dynamic lookup value */
   @Json(name = "Control2128")
   val patientReferralToFacility: Int?,
+  /**
+   * Custom facility for when the district is set to "OTHER". This is non-null and non-empty if and
+   * only if [patientReferralToFacility] is null and [patientReferralToDistrict] corresponds to
+   * "OTHER"
+   */
+  @Json(name = "Control2156")
+  val patientReferralToFacilityCustom: String?,
 ) {
   companion object {
     val controlIdToNameMap: Map<String, String> = ArrayMap<String, String>(11).apply {
@@ -50,8 +64,10 @@ data class Registration(
       put("Control2124", "Was this patient a referral?")
       put("Control2125", "Which district was the patient referred from?")
       put("Control2126", "Which facility was the patient referred from?")
+      put("Control2155", "Which facility was the patient referred from? (custom input text)")
       put("Control2127", "Which district was the patient referred to?")
       put("Control2128", "Which facility was the patient referred to?")
+      put("Control2156", "Which facility was the patient referred to? (custom input text)")
     }
   }
 }
