@@ -10,7 +10,6 @@ import org.welbodipartnership.cradle5.data.database.entities.Outcomes
 import org.welbodipartnership.cradle5.data.database.entities.Patient
 import org.welbodipartnership.cradle5.data.database.entities.PatientReferralInfo
 import org.welbodipartnership.cradle5.data.database.entities.PerinatalDeath
-import org.welbodipartnership.cradle5.data.database.entities.SurgicalManagementOfHaemorrhage
 import org.welbodipartnership.cradle5.data.database.entities.TouchedState
 import org.welbodipartnership.cradle5.data.database.entities.embedded.EnumSelection
 import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
@@ -25,8 +24,10 @@ object PatientPreviewClasses {
   fun createTestReferralInfo() = PatientReferralInfo(
     fromDistrict = FROM_DISTRICT_ID,
     fromFacility = FROM_FACILITY_ID,
+    fromFacilityText = null,
     toDistrict = TO_DISTRICT_ID,
-    toFacility = TO_FACILITY_ID
+    toFacility = TO_FACILITY_ID,
+    toFacilityText = "Custom to facility"
   )
 
   fun createTestPatient(
@@ -55,6 +56,7 @@ object PatientPreviewClasses {
     eclampsiaFitTouched = TouchedState.TOUCHED_ENABLED,
     eclampsiaFit = EclampsiaFit(
       didTheWomanFit = true,
+      whenWasFirstFit = EnumSelection.IdOnly(1),
       place = EnumSelection.IdOnly(2)
     ),
     hysterectomyTouched = TouchedState.TOUCHED_ENABLED,
@@ -67,11 +69,7 @@ object PatientPreviewClasses {
       date = FormDate.today(),
       underlyingCause = EnumSelection.WithOther(6),
       place = EnumSelection.IdOnly(2),
-    ),
-    surgicalManagementTouched = TouchedState.TOUCHED_ENABLED,
-    surgicalManagement = SurgicalManagementOfHaemorrhage(
-      date = FormDate.today(),
-      typeOfSurgicalManagement = EnumSelection.WithOther(3)
+      summaryOfMdsrFindings = "MDSR findings"
     ),
     perinatalDeathTouched = TouchedState.TOUCHED_ENABLED,
     perinatalDeath = PerinatalDeath(

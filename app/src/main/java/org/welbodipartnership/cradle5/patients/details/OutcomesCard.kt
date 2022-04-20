@@ -1,18 +1,15 @@
 package org.welbodipartnership.cradle5.patients.details
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -25,7 +22,6 @@ import org.welbodipartnership.cradle5.data.database.entities.Hysterectomy
 import org.welbodipartnership.cradle5.data.database.entities.MaternalDeath
 import org.welbodipartnership.cradle5.data.database.entities.Outcomes
 import org.welbodipartnership.cradle5.data.database.entities.PerinatalDeath
-import org.welbodipartnership.cradle5.data.database.entities.SurgicalManagementOfHaemorrhage
 import org.welbodipartnership.cradle5.data.database.entities.TouchedState
 import org.welbodipartnership.cradle5.data.serverenums.DropdownType
 import org.welbodipartnership.cradle5.data.serverenums.ServerEnumCollection
@@ -35,7 +31,6 @@ import org.welbodipartnership.cradle5.ui.composables.LabelAndValueForDropdownOrU
 import org.welbodipartnership.cradle5.ui.composables.LabelAndValueOrNone
 import org.welbodipartnership.cradle5.ui.composables.LabelAndValueOrUnknown
 import org.welbodipartnership.cradle5.ui.composables.ValueForDropdownOrDefault
-import org.welbodipartnership.cradle5.ui.composables.forms.MoreInfoIconButton
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
 
 @Composable
@@ -61,8 +56,6 @@ fun OutcomesCard(
       hysterectomy: Hysterectomy?,
       maternalDeathTouched: TouchedState,
       maternalDeath: MaternalDeath?,
-      surgicalManagementTouched: TouchedState,
-      surgicalManagement: SurgicalManagementOfHaemorrhage?,
       perinatalDeathTouched: TouchedState,
       perinatalDeath: PerinatalDeath?,
       birthWeight: BirthWeight?,
@@ -174,6 +167,13 @@ fun OutcomesCard(
       )
 
       LabelAndValueForDropdownOrUnknown(
+        dropdownType = DropdownType.EclampticFitTime,
+        label = stringResource(R.string.when_was_first_eclamptic_fit_label),
+        enumValue = eclampsiaFit.whenWasFirstFit,
+        enumCollection = enumCollection
+      )
+
+      LabelAndValueForDropdownOrUnknown(
         dropdownType = DropdownType.Place,
         label = stringResource(R.string.place_of_first_eclamptic_fit_label),
         enumValue = eclampsiaFit.place,
@@ -198,7 +198,10 @@ fun OutcomesCard(
     )
     Spacer(Modifier.height(categoryToBodySpacerHeight))
     if (maternalDeath != null) {
-      LabelAndValueOrUnknown(stringResource(R.string.form_date_label), maternalDeath.date?.toString())
+      LabelAndValueOrUnknown(
+        stringResource(R.string.form_date_label),
+        maternalDeath.date?.toString()
+      )
       LabelAndValueForDropdownOrUnknown(
         dropdownType = DropdownType.UnderlyingCauseOfMaternalDeath,
         label = stringResource(R.string.maternal_death_underlying_cause_label),
@@ -210,6 +213,10 @@ fun OutcomesCard(
         label = stringResource(R.string.maternal_death_place_label),
         enumValue = maternalDeath.place,
         enumCollection = enumCollection
+      )
+      LabelAndValueOrNone(
+        stringResource(R.string.maternal_death_summary_of_mdsr_findings_label),
+        maternalDeath.summaryOfMdsrFindings
       )
     } else {
       Text(
@@ -249,77 +256,6 @@ fun OutcomesCard(
         },
         style = MaterialTheme.typography.body2,
       )
-    }
-
-    Spacer(Modifier.height(categoryToCategorySpacerHeight))
-
-    CategoryHeader(
-      text = stringResource(R.string.outcomes_surgical_management_label),
-      moreInfoText = stringResource(R.string.outcomes_surgical_management_more_info),
-    )
-    Spacer(Modifier.height(categoryToBodySpacerHeight))
-    if (surgicalManagement != null) {
-      LabelAndValueOrNone(stringResource(R.string.form_date_label), surgicalManagement.date?.toString())
-      LabelAndValueForDropdownOrUnknown(
-        dropdownType = DropdownType.TypeOfSurgicalManagement,
-        label = stringResource(R.string.surgical_management_type_label),
-        enumValue = surgicalManagement.typeOfSurgicalManagement,
-        enumCollection = enumCollection
-      )
-    } else {
-      Text(
-        text = if (surgicalManagementTouched == TouchedState.TOUCHED_ENABLED) {
-          stringResource(R.string.outcomes_card_enabled_but_missing_details_from_draft)
-        } else {
-          stringResource(R.string.none)
-        },
-        style = MaterialTheme.typography.body2,
-      )
-    }
-  }
-}
-
-@Composable
-fun CategoryHeader(
-  text: String,
-  modifier: Modifier = Modifier,
-  moreInfoText: String? = null,
-  textModifier: Modifier = Modifier
-) {
-  Row(modifier, verticalAlignment = Alignment.CenterVertically) {
-    Text(
-      text = text,
-      style = MaterialTheme.typography.h6,
-      modifier = textModifier.weight(1f),
-    )
-    moreInfoText?.let {
-      MoreInfoIconButton(
-        moreInfoText = it,
-      )
-    }
-  }
-}
-
-@Preview
-@Composable
-fun CategoryHeaderPreview() {
-  CradleTrialAppTheme {
-    Surface {
-      Column {
-        CategoryHeader(
-          text = stringResource(R.string.outcomes_surgical_management_label),
-          moreInfoText = "More info"
-        )
-
-        CategoryHeader(
-          text = stringResource(R.string.outcomes_surgical_management_label),
-        )
-
-        CategoryHeader(
-          text = stringResource(R.string.outcomes_maternal_death_label),
-          moreInfoText = stringResource(R.string.outcomes_maternal_death_more_info),
-        )
-      }
     }
   }
 }

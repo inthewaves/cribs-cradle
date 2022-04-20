@@ -31,8 +31,17 @@ abstract class DistrictDao {
    */
   @Transaction
   open suspend fun upsert(district: District) {
-    if (update(district) <= 0) {
-      insert(district)
+    val districtToUse = if (
+      district.name?.contains("other", ignoreCase = true) == true &&
+      !district.isOther
+    ) {
+      district.copy(isOther = true)
+    } else {
+      district
+    }
+
+    if (update(districtToUse) <= 0) {
+      insert(districtToUse)
     }
   }
 

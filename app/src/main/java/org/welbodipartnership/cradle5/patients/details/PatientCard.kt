@@ -105,7 +105,11 @@ fun PatientCard(
       Spacer(modifier = Modifier.height(spacerHeight))
       LabelAndValueOrUnknown(
         label = stringResource(R.string.patient_referral_info_from_facility_label),
-        value = referralFromFacility?.name,
+        value = if (referralFromDistrict?.isOther == true && patient.referralInfo != null) {
+          patient.referralInfo!!.fromFacilityText
+        } else {
+          referralFromFacility?.name
+        },
       )
       Spacer(modifier = Modifier.height(spacerHeight))
       LabelAndValueOrUnknown(
@@ -115,7 +119,11 @@ fun PatientCard(
       Spacer(modifier = Modifier.height(spacerHeight))
       LabelAndValueOrUnknown(
         label = stringResource(R.string.patient_referral_info_to_facility_label),
-        value = referralToFacility?.name,
+        value = if (referralToDistrict?.isOther == true && patient.referralInfo != null) {
+          patient.referralInfo!!.toFacilityText
+        } else {
+          referralToFacility?.name
+        },
       )
     }
   }

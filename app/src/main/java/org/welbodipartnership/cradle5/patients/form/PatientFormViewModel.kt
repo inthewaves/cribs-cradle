@@ -45,7 +45,6 @@ import org.welbodipartnership.cradle5.data.database.entities.Outcomes
 import org.welbodipartnership.cradle5.data.database.entities.Patient
 import org.welbodipartnership.cradle5.data.database.entities.PatientReferralInfo
 import org.welbodipartnership.cradle5.data.database.entities.PerinatalDeath
-import org.welbodipartnership.cradle5.data.database.entities.SurgicalManagementOfHaemorrhage
 import org.welbodipartnership.cradle5.data.database.entities.TouchedState
 import org.welbodipartnership.cradle5.data.database.resultentities.PatientFacilityDistrictOutcomes
 import org.welbodipartnership.cradle5.data.serverenums.DropdownType
@@ -148,7 +147,8 @@ class PatientFormViewModel @Inject constructor(
       "maternalDeathPlace",
       DropdownType.Place,
       isMandatory = false
-    )
+    ),
+    summaryOfMdsrFindings = handle.createMutableState("maternalDealthSummaryOfMdsr", null)
   )
 
   val formFields = PatientFormFields(
@@ -188,6 +188,11 @@ class PatientFormViewModel @Inject constructor(
           handle.createMutableState("patientFromFacility", null),
           isFormDraftState = isFormDraftState
         ),
+        fromFacilityText = NonEmptyTextState(
+          isMandatory = true,
+          handle.createMutableState("patientFromFacilityText", null),
+          isFormDraftState = isFormDraftState
+        ),
         toDistrict = DistrictState(
           isMandatory = true,
           handle.createMutableState("patientToDistrict", null),
@@ -198,6 +203,11 @@ class PatientFormViewModel @Inject constructor(
           handle.createMutableState("patientToFacility", null),
           isFormDraftState = isFormDraftState
         ),
+        toFacilityText = NonEmptyTextState(
+          isMandatory = true,
+          handle.createMutableState("patientToFacilityText", null),
+          isFormDraftState = isFormDraftState
+        ),
       ),
       localNotes = handle.createMutableState("patientLocalNotes", ""),
       isDraft = isFormDraftState
@@ -205,6 +215,11 @@ class PatientFormViewModel @Inject constructor(
     eclampsia = OutcomeFieldsWithCheckbox.Eclampsia(
       isEnabled = enabledState("eclampsiaEnabled"),
       didTheWomanFit = toggleState("eclampsiaDidWomanFit", isMandatory = true),
+      whenWasFirstFit = enumIdOnlyState(
+        "eclampsiaWhen",
+        DropdownType.EclampticFitTime,
+        isMandatory = false
+      ),
       placeOfFirstFit = enumIdOnlyState(
         "eclampsiaPlace",
         DropdownType.Place,
@@ -225,19 +240,6 @@ class PatientFormViewModel @Inject constructor(
       ),
     ),
     maternalDeath = maternalDeathState,
-    surgicalManagement = OutcomeFieldsWithCheckbox.SurgicalManagement(
-      isEnabled = enabledState("surgicalManagementEnabled"),
-      date = maternalDeathBoundedDateState(
-        "surgicalManagementDate",
-        isMandatory = true,
-        areApproximateDatesAcceptable = false,
-      ),
-      type = enumWithOtherState(
-        "surgicalManagementType",
-        DropdownType.TypeOfSurgicalManagement,
-        isMandatory = false
-      ),
-    ),
     perinatalDeath = OutcomeFieldsWithCheckbox.PerinatalDeath(
       isEnabled = enabledState("perinatalDeathEnabled"),
       date = maternalDeathBoundedDateState(
@@ -346,20 +348,28 @@ class PatientFormViewModel @Inject constructor(
                       ?.coerceAtLeast(0)
                   )
                 }
-                referralFromFacility?.let { facility ->
-                  fromFacility.stateValue = FacilityAndPosition(
-                    facility,
-                    facility.id
-                      .let { id ->
-                        dbWrapper.facilitiesDao().getFacilityIndexWhenOrderedByName(
-                          id,
-                          districtId = referralFromDistrict?.id ?: Facility.DEFAULT_DISTRICT_ID
-                        )
-                      }
-                      ?.toInt()
-                      ?.coerceAtLeast(0)
-                  )
+
+                if (referralFromDistrict?.isOther == true) {
+                  fromFacility.stateValue = null
+                  fromFacilityText.stateValue = patient.referralInfo?.fromFacilityText
+                } else {
+                  referralFromFacility?.let { facility ->
+                    fromFacility.stateValue = FacilityAndPosition(
+                      facility,
+                      facility.id
+                        .let { id ->
+                          dbWrapper.facilitiesDao().getFacilityIndexWhenOrderedByName(
+                            id,
+                            districtId = referralFromDistrict?.id ?: Facility.DEFAULT_DISTRICT_ID
+                          )
+                        }
+                        ?.toInt()
+                        ?.coerceAtLeast(0)
+                    )
+                  }
+                  fromFacilityText.stateValue = null
                 }
+
                 referralToDistrict?.let { district ->
                   toDistrict.stateValue = DistrictAndPosition(
                     district,
@@ -369,19 +379,26 @@ class PatientFormViewModel @Inject constructor(
                       ?.coerceAtLeast(0)
                   )
                 }
-                referralToFacility?.let { facility ->
-                  toFacility.stateValue = FacilityAndPosition(
-                    facility,
-                    facility.id
-                      .let { id ->
-                        dbWrapper.facilitiesDao().getFacilityIndexWhenOrderedByName(
-                          id,
-                          districtId = referralToDistrict?.id ?: Facility.DEFAULT_DISTRICT_ID
-                        )
-                      }
-                      ?.toInt()
-                      ?.coerceAtLeast(0)
-                  )
+
+                if (referralToDistrict?.isOther == true) {
+                  toFacility.stateValue = null
+                  toFacilityText.stateValue = patient.referralInfo?.toFacilityText
+                } else {
+                  referralToFacility?.let { facility ->
+                    toFacility.stateValue = FacilityAndPosition(
+                      facility,
+                      facility.id
+                        .let { id ->
+                          dbWrapper.facilitiesDao().getFacilityIndexWhenOrderedByName(
+                            id,
+                            districtId = referralToDistrict?.id ?: Facility.DEFAULT_DISTRICT_ID
+                          )
+                        }
+                        ?.toInt()
+                        ?.coerceAtLeast(0)
+                    )
+                  }
+                  toFacilityText.stateValue = null
                 }
               } ?: clearFormsAndSetCheckbox(
                 newEnabledState = patient.referralInfoTouched.nullEnabledState
@@ -396,6 +413,7 @@ class PatientFormViewModel @Inject constructor(
             outcomes?.eclampsiaFit?.let {
               isEnabled.value = true
               didTheWomanFit.stateValue = it.didTheWomanFit
+              whenWasFirstFit.backingState.value = it.whenWasFirstFit
               placeOfFirstFit.backingState.value = it.place
             } ?: clearFormsAndSetCheckbox(
               newEnabledState = outcomes?.eclampsiaFitTouched?.nullEnabledState
@@ -416,18 +434,9 @@ class PatientFormViewModel @Inject constructor(
               date.setStateFromFormDate(it.date)
               underlyingCause.backingState.value = it.underlyingCause
               placeOfDeath.backingState.value = it.place
+              summaryOfMdsrFindings.value = it.summaryOfMdsrFindings
             } ?: clearFormsAndSetCheckbox(
               newEnabledState = outcomes?.maternalDeathTouched?.nullEnabledState
-            )
-          }
-
-          with(formFields.surgicalManagement) {
-            outcomes?.surgicalManagement?.let {
-              isEnabled.value = true
-              date.setStateFromFormDate(it.date)
-              type.backingState.value = it.typeOfSurgicalManagement
-            } ?: clearFormsAndSetCheckbox(
-              newEnabledState = outcomes?.surgicalManagementTouched?.nullEnabledState
             )
           }
 
@@ -500,7 +509,6 @@ class PatientFormViewModel @Inject constructor(
         is OutcomeFieldsWithCheckbox.Hysterectomy -> R.string.outcomes_hysterectomy_label
         is OutcomeFieldsWithCheckbox.MaternalDeath -> R.string.outcomes_maternal_death_label
         is OutcomeFieldsWithCheckbox.PerinatalDeath -> R.string.outcomes_perinatal_death_label
-        is OutcomeFieldsWithCheckbox.SurgicalManagement -> R.string.outcomes_surgical_management_label
         is PatientFields.ReferralInfoFields -> R.string.patient_referral_info_labels
         is OutcomeFieldsWithoutCheckbox.AgeAtDelivery -> R.string.outcomes_age_at_delivery_label
         is OutcomeFieldsWithoutCheckbox.BirthWeight -> R.string.outcomes_birthweight_label
@@ -579,13 +587,24 @@ class PatientFormViewModel @Inject constructor(
                       fromDistrict.errorFor(context, fromDistrict.stateValue)
                     )
                   }
-                  if (!fromFacility.isValid) {
-                    fieldToErrorMap.addFieldError(
-                      getCategoryStringRes(),
-                      R.string.patient_referral_info_from_facility_label,
-                      fromFacility.errorFor(context, fromFacility.stateValue)
-                    )
+                  if (fromDistrict.stateValue?.district?.isOther == true) {
+                    if (!fromFacilityText.isValid) {
+                      fieldToErrorMap.addFieldError(
+                        getCategoryStringRes(),
+                        R.string.patient_referral_info_from_facility_label,
+                        fromFacilityText.errorFor(context, fromFacilityText.stateValue)
+                      )
+                    }
+                  } else {
+                    if (!fromFacility.isValid) {
+                      fieldToErrorMap.addFieldError(
+                        getCategoryStringRes(),
+                        R.string.patient_referral_info_from_facility_label,
+                        fromFacility.errorFor(context, fromFacility.stateValue)
+                      )
+                    }
                   }
+
                   if (!toDistrict.isValid) {
                     fieldToErrorMap.addFieldError(
                       getCategoryStringRes(),
@@ -593,19 +612,40 @@ class PatientFormViewModel @Inject constructor(
                       toDistrict.errorFor(context, toDistrict.stateValue)
                     )
                   }
-                  if (!toFacility.isValid) {
-                    fieldToErrorMap.addFieldError(
-                      getCategoryStringRes(),
-                      R.string.patient_referral_info_to_facility_label,
-                      toFacility.errorFor(context, toFacility.stateValue)
-                    )
+                  if (toDistrict.stateValue?.district?.isOther == true) {
+                    if (!toFacilityText.isValid) {
+                      fieldToErrorMap.addFieldError(
+                        getCategoryStringRes(),
+                        R.string.patient_referral_info_to_facility_label,
+                        toFacilityText.errorFor(context, toFacilityText.stateValue)
+                      )
+                    }
+                  } else {
+                    if (!toFacility.isValid) {
+                      fieldToErrorMap.addFieldError(
+                        getCategoryStringRes(),
+                        R.string.patient_referral_info_to_facility_label,
+                        toFacility.errorFor(context, toFacility.stateValue)
+                      )
+                    }
                   }
+
                   runCatching {
                     PatientReferralInfo(
                       fromDistrict = fromDistrict.stateValue?.district?.id,
                       fromFacility = fromFacility.stateValue?.facility?.id,
+                      fromFacilityText = if (fromDistrict.stateValue?.district?.isOther == true) {
+                        fromFacilityText.stateValue
+                      } else {
+                        null
+                      },
                       toDistrict = toDistrict.stateValue?.district?.id,
                       toFacility = toFacility.stateValue?.facility?.id,
+                      toFacilityText = if (toDistrict.stateValue?.district?.isOther == true) {
+                        toFacilityText.stateValue
+                      } else {
+                        null
+                      },
                     )
                   }
                 }
@@ -683,6 +723,7 @@ class PatientFormViewModel @Inject constructor(
               runCatching {
                 EclampsiaFit(
                   didTheWomanFit = didTheWomanFit.stateValue,
+                  whenWasFirstFit = whenWasFirstFit.stateValue,
                   place = placeOfFirstFit.stateValue
                 )
               }
@@ -769,45 +810,8 @@ class PatientFormViewModel @Inject constructor(
                 MaternalDeath(
                   date = if (isDraft) date.dateFromStateOrNull() else date.dateFromStateOrThrow(),
                   underlyingCause = underlyingCause.stateValue,
-                  place = placeOfDeath.stateValue
-                )
-              }
-            }
-            else -> null
-          }
-        }
-
-        val surgicalManagement: Result<SurgicalManagementOfHaemorrhage>? = with(formFields.surgicalManagement) {
-          when (isEnabled.value) {
-            null -> {
-              if (!isDraft) {
-                fieldToErrorMap.addFieldError(
-                  getCategoryStringRes(),
-                  R.string.outcomes_surgical_management_label,
-                  context.getString(R.string.outcomes_surgical_management_not_selected_error)
-                )
-              }
-              null
-            }
-            true -> {
-              if (!date.isValid) {
-                fieldToErrorMap.addFieldError(
-                  getCategoryStringRes(),
-                  R.string.form_date_label,
-                  date.errorFor(context, date.stateValue)
-                )
-              }
-              if (!type.isValid) {
-                fieldToErrorMap.addFieldError(
-                  getCategoryStringRes(),
-                  R.string.surgical_management_type_label,
-                  type.errorFor(context, type.stateValue)
-                )
-              }
-              runCatching {
-                SurgicalManagementOfHaemorrhage(
-                  date = if (isDraft) date.dateFromStateOrNull() else date.dateFromStateOrThrow(),
-                  typeOfSurgicalManagement = type.stateValue
+                  place = placeOfDeath.stateValue,
+                  summaryOfMdsrFindings = summaryOfMdsrFindings.value?.ifBlank { null }
                 )
               }
             }
@@ -938,12 +942,6 @@ class PatientFormViewModel @Inject constructor(
                   null -> TouchedState.NOT_TOUCHED
                 },
                 maternalDeath = maternalDeath?.getOrThrow(),
-                surgicalManagementTouched = when (formFields.surgicalManagement.isEnabled.value) {
-                  true -> TouchedState.TOUCHED_ENABLED
-                  false -> TouchedState.TOUCHED
-                  null -> TouchedState.NOT_TOUCHED
-                },
-                surgicalManagement = surgicalManagement?.getOrThrow(),
                 perinatalDeathTouched = when (formFields.perinatalDeath.isEnabled.value) {
                   true -> TouchedState.TOUCHED_ENABLED
                   false -> TouchedState.TOUCHED
@@ -1040,7 +1038,6 @@ class PatientFormViewModel @Inject constructor(
     val eclampsia: OutcomeFieldsWithCheckbox.Eclampsia,
     val hysterectomy: OutcomeFieldsWithCheckbox.Hysterectomy,
     val maternalDeath: OutcomeFieldsWithCheckbox.MaternalDeath,
-    val surgicalManagement: OutcomeFieldsWithCheckbox.SurgicalManagement,
     val perinatalDeath: OutcomeFieldsWithCheckbox.PerinatalDeath,
     val birthWeight: OutcomeFieldsWithoutCheckbox.BirthWeight,
     val ageAtDelivery: OutcomeFieldsWithoutCheckbox.AgeAtDelivery,
@@ -1050,7 +1047,6 @@ class PatientFormViewModel @Inject constructor(
       eclampsia.forceShowErrors()
       hysterectomy.forceShowErrors()
       maternalDeath.forceShowErrors()
-      surgicalManagement.forceShowErrors()
       perinatalDeath.forceShowErrors()
     }
   }
@@ -1072,23 +1068,29 @@ class PatientFormViewModel @Inject constructor(
       override val isEnabled: MutableState<Boolean?>,
       val fromDistrict: DistrictState,
       val fromFacility: HealthcareFacilityState,
+      val fromFacilityText: NonEmptyTextState,
       val toDistrict: DistrictState,
       val toFacility: HealthcareFacilityState,
+      val toFacilityText: NonEmptyTextState,
     ) : FieldsWithCheckbox() {
       override fun clearFormsAndSetCheckbox(newEnabledState: Boolean?) {
         isEnabled.value = newEnabledState
         fromDistrict.reset()
         fromFacility.reset()
+        fromFacilityText.reset()
         toDistrict.reset()
         toFacility.reset()
+        toFacilityText.reset()
       }
 
       override fun forceShowErrors() {
         if (isEnabled.value == true) {
           fromDistrict.enableShowErrors(force = true)
           fromFacility.enableShowErrors(force = true)
+          fromFacilityText.enableShowErrors(force = true)
           toDistrict.enableShowErrors(force = true)
           toFacility.enableShowErrors(force = true)
+          toFacilityText.enableShowErrors(force = true)
         }
       }
     }
@@ -1145,17 +1147,20 @@ class PatientFormViewModel @Inject constructor(
     data class Eclampsia(
       override val isEnabled: MutableState<Boolean?>,
       val didTheWomanFit: NullableToggleState,
+      val whenWasFirstFit: EnumIdOnlyState,
       val placeOfFirstFit: EnumIdOnlyState
     ) : FieldsWithCheckbox() {
       override fun clearFormsAndSetCheckbox(newEnabledState: Boolean?) {
         isEnabled.value = newEnabledState
         didTheWomanFit.reset()
+        whenWasFirstFit.reset()
         placeOfFirstFit.reset()
       }
 
       override fun forceShowErrors() {
         if (isEnabled.value == true) {
           didTheWomanFit.enableShowErrors(force = true)
+          whenWasFirstFit.enableShowErrors(force = true)
           placeOfFirstFit.enableShowErrors(force = true)
         }
       }
@@ -1186,13 +1191,15 @@ class PatientFormViewModel @Inject constructor(
       override val isEnabled: MutableState<Boolean?>,
       val date: NoFutureDateState,
       val underlyingCause: EnumWithOtherState,
-      val placeOfDeath: EnumIdOnlyState
+      val placeOfDeath: EnumIdOnlyState,
+      val summaryOfMdsrFindings: MutableState<String?>
     ) : FieldsWithCheckbox() {
       override fun clearFormsAndSetCheckbox(newEnabledState: Boolean?) {
         isEnabled.value = newEnabledState
         date.reset()
         underlyingCause.reset()
         placeOfDeath.reset()
+        summaryOfMdsrFindings.value = null
       }
 
       override fun forceShowErrors() {
@@ -1200,26 +1207,6 @@ class PatientFormViewModel @Inject constructor(
           date.enableShowErrors(force = true)
           underlyingCause.enableShowErrors(force = true)
           placeOfDeath.enableShowErrors(force = true)
-        }
-      }
-    }
-
-    @Stable
-    data class SurgicalManagement(
-      override val isEnabled: MutableState<Boolean?>,
-      val date: NoFutureDateState,
-      val type: EnumWithOtherState
-    ) : FieldsWithCheckbox() {
-      override fun clearFormsAndSetCheckbox(newEnabledState: Boolean?) {
-        isEnabled.value = newEnabledState
-        date.reset()
-        type.reset()
-      }
-
-      override fun forceShowErrors() {
-        if (isEnabled.value == true) {
-          date.enableShowErrors(force = true)
-          type.enableShowErrors(force = true)
         }
       }
     }

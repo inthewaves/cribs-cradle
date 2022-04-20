@@ -13,20 +13,20 @@
     <string name="outcomes_eclampsia_label">Pre-eclampsia/severe pre-eclampsia/eclampsia</string>
     <string name="none">None</string>
     <string name="form_date_label">Date (dd/mm/yyyy)</string>
+    <string name="when_was_first_eclamptic_fit_label">When was the first eclamptic fit</string>
     <string name="place_of_first_eclamptic_fit_label">Reported place of first eclamptic fit</string>
     <string name="unknown_dropdown_value_d">Unknown (selection Id: %1$d)</string>
     <string name="outcomes_hysterectomy_label">Hysterectomy/Sub-total hysterectomy</string>
     <string name="hysterectomy_cause_label">Cause of hysterectomy</string>
     <string name="unknown">Unknown</string>
     <string name="no">No</string>
-    <string name="outcomes_surgical_management_label">Surgical management of postpartum haemorrhage requiring anaesthesia</string>
-    <string name="surgical_management_type_label">Type of surgical management</string>
     <string name="outcomes_maternal_death_label">Maternal death</string>
     <string name="outcomes_perinatal_death_label">Perinatal death</string>
     <string name="perinatal_death_outcome_label">Perinatal outcome</string>
     <string name="perinatal_death_cause_of_stillbirth_label">Cause of stillbirth (macerated / fresh)</string>
     <string name="maternal_death_underlying_cause_label">Underlying cause of death</string>
     <string name="maternal_death_place_label">Place of death</string>
+    <string name="maternal_death_summary_of_mdsr_findings_label">Summary of MDSR findings</string>
     <string name="outcomes_card_title">Outcomes</string>
     <string name="patient_registration_card_title">Registration</string>
     <string name="other_card_title">Other</string>
@@ -63,7 +63,6 @@
     <string name="outcomes_hdu_itu_admission_not_selected_error">Missing HDU / ITU admission radio button selection</string>
     <string name="outcomes_maternal_death_not_selected_error">Missing maternal death radio button selection</string>
     <string name="outcomes_perinatal_death_not_selected_error">Missing perinatal death radio button selection</string>
-    <string name="outcomes_surgical_management_not_selected_error">Missing surgical management radio button selection</string>
     <string name="mark_as_draft_not_selected_error">Missing mark as draft radio button selection</string>
     <string name="patient_form_failed_to_load_patient_with_pk_d">Failed to load patient with primary key %1$d</string>
     <string name="errors_card_title">Errors</string>
@@ -176,6 +175,8 @@
     <string name="patients_list_filter_by_month_s">Month of presentation date (%1$s)</string>
     <string name="patients_list_filter_by_facility_s">Facility (%1$s)</string>
     <string name="filter_button_clear_filter">Clear filter</string>
+    <string name="missing_text_error">Missing input</string>
+
     <plurals name="patient_form_snackbar_failed_to_save_there_are_d_errors">
         <item quantity="one">Failed to save, as there is %1$d error.</item>
         <item quantity="other">Failed to save, as there are %1$d errors.</item>

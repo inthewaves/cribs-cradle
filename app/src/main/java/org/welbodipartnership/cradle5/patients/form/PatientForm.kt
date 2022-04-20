@@ -485,6 +485,7 @@ fun PatientForm(
               if (!it) eclampsia.clearFormsAndSetCheckbox(newEnabledState = false)
             },
             didTheWomanFitState = eclampsia.didTheWomanFit,
+            whenWasFirstFitState = eclampsia.whenWasFirstFit,
             placeOfFirstFitState = eclampsia.placeOfFirstFit,
             serverEnumCollection = serverEnumCollection,
             textFieldModifier = Modifier.bringIntoViewRequester(bringIntoViewRequester)
@@ -503,6 +504,7 @@ fun PatientForm(
             dateState = maternalDeath.date,
             underlyingCauseState = maternalDeath.underlyingCause,
             placeOfDeathState = maternalDeath.placeOfDeath,
+            mdsrFindingsState = maternalDeath.summaryOfMdsrFindings,
           )
 
           Spacer(Modifier.height(categoryToCategorySpacerHeight))
@@ -530,20 +532,6 @@ fun PatientForm(
               }
 
                */
-          )
-
-          Spacer(Modifier.height(categoryToCategorySpacerHeight))
-
-          CategoryHeader(stringResource(R.string.outcomes_surgical_management_label))
-          val surgicalManagement = viewModel.formFields.surgicalManagement
-          SurgicalManagementForm(
-            isFormEnabled = surgicalManagement.isEnabled.value,
-            onFormEnabledChange = {
-              surgicalManagement.isEnabled.value = it
-              if (!it) surgicalManagement.clearFormsAndSetCheckbox(newEnabledState = false)
-            },
-            dateState = surgicalManagement.date,
-            surgicalManagementTypeState = surgicalManagement.type,
           )
         }
       }
@@ -664,8 +652,10 @@ fun PatientReferralInfoForm(
     isFormEnabledState,
     fromDistrictState: DistrictState,
     fromFacilityState: HealthcareFacilityState,
+    fromFacilityText: NonEmptyTextState,
     toDistrictState: DistrictState,
-    toFacilityState: HealthcareFacilityState
+    toFacilityState: HealthcareFacilityState,
+    toFacilityText: NonEmptyTextState,
   ) = referralInfoFields
   var isFormEnabled by isFormEnabledState
   Column(modifier) {
@@ -686,24 +676,35 @@ fun PatientReferralInfoForm(
         textFieldModifier = Modifier
           .fillMaxWidth()
           .then(fromDistrictState.createFocusChangeModifier()),
-        extraOnItemSelected = { old, new -> if (old != new) fromFacilityState.reset() }
+        extraOnItemSelected = { old, new -> if (old != new) fromFacilityState.reset() },
       )
 
       Spacer(Modifier.height(textFieldToTextFieldHeight))
 
-      val fromFacilityFlow = remember(fromDistrictState.stateValue) {
-        facilityPagingFlowGetter(fromDistrictState.stateValue?.district)
-      }
+      if (fromDistrictState.stateValue?.district?.isOther == true) {
+        OutlinedTextFieldWithErrorHint(
+          value = fromFacilityText.stateValue ?: "",
+          onValueChange = { fromFacilityText.stateValue = it },
+          modifier = Modifier.fillMaxWidth(),
+          label = { RequiredText(stringResource(R.string.patient_referral_info_from_facility_label)) },
+          colors = darkerDisabledOutlinedTextFieldColors(),
+          errorHint = fromFacilityText.getError()
+        )
+      } else {
+        val fromFacilityFlow = remember(fromDistrictState.stateValue) {
+          facilityPagingFlowGetter(fromDistrictState.stateValue?.district)
+        }
 
-      FacilityListDropdown(
-        state = fromFacilityState,
-        pagingItemFlow = fromFacilityFlow,
-        label = { RequiredText(stringResource(R.string.patient_referral_info_from_facility_label)) },
-        modifier = Modifier.fillMaxWidth(),
-        textFieldModifier = Modifier
-          .fillMaxWidth()
-          .then(fromFacilityState.createFocusChangeModifier())
-      )
+        FacilityListDropdown(
+          state = fromFacilityState,
+          pagingItemFlow = fromFacilityFlow,
+          label = { RequiredText(stringResource(R.string.patient_referral_info_from_facility_label)) },
+          modifier = Modifier.fillMaxWidth(),
+          textFieldModifier = Modifier
+            .fillMaxWidth()
+            .then(fromFacilityState.createFocusChangeModifier())
+        )
+      }
 
       Spacer(Modifier.height(textFieldToTextFieldHeight))
 
@@ -715,26 +716,38 @@ fun PatientReferralInfoForm(
         textFieldModifier = Modifier
           .fillMaxWidth()
           .then(toDistrictState.createFocusChangeModifier()),
-        extraOnItemSelected = { old, new -> if (old != new) toFacilityState.reset() }
+        extraOnItemSelected = { old, new -> if (old != new) toFacilityState.reset() },
       )
 
       Spacer(Modifier.height(textFieldToTextFieldHeight))
 
-      val toFacilityFlow = remember(toDistrictState.stateValue) {
-        facilityPagingFlowGetter(toDistrictState.stateValue?.district)
-      }
+      if (toDistrictState.stateValue?.district?.isOther == true) {
+        OutlinedTextFieldWithErrorHint(
+          value = toFacilityText.stateValue ?: "",
+          onValueChange = { toFacilityText.stateValue = it },
+          modifier = Modifier.fillMaxWidth(),
+          label = { RequiredText(stringResource(R.string.patient_referral_info_to_facility_label)) },
+          colors = darkerDisabledOutlinedTextFieldColors(),
+          errorHint = toFacilityText.getError()
+        )
+      } else {
 
-      FacilityListDropdown(
-        state = toFacilityState,
-        pagingItemFlow = toFacilityFlow,
-        label = {
-          RequiredText(stringResource(R.string.patient_referral_info_to_facility_label))
-        },
-        modifier = Modifier.fillMaxWidth(),
-        textFieldModifier = Modifier
-          .fillMaxWidth()
-          .then(toFacilityState.createFocusChangeModifier())
-      )
+        val toFacilityFlow = remember(toDistrictState.stateValue) {
+          facilityPagingFlowGetter(toDistrictState.stateValue?.district)
+        }
+
+        FacilityListDropdown(
+          state = toFacilityState,
+          pagingItemFlow = toFacilityFlow,
+          label = {
+            RequiredText(stringResource(R.string.patient_referral_info_to_facility_label))
+          },
+          modifier = Modifier.fillMaxWidth(),
+          textFieldModifier = Modifier
+            .fillMaxWidth()
+            .then(toFacilityState.createFocusChangeModifier()),
+        )
+      }
     }
   }
 }
@@ -744,6 +757,7 @@ fun EclampsiaForm(
   isFormEnabled: Boolean?,
   onFormEnabledStateChange: (newState: Boolean) -> Unit,
   didTheWomanFitState: NullableToggleState,
+  whenWasFirstFitState: EnumIdOnlyState,
   placeOfFirstFitState: EnumIdOnlyState,
   serverEnumCollection: ServerEnumCollection,
   modifier: Modifier = Modifier,
@@ -772,13 +786,26 @@ fun EclampsiaForm(
     )
     AnimatedErrorHint(errorHint = didTheWomanFitState.getError(), enabled = isFormEnabled == true)
 
-    val serverEnum = requireNotNull(serverEnumCollection[DropdownType.Place]) {
+    val whenWasFirstFitEnum = requireNotNull(serverEnumCollection[DropdownType.EclampticFitTime]) {
+      "missing EclampticFitTime lookup values from the server"
+    }
+    EnumDropdownMenuIdOnly(
+      currentSelection = whenWasFirstFitState.stateValue,
+      onSelect = { whenWasFirstFitState.stateValue = it },
+      serverEnum = whenWasFirstFitEnum,
+      label = { Text(stringResource(R.string.when_was_first_eclamptic_fit_label)) },
+      enabled = isFormEnabled == true && didTheWomanFitState.stateValue == true,
+      errorHint = whenWasFirstFitState.getError(),
+      textModifier = textFieldModifier.fillMaxWidth()
+    )
+
+    val placeEnum = requireNotNull(serverEnumCollection[DropdownType.Place]) {
       "missing Place lookup values from the server"
     }
     EnumDropdownMenuIdOnly(
       currentSelection = placeOfFirstFitState.stateValue,
       onSelect = { placeOfFirstFitState.stateValue = it },
-      serverEnum = serverEnum,
+      serverEnum = placeEnum,
       label = { Text(stringResource(R.string.place_of_first_eclamptic_fit_label)) },
       enabled = isFormEnabled == true && didTheWomanFitState.stateValue == true,
       errorHint = placeOfFirstFitState.getError(),
@@ -846,6 +873,7 @@ fun MaternalDeathForm(
   dateState: NoFutureDateState,
   underlyingCauseState: EnumWithOtherState,
   placeOfDeathState: EnumIdOnlyState,
+  mdsrFindingsState: MutableState<String?>,
   modifier: Modifier = Modifier,
 ) {
   Row {
@@ -904,57 +932,13 @@ fun MaternalDeathForm(
       errorHint = placeOfDeathState.getError(),
       textModifier = Modifier.fillMaxWidth()
     )
-  }
-}
 
-@Composable
-fun SurgicalManagementForm(
-  isFormEnabled: Boolean?,
-  onFormEnabledChange: (newState: Boolean) -> Unit,
-  dateState: NoFutureDateState,
-  surgicalManagementTypeState: EnumWithOtherState,
-  modifier: Modifier = Modifier,
-) {
-  Column(modifier) {
-    Row {
-      BooleanRadioButtonRow(
-        isTrue = isFormEnabled,
-        onBooleanChange = onFormEnabledChange,
-      )
-      MoreInfoIconButton(stringResource(R.string.outcomes_surgical_management_more_info))
-    }
-
-    DateOutlinedTextField(
-      text = dateState.stateValue,
-      onValueChange = { dateState.stateValue = it },
-      dateStringToTimestampMapper = formDateToTimestampMapper,
-      timestampToDateStringMapper = timestampToFormDateMapper,
-      maxLength = FormDate.MAX_STRING_LEN_NO_SLASHES,
-      onPickerClose = { dateState.enableShowErrors(force = true) },
-      label = {
-        RequiredText(text = stringResource(R.string.form_date_label), required = isFormEnabled == true)
-      },
-      enabled = isFormEnabled == true,
+    BringIntoViewOutlinedTextField(
+      label = { Text(stringResource(R.string.maternal_death_summary_of_mdsr_findings_label)) },
+      value = mdsrFindingsState.value ?: "",
+      onValueChange = { mdsrFindingsState.value = it },
       modifier = Modifier.fillMaxWidth(),
-      textFieldModifier = Modifier
-        .fillMaxWidth()
-        .then(dateState.createFocusChangeModifier()),
-      errorHint = dateState.getError(),
-      keyboardOptions = KeyboardOptions.Default,
-    )
-
-    EnumDropdownMenuWithOther(
-      currentSelection = surgicalManagementTypeState.stateValue,
-      onSelect = { surgicalManagementTypeState.stateValue = it },
-      serverEnum = surgicalManagementTypeState.enum!!,
-      label = { Text(stringResource(R.string.surgical_management_type_label)) },
-      enabled = isFormEnabled == true,
-      dropdownTextModifier = Modifier.fillMaxWidth(),
-      showErrorHintOnOtherField = surgicalManagementTypeState.stateValue != null,
-      otherTextModifier = Modifier
-        .fillMaxWidth()
-        .then(surgicalManagementTypeState.createFocusChangeModifier()),
-      errorHint = surgicalManagementTypeState.getError()
+      colors = darkerDisabledOutlinedTextFieldColors()
     )
   }
 }
@@ -1309,6 +1293,11 @@ fun EclampsiaFormPreview() {
           remember { mutableStateOf(null) },
           true
         ),
+        whenWasFirstFitState = EnumIdOnlyState(
+          defaultEnums[DropdownType.EclampticFitTime],
+          isMandatory = false,
+          isFormDraftState = draft
+        ),
         placeOfFirstFitState = EnumIdOnlyState(
           defaultEnums[DropdownType.Place],
           isMandatory = false,
@@ -1338,7 +1327,7 @@ fun DistrictListDropdown(
   textFieldModifier: Modifier = Modifier,
   enabled: Boolean = true,
   label: @Composable (() -> Unit)? = null,
-  extraOnItemSelected: (previous: District?, new: District) -> Unit = { _, _ -> }
+  extraOnItemSelected: (previous: District?, new: District) -> Unit = { _, _ -> },
 ) = DatabasePagingListDropdown(
   selectedItem = state.stateValue?.district,
   positionInList = state.stateValue?.position,
@@ -1360,7 +1349,7 @@ fun DistrictListDropdown(
   enabled = enabled,
   label = label,
   modifier = modifier,
-  textFieldModifier = textFieldModifier
+  textFieldModifier = textFieldModifier,
 )
 
 @Composable
@@ -1389,6 +1378,24 @@ fun FacilityListDropdown(
   modifier = modifier,
   textFieldModifier = textFieldModifier
 )
+
+class NonEmptyTextState(
+  isMandatory: Boolean,
+  backingState: MutableState<String?>,
+  isFormDraftState: State<Boolean?>
+) : FieldState<String?>(
+  validator = { !it.isNullOrBlank() },
+  errorFor = { ctx, _ -> ctx.getString(R.string.missing_text_error) },
+  initialValue = null,
+  backingState = backingState,
+  isFormDraftState = isFormDraftState,
+  isMandatory = isMandatory,
+) {
+  override val showErrorOnInput: Boolean = true
+  override fun isMissing(): Boolean {
+    return stateValue == null
+  }
+}
 
 class HealthcareFacilityState(
   isMandatory: Boolean,

@@ -51,11 +51,6 @@ data class Outcomes(
   val maternalDeath: MaternalDeath?,
 
   @ColumnInfo(defaultValue = "1")
-  val surgicalManagementTouched: TouchedState,
-  @Embedded(prefix = "surgical_mgmt_")
-  val surgicalManagement: SurgicalManagementOfHaemorrhage?,
-
-  @ColumnInfo(defaultValue = "1")
   val perinatalDeathTouched: TouchedState,
   @Embedded(prefix = "perinatal_death_")
   val perinatalDeath: PerinatalDeath?,
@@ -72,7 +67,6 @@ data class Outcomes(
       eclampsiaFit?.requiredFieldsPresent() == false ||
         hysterectomy?.requiredFieldsPresent() == false ||
         maternalDeath?.requiredFieldsPresent() == false ||
-        surgicalManagement?.requiredFieldsPresent() == false ||
         perinatalDeath?.requiredFieldsPresent() == false -> false
       else -> true
     }
@@ -92,7 +86,12 @@ data class Outcomes(
  */
 @Immutable
 data class EclampsiaFit(
+  @Required
   val didTheWomanFit: Boolean?,
+  /**
+   * The server provides enums for when the fit occurred starting at 1
+   */
+  val whenWasFirstFit: EnumSelection.IdOnly?,
   /**
    * The server provides enums for location starting at 1
    */
@@ -131,21 +130,9 @@ data class MaternalDeath(
    */
   @get:JvmName("getPlace")
   val place: EnumSelection.IdOnly?,
+  val summaryOfMdsrFindings: String?,
 ) : HasRequiredFields {
   override fun requiredFieldsPresent() = date != null && underlyingCause != null
-}
-
-/**
- * Surgical management of postpartum haemorrhage requiring anaesthesia
- */
-@Immutable
-data class SurgicalManagementOfHaemorrhage(
-  @Required
-  val date: FormDate?,
-  @Embedded(prefix = "type_")
-  val typeOfSurgicalManagement: EnumSelection.WithOther?,
-) : HasRequiredFields {
-  override fun requiredFieldsPresent() = date != null
 }
 
 /**

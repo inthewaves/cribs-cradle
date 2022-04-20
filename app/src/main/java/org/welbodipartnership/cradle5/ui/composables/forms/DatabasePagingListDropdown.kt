@@ -55,7 +55,7 @@ fun <DatabaseType : Parcelable> DatabasePagingListDropdown(
   textFieldModifier: Modifier = Modifier,
   enabled: Boolean = true,
   label: @Composable (() -> Unit)? = null,
-  errorHint: String?,
+  errorHint: String? = null,
 ) {
   var showDialog by rememberSaveable { mutableStateOf(false) }
   if (showDialog) {

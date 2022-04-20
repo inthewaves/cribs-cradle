@@ -137,8 +137,10 @@ data class Patient(
 data class PatientReferralInfo(
   @Required val fromDistrict: Long?,
   @Required val fromFacility: Long?,
+  val fromFacilityText: String?,
   @Required val toDistrict: Long?,
   @Required val toFacility: Long?,
+  val toFacilityText: String?,
 ) : HasRequiredFields {
   override fun requiredFieldsPresent() =
     fromDistrict != null && fromFacility != null && toDistrict != null && toFacility != null

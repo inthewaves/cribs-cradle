@@ -18,4 +18,6 @@ data class District(
   @ColumnInfo(name = "id")
   val id: Long,
   val name: String?,
+  @ColumnInfo(defaultValue = "0")
+  val isOther: Boolean = false,
 ) : Parcelable

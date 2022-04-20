@@ -19,8 +19,10 @@ fun Patient.toApiBody() = Registration(
   wasPatientReferral = referralInfo != null,
   patientReferralFromDistrict = referralInfo?.fromDistrict?.toInt(),
   patientReferralFromFacility = referralInfo?.fromFacility?.toInt(),
+  patientReferralFromFacilityCustom = referralInfo?.fromFacilityText,
   patientReferralToDistrict = referralInfo?.toDistrict?.toInt(),
   patientReferralToFacility = referralInfo?.toFacility?.toInt(),
+  patientReferralToFacilityCustom = referralInfo?.toFacilityText,
 )
 
 fun Outcomes.toApiBody() = Outcome(
@@ -41,10 +43,13 @@ fun Outcomes.toApiBody() = Outcome(
   perinatalAdditionalInfo = perinatalDeath?.additionalInfo?.ifBlank { null },
 
   birthWeight = if (birthWeight?.isNotReported == true) null else birthWeight?.birthWeight?.selectionId,
+  birthWeightNotReported = birthWeight?.isNotReported == true,
   ageAtDelivery = if (ageAtDelivery?.isNotReported == true) null else ageAtDelivery?.ageAtDelivery?.selectionId,
+  ageAtDeliveryNotReported = ageAtDelivery?.isNotReported == true,
 
   hadFirstEclampsiaFit = eclampsiaFit != null,
   eclampsiaDidTheWomanFit = eclampsiaFit?.didTheWomanFit,
+  eclampsiaWhenWasFirstFit = eclampsiaFit?.whenWasFirstFit?.selectionId,
   eclampsiaFitLocation = eclampsiaFit?.place?.selectionId,
 
   hasHysterectomy = hysterectomy != null,
@@ -57,11 +62,7 @@ fun Outcomes.toApiBody() = Outcome(
   maternalDeathUnderlyingCause = maternalDeath?.underlyingCause?.selectionId,
   maternalDeathOtherCause = maternalDeath?.underlyingCause?.otherString?.ifBlank { null },
   maternalDeathPlace = maternalDeath?.place?.selectionId,
-
-  hadSurgicalMgmtOfPostpartumHaemorrhageAndAnaesthesia = surgicalManagement != null,
-  surgicalManagementDate = surgicalManagement?.date,
-  surgicalManagementType = surgicalManagement?.typeOfSurgicalManagement?.selectionId,
-  surgicalManagementOtherType = surgicalManagement?.typeOfSurgicalManagement?.otherString?.ifBlank { null },
+  maternalDeathMdsrFindingsSummary = maternalDeath?.summaryOfMdsrFindings
 )
 
 fun LocationCheckIn.toApiBody(userId: Int) = GpsForm(

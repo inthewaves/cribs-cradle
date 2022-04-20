@@ -31,7 +31,7 @@ value class ServerEnumCollection private constructor(
      * The current version of the default instance. This is kept track of in order to force an
      * update when the app updates.
      */
-    const val DROPDOWN_VERSION = 2
+    const val DROPDOWN_VERSION = 3
 
     val defaultInstance by lazy {
       ServerEnumCollection(
