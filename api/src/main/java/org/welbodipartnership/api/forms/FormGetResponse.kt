@@ -16,9 +16,20 @@ data class FormGetResponse<T>(
   @Json(name = "Meta")
   val meta: Meta
 ) {
+
+  object MetaObjectIdOnlyAdapter : SingleMetaFieldAdapter<Int>(
+    metaFieldName = "ObjectId",
+    resultParser = { nextInt() }
+  )
+
+  object MetaTitleOnlyAdapter : SingleMetaFieldAdapter<String>(
+    metaFieldName = "Title",
+    resultParser = { nextString() }
+  )
+
   /**
-   * An adapter that only read the ObjectId of the GET request body. This will not consume
-   * the entire stream for speed reasons. Note that since OkHttp uses BufferedSources,
+   * An adapter that only reads the [metaFieldName] field of the GET request body. This will not
+   * consume the entire stream for speed reasons. Note that since OkHttp uses BufferedSources,
    * this doesn't save much in terms of bandwidth.
    *
    * The general format it is trying to read:
@@ -32,13 +43,25 @@ data class FormGetResponse<T>(
    *   },
    * }
    */
-  object ObjectIdOnlyAdapter : JsonAdapter<Int>() {
+  open class SingleMetaFieldAdapter<T>(
+    private val metaFieldName: String,
+    private val resultParser: JsonReader.() -> T
+  ) : JsonAdapter<T>() {
+    init {
+      require(metaFieldName.first().isUpperCase()) {
+        "First character in $metaFieldName should be upper cased"
+      }
+    }
+    val nonUpperCasedMetaFieldName = metaFieldName.asSequence()
+      .mapIndexed { index, c -> if (index == 0) c.lowercase() else c }
+      .joinToString()
+
     private val formOptions: JsonReader.Options = JsonReader.Options.of("Meta")
-    private val metaOptions: JsonReader.Options = JsonReader.Options.of("ObjectId")
+    private val metaOptions: JsonReader.Options = JsonReader.Options.of(metaFieldName)
 
-    override fun toString(): String = "ObjectIdOnlyAdapter"
+    override fun toString(): String = "SingleMetaFieldAdapter(metaFieldName=$metaFieldName)"
 
-    override fun fromJson(reader: JsonReader): Int {
+    override fun fromJson(reader: JsonReader): T {
       reader.beginObject()
       while (reader.hasNext()) {
         when (reader.selectName(formOptions)) {
@@ -48,7 +71,7 @@ data class FormGetResponse<T>(
               when (reader.selectName(metaOptions)) {
                 0 -> {
                   // selectName consume the name token; now we just read the integer and return
-                  return reader.nextInt()
+                  return resultParser.invoke(reader)
                 }
                 -1 -> {
                   // Unknown name, skip it.
@@ -58,7 +81,7 @@ data class FormGetResponse<T>(
               }
             }
             reader.endObject()
-            throw Util.missingProperty("objectId", "ObjectId", reader)
+            throw Util.missingProperty(nonUpperCasedMetaFieldName, metaFieldName, reader)
           }
           -1 -> {
             // Unknown name, skip it.
@@ -71,7 +94,7 @@ data class FormGetResponse<T>(
       throw Util.missingProperty("meta", "Meta", reader)
     }
 
-    override fun toJson(writer: JsonWriter, value_: Int?) {
+    override fun toJson(writer: JsonWriter, value_: T?) {
       throw JsonDataException("toJson is not supported")
     }
   }

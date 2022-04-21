@@ -550,7 +550,7 @@ class FormTest {
     val source = json.byteInputStream()
     val bufferedSource = source.source().buffer()
 
-    val adapter = FormGetResponse.ObjectIdOnlyAdapter
+    val adapter = FormGetResponse.MetaObjectIdOnlyAdapter
     val parsed = adapter.fromJson(bufferedSource)
     assertNotNull(parsed)
     assertEquals(expectedObjectId, parsed)

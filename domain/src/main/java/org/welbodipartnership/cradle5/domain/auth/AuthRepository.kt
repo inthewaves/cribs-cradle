@@ -24,7 +24,6 @@ import org.welbodipartnership.cradle5.data.settings.AppValuesStore
 import org.welbodipartnership.cradle5.data.settings.AuthToken
 import org.welbodipartnership.cradle5.data.settings.PasswordHash
 import org.welbodipartnership.cradle5.domain.NetworkResult
-import org.welbodipartnership.cradle5.domain.ObjectId
 import org.welbodipartnership.cradle5.domain.RestApi
 import org.welbodipartnership.cradle5.domain.UrlProvider
 import org.welbodipartnership.cradle5.domain.districts.DistrictRepository
@@ -279,10 +278,14 @@ class AuthRepository @Inject internal constructor(
       // Try to get the user's district
       loginEventMessagesChannel?.trySend("Getting user district")
       val districtName: String? = when (
-        val result = restApi.getFormData<HealthcareFacilitySummary>(objectId = ObjectId.QUERIES)
+        val result = restApi.getFormTitle<HealthcareFacilitySummary>()
       ) {
         is NetworkResult.Success -> {
-          val name = result.value.districtName
+          val title = result.value
+          val name = title.substringAfter("Healthcare Facility Summary - ")
+            .trim()
+            .ifBlank { null }
+          Log.d(TAG, "login(): parsed title $title to get name $name")
           if (name != null) {
             appValuesStore.setDistrictName(name)
           } else {

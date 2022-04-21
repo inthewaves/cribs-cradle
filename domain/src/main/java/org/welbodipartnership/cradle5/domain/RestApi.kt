@@ -493,9 +493,28 @@ class RestApi @Inject internal constructor(
       failureReader = { src, _ -> src.readByteArray() },
       successReader = { src, _ ->
         // this adapter doesn't consume the entire body
-        val objectId = FormGetResponse.ObjectIdOnlyAdapter.fromJson(src)
+        val objectId = runInterruptible { FormGetResponse.MetaObjectIdOnlyAdapter.fromJson(src) }
           ?: throw IOException("missing ObjectId for nodeId $nodeId")
         ObjectId(objectId)
+      }
+    )
+  }
+
+  /**
+   * Gets the Title for a form with the given [formId]
+   */
+  suspend inline fun <reified T> getFormTitle(
+    formId: FormId = FormId.fromAnnotationOrThrow<T>()
+  ): DefaultNetworkResult<String> {
+    return httpClient.makeRequest(
+      method = HttpClient.Method.GET,
+      url = urlProvider.forms(formId, ObjectId.QUERIES),
+      headers = defaultHeadersFlow.first(),
+      failureReader = { src, _ -> src.readByteArray() },
+      successReader = { src, _ ->
+        // this adapter doesn't consume the entire body
+        runInterruptible { FormGetResponse.MetaTitleOnlyAdapter.fromJson(src) }
+          ?: throw IOException("missing Title for formId $formId")
       }
     )
   }
