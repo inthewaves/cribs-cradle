@@ -439,7 +439,7 @@ fun PatientListHeader(modifier: Modifier = Modifier) {
     BasePatientListItem(
       id = stringResource(R.string.patient_list_header_id),
       initials = stringResource(R.string.patient_list_header_initials),
-      dateOfBirth = stringResource(R.string.patient_list_header_date_of_birth),
+      age = stringResource(R.string.patient_list_header_age),
       listIconType = ListIconType.DontShow,
       minHeight = 24.dp,
       textStyle = MaterialTheme.typography.subtitle2,
@@ -463,7 +463,7 @@ fun PatientListItem(
   BasePatientListItem(
     id = listPatient.serverInfo?.objectId?.toString() ?: stringResource(R.string.not_available_n_slash_a),
     initials = listPatient.initials,
-    dateOfBirth = listPatient.dateOfBirth?.toString() ?: stringResource(R.string.not_available_n_slash_a),
+    age = listPatient.dateOfBirth?.getAgeInYearsFromNow()?.toString() ?: stringResource(R.string.not_available_n_slash_a),
     listIconType = ListIconType.ShowIcons(
       isPatientUploaded = listPatient.serverInfo != null,
       hasLocalNotes = !listPatient.localNotes.isNullOrBlank(),
@@ -508,7 +508,7 @@ sealed class ListIconType {
 private fun BasePatientListItem(
   id: String,
   initials: String,
-  dateOfBirth: String,
+  age: String,
   listIconType: ListIconType,
   minHeight: Dp,
   textStyle: TextStyle,
@@ -535,9 +535,9 @@ private fun BasePatientListItem(
       style = textStyle
     )
     Text(
-      dateOfBirth,
+      age,
       modifier = Modifier
-        .weight(0.3f)
+        .weight(0.2f)
         .align(Alignment.CenterVertically),
       style = textStyle
     )

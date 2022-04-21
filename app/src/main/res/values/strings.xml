@@ -42,7 +42,7 @@
     <string name="back_button">Back button</string>
     <string name="patient_list_header_id">ID</string>
     <string name="patient_list_header_initials">Initials</string>
-    <string name="patient_list_header_date_of_birth">Date of birth</string>
+    <string name="patient_list_header_age">Age</string>
     <string name="patients_list_add_new_button">Add a new patient</string>
     <string name="patient_registration_initials_error">Initials must be 1–5 characters</string>
     <string name="form_date_cannot_be_in_future_error">Date cannot be in the future</string>
