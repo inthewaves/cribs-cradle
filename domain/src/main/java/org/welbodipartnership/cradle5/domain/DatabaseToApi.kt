@@ -40,6 +40,7 @@ fun Outcomes.toApiBody() = Outcome(
   perinatalNeonatalDeathPrematurity = perinatalDeath?.causesOfNeonatalDeath?.prematurity ?: false,
   perinatalNeonatalDeathCauseNotEstablished = perinatalDeath?.causesOfNeonatalDeath?.causeNotEstablished ?: false,
   perinatalNeonatalDeathCauseOther = perinatalDeath?.causesOfNeonatalDeath?.other ?: false,
+  perinatalNeonatalDeathCauseNotReported = perinatalDeath?.causesOfNeonatalDeath?.notReported ?: false,
   perinatalAdditionalInfo = perinatalDeath?.additionalInfo?.ifBlank { null },
 
   birthWeight = if (birthWeight?.isNotReported == true) null else birthWeight?.birthWeight?.selectionId,

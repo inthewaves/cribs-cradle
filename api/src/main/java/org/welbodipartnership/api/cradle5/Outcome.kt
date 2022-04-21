@@ -39,6 +39,8 @@ data class Outcome(
   val perinatalNeonatalDeathCauseNotEstablished: Boolean? = null,
   @Json(name = "Control2141")
   val perinatalNeonatalDeathCauseOther: Boolean? = null,
+  @Json(name = "Control2147")
+  val perinatalNeonatalDeathCauseNotReported: Boolean?,
   /**
    * Additional information on reason for perinatal death
    */
