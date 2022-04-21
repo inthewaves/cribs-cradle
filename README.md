@@ -7,6 +7,26 @@ An app developed specifically for the Cradle5 trial.
 This is an Android app written 100% in Kotlin using Jetpack Compose (UI). This was both rushed and
 also my first time working with Compose.
 
+Some code here has been heavily inspired by official Compose samples. For example,
+
+* The navigation code was adapted from the [Tivi](https://github.com/chrisbanes/tivi) app (although 
+  I still don't agree with the androidx.navigation approach of using URL-based navigation without 
+  type-safe compiler-checked navigation args)
+* Much of the Compose-related form code is derived from 
+  [JetSurvey](https://github.com/android/compose-samples/tree/master/Jetsurvey)
+  
+### Structure
+
+There are several modules to this project.
+
+* **util**: A module containing utilities used by all other modules
+* **api**: Strictly related to serializing / deserializing JSON from the MedSciNet API
+* **data**: Contains information on how the data is stored in the app (using Room on SQLite + 
+  SQLCipher, but see [issue 8](https://github.com/inthewaves/cribs-cradle/issues/8) on whether
+  SQLCipher is unneeded technical debt)
+* **domain**: Connects the **api** and **data** modules together
+* **app**: Contains the main Android app code (Compose UI, ViewModels, etc.)
+
 ### Building
 
 Inside of `local.properties`, fill in these properties:
