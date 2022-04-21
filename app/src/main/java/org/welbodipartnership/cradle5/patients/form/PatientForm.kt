@@ -652,103 +652,102 @@ fun PatientReferralInfoForm(
     isFormEnabledState,
     fromDistrictState: DistrictState,
     fromFacilityState: HealthcareFacilityState,
-    fromFacilityText: NonEmptyTextState,
+    fromFacilityTextState: NonEmptyTextState,
     toDistrictState: DistrictState,
     toFacilityState: HealthcareFacilityState,
-    toFacilityText: NonEmptyTextState,
+    toFacilityTextState: NonEmptyTextState,
   ) = referralInfoFields
   var isFormEnabled by isFormEnabledState
   Column(modifier) {
     RequiredText(text = stringResource(R.string.patient_referral_checkbox_label))
-    BooleanRadioButtonRow(isTrue = isFormEnabled, onBooleanChange = {
-      isFormEnabled = it
-      if (!it) referralInfoFields.clearFormsAndSetCheckbox(newEnabledState = false)
+    BooleanRadioButtonRow(isTrue = isFormEnabled, onBooleanChange = { newValue ->
+      val oldValue = isFormEnabled
+      isFormEnabled = newValue
+      if (oldValue != newValue) {
+        referralInfoFields.clearFormsAndSetCheckbox(newEnabledState = newValue)
+      }
     })
 
     if (isFormEnabled == true) {
-      DistrictListDropdown(
-        state = fromDistrictState,
-        pagingItemFlow = districtPagingFlow,
-        label = {
-          RequiredText(stringResource(R.string.patient_referral_info_from_district_label))
-        },
-        modifier = Modifier.fillMaxWidth(),
-        textFieldModifier = Modifier
-          .fillMaxWidth()
-          .then(fromDistrictState.createFocusChangeModifier()),
-        extraOnItemSelected = { old, new -> if (old != new) fromFacilityState.reset() },
+      DistrictAndFacilityFormPair(
+        districtState = fromDistrictState,
+        districtLabel = { RequiredText(stringResource(R.string.patient_referral_info_from_district_label)) },
+        facilityState = fromFacilityState,
+        facilityCustomTextState = fromFacilityTextState,
+        facilityLabel = { RequiredText(stringResource(R.string.patient_referral_info_from_facility_label)) },
+        districtPagingFlow,
+        facilityPagingFlowGetter,
+        textFieldToTextFieldHeight
       )
 
       Spacer(Modifier.height(textFieldToTextFieldHeight))
 
-      if (fromDistrictState.stateValue?.district?.isOther == true) {
-        OutlinedTextFieldWithErrorHint(
-          value = fromFacilityText.stateValue ?: "",
-          onValueChange = { fromFacilityText.stateValue = it },
-          modifier = Modifier.fillMaxWidth(),
-          label = { RequiredText(stringResource(R.string.patient_referral_info_from_facility_label)) },
-          colors = darkerDisabledOutlinedTextFieldColors(),
-          errorHint = fromFacilityText.getError()
-        )
-      } else {
-        val fromFacilityFlow = remember(fromDistrictState.stateValue) {
-          facilityPagingFlowGetter(fromDistrictState.stateValue?.district)
-        }
-
-        FacilityListDropdown(
-          state = fromFacilityState,
-          pagingItemFlow = fromFacilityFlow,
-          label = { RequiredText(stringResource(R.string.patient_referral_info_from_facility_label)) },
-          modifier = Modifier.fillMaxWidth(),
-          textFieldModifier = Modifier
-            .fillMaxWidth()
-            .then(fromFacilityState.createFocusChangeModifier())
-        )
-      }
-
-      Spacer(Modifier.height(textFieldToTextFieldHeight))
-
-      DistrictListDropdown(
-        state = toDistrictState,
-        pagingItemFlow = districtPagingFlow,
-        label = { RequiredText(stringResource(R.string.patient_referral_info_to_district_label)) },
-        modifier = Modifier.fillMaxWidth(),
-        textFieldModifier = Modifier
-          .fillMaxWidth()
-          .then(toDistrictState.createFocusChangeModifier()),
-        extraOnItemSelected = { old, new -> if (old != new) toFacilityState.reset() },
+      DistrictAndFacilityFormPair(
+        districtState = toDistrictState,
+        districtLabel = { RequiredText(stringResource(R.string.patient_referral_info_to_district_label)) },
+        facilityState = toFacilityState,
+        facilityCustomTextState = toFacilityTextState,
+        facilityLabel = { RequiredText(stringResource(R.string.patient_referral_info_to_facility_label)) },
+        districtPagingFlow,
+        facilityPagingFlowGetter,
+        textFieldToTextFieldHeight
       )
-
-      Spacer(Modifier.height(textFieldToTextFieldHeight))
-
-      if (toDistrictState.stateValue?.district?.isOther == true) {
-        OutlinedTextFieldWithErrorHint(
-          value = toFacilityText.stateValue ?: "",
-          onValueChange = { toFacilityText.stateValue = it },
-          modifier = Modifier.fillMaxWidth(),
-          label = { RequiredText(stringResource(R.string.patient_referral_info_to_facility_label)) },
-          colors = darkerDisabledOutlinedTextFieldColors(),
-          errorHint = toFacilityText.getError()
-        )
-      } else {
-
-        val toFacilityFlow = remember(toDistrictState.stateValue) {
-          facilityPagingFlowGetter(toDistrictState.stateValue?.district)
-        }
-
-        FacilityListDropdown(
-          state = toFacilityState,
-          pagingItemFlow = toFacilityFlow,
-          label = {
-            RequiredText(stringResource(R.string.patient_referral_info_to_facility_label))
-          },
-          modifier = Modifier.fillMaxWidth(),
-          textFieldModifier = Modifier
-            .fillMaxWidth()
-            .then(toFacilityState.createFocusChangeModifier()),
-        )
-      }
     }
+  }
+}
+
+@Composable
+fun DistrictAndFacilityFormPair(
+  districtState: DistrictState,
+  districtLabel: @Composable() (() -> Unit)?,
+  facilityState: HealthcareFacilityState,
+  facilityCustomTextState: NonEmptyTextState,
+  facilityLabel: @Composable() (() -> Unit)?,
+  districtPagingFlow: Flow<PagingData<District>>,
+  facilityPagingFlowGetter: (District?) -> Flow<PagingData<Facility>>,
+  textFieldToTextFieldHeight: Dp,
+) {
+  DistrictListDropdown(
+    state = districtState,
+    pagingItemFlow = districtPagingFlow,
+    label = districtLabel,
+    modifier = Modifier.fillMaxWidth(),
+    textFieldModifier = Modifier
+      .fillMaxWidth()
+      .then(districtState.createFocusChangeModifier()),
+    extraOnItemSelected = { old, new ->
+      if (old != new) {
+        facilityState.reset()
+        facilityCustomTextState.reset()
+      }
+    },
+  )
+
+  Spacer(Modifier.height(textFieldToTextFieldHeight))
+
+  if (districtState.stateValue?.district?.isOther == true) {
+    OutlinedTextFieldWithErrorHint(
+      value = facilityCustomTextState.stateValue ?: "",
+      onValueChange = { facilityCustomTextState.stateValue = it },
+      modifier = Modifier.fillMaxWidth(),
+      label = facilityLabel,
+      colors = darkerDisabledOutlinedTextFieldColors(),
+      errorHint = facilityCustomTextState.getError()
+    )
+  } else {
+    val fromFacilityFlow = remember(districtState.stateValue) {
+      facilityPagingFlowGetter(districtState.stateValue?.district)
+    }
+
+    FacilityListDropdown(
+      state = facilityState,
+      pagingItemFlow = fromFacilityFlow,
+      label = facilityLabel,
+      modifier = Modifier.fillMaxWidth(),
+      textFieldModifier = Modifier
+        .fillMaxWidth()
+        .then(facilityState.createFocusChangeModifier())
+    )
   }
 }
 
