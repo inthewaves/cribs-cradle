@@ -139,14 +139,8 @@ private fun ActiveSyncCard(
         SyncWorker.Stage.UPLOADING_LOCATION_CHECK_INS -> {
           Text("Uploading location check ins")
         }
-        SyncWorker.Stage.DOWNLOADING_FACILITIES -> {
-          Text("Downloading facilities")
-        }
-        SyncWorker.Stage.DOWNLOADING_DISTRICTS -> {
-          Text("Downloading districts")
-        }
-        SyncWorker.Stage.DOWNLOADING_DROPDOWN_VALUES -> {
-          Text("Downloading dropdown values")
+        SyncWorker.Stage.PERFORMING_INFO_SYNC -> {
+          Text("Updating info")
         }
         null -> {
           Text("Performing sync")
@@ -173,6 +167,21 @@ private fun ActiveSyncCard(
               ),
               color = MaterialTheme.colors.error
             )
+          }
+        }
+      }
+      is SyncWorker.Progress.InfoSync -> {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+          LinearProgressIndicator()
+          Spacer(Modifier.height(8.dp))
+          progress.infoSyncStage?.let {
+            Text(it.logString)
+          }
+          progress.infoSyncText?.let { syncText ->
+            if (syncText != progress.infoSyncStage?.logString) {
+              Spacer(Modifier.height(8.dp))
+              Text(syncText, textAlign = TextAlign.Center)
+            }
           }
         }
       }

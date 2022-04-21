@@ -20,25 +20,14 @@ import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.withContext
-import org.welbodipartnership.api.cradle5.HealthcareFacilitySummary
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
 import org.welbodipartnership.cradle5.data.database.entities.LocationCheckIn
 import org.welbodipartnership.cradle5.data.database.resultentities.PatientOutcomePair
 import org.welbodipartnership.cradle5.data.settings.AppValuesStore
-import org.welbodipartnership.cradle5.domain.NetworkResult
-import org.welbodipartnership.cradle5.domain.ObjectId
 import org.welbodipartnership.cradle5.domain.RestApi
 import org.welbodipartnership.cradle5.domain.auth.AuthRepository
-import org.welbodipartnership.cradle5.domain.auth.FacilityParallelDownloadException
-import org.welbodipartnership.cradle5.domain.districts.DistrictRepository
-import org.welbodipartnership.cradle5.domain.enums.EnumRepository
-import org.welbodipartnership.cradle5.domain.facilities.FacilityRepository
 import org.welbodipartnership.cradle5.domain.patients.PatientsManager
 import org.welbodipartnership.cradle5.domain.toApiBody
-import org.welbodipartnership.cradle5.domain.util.launchWithPermit
-import org.welbodipartnership.cradle5.util.coroutines.AppCoroutineDispatchers
 import java.security.SecureRandom
 import javax.annotation.concurrent.Immutable
 import kotlin.random.asKotlinRandom
@@ -96,13 +85,18 @@ class SyncWorker @AssistedInject constructor(
     runUploadForCheckIns(dbWrapper.locationCheckInDao().getCheckInsForUpload())
 
     coroutineScope {
-      val logChannel = actor<String> {
-        consumeEach { Log.d(TAG, it) }
+      val progressChannel = actor<AuthRepository.InfoSyncProgress>(capacity = Channel.CONFLATED) {
+        consumeEach {
+          Log.d(TAG, "${it.stage}: ${it.text}")
+          reportInfoProgress(it.stage, it.text)
+        }
       }
       try {
-        authRepository.doLoginInfoSync(logChannel)
+        authRepository.doLoginInfoSync(
+          AuthRepository.InfoSyncProgressReceiver.StageAndStringMessages(progressChannel)
+        )
       } finally {
-        logChannel.close()
+        progressChannel.close()
       }
     }
 
@@ -226,6 +220,19 @@ class SyncWorker @AssistedInject constructor(
     }
   }
 
+  private suspend fun reportInfoProgress(
+    infoSyncStage: AuthRepository.InfoSyncStage,
+    infoSyncText: String
+  ) {
+    setProgress(
+      Data.Builder()
+        .putString(PROGRESS_DATA_STAGE_KEY, Stage.PERFORMING_INFO_SYNC.name)
+        .putString(PROGRESS_DATA_SYNC_INFO_STAGE_KEY, infoSyncStage.name)
+        .putString(PROGRESS_DATA_SYNC_INFO_TEXT_KEY, infoSyncText)
+        .build()
+    )
+  }
+
   @Immutable
   sealed class Progress {
     abstract val stage: Stage
@@ -240,6 +247,12 @@ class SyncWorker @AssistedInject constructor(
     }
     @Immutable
     class WithIndeterminateProgress(override val stage: Stage) : Progress()
+    @Immutable
+    class InfoSync(
+      override val stage: Stage,
+      val infoSyncStage: AuthRepository.InfoSyncStage?,
+      val infoSyncText: String?,
+    ) : Progress()
   }
 
   @Immutable
@@ -253,9 +266,7 @@ class SyncWorker @AssistedInject constructor(
     UPLOADING_INCOMPLETE_PATIENTS,
     UPLOADING_INCOMPLETE_OUTCOMES,
     UPLOADING_LOCATION_CHECK_INS,
-    DOWNLOADING_FACILITIES,
-    DOWNLOADING_DISTRICTS,
-    DOWNLOADING_DROPDOWN_VALUES,
+    PERFORMING_INFO_SYNC
   }
 
   companion object {
@@ -264,31 +275,61 @@ class SyncWorker @AssistedInject constructor(
     private const val PROGRESS_DATA_TOTAL_KEY = "numTotal"
     private const val PROGRESS_DATA_FAILED_KEY = "numFailed"
 
+    private const val PROGRESS_DATA_SYNC_INFO_STAGE_KEY = "infoSyncStage"
+    private const val PROGRESS_DATA_SYNC_INFO_TEXT_KEY = "infoSyncText"
+
     private const val TAG = "SyncWorker"
     const val UNIQUE_WORK_NAME = "SyncWorker-unique-work"
 
-    fun getProgressFromWorkInfo(workInfo: WorkInfo): Progress? {
-      val progress = workInfo.progress
-      val stageString = progress.getString(PROGRESS_DATA_STAGE_KEY) ?: return null
-      val stage = try {
+    private fun Data.getStageOrNull(): Stage? {
+      val stageString = getString(PROGRESS_DATA_STAGE_KEY) ?: return null
+      return try {
         Stage.valueOf(stageString)
       } catch (e: IllegalArgumentException) {
-        return null
+        null
       }
+    }
 
-      val doneSoFar = progress.getInt(PROGRESS_DATA_PROGRESS_KEY, Int.MIN_VALUE)
-      if (doneSoFar == Int.MIN_VALUE) {
-        return Progress.WithIndeterminateProgress(stage)
-      }
-      val totalToDo = progress.getInt(PROGRESS_DATA_TOTAL_KEY, Int.MIN_VALUE)
-      if (doneSoFar == Int.MIN_VALUE) {
-        return Progress.WithIndeterminateProgress(stage)
-      }
-      val numFailed = progress.getInt(PROGRESS_DATA_FAILED_KEY, Int.MIN_VALUE)
-        .takeUnless { it == Int.MIN_VALUE }
-        ?: 0
+    fun getProgressFromWorkInfo(workInfo: WorkInfo): Progress? {
+      val progress = workInfo.progress
+      val stage = progress.getStageOrNull() ?: return null
 
-      return Progress.WithFiniteProgress(stage, doneSoFar, totalToDo, numFailed)
+      when (stage) {
+        Stage.PERFORMING_INFO_SYNC -> {
+          val syncStage = progress.getString(PROGRESS_DATA_SYNC_INFO_STAGE_KEY)?.let {
+            try {
+              AuthRepository.InfoSyncStage.valueOf(it)
+            } catch (e: IllegalArgumentException) {
+              null
+            }
+          }
+          val syncText = progress.getString(PROGRESS_DATA_SYNC_INFO_TEXT_KEY)
+          return Progress.InfoSync(
+            stage = Stage.PERFORMING_INFO_SYNC,
+            infoSyncStage = syncStage,
+            infoSyncText = syncText
+          )
+        }
+        Stage.STARTING,
+        Stage.UPLOADING_NEW_PATIENTS,
+        Stage.UPLOADING_INCOMPLETE_PATIENTS,
+        Stage.UPLOADING_INCOMPLETE_OUTCOMES,
+        Stage.UPLOADING_LOCATION_CHECK_INS -> {
+          val doneSoFar = progress.getInt(PROGRESS_DATA_PROGRESS_KEY, Int.MIN_VALUE)
+          if (doneSoFar == Int.MIN_VALUE) {
+            return Progress.WithIndeterminateProgress(stage)
+          }
+          val totalToDo = progress.getInt(PROGRESS_DATA_TOTAL_KEY, Int.MIN_VALUE)
+          if (doneSoFar == Int.MIN_VALUE) {
+            return Progress.WithIndeterminateProgress(stage)
+          }
+          val numFailed = progress.getInt(PROGRESS_DATA_FAILED_KEY, Int.MIN_VALUE)
+            .takeUnless { it == Int.MIN_VALUE }
+            ?: 0
+
+          return Progress.WithFiniteProgress(stage, doneSoFar, totalToDo, numFailed)
+        }
+      }
     }
 
     /**

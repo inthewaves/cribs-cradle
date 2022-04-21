@@ -5,6 +5,8 @@ import android.util.Log
 import androidx.compose.runtime.Immutable
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -14,6 +16,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.selects.SelectClause2
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.withContext
 import org.welbodipartnership.api.ApiAuthToken
@@ -224,7 +227,9 @@ class AuthRepository @Inject internal constructor(
       // redundantly?
       appValuesStore.insertLoginDetails(authToken = token, hash)
 
-      val result = doLoginInfoSync(loginEventMessagesChannel)
+      val result = doLoginInfoSync(
+        loginEventMessagesChannel?.let { InfoSyncProgressReceiver.StringMessages(it) }
+      )
       success = result is LoginResult.Success
       return result
     } finally {
@@ -240,10 +245,88 @@ class AuthRepository @Inject internal constructor(
     }
   }
 
-  suspend fun doLoginInfoSync(loginEventMessagesChannel: SendChannel<String>?): LoginResult {
+  data class InfoSyncProgress(
+    val stage: InfoSyncStage,
+    val text: String
+  )
+
+  sealed class InfoSyncProgressReceiver {
+    abstract val stringChannel: SendChannel<String>
+    abstract fun sendProgress(infoString: String)
+    abstract fun sendProgress(stage: InfoSyncStage, infoString: String)
+    abstract fun sendProgress(stage: InfoSyncStage)
+    class StringMessages(
+      private val channel: SendChannel<String>
+    ) : InfoSyncProgressReceiver() {
+      override fun sendProgress(stage: InfoSyncStage, infoString: String) {
+        channel.trySend(infoString)
+      }
+
+      override fun sendProgress(stage: InfoSyncStage) {
+        channel.trySend(stage.logString)
+      }
+
+      override val stringChannel: SendChannel<String> get() = channel
+      override fun sendProgress(infoString: String) {
+        channel.trySend(infoString)
+      }
+    }
+    class StageAndStringMessages(private val channel: SendChannel<InfoSyncProgress>) : InfoSyncProgressReceiver() {
+      var previousStage: InfoSyncStage = InfoSyncStage.GETTING_USER_INFO
+
+      override fun sendProgress(stage: InfoSyncStage) {
+        previousStage = stage
+        channel.trySend(InfoSyncProgress(stage, stage.logString))
+      }
+      override fun sendProgress(stage: InfoSyncStage, infoString: String) {
+        previousStage = stage
+        channel.trySend(InfoSyncProgress(stage, infoString))
+      }
+      override fun sendProgress(infoString: String) {
+        channel.trySend(InfoSyncProgress(previousStage, infoString))
+      }
+
+      override val stringChannel: SendChannel<String> = object : SendChannel<String> {
+        @ExperimentalCoroutinesApi
+        override val isClosedForSend: Boolean
+          get() = channel.isClosedForSend
+        override val onSend: SelectClause2<String, SendChannel<String>>
+          get() = error("Not used")
+
+        override fun close(cause: Throwable?): Boolean {
+          return channel.close(cause)
+        }
+
+        @ExperimentalCoroutinesApi
+        override fun invokeOnClose(handler: (cause: Throwable?) -> Unit) {
+          channel.invokeOnClose(handler)
+        }
+
+        override suspend fun send(element: String) {
+          channel.send(InfoSyncProgress(previousStage, element))
+        }
+
+        override fun trySend(element: String): ChannelResult<Unit> {
+          return channel.trySend(InfoSyncProgress(previousStage, element))
+        }
+      }
+    }
+  }
+
+  enum class InfoSyncStage(val logString: String) {
+    GETTING_USER_INFO("Getting user information"),
+    GETTING_USER_DISTRICT("Getting user's district"),
+    DOWNLOADING_DISTRICTS("Downloading districts"),
+    DOWNLOADING_FACILITIES("Downloading facilities"),
+    DOWNLOADING_DROPDOWN_VALUES("Downloading dropdown values"),
+  }
+
+  suspend fun doLoginInfoSync(
+    progressReceiver: InfoSyncProgressReceiver?
+  ): LoginResult {
     // Try to get the userId from the index menu items. If we can't get it, we will fail,
     // because certain forms (like GPS coordinates) require us to input a userId.
-    loginEventMessagesChannel?.trySend("Getting user information")
+    progressReceiver?.sendProgress(InfoSyncStage.GETTING_USER_INFO)
     when (val indexResult = restApi.getIndexEntries()) {
       is NetworkResult.Success -> {
         val userDataItem = indexResult.value.asReversed().find { it.title == "User data" }
@@ -254,8 +337,8 @@ class AuthRepository @Inject internal constructor(
             ?: run {
               val errorMessage =
                 "Unable to get userId: ${userDataItem.url} from API index doesn't end in a number"
-              loginEventMessagesChannel?.apply {
-                trySend(errorMessage)
+              progressReceiver?.apply {
+                sendProgress(errorMessage)
                 delay(2.seconds)
               }
               return LoginResult.Exception(gotTokenFromServer = true, errorMessage)
@@ -264,8 +347,8 @@ class AuthRepository @Inject internal constructor(
           val errorMessage =
             "Unable to get userId: Missing user data index tab " +
               "(available tabs: ${indexResult.value})"
-          loginEventMessagesChannel?.apply {
-            trySend(errorMessage)
+          progressReceiver?.apply {
+            sendProgress(errorMessage)
             delay(2.seconds)
           }
           return LoginResult.Exception(gotTokenFromServer = true, errorMessage)
@@ -275,8 +358,8 @@ class AuthRepository @Inject internal constructor(
         val message = indexResult.errorValue.decodeToString()
         val errorMessage =
           "Unable to get userId: HTTP ${indexResult.statusCode} error (message: $message)"
-        loginEventMessagesChannel?.apply {
-          trySend(errorMessage)
+        progressReceiver?.apply {
+          sendProgress(errorMessage)
           delay(800L)
         }
         return LoginResult.Invalid(
@@ -287,14 +370,14 @@ class AuthRepository @Inject internal constructor(
       }
       is NetworkResult.NetworkException -> {
         val errorMessage = "Unable to get userId: ${indexResult.formatErrorMessage(context)}"
-        loginEventMessagesChannel?.trySend(errorMessage)
+        progressReceiver?.sendProgress(errorMessage)
         delay(800L)
         return LoginResult.Exception(gotTokenFromServer = true, errorMessage)
       }
     }
 
     // Try to get the user's district
-    loginEventMessagesChannel?.trySend("Getting user district")
+    progressReceiver?.sendProgress(InfoSyncStage.GETTING_USER_DISTRICT)
     val districtName: String? = when (
       val result = restApi.getFormTitle<HealthcareFacilitySummary>()
     ) {
@@ -303,32 +386,32 @@ class AuthRepository @Inject internal constructor(
         val name = title.substringAfter("Healthcare Facility Summary - ")
           .trim()
           .ifBlank { null }
-        Log.d(TAG, "login(): parsed title $title to get name $name")
+        Log.d(TAG, "doLoginInfoSync(): parsed title $title to get name $name")
         if (name != null) {
           appValuesStore.setDistrictName(name)
         } else {
-          loginEventMessagesChannel?.trySend("User not associated with a district")
+          progressReceiver?.sendProgress("User not associated with a district")
           delay(1.seconds)
         }
         name
       }
       is NetworkResult.Failure -> {
         val message = result.errorValue.decodeToString()
-        loginEventMessagesChannel?.trySend(
+        progressReceiver?.sendProgress(
           "Unable to get district: HTTP ${result.statusCode} error (message: $message)"
         )
         null
       }
       is NetworkResult.NetworkException -> {
-        loginEventMessagesChannel?.trySend(
+        progressReceiver?.sendProgress(
           "Unable to get district: ${result.formatErrorMessage(context)}"
         )
         null
       }
     }
 
-    loginEventMessagesChannel?.trySend("Getting districts")
-    when (val result = districtRepository.downloadAndSaveDistricts(loginEventMessagesChannel)) {
+    progressReceiver?.sendProgress(InfoSyncStage.DOWNLOADING_DISTRICTS)
+    when (val result = districtRepository.downloadAndSaveDistricts(progressReceiver?.stringChannel)) {
       DistrictRepository.DownloadResult.Success -> {}
       is DistrictRepository.DownloadResult.Exception -> {
         return LoginResult.Exception(gotTokenFromServer = true, result.errorMessage)
@@ -346,8 +429,9 @@ class AuthRepository @Inject internal constructor(
       }
 
     // Try to get the facilities associated with this district
-    loginEventMessagesChannel?.trySend("Getting facilities for our district")
-    when (val result = facilityRepository.downloadAndSaveFacilities(loginEventMessagesChannel)) {
+
+    progressReceiver?.sendProgress(InfoSyncStage.DOWNLOADING_FACILITIES, "Getting facilities for our district")
+    when (val result = facilityRepository.downloadAndSaveFacilities(progressReceiver?.stringChannel)) {
       FacilityRepository.DownloadResult.Success -> {}
       is FacilityRepository.DownloadResult.Exception -> {
         return LoginResult.Exception(gotTokenFromServer = true, result.errorMessage)
@@ -362,10 +446,10 @@ class AuthRepository @Inject internal constructor(
       withContext(appCoroutineDispatchers.io.limitedParallelism(3)) {
         dbWrapper.districtDao().getAllDistricts().forEach { district ->
           launchWithPermit(workSemaphore) {
-            loginEventMessagesChannel?.trySend("Getting facilities for district ${district.name}")
+            progressReceiver?.sendProgress("Getting facilities for district ${district.name}")
             when (
               val result = facilityRepository.downloadAndSaveFacilities(
-                loginEventMessagesChannel,
+                progressReceiver?.stringChannel,
                 districtId = district.id
               )
             ) {
@@ -393,8 +477,8 @@ class AuthRepository @Inject internal constructor(
       return e.result
     }
 
-    loginEventMessagesChannel?.trySend("Getting dropdown values")
-    when (val result = enumRepository.downloadAndSaveEnumsFromServer(loginEventMessagesChannel)) {
+    progressReceiver?.sendProgress(InfoSyncStage.DOWNLOADING_DROPDOWN_VALUES)
+    when (val result = enumRepository.downloadAndSaveEnumsFromServer(progressReceiver?.stringChannel)) {
       EnumRepository.DownloadResult.Success -> {}
       is EnumRepository.DownloadResult.Exception -> {
         return LoginResult.Exception(gotTokenFromServer = true, result.errorMessage)
