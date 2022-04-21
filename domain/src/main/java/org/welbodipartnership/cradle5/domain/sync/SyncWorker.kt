@@ -52,10 +52,7 @@ class SyncWorker @AssistedInject constructor(
   private val patientsManager: PatientsManager,
   private val dbWrapper: CradleDatabaseWrapper,
   private val restApi: RestApi,
-  private val facilityRepository: FacilityRepository,
-  private val districtRepository: DistrictRepository,
-  private val enumRepository: EnumRepository,
-  private val appCoroutineDispatchers: AppCoroutineDispatchers,
+  private val authRepository: AuthRepository,
 ) : CoroutineWorker(appContext, workerParams) {
 
   private val secureRandom = SecureRandom()
@@ -103,90 +100,7 @@ class SyncWorker @AssistedInject constructor(
         consumeEach { Log.d(TAG, it) }
       }
       try {
-        // Try to get the user's district
-        logChannel.trySend("Getting user district")
-        val districtName: String? = when (
-          val result = restApi.getFormData<HealthcareFacilitySummary>(objectId = ObjectId.QUERIES)
-        ) {
-          is NetworkResult.Success -> {
-            val name = result.value.districtName
-            if (name != null) {
-              appValuesStore.setDistrictName(name)
-            } else {
-              logChannel.trySend("User not associated with a district")
-            }
-            name
-          }
-          is NetworkResult.Failure -> {
-            val message = result.errorValue.decodeToString()
-            logChannel.trySend(
-              "Unable to get district: HTTP ${result.statusCode} error (message: $message)"
-            )
-            null
-          }
-          is NetworkResult.NetworkException -> {
-            logChannel.trySend(
-              "Unable to get district: ${result.formatErrorMessage(applicationContext)}"
-            )
-            null
-          }
-        }
-
-        logChannel.trySend("Getting districts")
-        when (val result = districtRepository.downloadAndSaveDistricts(logChannel)) {
-          DistrictRepository.DownloadResult.Success -> {}
-          is DistrictRepository.DownloadResult.Exception -> {
-          }
-          is DistrictRepository.DownloadResult.Invalid -> {}
-        }
-
-        districtName
-          ?.let { dbWrapper.districtDao().getDistrictByName(districtName).firstOrNull() }
-          ?.let { district ->
-            appValuesStore.setDistrictId(district.id)
-            district.id
-          }
-
-        Log.d(TAG, "downloading districts")
-        reportProgress(Stage.DOWNLOADING_DISTRICTS)
-        districtRepository.downloadAndSaveDistricts(logChannel)
-
-        Log.d(TAG, "downloading facilities")
-        reportProgress(Stage.DOWNLOADING_FACILITIES)
-        facilityRepository.downloadAndSaveFacilities(logChannel)
-
-        val workSemaphore = Semaphore(permits = 3)
-        try {
-          withContext(appCoroutineDispatchers.io.limitedParallelism(3)) {
-            dbWrapper.districtDao().getAllDistricts().forEach { district ->
-              launchWithPermit(workSemaphore) {
-                logChannel.trySend("Getting facilities for district ${district.name}")
-                when (
-                  val result = facilityRepository.downloadAndSaveFacilities(
-                    logChannel,
-                    districtId = district.id
-                  )
-                ) {
-                  FacilityRepository.DownloadResult.Success -> {}
-                  is FacilityRepository.DownloadResult.Exception -> {
-                    throw FacilityParallelDownloadException(AuthRepository.LoginResult.Exception(true, result.errorMessage))
-                  }
-                  is FacilityRepository.DownloadResult.Invalid -> {
-                    throw FacilityParallelDownloadException(
-                      AuthRepository.LoginResult.Invalid(true, result.errorMessage, result.errorCode)
-                    )
-                  }
-                }
-              }
-            }
-          }
-        } catch (e: FacilityParallelDownloadException) {
-          Log.e(TAG, "Facility download failed: ${e.result}")
-        }
-
-        Log.d(TAG, "downloading dropdown values")
-        reportProgress(Stage.DOWNLOADING_DROPDOWN_VALUES)
-        enumRepository.downloadAndSaveEnumsFromServer(logChannel)
+        authRepository.doLoginInfoSync(logChannel)
       } finally {
         logChannel.close()
       }

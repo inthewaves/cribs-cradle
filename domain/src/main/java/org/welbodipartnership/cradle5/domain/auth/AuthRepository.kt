@@ -224,170 +224,9 @@ class AuthRepository @Inject internal constructor(
       // redundantly?
       appValuesStore.insertLoginDetails(authToken = token, hash)
 
-      // Try to get the userId from the index menu items. If we can't get it, we will fail,
-      // because certain forms (like GPS coordinates) require us to input a userId.
-      loginEventMessagesChannel?.trySend("Getting user information")
-      when (val indexResult = restApi.getIndexEntries()) {
-        is NetworkResult.Success -> {
-          val userDataItem = indexResult.value.asReversed().find { it.title == "User data" }
-          if (userDataItem != null) {
-            userDataItem.url.substringAfterLast('/', "")
-              .toIntOrNull()
-              ?.let { userId -> appValuesStore.insertUserId(userId) }
-              ?: run {
-                val errorMessage =
-                  "Unable to get userId: ${userDataItem.url} from API index doesn't end in a number"
-                loginEventMessagesChannel?.apply {
-                  trySend(errorMessage)
-                  delay(2.seconds)
-                }
-                return LoginResult.Exception(gotTokenFromServer = true, errorMessage)
-              }
-          } else {
-            val errorMessage =
-              "Unable to get userId: Missing user data index tab " +
-                "(available tabs: ${indexResult.value})"
-            loginEventMessagesChannel?.apply {
-              trySend(errorMessage)
-              delay(2.seconds)
-            }
-            return LoginResult.Exception(gotTokenFromServer = true, errorMessage)
-          }
-        }
-        is NetworkResult.Failure -> {
-          val message = indexResult.errorValue.decodeToString()
-          val errorMessage = "Unable to get userId: HTTP ${indexResult.statusCode} error (message: $message)"
-          loginEventMessagesChannel?.apply {
-            trySend(errorMessage)
-            delay(800L)
-          }
-          return LoginResult.Invalid(
-            gotTokenFromServer = true,
-            errorMessage,
-            indexResult.statusCode
-          )
-        }
-        is NetworkResult.NetworkException -> {
-          val errorMessage = "Unable to get userId: ${indexResult.formatErrorMessage(context)}"
-          loginEventMessagesChannel?.trySend(errorMessage)
-          delay(800L)
-          return LoginResult.Exception(gotTokenFromServer = true, errorMessage)
-        }
-      }
-
-      // Try to get the user's district
-      loginEventMessagesChannel?.trySend("Getting user district")
-      val districtName: String? = when (
-        val result = restApi.getFormTitle<HealthcareFacilitySummary>()
-      ) {
-        is NetworkResult.Success -> {
-          val title = result.value
-          val name = title.substringAfter("Healthcare Facility Summary - ")
-            .trim()
-            .ifBlank { null }
-          Log.d(TAG, "login(): parsed title $title to get name $name")
-          if (name != null) {
-            appValuesStore.setDistrictName(name)
-          } else {
-            loginEventMessagesChannel?.trySend("User not associated with a district")
-            delay(1.seconds)
-          }
-          name
-        }
-        is NetworkResult.Failure -> {
-          val message = result.errorValue.decodeToString()
-          loginEventMessagesChannel?.trySend(
-            "Unable to get district: HTTP ${result.statusCode} error (message: $message)"
-          )
-          null
-        }
-        is NetworkResult.NetworkException -> {
-          loginEventMessagesChannel?.trySend(
-            "Unable to get district: ${result.formatErrorMessage(context)}"
-          )
-          null
-        }
-      }
-
-      loginEventMessagesChannel?.trySend("Getting districts")
-      when (val result = districtRepository.downloadAndSaveDistricts(loginEventMessagesChannel)) {
-        DistrictRepository.DownloadResult.Success -> {}
-        is DistrictRepository.DownloadResult.Exception -> {
-          return LoginResult.Exception(gotTokenFromServer = true, result.errorMessage)
-        }
-        is DistrictRepository.DownloadResult.Invalid -> {
-          return LoginResult.Invalid(gotTokenFromServer = true, result.errorMessage, result.errorCode)
-        }
-      }
-
-      districtName
-        ?.let { dbWrapper.districtDao().getDistrictByName(districtName).firstOrNull() }
-        ?.let { district ->
-          appValuesStore.setDistrictId(district.id)
-          district.id
-        }
-
-      // Try to get the facilities associated with this district
-      loginEventMessagesChannel?.trySend("Getting facilities for our district")
-      when (val result = facilityRepository.downloadAndSaveFacilities(loginEventMessagesChannel)) {
-        FacilityRepository.DownloadResult.Success -> {}
-        is FacilityRepository.DownloadResult.Exception -> {
-          return LoginResult.Exception(gotTokenFromServer = true, result.errorMessage)
-        }
-        is FacilityRepository.DownloadResult.Invalid -> {
-          return LoginResult.Invalid(gotTokenFromServer = true, result.errorMessage, result.errorCode)
-        }
-      }
-
-      val workSemaphore = Semaphore(permits = 3)
-      try {
-        withContext(appCoroutineDispatchers.io.limitedParallelism(3)) {
-          dbWrapper.districtDao().getAllDistricts().forEach { district ->
-            launchWithPermit(workSemaphore) {
-              loginEventMessagesChannel?.trySend("Getting facilities for district ${district.name}")
-              when (
-                val result = facilityRepository.downloadAndSaveFacilities(
-                  loginEventMessagesChannel,
-                  districtId = district.id
-                )
-              ) {
-                FacilityRepository.DownloadResult.Success -> {}
-                is FacilityRepository.DownloadResult.Exception -> {
-                  throw FacilityParallelDownloadException(
-                    LoginResult.Exception(gotTokenFromServer = true, result.errorMessage)
-                  )
-                }
-                is FacilityRepository.DownloadResult.Invalid -> {
-                  throw FacilityParallelDownloadException(
-                    LoginResult.Invalid(
-                      gotTokenFromServer = true,
-                      result.errorMessage,
-                      result.errorCode
-                    )
-                  )
-                }
-              }
-            }
-          }
-        }
-      } catch (e: FacilityParallelDownloadException) {
-        Log.e(TAG, "Facility download failed: ${e.result}")
-        return e.result
-      }
-
-      loginEventMessagesChannel?.trySend("Getting dropdown values")
-      when (val result = enumRepository.downloadAndSaveEnumsFromServer(loginEventMessagesChannel)) {
-        EnumRepository.DownloadResult.Success -> {}
-        is EnumRepository.DownloadResult.Exception -> {
-          return LoginResult.Exception(gotTokenFromServer = true, result.errorMessage)
-        }
-        is EnumRepository.DownloadResult.Invalid -> {
-          return LoginResult.Invalid(gotTokenFromServer = true, result.errorMessage, result.errorCode)
-        }
-      }
-
-      success = true
-      return LoginResult.Success
+      val result = doLoginInfoSync(loginEventMessagesChannel)
+      success = result is LoginResult.Success
+      return result
     } finally {
       if (!success) {
         if (!isForTokenRefresh) {
@@ -399,6 +238,173 @@ class AuthRepository @Inject internal constructor(
       appValuesStore.markLoginComplete()
       loginEventMessagesChannel?.close()
     }
+  }
+
+  suspend fun doLoginInfoSync(loginEventMessagesChannel: SendChannel<String>?): LoginResult {
+    // Try to get the userId from the index menu items. If we can't get it, we will fail,
+    // because certain forms (like GPS coordinates) require us to input a userId.
+    loginEventMessagesChannel?.trySend("Getting user information")
+    when (val indexResult = restApi.getIndexEntries()) {
+      is NetworkResult.Success -> {
+        val userDataItem = indexResult.value.asReversed().find { it.title == "User data" }
+        if (userDataItem != null) {
+          userDataItem.url.substringAfterLast('/', "")
+            .toIntOrNull()
+            ?.let { userId -> appValuesStore.insertUserId(userId) }
+            ?: run {
+              val errorMessage =
+                "Unable to get userId: ${userDataItem.url} from API index doesn't end in a number"
+              loginEventMessagesChannel?.apply {
+                trySend(errorMessage)
+                delay(2.seconds)
+              }
+              return LoginResult.Exception(gotTokenFromServer = true, errorMessage)
+            }
+        } else {
+          val errorMessage =
+            "Unable to get userId: Missing user data index tab " +
+              "(available tabs: ${indexResult.value})"
+          loginEventMessagesChannel?.apply {
+            trySend(errorMessage)
+            delay(2.seconds)
+          }
+          return LoginResult.Exception(gotTokenFromServer = true, errorMessage)
+        }
+      }
+      is NetworkResult.Failure -> {
+        val message = indexResult.errorValue.decodeToString()
+        val errorMessage =
+          "Unable to get userId: HTTP ${indexResult.statusCode} error (message: $message)"
+        loginEventMessagesChannel?.apply {
+          trySend(errorMessage)
+          delay(800L)
+        }
+        return LoginResult.Invalid(
+          gotTokenFromServer = true,
+          errorMessage,
+          indexResult.statusCode
+        )
+      }
+      is NetworkResult.NetworkException -> {
+        val errorMessage = "Unable to get userId: ${indexResult.formatErrorMessage(context)}"
+        loginEventMessagesChannel?.trySend(errorMessage)
+        delay(800L)
+        return LoginResult.Exception(gotTokenFromServer = true, errorMessage)
+      }
+    }
+
+    // Try to get the user's district
+    loginEventMessagesChannel?.trySend("Getting user district")
+    val districtName: String? = when (
+      val result = restApi.getFormTitle<HealthcareFacilitySummary>()
+    ) {
+      is NetworkResult.Success -> {
+        val title = result.value
+        val name = title.substringAfter("Healthcare Facility Summary - ")
+          .trim()
+          .ifBlank { null }
+        Log.d(TAG, "login(): parsed title $title to get name $name")
+        if (name != null) {
+          appValuesStore.setDistrictName(name)
+        } else {
+          loginEventMessagesChannel?.trySend("User not associated with a district")
+          delay(1.seconds)
+        }
+        name
+      }
+      is NetworkResult.Failure -> {
+        val message = result.errorValue.decodeToString()
+        loginEventMessagesChannel?.trySend(
+          "Unable to get district: HTTP ${result.statusCode} error (message: $message)"
+        )
+        null
+      }
+      is NetworkResult.NetworkException -> {
+        loginEventMessagesChannel?.trySend(
+          "Unable to get district: ${result.formatErrorMessage(context)}"
+        )
+        null
+      }
+    }
+
+    loginEventMessagesChannel?.trySend("Getting districts")
+    when (val result = districtRepository.downloadAndSaveDistricts(loginEventMessagesChannel)) {
+      DistrictRepository.DownloadResult.Success -> {}
+      is DistrictRepository.DownloadResult.Exception -> {
+        return LoginResult.Exception(gotTokenFromServer = true, result.errorMessage)
+      }
+      is DistrictRepository.DownloadResult.Invalid -> {
+        return LoginResult.Invalid(gotTokenFromServer = true, result.errorMessage, result.errorCode)
+      }
+    }
+
+    districtName
+      ?.let { dbWrapper.districtDao().getDistrictByName(districtName).firstOrNull() }
+      ?.let { district ->
+        appValuesStore.setDistrictId(district.id)
+        district.id
+      }
+
+    // Try to get the facilities associated with this district
+    loginEventMessagesChannel?.trySend("Getting facilities for our district")
+    when (val result = facilityRepository.downloadAndSaveFacilities(loginEventMessagesChannel)) {
+      FacilityRepository.DownloadResult.Success -> {}
+      is FacilityRepository.DownloadResult.Exception -> {
+        return LoginResult.Exception(gotTokenFromServer = true, result.errorMessage)
+      }
+      is FacilityRepository.DownloadResult.Invalid -> {
+        return LoginResult.Invalid(gotTokenFromServer = true, result.errorMessage, result.errorCode)
+      }
+    }
+
+    val workSemaphore = Semaphore(permits = 3)
+    try {
+      withContext(appCoroutineDispatchers.io.limitedParallelism(3)) {
+        dbWrapper.districtDao().getAllDistricts().forEach { district ->
+          launchWithPermit(workSemaphore) {
+            loginEventMessagesChannel?.trySend("Getting facilities for district ${district.name}")
+            when (
+              val result = facilityRepository.downloadAndSaveFacilities(
+                loginEventMessagesChannel,
+                districtId = district.id
+              )
+            ) {
+              FacilityRepository.DownloadResult.Success -> {}
+              is FacilityRepository.DownloadResult.Exception -> {
+                throw FacilityParallelDownloadException(
+                  LoginResult.Exception(gotTokenFromServer = true, result.errorMessage)
+                )
+              }
+              is FacilityRepository.DownloadResult.Invalid -> {
+                throw FacilityParallelDownloadException(
+                  LoginResult.Invalid(
+                    gotTokenFromServer = true,
+                    result.errorMessage,
+                    result.errorCode
+                  )
+                )
+              }
+            }
+          }
+        }
+      }
+    } catch (e: FacilityParallelDownloadException) {
+      Log.e(TAG, "Facility download failed: ${e.result}")
+      return e.result
+    }
+
+    loginEventMessagesChannel?.trySend("Getting dropdown values")
+    when (val result = enumRepository.downloadAndSaveEnumsFromServer(loginEventMessagesChannel)) {
+      EnumRepository.DownloadResult.Success -> {}
+      is EnumRepository.DownloadResult.Exception -> {
+        return LoginResult.Exception(gotTokenFromServer = true, result.errorMessage)
+      }
+      is EnumRepository.DownloadResult.Invalid -> {
+        return LoginResult.Invalid(gotTokenFromServer = true, result.errorMessage, result.errorCode)
+      }
+    }
+
+    return LoginResult.Success
   }
 
   suspend fun reauthForLockscreen(
