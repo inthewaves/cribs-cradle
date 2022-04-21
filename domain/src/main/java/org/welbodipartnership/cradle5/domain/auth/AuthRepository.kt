@@ -711,7 +711,7 @@ class AuthRepository @Inject internal constructor(
       dbWrapper.database?.clearAllTables()
       // This will clear the auth token, which will signal to the app state flow above that
       // we are logged out.
-      appValuesStore.clearAllDataExceptServerOverride()
+      appValuesStore.clearAllDataExceptVersionsAndOverrides()
     }
   }
 

@@ -246,12 +246,14 @@ class AppValuesStore @Inject internal constructor(
     }
   }
 
-  suspend fun clearAllDataExceptServerOverride() {
+  suspend fun clearAllDataExceptVersionsAndOverrides() {
     encryptedSettings.updateData { originalData ->
-      if (originalData.hasServerOverride()) {
-        encryptedSettings { serverOverride = originalData.serverOverride }
-      } else {
-        EncryptedSettings.getDefaultInstance()
+      encryptedSettings {
+        if (originalData.hasServerOverride()) {
+          serverOverride = originalData.serverOverride
+        }
+        lastAppMigrationVersion = originalData.lastAppMigrationVersion
+        defaultDropdownVersion = originalData.defaultDropdownVersion
       }
     }
   }
