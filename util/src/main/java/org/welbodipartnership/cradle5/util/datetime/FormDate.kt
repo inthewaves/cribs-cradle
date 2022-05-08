@@ -30,7 +30,7 @@ private const val SLASH_LENGTH = 1
  * Note that we do not perform validations for determining if all quantities are strictly positive.
  * The database uses 00/00/{year} to indicate that a birthday is not exact.
  */
-@JsonClass(generateAdapter = true)
+@JsonClass(generateAdapter = false)
 @Parcelize
 @Immutable
 data class FormDate(val day: Int, val month: Int, val year: Int) : Comparable<FormDate>, Parcelable {
