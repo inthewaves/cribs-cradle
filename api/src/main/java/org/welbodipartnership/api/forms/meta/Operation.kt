@@ -6,8 +6,8 @@ import com.squareup.moshi.JsonClass
 @JsonClass(generateAdapter = true)
 data class Operation(
   /** Operation's ID (will be needed for data submission) */
-  @Json(name = "ID")
-  val id: String?,
+  @Json(name = "Id")
+  val id: Int?,
   /** Operation's title (e.g. "Save draft") */
   @Json(name = "Title")
   val title: String,

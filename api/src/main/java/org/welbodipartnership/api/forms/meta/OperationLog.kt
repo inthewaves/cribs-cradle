@@ -2,6 +2,7 @@ package org.welbodipartnership.api.forms.meta
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
+import java.util.Date
 
 /**
  * Additional information about who and when inserted/updated/signed a form’s data record.
@@ -25,6 +26,6 @@ data class OperationLog(
     val user: String,
     /** The date with time when the record was made */
     @Json(name = "Date")
-    val date: String,
+    val date: Date,
   )
 }
