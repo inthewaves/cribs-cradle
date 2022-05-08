@@ -31,7 +31,7 @@ val TEST_URL = "https://www.medscinet.com/Cradle5Test/api"
 android {
     compileSdk = appconfig.versions.compileSdkVersion.get().toInt()
     defaultConfig {
-        applicationId = "org.welbodipartnership.cradle5"
+        applicationId = "org.welbodipartnership.cradle5.champions"
         minSdk = appconfig.versions.minSdkVersion.get().toInt()
         targetSdk = appconfig.versions.targetSdkVersion.get().toInt()
         versionCode = 18

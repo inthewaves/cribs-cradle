@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">CRIBS CRADLE</string>
+    <string name="app_name">CRADLE Champions</string>
     <string name="patients_title">Patients</string>
     <string name="cd_patients_nav_button">Show the patients list</string>
     <string name="sync_title">Sync</string>
