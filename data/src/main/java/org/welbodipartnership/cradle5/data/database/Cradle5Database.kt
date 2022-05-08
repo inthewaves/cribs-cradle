@@ -17,7 +17,8 @@ import org.welbodipartnership.cradle5.data.database.daos.DistrictDao
 import org.welbodipartnership.cradle5.data.database.daos.FacilityDao
 import org.welbodipartnership.cradle5.data.database.daos.LocationCheckInDao
 import org.welbodipartnership.cradle5.data.database.daos.OutcomesDao
-import org.welbodipartnership.cradle5.data.database.daos.PatientDao
+import org.welbodipartnership.cradle5.data.database.daos.CradleTrainingFormDao
+import org.welbodipartnership.cradle5.data.database.entities.CradleTrainingForm
 import org.welbodipartnership.cradle5.data.database.entities.District
 import org.welbodipartnership.cradle5.data.database.entities.Facility
 import org.welbodipartnership.cradle5.data.database.entities.LocationCheckIn
@@ -29,7 +30,7 @@ import javax.inject.Singleton
 
 const val TAG = "Cradle5Database"
 
-const val DATABASE_VERSION = 12
+const val DATABASE_VERSION = 1
 const val DATABASE_NAME = "cradle5.db"
 
 @Singleton
@@ -37,8 +38,7 @@ class CradleDatabaseWrapper @Inject constructor() {
   var database: Cradle5Database? = null
     private set
 
-  fun patientsDao(): PatientDao = requireNotNull(database).patientDao()
-  fun outcomesDao(): OutcomesDao = requireNotNull(database).outcomesDao()
+  fun cradleTrainingFormDao(): CradleTrainingFormDao = requireNotNull(database).cradleTrainingFormDao()
   fun facilitiesDao(): FacilityDao = requireNotNull(database).facilitiesDao()
   fun locationCheckInDao(): LocationCheckInDao = requireNotNull(database).locationCheckInDao()
   fun districtDao(): DistrictDao = requireNotNull(database).districtDao()
@@ -78,112 +78,22 @@ class CradleDatabaseWrapper @Inject constructor() {
   }
 }
 
-private val MIGRATIONS = arrayOf(
-  MigrationCreator(2, 3) {
-    execSQL("DROP TABLE GpsLocation")
-    execSQL(
-      """
-        CREATE TABLE IF NOT EXISTS `LocationCheckIn` (
-          `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `isUploaded` INTEGER NOT NULL, 
-          `timestamp` INTEGER NOT NULL, `providerName` TEXT NOT NULL, `accuracy` REAL, 
-          `latitude` REAL NOT NULL, `longitude` REAL NOT NULL
-        )
-      """.trimIndent()
-    )
-  },
-)
+private val MIGRATIONS = arrayOf<Migration>()
 
 @Database(
   version = DATABASE_VERSION,
   exportSchema = true,
   entities = [
-    Patient::class,
-    Outcomes::class,
+    CradleTrainingForm::class,
     Facility::class,
     LocationCheckIn::class,
     District::class,
   ],
-  autoMigrations = [
-    AutoMigration(from = 1, to = 2),
-    AutoMigration(from = 3, to = 4),
-    AutoMigration(from = 4, to = 5),
-    AutoMigration(from = 5, to = 6),
-    AutoMigration(from = 6, to = 7, spec = Cradle5Database.Version6To7::class),
-    AutoMigration(from = 7, to = 8),
-    AutoMigration(from = 8, to = 9),
-    AutoMigration(from = 9, to = 10, spec = Cradle5Database.Version9To10::class),
-    AutoMigration(from = 10, to = 11, spec = Cradle5Database.Version10To11::class),
-    AutoMigration(from = 11, to = 12, spec = Cradle5Database.Version11To12::class),
-  ]
+  autoMigrations = []
 )
 @TypeConverters(DbTypeConverters::class)
 abstract class Cradle5Database : RoomDatabase() {
-  @DeleteColumn(tableName = "Outcomes", columnName = "hysterectomy_additionalInfo")
-  internal class Version6To7 : AutoMigrationSpec
-
-  internal class Version9To10 : AutoMigrationSpec {
-    override fun onPostMigrate(db: SupportSQLiteDatabase): Unit = db.run {
-      val defaultDistricts = listOf(
-        Pair(1, "1 - Bonthe"),
-        Pair(2, "2 - Falaba"),
-        Pair(3, "3 - Kailahun"),
-        Pair(4, "4 - Karene"),
-        Pair(5, "5 - Koinadugu"),
-        Pair(6, "6 - Kono"),
-        Pair(7, "7 - Moyamba"),
-        Pair(8, "8 - Tonkolili"),
-      )
-      for ((id, districtName) in defaultDistricts) {
-        Log.d(TAG, "Version9To10: Inserting district id $id, $districtName")
-        execSQL("""INSERT INTO District(id, name) VALUES ($id, "$districtName")""")
-      }
-    }
-  }
-
-  @DeleteColumn(tableName = "Outcomes", columnName = "hdu_itu_admission_date")
-  @DeleteColumn(tableName = "Outcomes", columnName = "hduOrItuAdmissionTouched")
-  @DeleteColumn(tableName = "Outcomes", columnName = "hdu_itu_admission_additionalInfo")
-  @DeleteColumn(tableName = "Outcomes", columnName = "hdu_itu_admission_cause_otherString")
-  @DeleteColumn(tableName = "Outcomes", columnName = "hdu_itu_admission_cause_selectionId")
-  @DeleteColumn(tableName = "Outcomes", columnName = "hdu_itu_admission_stayInDays")
-  @DeleteColumn(tableName = "Outcomes", columnName = "perinatal_death_maternalfactors_selectionId")
-  @DeleteColumn(tableName = "Outcomes", columnName = "perinatal_death_maternalfactors_otherString")
-  @DeleteColumn(tableName = "Outcomes", columnName = "eclampsia_date")
-  internal class Version10To11 : AutoMigrationSpec {
-    override fun onPostMigrate(db: SupportSQLiteDatabase): Unit = db.run {
-      val now = LocalDate.now().let { localDate ->
-        fun StringBuilder.padInt(value: Int, length: Int) {
-          val strValue = value.toString()
-          for (i in length - strValue.length downTo 1) {
-            append('0')
-          }
-          append(strValue)
-        }
-        buildString {
-          padInt(localDate.dayOfMonth, 2)
-          append('/')
-          padInt(localDate.monthValue, 2)
-          append('/')
-          padInt(localDate.year, 4)
-        }
-      }
-      Log.d(TAG, "Version10To11: Setting all patient registration dates to $now")
-      execSQL("""UPDATE Patient SET registrationDate = ?""", arrayOf(now))
-    }
-  }
-
-  @DeleteColumn(tableName = "Outcomes", columnName = "surgicalManagementTouched")
-  @DeleteColumn(tableName = "Outcomes", columnName = "surgical_mgmt_type_selectionId")
-  @DeleteColumn(tableName = "Outcomes", columnName = "surgical_mgmt_type_otherString")
-  @DeleteColumn(tableName = "Outcomes", columnName = "surgical_mgmt_date")
-  internal class Version11To12 : AutoMigrationSpec {
-    override fun onPostMigrate(db: SupportSQLiteDatabase): Unit = db.run {
-      execSQL("""UPDATE District SET isOther = 1 WHERE name LIKE '%other%'""")
-    }
-  }
-
-  abstract fun patientDao(): PatientDao
-  abstract fun outcomesDao(): OutcomesDao
+  abstract fun cradleTrainingFormDao(): CradleTrainingFormDao
   abstract fun facilitiesDao(): FacilityDao
   abstract fun locationCheckInDao(): LocationCheckInDao
   abstract fun districtDao(): DistrictDao

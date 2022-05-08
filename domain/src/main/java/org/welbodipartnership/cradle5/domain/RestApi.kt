@@ -27,9 +27,8 @@ import org.welbodipartnership.api.forms.PostFailureBody
 import org.welbodipartnership.api.lookups.LookupResult
 import org.welbodipartnership.api.lookups.LookupsEnumerationEntry
 import org.welbodipartnership.api.lookups.dynamic.DynamicLookupBody
+import org.welbodipartnership.cradle5.data.database.entities.CradleTrainingForm
 import org.welbodipartnership.cradle5.data.database.entities.FormEntity
-import org.welbodipartnership.cradle5.data.database.entities.Outcomes
-import org.welbodipartnership.cradle5.data.database.entities.Patient
 import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
 import org.welbodipartnership.cradle5.data.settings.AppValuesStore
 import org.welbodipartnership.cradle5.data.settings.AuthToken
@@ -290,11 +289,27 @@ class RestApi @Inject internal constructor(
   }
 
   /**
+   * A reader to read a newly posted form entry's [NodeId] from the header. When a new form entry
+   * is made via a POST request, the API sends back the NodeId as a link in the Location header.
+   */
+  private val objectIdFromHeaderReader: suspend (BufferedSource, Headers) -> ObjectId = { _, headers ->
+    val locationHeader = headers["Location"]
+      ?: throw IOException("missing expected location header")
+    Log.d(TAG, "Location header: $locationHeader")
+    val nodeIdString = locationHeader.substringAfterLast('/', "")
+      .ifEmpty { null }
+      ?: throw IOException("location header $locationHeader doesn't have a path")
+    val objectId = nodeIdString.toIntOrNull()
+      ?: throw IOException("location header $locationHeader doesn't end in an integer")
+    ObjectId(objectId)
+  }
+
+  /**
    * Encapsulates the result of a sequence of POST and GET requests for uploading data to the API.
    *
-   * When we send a POST request to the server, the API does not give us the objectId. It only
-   * gives us the nodeId in the form of a URL in the response Location header. We have to follow
-   * the nodeId in order to get the objectId. This
+   * When we send a POST request to the server for a form with a tree structure, the API does not
+   * give us the objectId. It only gives us the nodeId in the form of a URL in the response Location
+   * header. We have to follow the nodeId in order to get the objectId. This
    */
   sealed interface PostResult {
     /**
@@ -352,29 +367,20 @@ class RestApi @Inject internal constructor(
   private suspend inline fun <
     reified DbEntity : FormEntity,
     reified PostType
-    > multiStageNewFormSubmission(
+    > multiStageNewFormSubmissionForNonTreeEntity(
     entityToUpload: DbEntity,
     transform: (DbEntity) -> PostType,
     urlProvider: (FormId) -> String,
   ): PostResult {
     val serverInfo = entityToUpload.serverInfo
 
-    val nodeId: NodeId = if (serverInfo?.nodeId != null) {
-      if (serverInfo.objectId != null) {
-        Log.w(
-          TAG,
-          "multiStageNewFormSubmission: " +
-            "trying to post ${PostType::class.java.simpleName} that has already been uploaded"
-        )
-        return PostResult.AlreadyUploaded(serverInfo)
-      }
-      Log.d(
+    if (serverInfo?.objectId != null) {
+      Log.w(
         TAG,
-        "multiStageNewFormSubmission" +
-          "entity ${PostType::class.java.simpleName} with id ${entityToUpload.id} has been " +
-          "partially uploaded"
+        "multiStageNewFormSubmission: " +
+          "trying to post ${PostType::class.java.simpleName} that has already been uploaded"
       )
-      NodeId(serverInfo.nodeId.toInt())
+      return PostResult.AlreadyUploaded(serverInfo)
     } else {
       val submission: PostType = try {
         transform(entityToUpload)
@@ -409,17 +415,21 @@ class RestApi @Inject internal constructor(
 
       val body = HttpClient.buildJsonRequestBody { sink -> adapter.toJson(sink, postBody) }
 
-      when (
+      return when (
         val result = httpClient.makeRequest(
           method = HttpClient.Method.POST,
           url = urlProvider(formId),
           headers = defaultHeadersFlow.first(),
           requestBody = body,
-          failureReader = { src, _ -> src.readByteArray() },
-          successReader = nodeIdFromHeaderReader
+          failureReader = { src, _ ->
+            runInterruptible { src.readByteArray() }
+          },
+          successReader = objectIdFromHeaderReader
         )
       ) {
-        is NetworkResult.Success -> result.value
+        is NetworkResult.Success -> PostResult.Success(
+          ServerInfo(nodeId = null, objectId = result.value.id.toLong())
+        )
         is NetworkResult.Failure -> {
           Log.e(
             TAG,
@@ -440,7 +450,7 @@ class RestApi @Inject internal constructor(
             null
           }
 
-          return PostResult.AllFailed(result, failureBody, null)
+          PostResult.AllFailed(result, failureBody, null)
         }
         is NetworkResult.NetworkException -> {
           Log.e(
@@ -449,43 +459,34 @@ class RestApi @Inject internal constructor(
               "exception during POST ${PostType::class.java.simpleName}: " +
               result.getErrorMessageOrNull(context)
           )
-          return PostResult.AllFailed(result, null, null)
+          PostResult.AllFailed(result, null, null)
         }
-      }.also {
-        Log.d(
-          TAG,
-          "multiStageNewFormSubmission: " +
-            "POSTed ${PostType::class.java.simpleName} & got NodeId ${it.id}. " +
-            "Now getting ObjectId"
-        )
       }
     }
-
-    val objectId = when (val result = getObjectId(nodeId)) {
-      is NetworkResult.Success -> result.value
-      else -> {
-        Log.e(
-          TAG,
-          "multiStageNewFormSubmission: failed to get ObjectId for NodeId ${nodeId.id}: " +
-            result.getErrorMessageOrNull(context)
-        )
-        return PostResult.ObjectIdRetrievalFailed(
-          result,
-          otherCause = null,
-          ServerInfo(nodeId = nodeId.id.toLong(), objectId = null)
-        )
-      }
-    }
-
-    return PostResult.Success(
-      ServerInfo(nodeId = nodeId.id.toLong(), objectId = objectId.id.toLong())
-    )
   }
 
   /**
    * Gets the objectId for a form with the given [nodeId].
    */
   private suspend fun getObjectId(nodeId: NodeId): DefaultNetworkResult<ObjectId> {
+    return httpClient.makeRequest(
+      method = HttpClient.Method.GET,
+      url = urlProvider.forms(nodeId),
+      headers = defaultHeadersFlow.first(),
+      failureReader = { src, _ -> src.readByteArray() },
+      successReader = { src, _ ->
+        // this adapter doesn't consume the entire body
+        val objectId = runInterruptible { FormGetResponse.MetaObjectIdOnlyAdapter.fromJson(src) }
+          ?: throw IOException("missing ObjectId for nodeId $nodeId")
+        ObjectId(objectId)
+      }
+    )
+  }
+
+  /**
+   * Gets the objectId for a form with the given [nodeId].
+   */
+  private suspend fun getOperations(nodeId: NodeId): DefaultNetworkResult<ObjectId> {
     return httpClient.makeRequest(
       method = HttpClient.Method.GET,
       url = urlProvider.forms(nodeId),
@@ -520,9 +521,9 @@ class RestApi @Inject internal constructor(
   }
 
   /**
-   * Post a patient to the server. This will perform a POST request to send the data and grab the
-   * nodeId of the patient, and then it will send a GET request to the server's Meta info in order
-   * to get the patient's objectId.
+   * Post a CRADLE training form to the server. This will perform a POST request to send the data
+   * and grab the nodeId of the form, and then it will send a GET request to the server's Meta info
+   * in order to get the patient's objectId.
    *
    * If the [patient] has non-null server info, then it will fail if it has both a nodeId and
    * objectId. Otherwise, we interpret it as a partial upload
@@ -530,33 +531,11 @@ class RestApi @Inject internal constructor(
    * Note that posting a patient and posting a patient's outcomes are done in separate calls.
    * Posting outcomes has to be done by calling [multiStagePostOutcomes].
    */
-  suspend fun multiStagePostPatient(patient: Patient): PostResult {
-    return multiStageNewFormSubmission(
-      patient,
+  suspend fun multiStagePostCradleTrainingForm(cradleTrainingForm: CradleTrainingForm): PostResult {
+    return multiStageNewFormSubmissionForTreeEntity(
+      cradleTrainingForm,
       { it.toApiBody() },
       urlProvider = { formId -> urlProvider.forms(formId, ObjectId.NEW_POST) }
-    )
-  }
-
-  /**
-   * Post an outcome for the patient with the given [patientObjectId] to the server. Performs a
-   * POST-and-GET-request sequence.
-   *
-   * The [patientObjectId] is the patient's object ID obtained from the server. It can only be done
-   * from a successful call to [multiStagePostPatient]
-   */
-  suspend fun multiStagePostOutcomes(outcomes: Outcomes, patientObjectId: ObjectId): PostResult {
-    return multiStageNewFormSubmission(
-      outcomes,
-      { it.toApiBody() },
-      urlProvider = {
-        formId ->
-        urlProvider.forms(
-          formId = formId,
-          objectId = ObjectId.NEW_POST,
-          basePatientId = patientObjectId
-        )
-      }
     )
   }
 

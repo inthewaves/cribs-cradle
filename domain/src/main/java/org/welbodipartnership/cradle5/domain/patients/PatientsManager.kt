@@ -3,8 +3,6 @@ package org.welbodipartnership.cradle5.domain.patients
 import android.content.Context
 import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
-import org.welbodipartnership.api.cradle5.Outcome
-import org.welbodipartnership.api.cradle5.Registration
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
 import org.welbodipartnership.cradle5.data.database.entities.Outcomes
 import org.welbodipartnership.cradle5.data.database.entities.Patient

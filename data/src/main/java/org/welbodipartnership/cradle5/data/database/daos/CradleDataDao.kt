@@ -10,6 +10,7 @@ import androidx.room.RewriteQueriesToDropUnusedColumns
 import androidx.room.Transaction
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
+import org.welbodipartnership.cradle5.data.database.entities.CradleTrainingForm
 import org.welbodipartnership.cradle5.data.database.entities.Outcomes
 import org.welbodipartnership.cradle5.data.database.entities.Patient
 import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
@@ -19,75 +20,75 @@ import org.welbodipartnership.cradle5.data.database.resultentities.PatientFacili
 import org.welbodipartnership.cradle5.data.database.resultentities.PatientOtherInfo
 
 @Dao
-abstract class PatientDao {
+abstract class CradleTrainingFormDao {
   /**
-   * Updates the [patient] or inserts it into the database if the patient doesn't yet exist.
-   * Returns the primary key of the patient. For a new patient, the primary key might be populated
+   * Updates the [form] or inserts it into the database if the form doesn't yet exist.
+   * Returns the primary key of the form. For a new form, the primary key might be populated
    * by Room, as it is autoincrementing.
    */
   @Update
-  suspend fun upsert(patient: Patient): Long {
-    return if (update(patient) <= 0) {
-      insert(patient)
+  suspend fun upsert(form: CradleTrainingForm): Long {
+    return if (update(form) <= 0) {
+      insert(form)
     } else {
-      patient.id
+      form.id
     }
   }
 
   /**
-   * @return the number of rows updated (i.e., 0 means the given patient wasn't in the database,
-   * and 1 means the [patient] was updated)
+   * @return the number of rows updated (i.e., 0 means the given form wasn't in the database,
+   * and 1 means the [form] was updated)
    */
   @Update
-  abstract suspend fun update(patient: Patient): Int
+  abstract suspend fun update(form: CradleTrainingForm): Int
 
   /**
-   * Inserts [patient] into the [Patient] table.
+   * Inserts [form] into the [CradleTrainingForm] table.
    *
-   * DO NOT use this to update a [Patient]; use [update] or [upsert] for that.
-   * If this is used to update a [Patient] in the database, any [Outcomes] with foreign keys
-   * pointing to the "updated" Patient will cascade and delete themselves, because Room's
+   * DO NOT use this to update a [CradleTrainingForm]; use [update] or [upsert] for that.
+   * If this is used to update a [CradleTrainingForm] in the database, any dependencies with foreign keys
+   * pointing to the "updated" form will cascade and delete themselves, because Room's
    * `OnConflictStrategy.REPLACE` somehow involves deleting the entity and reading it.
    *
-   * @return the new SQLite rowId for the inserted [patient], or -1 if [patient] was not inserted
-   * into the database. -1 might occur if the [patient] already exists.
+   * @return the new SQLite rowId for the inserted [form], or -1 if [form] was not inserted
+   * into the database. -1 might occur if the [form] already exists.
    */
   @Insert(onConflict = OnConflictStrategy.IGNORE)
-  protected abstract suspend fun insert(patient: Patient): Long
+  protected abstract suspend fun insert(form: CradleTrainingForm): Long
 
   @Delete
-  abstract suspend fun delete(patient: Patient): Int
+  abstract suspend fun delete(form: CradleTrainingForm): Int
 
   // ---- Patients paging
 
   @RewriteQueriesToDropUnusedColumns
   @Transaction
-  @Query("SELECT * FROM Patient ORDER BY id DESC")
-  abstract fun patientsPagingSource(): PagingSource<Int, ListPatientAndOutcomeError>
+  @Query("SELECT * FROM CradleTrainingForm ORDER BY id DESC")
+  abstract fun cradleFormPagingSource(): PagingSource<Int, ListPatientAndOutcomeError>
 
   @RewriteQueriesToDropUnusedColumns
   @Transaction
-  @Query("SELECT * FROM Patient WHERE nodeId IS NULL AND isDraft = 1 ORDER BY id DESC")
-  abstract fun patientsPagingSourceFilterByDraft(): PagingSource<Int, ListPatientAndOutcomeError>
+  @Query("SELECT * FROM CradleTrainingForm WHERE nodeId IS NULL AND isDraft = 1 ORDER BY id DESC")
+  abstract fun cradleFormPagingSourceFilterByDraft(): PagingSource<Int, ListPatientAndOutcomeError>
 
   @RewriteQueriesToDropUnusedColumns
   @Transaction
-  @Query("SELECT * FROM Patient WHERE nodeId IS NOT NULL ORDER BY id DESC")
+  @Query("SELECT * FROM CradleTrainingForm WHERE nodeId IS NOT NULL ORDER BY id DESC")
   abstract fun patientsPagingSourceFilterByUploaded(): PagingSource<Int, ListPatientAndOutcomeError>
 
   @RewriteQueriesToDropUnusedColumns
   @Transaction
-  @Query("SELECT * FROM Patient WHERE nodeId IS NULL AND isDraft = 0 ORDER BY id DESC")
+  @Query("SELECT * FROM CradleTrainingForm WHERE nodeId IS NULL AND isDraft = 0 ORDER BY id DESC")
   abstract fun patientsPagingSourceFilterByNotUploadedAndNotDraft(): PagingSource<Int, ListPatientAndOutcomeError>
 
   @RewriteQueriesToDropUnusedColumns
   @Transaction
-  @Query("SELECT * FROM Patient WHERE healthcareFacilityId = :facilityId ORDER BY id DESC")
+  @Query("SELECT * FROM CradleTrainingForm WHERE healthcareFacilityId = :facilityId ORDER BY id DESC")
   abstract fun patientsPagingSourceFilterByFacility(facilityId: Long): PagingSource<Int, ListPatientAndOutcomeError>
 
   @RewriteQueriesToDropUnusedColumns
   @Transaction
-  @Query("SELECT * FROM Patient WHERE CAST(SUBSTR(registrationDate, 4, 2) AS INT) = :monthOneBased ORDER BY id DESC")
+  @Query("SELECT * FROM CradleTrainingForm WHERE CAST(SUBSTR(registrationDate, 4, 2) AS INT) = :monthOneBased ORDER BY id DESC")
   abstract fun patientsPagingSourceFilterByRegistrationMonth(
     monthOneBased: Int
   ): PagingSource<Int, ListPatientAndOutcomeError>
