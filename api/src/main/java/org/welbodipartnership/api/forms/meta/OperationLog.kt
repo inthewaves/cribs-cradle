@@ -26,6 +26,6 @@ data class OperationLog(
     val user: String,
     /** The date with time when the record was made */
     @Json(name = "Date")
-    val date: Date,
+    val date: String,
   )
 }

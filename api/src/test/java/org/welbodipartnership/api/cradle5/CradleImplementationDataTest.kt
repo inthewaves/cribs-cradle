@@ -75,18 +75,12 @@ internal class CradleImplementationDataTest {
         inserted = OperationLog.Entry(
           113,
           "Investigator Test (testinvestigator)",
-          Date.from(
-            LocalDateTime.parse("2022-05-08T05:41:54", DateTimeFormatter.ISO_DATE_TIME)
-              .toInstant(ZoneOffset.UTC)
-          )
+          "2022-05-08T05:41:54"
         ),
         updated = OperationLog.Entry(
           113,
           "Investigator Test (testinvestigator)",
-          Date.from(
-            LocalDateTime.parse("2022-05-08T05:49:56", DateTimeFormatter.ISO_DATE_TIME)
-              .toInstant(ZoneOffset.UTC)
-          )
+          "2022-05-08T05:49:56"
         ),
         signed = null
       ),
