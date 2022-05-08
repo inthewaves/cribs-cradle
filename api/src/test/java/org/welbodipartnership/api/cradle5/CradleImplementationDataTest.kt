@@ -1,12 +1,21 @@
 package org.welbodipartnership.api.cradle5
 
 import com.squareup.moshi.JsonAdapter
+import com.squareup.moshi.adapters.Rfc3339DateJsonAdapter
 import org.junit.jupiter.api.Test
 import org.welbodipartnership.api.Json
 import org.welbodipartnership.api.forms.FormGetResponse
 import org.welbodipartnership.api.forms.FormId
+import org.welbodipartnership.api.forms.meta.HistoryNavigation
+import org.welbodipartnership.api.forms.meta.Meta
+import org.welbodipartnership.api.forms.meta.Operation
+import org.welbodipartnership.api.forms.meta.OperationLog
 import org.welbodipartnership.api.getAdapterForFormType
 import org.welbodipartnership.cradle5.util.datetime.FormDate
+import java.time.LocalDateTime
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
+import java.util.Date
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
@@ -45,6 +54,56 @@ internal class CradleImplementationDataTest {
       totalStaffTrainedTodayTBA = 10,
       totalStaffTrainedBefore = 1,
       totalStaffTrainedScored8 = 1
+    )
+    val expectedMetaWithoutControls = Meta(
+      title = "CRADLE Implementation Data - Bendu",
+      formId = 117,
+      objectId = 4,
+      historyNavigation = HistoryNavigation(
+        firstRecord = HistoryNavigation.Entry(
+          url = "https://www.medscinet.com/Cradle5/api/v0/forms/0?historyId=6",
+          text = " First instance "
+        ),
+        previousRecord = HistoryNavigation.Entry(
+          url = "https://www.medscinet.com/Cradle5/api/v0/forms/0?historyId=6",
+          text = " Previous instance "
+        ),
+        nextRecord = null,
+        lastRecord = null
+      ),
+      operationLog = OperationLog(
+        inserted = OperationLog.Entry(
+          113,
+          "Investigator Test (testinvestigator)",
+          Date.from(
+            LocalDateTime.parse("2022-05-08T05:41:54", DateTimeFormatter.ISO_DATE_TIME)
+              .toInstant(ZoneOffset.UTC)
+          )
+        ),
+        updated = OperationLog.Entry(
+          113,
+          "Investigator Test (testinvestigator)",
+          Date.from(
+            LocalDateTime.parse("2022-05-08T05:49:56", DateTimeFormatter.ISO_DATE_TIME)
+              .toInstant(ZoneOffset.UTC)
+          )
+        ),
+        signed = null
+      ),
+      operations = listOf(
+        Operation(
+          id = 247,
+          title = "Save",
+          url = null
+        ),
+        Operation (
+          id = null,
+          title = "Cancel",
+          url = null
+        )
+      ),
+      controls = emptyList(),
+      treeUrl = null,
     )
     val json = """
       {
@@ -396,5 +455,6 @@ internal class CradleImplementationDataTest {
 
     val parsed = assertNotNull(adapter.fromJson(json))
     assertEquals(expected, parsed.data)
+    assertEquals(expectedMetaWithoutControls, parsed.meta.copy(controls = emptyList()))
   }
 }
