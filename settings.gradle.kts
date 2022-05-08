@@ -42,7 +42,7 @@ dependencyResolutionManagement {
 
             library("androidx-work-runtime", "androidx.work:work-runtime-ktx:2.7.1")
 
-            library("google-android-material", "com.google.android.material:material:1.5.0")
+            library("google-android-material", "com.google.android.material:material:1.6.0")
 
             version("accompanist", "0.23.1")
             library("accompanist-navigation-animation", "com.google.accompanist", "accompanist-navigation-animation").versionRef("accompanist")
@@ -114,7 +114,7 @@ dependencyResolutionManagement {
             library("moshi-adapters", "com.squareup.moshi", "moshi-adapters").versionRef("moshi")
             // library("valiktor", "org.valiktor:valiktor-core:0.12.0")
 
-            version("protobuf", "3.19.4")
+            version("protobuf", "3.20.1")
             library("protobuf-kotlin-lite", "com.google.protobuf", "protobuf-kotlin-lite").versionRef("protobuf")
             library("protobuf-compiler", "com.google.protobuf", "protoc").versionRef("protobuf")
             plugin("protobuf", "com.google.protobuf").version("0.8.18")
