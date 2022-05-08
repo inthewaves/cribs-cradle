@@ -18,4 +18,8 @@ data class ServerInfo(
    * Non-nullable, because server returns the ID
    */
   val objectId: Long,
+  /** Nullable because this requires an extra stage during upload to resolve */
+  val updateTime: String?,
+  /** Nullable because this requires an extra stage during upload to resolve */
+  val createdTime: String?
 )

@@ -5,6 +5,7 @@ import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.firstOrNull
+import org.welbodipartnership.api.cradle5.CradleImplementationData
 import org.welbodipartnership.api.forms.meta.DynamicLookupListEntry
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
 import org.welbodipartnership.cradle5.data.database.daos.FacilityDao
@@ -36,31 +37,19 @@ class FacilityRepository @Inject constructor(
 
   /**
    * TODO: Might be worth streaming this response from the server
-   * @param districtId The district to get facilities for. If null, will get for self.
+   * @param districtId The district to get facilities for.
    */
   suspend fun downloadAndSaveFacilities(
     eventMessagesChannel: SendChannel<String>?,
-    districtId: Long? = null
+    districtId: Long
   ): DownloadResult {
-    val selfDistrictId = appValuesStore.districtIdFlow.firstOrNull()
-    if (districtId == null && selfDistrictId == null) {
-      return DownloadResult.Exception(
-        IOException("Missing district id for current user"),
-        "Missing district id for current user"
-      )
-    }
-
     val result: DefaultNetworkResult<List<DynamicLookupListEntry>> = restApi
       .getDynamicLookupData(
         valuesClass = DynamicLookupListEntry::class.java,
-        controlId = if (districtId == null) {
-          REGISTRATION_CONTROL_ID_SELF_FACILITIES
-        } else {
-          REGISTRATION_CONTROL_ID_OTHER_DISTRICT_FACILITIES
-        },
-        formId = FormId.fromAnnotationOrThrow<Registration>(),
+        controlId = CRADLE_IMPL_DATA_CONTROL_ID_OTHER_DISTRICT_FACILITIES,
+        formId = FormId.fromAnnotationOrThrow<CradleImplementationData>(),
         objectId = ObjectId.QUERIES,
-        masterValues = districtId?.let { listOf(it.toString()) } ?: emptyList()
+        masterValues = listOf(districtId.toString()) ?: emptyList()
       )
 
     when (result) {
@@ -76,22 +65,14 @@ class FacilityRepository @Inject constructor(
         dbWrapper.withTransaction { db ->
           val dao = db.facilitiesDao()
           result.value.forEachIndexed { index, apiFacilityListItem ->
-            val update = if (districtId == null) {
+            dao.upsert(
               FacilityDao.FacilityUpdate(
-                id = apiFacilityListItem.id.toLong(),
-                name = apiFacilityListItem.name,
-                districtId = requireNotNull(selfDistrictId).toLong(),
-                listOrder = index
+              id = apiFacilityListItem.id.toLong(),
+              name = apiFacilityListItem.name,
+              districtId = districtId,
+              listOrder = index
               )
-            } else {
-              FacilityDao.FacilityUpdate(
-                id = apiFacilityListItem.id.toLong(),
-                name = apiFacilityListItem.name,
-                districtId = districtId.toLong(),
-                listOrder = index
-              )
-            }
-            dao.upsert(update)
+            )
           }
         }
       }
@@ -115,7 +96,6 @@ class FacilityRepository @Inject constructor(
   companion object {
     private const val TAG = "FacilityRepository"
 
-    private val REGISTRATION_CONTROL_ID_SELF_FACILITIES = ControlId("Control2092")
-    private val REGISTRATION_CONTROL_ID_OTHER_DISTRICT_FACILITIES = ControlId("Control2126")
+    private val CRADLE_IMPL_DATA_CONTROL_ID_OTHER_DISTRICT_FACILITIES = ControlId("Control2018")
   }
 }

@@ -29,10 +29,9 @@ data class FormGetResponse<T>(
     resultParser = { nextString() }
   )
 
-  class MetaOperationLogOnlyAdapter(moshi: Moshi) : SingleMetaFieldAdapter<OperationLog>(
+  class MetaOperationLogOnlyAdapter(adapter: JsonAdapter<OperationLog>) : SingleMetaFieldAdapter<OperationLog>(
     metaFieldName = "OperationLog",
     resultParser = {
-      val adapter = moshi.adapter<OperationLog>(OperationLog::class.java, emptySet(), "operationLog")
       adapter.fromJson(this)
         ?: throw Util.unexpectedNull("operationLog_", "OperationLog", this)
     }

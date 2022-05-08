@@ -21,11 +21,12 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.firstOrNull
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
+import org.welbodipartnership.cradle5.data.database.entities.CradleTrainingForm
 import org.welbodipartnership.cradle5.data.database.entities.LocationCheckIn
-import org.welbodipartnership.cradle5.data.database.resultentities.PatientOutcomePair
 import org.welbodipartnership.cradle5.data.settings.AppValuesStore
 import org.welbodipartnership.cradle5.domain.RestApi
 import org.welbodipartnership.cradle5.domain.auth.AuthRepository
+import org.welbodipartnership.cradle5.domain.cradletraining.CradleTrainingFormManager
 import org.welbodipartnership.cradle5.domain.patients.PatientsManager
 import org.welbodipartnership.cradle5.domain.toApiBody
 import java.security.SecureRandom
@@ -38,7 +39,7 @@ class SyncWorker @AssistedInject constructor(
   @Assisted appContext: Context,
   @Assisted workerParams: WorkerParameters,
   private val appValuesStore: AppValuesStore,
-  private val patientsManager: PatientsManager,
+  private val cradleFormsManager: CradleTrainingFormManager,
   private val dbWrapper: CradleDatabaseWrapper,
   private val restApi: RestApi,
   private val authRepository: AuthRepository,
@@ -58,27 +59,19 @@ class SyncWorker @AssistedInject constructor(
     reportProgress(Stage.STARTING)
 
     Log.d(TAG, "uploading patients")
-    val newPatientsUploadResult = runUploadForPatientsAndOutcomes(
+    val newPatientsUploadResult = runUploadForForms(
       Stage.UPLOADING_NEW_PATIENTS,
       dbWrapper
-        .patientsDao()
-        .getNewPatientsToUploadOrderedById()
+        .cradleTrainingFormDao()
+        .getNewFormsToUploadOrderedById()
     )
 
-    Log.d(TAG, "uploading any failed patients")
-    val failedPatientsUploadResult = runUploadForPatientsAndOutcomes(
+    Log.d(TAG, "uploading any failed forms")
+    val failedPatientsUploadResult = runUploadForForms(
       Stage.UPLOADING_INCOMPLETE_PATIENTS,
       dbWrapper
-        .patientsDao()
-        .getPatientsWithPartialServerInfoOrderedById()
-    )
-
-    Log.d(TAG, "uploading any patients with unuploaded outcomes")
-    val failedOutcomesResult = runUploadForPatientsAndOutcomes(
-      Stage.UPLOADING_INCOMPLETE_OUTCOMES,
-      dbWrapper
-        .outcomesDao()
-        .getOutcomesNotFullyUploadedOrderedWithOrWithoutErrorsById()
+        .cradleTrainingFormDao()
+        .getFormsWithPartialServerInfoOrderedById()
     )
 
     Log.d(TAG, "uploading check ins")
@@ -109,19 +102,19 @@ class SyncWorker @AssistedInject constructor(
     val failedPatientIds: Set<Long>
   )
 
-  private suspend fun runUploadForPatientsAndOutcomes(
+  private suspend fun runUploadForForms(
     stage: Stage,
-    patientsAndOutcomes: List<PatientOutcomePair>
+    forms: List<CradleTrainingForm>
   ): PatientUploadResult = coroutineScope {
     val successfulPatientIds = linkedSetOf<Long>()
     val failedPatientIds = linkedSetOf<Long>()
-    reportProgress(stage, doneSoFar = 0, totalToDo = patientsAndOutcomes.size)
+    reportProgress(stage, doneSoFar = 0, totalToDo = forms.size)
     val updateChannel = actor<Int>(capacity = Channel.CONFLATED) {
       consumeEach { progress ->
         reportProgress(
           stage,
-          doneSoFar = progress.coerceAtMost(patientsAndOutcomes.size),
-          totalToDo = patientsAndOutcomes.size,
+          doneSoFar = progress.coerceAtMost(forms.size),
+          totalToDo = forms.size,
           // don't really care about thread-safety here
           numFailed = failedPatientIds.size
         )
@@ -130,23 +123,15 @@ class SyncWorker @AssistedInject constructor(
       }
     }
 
-    patientsAndOutcomes.forEachIndexed { index, patientOutcomePair ->
-      val patient = patientOutcomePair.patient
-      val outcomes = patientOutcomePair.outcomes
-      if (patient == null) {
-        Log.w(TAG, "refusing to upload outcome ${outcomes?.id} because missing patient")
-      } else if (outcomes == null) {
-        Log.w(TAG, "refusing to upload patient ${patient?.id} because they have no outcomes")
+    forms.forEachIndexed { index, form ->
+      val result = cradleFormsManager.uploadCradleForm(form)
+      Log.d(TAG, "form result: $result")
+      if (result is CradleTrainingFormManager.UploadResult.Success) {
+        successfulPatientIds.add(form.id)
       } else {
-        val result = patientsManager.uploadPatientAndOutcomes(patient, outcomes)
-        Log.d(TAG, "patient result: $result")
-        if (result is PatientsManager.UploadResult.Success) {
-          successfulPatientIds.add(patient.id)
-        } else {
-          failedPatientIds.add(patient.id)
-          Log.d(TAG, "got a failed result; applying retry jitter")
-          delayWithRetryJitter()
-        }
+        failedPatientIds.add(form.id)
+        Log.d(TAG, "got a failed result; applying retry jitter")
+        delayWithRetryJitter()
       }
       updateChannel.trySend(index + 1)
     }

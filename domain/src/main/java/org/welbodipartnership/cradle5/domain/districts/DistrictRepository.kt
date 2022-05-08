@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.SendChannel
+import org.welbodipartnership.api.cradle5.CradleImplementationData
 import org.welbodipartnership.api.forms.meta.DynamicLookupListEntry
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
 import org.welbodipartnership.cradle5.data.database.entities.District
@@ -38,8 +39,8 @@ class DistrictRepository @Inject constructor(
       val result: DefaultNetworkResult<List<DynamicLookupListEntry>> = restApi
         .getDynamicLookupData(
           DynamicLookupListEntry::class.java,
-          ControlId("Control2125"),
-          FormId.fromAnnotationOrThrow<Registration>(),
+          ControlId("Control2159"),
+          FormId.fromAnnotationOrThrow<CradleImplementationData>(),
           ObjectId.QUERIES
         )
     ) {

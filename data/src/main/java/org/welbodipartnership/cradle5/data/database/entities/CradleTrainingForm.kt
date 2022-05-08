@@ -57,6 +57,20 @@ data class CradleTrainingForm(
    */
   val totalStaffTrainedBefore: Int?,
   val totalStaffTrainedScored8: Int?,
+
+  /**
+   * A Unix timestamp of when this was last updated
+   */
+  val lastUpdatedTimestamp: Long = System.currentTimeMillis() / 1000L,
+  /**
+   * Local notes the user may have saved for the patient. This is not uploaded to the server.
+   */
+  val localNotes: String? = null,
+  /**
+   * Whether the user has marked this patient as uploaded.
+   */
+  @ColumnInfo(defaultValue = "0")
+  val isDraft: Boolean
 ) : FormEntity
 
 @Immutable

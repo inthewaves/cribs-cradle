@@ -24,6 +24,7 @@ import org.welbodipartnership.cradle5.data.database.entities.Facility
 import org.welbodipartnership.cradle5.data.database.entities.LocationCheckIn
 import org.welbodipartnership.cradle5.data.database.entities.Outcomes
 import org.welbodipartnership.cradle5.data.database.entities.Patient
+import org.welbodipartnership.cradle5.data.database.resultentities.ListCradleTrainingForm
 import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -89,6 +90,7 @@ private val MIGRATIONS = arrayOf<Migration>()
     LocationCheckIn::class,
     District::class,
   ],
+  views = [ListCradleTrainingForm::class],
   autoMigrations = []
 )
 @TypeConverters(DbTypeConverters::class)

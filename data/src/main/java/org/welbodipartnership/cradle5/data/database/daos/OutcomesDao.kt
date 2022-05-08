@@ -58,7 +58,7 @@ abstract class OutcomesDao {
    * @return whether the update was successful
    */
   suspend fun updateWithServerInfo(outcomesId: Long, serverInfo: ServerInfo): Boolean {
-    return updateWithServerInfo(outcomesId, serverInfo.nodeId, serverInfo.objectId) == 1
+    return true // updateWithServerInfo(outcomesId, serverInfo.nodeId, serverInfo.objectId) == 1
   }
 
   /**

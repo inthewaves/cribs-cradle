@@ -11,11 +11,9 @@ import androidx.room.Transaction
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 import org.welbodipartnership.cradle5.data.database.entities.CradleTrainingForm
-import org.welbodipartnership.cradle5.data.database.entities.Outcomes
-import org.welbodipartnership.cradle5.data.database.entities.Patient
 import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
-import org.welbodipartnership.cradle5.data.database.resultentities.ListPatientAndOutcomeError
-import org.welbodipartnership.cradle5.data.database.resultentities.PatientAndOutcomes
+import org.welbodipartnership.cradle5.data.database.resultentities.FormFacilityDistrict
+import org.welbodipartnership.cradle5.data.database.resultentities.ListCradleTrainingForm
 import org.welbodipartnership.cradle5.data.database.resultentities.PatientFacilityDistrictOutcomes
 import org.welbodipartnership.cradle5.data.database.resultentities.PatientOtherInfo
 
@@ -63,54 +61,58 @@ abstract class CradleTrainingFormDao {
 
   @RewriteQueriesToDropUnusedColumns
   @Transaction
-  @Query("SELECT * FROM CradleTrainingForm ORDER BY id DESC")
-  abstract fun cradleFormPagingSource(): PagingSource<Int, ListPatientAndOutcomeError>
+  @Query("SELECT * FROM ListCradleTrainingForm ORDER BY id DESC")
+  abstract fun cradleFormPagingSource(): PagingSource<Int, ListCradleTrainingForm>
 
   @RewriteQueriesToDropUnusedColumns
   @Transaction
-  @Query("SELECT * FROM CradleTrainingForm WHERE nodeId IS NULL AND isDraft = 1 ORDER BY id DESC")
-  abstract fun cradleFormPagingSourceFilterByDraft(): PagingSource<Int, ListPatientAndOutcomeError>
+  @Query("SELECT * FROM ListCradleTrainingForm WHERE objectId IS NULL AND isDraft = 1 ORDER BY id DESC")
+  abstract fun cradleFormPagingSourceFilterByDraft(): PagingSource<Int, ListCradleTrainingForm>
 
   @RewriteQueriesToDropUnusedColumns
   @Transaction
-  @Query("SELECT * FROM CradleTrainingForm WHERE nodeId IS NOT NULL ORDER BY id DESC")
-  abstract fun patientsPagingSourceFilterByUploaded(): PagingSource<Int, ListPatientAndOutcomeError>
+  @Query("SELECT * FROM ListCradleTrainingForm WHERE objectId IS NOT NULL ORDER BY id DESC")
+  abstract fun patientsPagingSourceFilterByUploaded(): PagingSource<Int, ListCradleTrainingForm>
 
   @RewriteQueriesToDropUnusedColumns
   @Transaction
-  @Query("SELECT * FROM CradleTrainingForm WHERE nodeId IS NULL AND isDraft = 0 ORDER BY id DESC")
-  abstract fun patientsPagingSourceFilterByNotUploadedAndNotDraft(): PagingSource<Int, ListPatientAndOutcomeError>
+  @Query("SELECT * FROM ListCradleTrainingForm WHERE objectId IS NULL AND isDraft = 0 ORDER BY id DESC")
+  abstract fun patientsPagingSourceFilterByNotUploadedAndNotDraft(): PagingSource<Int, ListCradleTrainingForm>
 
   @RewriteQueriesToDropUnusedColumns
   @Transaction
-  @Query("SELECT * FROM CradleTrainingForm WHERE healthcareFacilityId = :facilityId ORDER BY id DESC")
-  abstract fun patientsPagingSourceFilterByFacility(facilityId: Long): PagingSource<Int, ListPatientAndOutcomeError>
+  @Query("SELECT * FROM ListCradleTrainingForm WHERE facility_id = :facilityId ORDER BY id DESC")
+  abstract fun patientsPagingSourceFilterByFacility(facilityId: Long): PagingSource<Int, ListCradleTrainingForm>
 
+  /*
   @RewriteQueriesToDropUnusedColumns
   @Transaction
   @Query("SELECT * FROM CradleTrainingForm WHERE CAST(SUBSTR(registrationDate, 4, 2) AS INT) = :monthOneBased ORDER BY id DESC")
   abstract fun patientsPagingSourceFilterByRegistrationMonth(
     monthOneBased: Int
   ): PagingSource<Int, ListPatientAndOutcomeError>
+   */
 
   // ---- Patient + outcomes observations
 
   @Transaction
-  @Query("SELECT * FROM Patient WHERE id = :patientPk")
-  abstract fun getPatientAndOutcomesFlow(patientPk: Long): Flow<PatientFacilityDistrictOutcomes?>
+  @Query("SELECT * FROM CradleTrainingForm WHERE id = :formPk")
+  abstract fun getFormFlow(formPk: Long): Flow<FormFacilityDistrict?>
 
+  /*
   @Query("SELECT initials FROM Patient WHERE id = :patientPk")
   abstract fun getPatientInitialsFlow(patientPk: Long): Flow<String?>
 
   @Query("SELECT nodeId FROM Patient WHERE id = :patientPk")
   abstract fun getPatientNodeIdFlow(patientPk: Long): Flow<Long?>
+   */
 
-  @Query("UPDATE Patient SET isDraft = 0 WHERE id = :patientPk")
-  abstract suspend fun clearPatientDraftStatus(patientPk: Long): Int
+  @Query("UPDATE CradleTrainingForm SET isDraft = 0 WHERE id = :formPk")
+  abstract suspend fun clearDraftStatus(formPk: Long): Int
 
-  @Query("UPDATE Patient SET localNotes = :localNotes WHERE id = :patientPk")
+  @Query("UPDATE CradleTrainingForm SET localNotes = :localNotes WHERE id = :formPk")
   protected abstract suspend fun updatePatientLocalNotesInner(
-    patientPk: Long,
+    formPk: Long,
     localNotes: String?
   ): Int
 
@@ -120,57 +122,66 @@ abstract class CradleTrainingFormDao {
   ): Boolean = updatePatientLocalNotesInner(patientPk, localNotes) == 1
 
   @RewriteQueriesToDropUnusedColumns
-  @Query("SELECT * FROM Patient WHERE id = :patientPk")
-  abstract suspend fun getPatientOtherInfo(patientPk: Long): PatientOtherInfo?
+  @Query("SELECT * FROM CradleTrainingForm WHERE id = :formPk")
+  abstract suspend fun getOtherInfo(formPk: Long): PatientOtherInfo?
 
   @Transaction
-  @Query("SELECT * FROM Patient WHERE id = :patientPk")
-  abstract suspend fun getPatientFacilityAndOutcomes(patientPk: Long): PatientFacilityDistrictOutcomes?
+  @Query("SELECT * FROM CradleTrainingForm WHERE id = :formPk")
+  abstract suspend fun getFormFacilityDistrict(formPk: Long): FormFacilityDistrict?
 
   /**
    * @return the number of rows that were updated. Note that WHERE is set to the primary key,
    * so it either returns 1 or 0.
    */
-  @Query("UPDATE Patient SET nodeId = :nodeId, objectId = :objectId WHERE id = :patientId")
-  protected abstract suspend fun updatePatientWithServerInfo(
-    patientId: Long,
-    nodeId: Long,
-    objectId: Long?
+  @Query("UPDATE CradleTrainingForm SET nodeId = :nodeId, objectId = :objectId, updateTime = :updateTime, createdTime = :createdTime WHERE id = :formId")
+  protected abstract suspend fun updateWithServerInfo(
+    formId: Long,
+    nodeId: Long?,
+    objectId: Long,
+    updateTime: String?,
+    createdTime: String?
   ): Int
 
-  @Query("UPDATE Patient SET serverErrorMessage = :serverErrorMessage WHERE id = :patientId")
-  abstract suspend fun updatePatientWithServerErrorMessage(
-    patientId: Long,
+  @Query("UPDATE CradleTrainingForm SET serverErrorMessage = :serverErrorMessage WHERE id = :formId")
+  abstract suspend fun updateWithServerErrorMessage(
+    formId: Long,
     serverErrorMessage: String?
   )
 
   /**
-   * Updates a patient with new server info. This marks a patient as uploaded.
+   * Updates a form with new server info. This marks a form as uploaded.
    *
    * @return whether the update was successful
    */
-  suspend fun updatePatientWithServerInfo(patientId: Long, serverInfo: ServerInfo): Boolean {
-    return updatePatientWithServerInfo(patientId, serverInfo.nodeId, serverInfo.objectId) == 1
+  suspend fun updateWithServerInfo(formId: Long, serverInfo: ServerInfo): Boolean {
+    return updateWithServerInfo(
+      formId = formId,
+      nodeId = serverInfo.nodeId,
+      objectId = serverInfo.objectId,
+      updateTime = serverInfo.updateTime,
+      createdTime = serverInfo.createdTime
+    ) == 1
   }
 
-  @Query("SELECT COUNT(*) FROM Patient")
-  abstract fun countTotalPatients(): Flow<Int>
+  @Query("SELECT COUNT(*) FROM CradleTrainingForm")
+  abstract fun countTotal(): Flow<Int>
 
-  @Query("SELECT COUNT(*) FROM Patient WHERE nodeId IS NULL AND isDraft = 0")
-  abstract fun countPatientsToUpload(): Flow<Int>
-
-  @Transaction
-  @Query("SELECT * FROM Patient WHERE nodeId IS NULL AND isDraft = 0 ORDER BY id")
-  abstract suspend fun getNewPatientsToUploadOrderedById(): List<PatientAndOutcomes>
-
-  @Query("SELECT COUNT(*) FROM Patient WHERE nodeId IS NOT NULL AND objectId IS NULL")
-  abstract fun countPartialPatientsToUpload(): Flow<Int>
+  @Query("SELECT COUNT(*) FROM CradleTrainingForm WHERE objectId IS NULL AND isDraft = 0")
+  abstract fun countFormsToUpload(): Flow<Int>
 
   @Transaction
-  @Query(
-    """
-    SELECT * FROM Patient WHERE nodeId IS NOT NULL AND objectId IS NULL ORDER BY id
-    """
-  )
-  abstract suspend fun getPatientsWithPartialServerInfoOrderedById(): List<PatientAndOutcomes>
+  @Query("SELECT * FROM CradleTrainingForm WHERE objectId IS NULL AND isDraft = 0 ORDER BY id")
+  abstract suspend fun getNewFormsToUploadOrderedById(): List<CradleTrainingForm>
+
+  @Query("SELECT COUNT(*) FROM CradleTrainingForm WHERE $WHERE_PARTIAL_FORM_CLAUSE")
+  abstract fun countPartialFormsToUpload(): Flow<Int>
+
+  @Transaction
+  @Query("SELECT * FROM CradleTrainingForm WHERE $WHERE_PARTIAL_FORM_CLAUSE ORDER BY id")
+  abstract suspend fun getFormsWithPartialServerInfoOrderedById(): List<CradleTrainingForm>
+
+  companion object {
+    private const val WHERE_PARTIAL_FORM_CLAUSE =
+      "objectId IS NOT NULL AND (updateTime IS NULL OR createdTime IS NULL)"
+  }
 }

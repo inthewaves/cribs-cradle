@@ -429,18 +429,6 @@ class AuthRepository @Inject internal constructor(
       }
 
     // Try to get the facilities associated with this district
-
-    progressReceiver?.sendProgress(InfoSyncStage.DOWNLOADING_FACILITIES, "Getting facilities for our district")
-    when (val result = facilityRepository.downloadAndSaveFacilities(progressReceiver?.stringChannel)) {
-      FacilityRepository.DownloadResult.Success -> {}
-      is FacilityRepository.DownloadResult.Exception -> {
-        return LoginResult.Exception(gotTokenFromServer = true, result.errorMessage)
-      }
-      is FacilityRepository.DownloadResult.Invalid -> {
-        return LoginResult.Invalid(gotTokenFromServer = true, result.errorMessage, result.errorCode)
-      }
-    }
-
     val workSemaphore = Semaphore(permits = 3)
     try {
       withContext(appCoroutineDispatchers.io.limitedParallelism(3)) {

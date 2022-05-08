@@ -1,6 +1,7 @@
 package org.welbodipartnership.cradle5.data.database.resultentities
 
 import androidx.compose.runtime.Immutable
+import androidx.room.DatabaseView
 import androidx.room.Embedded
 import androidx.room.Relation
 import org.welbodipartnership.cradle5.data.database.entities.CradleTrainingForm
@@ -12,18 +13,45 @@ import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
 import org.welbodipartnership.cradle5.util.datetime.FormDate
 
 /**
- * A shortened view of the cradle form
+ * A shortened view of the CRADLE form
  *
  * @see CradleTrainingForm
  */
+@DatabaseView(
+  value = """
+    SELECT
+      form.id,
+      
+      form.nodeId,
+      form.objectId,
+      form.updateTime,
+      form.createdTime,
+      
+      d.id AS district_id,
+      d.name AS district_name,
+      d.isOther AS district_isOther,
+      
+      fac.id AS facility_id,
+      fac.name AS facility_name,
+
+      form.serverErrorMessage,
+      form.dateOfTraining,
+      form.localNotes,
+      form.isDraft
+    FROM
+      CradleTrainingForm AS form
+      LEFT JOIN District AS d on form.district = d.id
+      LEFT JOIN Facility AS fac on form.healthcareFacility = fac.id
+  """
+)
 data class ListCradleTrainingForm(
-  val id: Long,
+  val id: Long = -1,
   @Embedded
   val serverInfo: ServerInfo?,
-  @Relation(parentColumn = "district", entityColumn = "id")
-  val district: District,
-  @Relation(parentColumn = "healthcareFacility", entityColumn = "id")
-  val healthcareFacility: Facility?,
+  @Embedded(prefix = "district_")
+  val district: District?,
+  @Embedded(prefix = "facility_")
+  val healthcareFacility: FacilityIdAndName?,
   val serverErrorMessage: String?,
   val dateOfTraining: FormDate,
   val localNotes: String?,

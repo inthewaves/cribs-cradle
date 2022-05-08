@@ -20,10 +20,12 @@ import okio.source
 import org.welbodipartnership.api.ApiAuthToken
 import org.welbodipartnership.api.IndexMenuItem
 import org.welbodipartnership.api.LoginErrorMessage
+import org.welbodipartnership.api.cradle5.CradleImplementationData
 import org.welbodipartnership.api.cradle5.GpsForm
 import org.welbodipartnership.api.forms.FormGetResponse
 import org.welbodipartnership.api.forms.FormPostBody
 import org.welbodipartnership.api.forms.PostFailureBody
+import org.welbodipartnership.api.forms.meta.OperationLog
 import org.welbodipartnership.api.lookups.LookupResult
 import org.welbodipartnership.api.lookups.LookupsEnumerationEntry
 import org.welbodipartnership.api.lookups.dynamic.DynamicLookupBody
@@ -343,7 +345,7 @@ class RestApi @Inject internal constructor(
     /**
      * R
      */
-    data class ObjectIdRetrievalFailed(
+    data class MetaInfoRetrievalFailed(
       val failOrException: NetworkResult<*, ByteArray>?,
       val otherCause: Exception? = null,
       val partialServerInfo: ServerInfo,
@@ -374,13 +376,22 @@ class RestApi @Inject internal constructor(
   ): PostResult {
     val serverInfo = entityToUpload.serverInfo
 
-    if (serverInfo?.objectId != null) {
+    val objectId: ObjectId = if (
+      serverInfo?.objectId != null &&
+      serverInfo.createdTime != null &&
+      serverInfo.updateTime != null
+    ) {
       Log.w(
         TAG,
         "multiStageNewFormSubmission: " +
           "trying to post ${PostType::class.java.simpleName} that has already been uploaded"
       )
       return PostResult.AlreadyUploaded(serverInfo)
+    } else if (
+      serverInfo?.objectId != null &&
+      (serverInfo.createdTime == null || serverInfo.updateTime == null)
+    ) {
+      ObjectId(serverInfo.objectId.toInt())
     } else {
       val submission: PostType = try {
         transform(entityToUpload)
@@ -415,7 +426,7 @@ class RestApi @Inject internal constructor(
 
       val body = HttpClient.buildJsonRequestBody { sink -> adapter.toJson(sink, postBody) }
 
-      return when (
+      when (
         val result = httpClient.makeRequest(
           method = HttpClient.Method.POST,
           url = urlProvider(formId),
@@ -427,9 +438,16 @@ class RestApi @Inject internal constructor(
           successReader = objectIdFromHeaderReader
         )
       ) {
-        is NetworkResult.Success -> PostResult.Success(
-          ServerInfo(nodeId = null, objectId = result.value.id.toLong())
-        )
+        is NetworkResult.Success -> {
+          val objectId = ObjectId(result.value.id)
+          Log.d(
+            TAG,
+            "multiStageNewFormSubmission: " +
+              "POSTed ${PostType::class.java.simpleName} & got ObjectId ${objectId.id}. " +
+              "Now getting updated and created dates from server"
+          )
+          objectId
+        }
         is NetworkResult.Failure -> {
           Log.e(
             TAG,
@@ -449,8 +467,7 @@ class RestApi @Inject internal constructor(
             Log.e(TAG, "failed to parse error message")
             null
           }
-
-          PostResult.AllFailed(result, failureBody, null)
+          return PostResult.AllFailed(result, failureBody, null)
         }
         is NetworkResult.NetworkException -> {
           Log.e(
@@ -459,10 +476,43 @@ class RestApi @Inject internal constructor(
               "exception during POST ${PostType::class.java.simpleName}: " +
               result.getErrorMessageOrNull(context)
           )
-          PostResult.AllFailed(result, null, null)
+          return PostResult.AllFailed(result, null, null)
         }
       }
     }
+
+    val operationLog = when (
+      val result = getOperationLog<CradleImplementationData>(objectId = objectId)
+    ) {
+      is NetworkResult.Success -> result.value
+      else -> {
+        Log.e(
+          TAG,
+          "multiStageNewFormSubmission: failed to get OperationLog for " +
+            "${PostType::class.java.simpleName}, $objectId: " +
+            result.getErrorMessageOrNull(context)
+        )
+        return PostResult.MetaInfoRetrievalFailed(
+          failOrException = result,
+          otherCause = null,
+          partialServerInfo = ServerInfo(
+            nodeId = null,
+            objectId = objectId.id.toLong(),
+            updateTime = null,
+            createdTime = null
+          )
+        )
+      }
+    }
+
+    return PostResult.Success(
+      ServerInfo(
+        nodeId = null,
+        objectId = objectId.id.toLong(),
+        updateTime = operationLog.updated?.date,
+        createdTime = operationLog.inserted?.date
+      )
+    )
   }
 
   /**
@@ -479,6 +529,30 @@ class RestApi @Inject internal constructor(
         val objectId = runInterruptible { FormGetResponse.MetaObjectIdOnlyAdapter.fromJson(src) }
           ?: throw IOException("missing ObjectId for nodeId $nodeId")
         ObjectId(objectId)
+      }
+    )
+  }
+
+  private val operationLogAdapter = FormGetResponse.MetaOperationLogOnlyAdapter(
+    moshi.adapter(OperationLog::class.java)
+  )
+
+  /**
+   * Gets the objectId for a form with the given [nodeId].
+   */
+  private suspend inline fun <reified T> getOperationLog(
+    formId: FormId = FormId.fromAnnotationOrThrow<T>(),
+    objectId: ObjectId
+  ): DefaultNetworkResult<OperationLog> {
+    return httpClient.makeRequest(
+      method = HttpClient.Method.GET,
+      url = urlProvider.forms(formId, objectId),
+      headers = defaultHeadersFlow.first(),
+      failureReader = { src, _ -> src.readByteArray() },
+      successReader = { src, _ ->
+        // this adapter doesn't consume the entire body
+        runInterruptible { operationLogAdapter.fromJson(src) }
+          ?: throw IOException("missing OperationLog for form ${formId.id}, objectId ${objectId.id}")
       }
     )
   }
@@ -532,7 +606,7 @@ class RestApi @Inject internal constructor(
    * Posting outcomes has to be done by calling [multiStagePostOutcomes].
    */
   suspend fun multiStagePostCradleTrainingForm(cradleTrainingForm: CradleTrainingForm): PostResult {
-    return multiStageNewFormSubmissionForTreeEntity(
+    return multiStageNewFormSubmissionForNonTreeEntity(
       cradleTrainingForm,
       { it.toApiBody() },
       urlProvider = { formId -> urlProvider.forms(formId, ObjectId.NEW_POST) }
