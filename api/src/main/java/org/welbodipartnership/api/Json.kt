@@ -120,10 +120,10 @@ internal object CustomIsoUtils {
   }
 
   /**
-   * Parse a date from ISO-8601 formatted string. It expects a format
-   * [yyyy-MM-dd|yyyyMMdd][T(hh:mm[:ss[.sss]]|hhmm[ss[.sss]])]?[Z|[+-]hh:mm]]
+   * Parse a date from ISO-8601 formatted local date string. It expects a format
+   * [yyyy-MM-dd|yyyyMMdd][T(hh:mm[:ss[.sss]]|hhmm[ss[.sss]])]?
    *
-   * @param date ISO string to parse in the appropriate format.
+   * @param date ISO local string to parse in the appropriate format.
    * @return the parsed date
    */
   fun parse(date: String): Date {

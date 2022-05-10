@@ -3,8 +3,11 @@ package org.welbodipartnership.api.forms.meta
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import org.welbodipartnership.api.CustomIsoUtils
+import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit
+import java.time.temporal.TemporalUnit
 
 /**
  * Additional information about who and when inserted/updated/signed a form’s data record.
@@ -30,7 +33,16 @@ data class OperationLog(
     @Json(name = "Date")
     val date: String?,
   ) {
+    /**
+     * FIXME: Apparently MedSciNet doesn't put any timezone info, so impossible to know from
+     *  the date string whether DST is being used. It seems MedSciNet uses this timezone, so use
+     *  that for now
+     */
     val parsedDate: ZonedDateTime? get() = date
-      ?.let { ZonedDateTime.ofInstant(CustomIsoUtils.parse(it).toInstant(), ZoneId.of("UTC")) }
+      ?.let { dateString -> LocalDateTime.parse(dateString).atZone(SERVER_ZONE) }
+
+    companion object {
+      val SERVER_ZONE = ZoneId.of("Europe/London")
+    }
   }
 }

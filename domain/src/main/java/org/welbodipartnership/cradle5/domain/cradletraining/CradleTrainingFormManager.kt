@@ -10,6 +10,9 @@ import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
 import org.welbodipartnership.cradle5.domain.RestApi
 import org.welbodipartnership.cradle5.domain.getErrorMessageOrNull
 import org.welbodipartnership.cradle5.domain.sync.SyncRepository
+import java.time.ZoneId
+import java.util.Date
+import java.util.SimpleTimeZone
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -67,6 +70,13 @@ class CradleTrainingFormManager @Inject constructor(
       is RestApi.PostResult.Success -> result.serverInfo
       is RestApi.PostResult.AlreadyUploaded -> result.serverInfo
     }
+
+    serverInfo.createdTime?.toInstant()?.let {
+      val isInDaylight = ZoneId.of("Europe/London").rules.isDaylightSavings(it)
+      Log.d(TAG, "Operation log Is ${serverInfo.createdTime} in daylight for Europe/London? $isInDaylight")
+    }
+
+
     dbWrapper.withTransaction {
       dao.updateWithServerInfo(form.id, serverInfo)
       if (!isMetaMissing) {
