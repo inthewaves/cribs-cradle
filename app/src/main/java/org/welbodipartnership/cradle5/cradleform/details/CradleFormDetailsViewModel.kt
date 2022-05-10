@@ -1,4 +1,4 @@
-package org.welbodipartnership.cradle5.patients.details
+package org.welbodipartnership.cradle5.cradleform.details
 
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
@@ -15,38 +15,41 @@ import kotlinx.coroutines.launch
 import org.welbodipartnership.cradle5.LeafScreen
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
 import org.welbodipartnership.cradle5.data.database.TAG
-import org.welbodipartnership.cradle5.data.database.entities.Outcomes
-import org.welbodipartnership.cradle5.data.database.entities.Patient
-import org.welbodipartnership.cradle5.data.database.resultentities.PatientFacilityDistrictOutcomes
-import org.welbodipartnership.cradle5.domain.patients.PatientsManager
+import org.welbodipartnership.cradle5.data.database.entities.CradleTrainingForm
+import org.welbodipartnership.cradle5.data.database.resultentities.CradleTrainingFormFacilityDistrict
+import org.welbodipartnership.cradle5.domain.cradletraining.CradleTrainingFormManager
 import org.welbodipartnership.cradle5.domain.sync.SyncRepository
 import org.welbodipartnership.cradle5.util.ApplicationCoroutineScope
 import javax.inject.Inject
 
 @HiltViewModel
-class PatientDetailsViewModel @Inject constructor(
+class CradleFormDetailsViewModel @Inject constructor(
   savedStateHandle: SavedStateHandle,
   private val dbWrapper: CradleDatabaseWrapper,
-  private val patientsManager: PatientsManager,
+  cradleFormManager: CradleTrainingFormManager,
   @ApplicationCoroutineScope private val appCoroutineScope: CoroutineScope
 ) : ViewModel() {
+  companion object {
+    private const val TAG = "CradleFormDetailsViewModel"
+  }
+
   sealed class State {
     object Loading : State()
-    class Ready(val patientFacilityOutcomes: PatientFacilityDistrictOutcomes) : State()
+    class Ready(val formFacilityDistrict: CradleTrainingFormFacilityDistrict) : State()
     object Failed : State()
   }
 
   private val patientPrimaryKey: Long? =
     savedStateHandle[LeafScreen.PatientDetails.ARG_PATIENT_PRIMARY_KEY]
 
-  val patientOutcomesStateFlow: StateFlow<State> =
+  val formDetailsStateFlow: StateFlow<State> =
     (
       patientPrimaryKey
         ?.let { pk ->
-          dbWrapper.database!!.patientDao().getPatientAndOutcomesFlow(pk)
-            .map { patientWithFacilityAndOutcomes ->
-              if (patientWithFacilityAndOutcomes != null) {
-                State.Ready(patientWithFacilityAndOutcomes)
+          dbWrapper.cradleTrainingFormDao().getFormFlow(pk)
+            .map { formWithDistrictAndFacility ->
+              if (formWithDistrictAndFacility != null) {
+                State.Ready(formWithDistrictAndFacility)
               } else {
                 State.Failed
               }
@@ -58,8 +61,8 @@ class PatientDetailsViewModel @Inject constructor(
       State.Loading
     )
 
-  val editStateFlow: StateFlow<SyncRepository.FormEditState?> = patientsManager
-    .editPatientsOutcomesState
+  val editStateFlow: StateFlow<SyncRepository.FormEditState?> = cradleFormManager
+    .editFormOutcomesState
     .stateIn(
       viewModelScope,
       SharingStarted.WhileSubscribed(2000L),
@@ -68,17 +71,15 @@ class PatientDetailsViewModel @Inject constructor(
 
   override fun onCleared() {
     super.onCleared()
-    Log.d("PatientDetailsViewModel", "onCleared()")
+    Log.d(TAG, "onCleared()")
   }
 
-  fun deletePatient(patient: Patient, outcomes: Outcomes?) {
-    if (outcomes != null) require(outcomes.patientId == patient.id)
-    Log.d(TAG, "Deleting patient ${patient.id}")
+  fun deleteForm(form: CradleTrainingForm) {
+    Log.d(TAG, "Deleting CRADLE form ${form.id}")
     appCoroutineScope.launch {
       // foreign keys are broken with SQLCipher + Room
       dbWrapper.withTransaction { db ->
-        outcomes?.let { db.outcomesDao().delete(it) }
-        db.patientDao().delete(patient)
+        db.cradleTrainingFormDao().delete(form)
       }
     }
   }

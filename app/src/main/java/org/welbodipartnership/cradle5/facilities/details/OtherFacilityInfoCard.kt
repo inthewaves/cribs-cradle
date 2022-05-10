@@ -13,7 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import org.welbodipartnership.cradle5.R
-import org.welbodipartnership.cradle5.patients.details.BaseDetailsCard
+import org.welbodipartnership.cradle5.cradleform.details.BaseDetailsCard
 import org.welbodipartnership.cradle5.ui.composables.LabelAndValueOrNone
 
 @Composable

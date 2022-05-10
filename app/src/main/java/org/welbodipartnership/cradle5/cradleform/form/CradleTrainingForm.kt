@@ -1,9 +1,10 @@
-package org.welbodipartnership.cradle5.patients.form
+package org.welbodipartnership.cradle5.cradleform.form
 
 import android.content.Context
 import android.os.Parcelable
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
+import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -35,6 +36,7 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.SnackbarHostState
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
+import androidx.compose.material.TextFieldColors
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.rememberScaffoldState
@@ -54,14 +56,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
@@ -75,15 +80,17 @@ import com.google.accompanist.insets.ui.TopAppBar
 import kotlinx.coroutines.flow.Flow
 import kotlinx.parcelize.Parcelize
 import org.welbodipartnership.cradle5.R
+import org.welbodipartnership.cradle5.cradleform.details.BaseDetailsCard
+import org.welbodipartnership.cradle5.cradleform.details.CategoryHeader
 import org.welbodipartnership.cradle5.data.database.entities.CausesOfNeonatalDeath
 import org.welbodipartnership.cradle5.data.database.entities.District
 import org.welbodipartnership.cradle5.data.database.entities.Facility
+import org.welbodipartnership.cradle5.data.database.entities.PowerSupply
 import org.welbodipartnership.cradle5.data.database.entities.embedded.EnumSelection
+import org.welbodipartnership.cradle5.data.database.resultentities.CradleTrainingFormFacilityDistrict
 import org.welbodipartnership.cradle5.data.serverenums.DropdownType
 import org.welbodipartnership.cradle5.data.serverenums.ServerEnum
 import org.welbodipartnership.cradle5.data.serverenums.ServerEnumCollection
-import org.welbodipartnership.cradle5.patients.details.BaseDetailsCard
-import org.welbodipartnership.cradle5.patients.details.CategoryHeader
 import org.welbodipartnership.cradle5.ui.composables.LabelAndValueOrNone
 import org.welbodipartnership.cradle5.ui.composables.forms.AnimatedErrorHint
 import org.welbodipartnership.cradle5.ui.composables.forms.BooleanRadioButtonRow
@@ -155,11 +162,56 @@ data class DistrictAndPosition(
 ) : Parcelable
 
 @Composable
-fun PatientForm(
+fun IntegerField(
+  field: TextFieldState,
+  label: String,
+  modifier: Modifier = Modifier,
+  textFieldModifier: Modifier = Modifier,
+  enabled: Boolean = true,
+  readOnly: Boolean = false,
+  textStyle: TextStyle = MaterialTheme.typography.body2,
+  placeholder: @Composable (() -> Unit)? = null,
+  leadingIcon: @Composable (() -> Unit)? = null,
+  trailingIcon: @Composable (() -> Unit)? = null,
+  visualTransformation: VisualTransformation = VisualTransformation.None,
+  keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+  keyboardActions: KeyboardActions = KeyboardActions.Default,
+  singleLine: Boolean = true,
+  maxLines: Int = Int.MAX_VALUE,
+  interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+  shape: Shape = MaterialTheme.shapes.small,
+  colors: TextFieldColors = darkerDisabledOutlinedTextFieldColors()
+) {
+  OutlinedTextFieldWithErrorHint(
+    value = field.stateValue,
+    onValueChange = { newValue -> field.stateValue = newValue },
+    modifier = modifier,
+    textFieldModifier = textFieldModifier,
+    enabled = enabled,
+    readOnly = readOnly,
+    textStyle = textStyle,
+    label = { RequiredText(label, required = field.isMandatory) },
+    placeholder = placeholder,
+    leadingIcon = leadingIcon,
+    trailingIcon = trailingIcon,
+    errorHint = field.getError(),
+    visualTransformation = visualTransformation,
+    keyboardOptions = keyboardOptions,
+    keyboardActions = keyboardActions,
+    singleLine = singleLine,
+    maxLines,
+    interactionSource,
+    shape,
+    colors
+  )
+}
+
+@Composable
+fun CradleTrainingForm(
   serverEnumCollection: ServerEnumCollection,
   onNavigateBack: () -> Unit,
-  onNavigateToPatient: (patientPrimaryKey: Long) -> Unit,
-  viewModel: PatientFormViewModel = hiltViewModel()
+  onNavigateToCompleteForm: (primaryKey: Long) -> Unit,
+  viewModel: CradleTrainingFormViewModel = hiltViewModel()
 ) {
   val formState = viewModel.formState.collectAsState()
 
@@ -169,21 +221,21 @@ fun PatientForm(
   val resources = context.resources
   LaunchedEffect(formState.value) {
     when (val state = formState.value) {
-      is PatientFormViewModel.FormState.FailedValidation -> {
+      is CradleTrainingFormViewModel.FormState.FailedValidation -> {
         val totalErrors = state.errorsBySectionStringId.asSequence()
           .flatMap { it.value }
           .count()
         snackbarHostState.showSnackbar(
           resources.getQuantityString(
-            R.plurals.patient_form_snackbar_failed_to_save_there_are_d_errors,
+            R.plurals.cradle_form_snackbar_failed_to_save_there_are_d_errors,
             totalErrors,
             totalErrors,
           )
         )
       }
-      is PatientFormViewModel.FormState.FailedException -> {
+      is CradleTrainingFormViewModel.FormState.FailedException -> {
         snackbarHostState.showSnackbar(
-          context.getString(R.string.patient_form_snackbar_failed_to_save_exception)
+          context.getString(R.string.cradle_form_snackbar_failed_to_save_exception)
         )
       }
       else -> {}
@@ -192,13 +244,13 @@ fun PatientForm(
 
   var showUnsavedChangesDialog by rememberSaveable { mutableStateOf(false) }
   BackHandler(
-    enabled = formState.value !is PatientFormViewModel.FormState.FailedLoading
+    enabled = formState.value !is CradleTrainingFormViewModel.FormState.FailedLoading
   ) { showUnsavedChangesDialog = true }
   if (showUnsavedChangesDialog) {
     AlertDialog(
       onDismissRequest = { showUnsavedChangesDialog = false },
       title = {
-        if (formState.value.isForPatientEdit) {
+        if (formState.value.isForFormEdit) {
           Text(stringResource(id = R.string.discard_unsaved_changes_dialog_title))
         } else {
           Text(stringResource(id = R.string.discard_unsaved_changes_dialog_title_new_entry))
@@ -218,7 +270,7 @@ fun PatientForm(
     )
   }
 
-  val existingPatientInfo by viewModel.existingParentFacilityOutcomes.collectAsState(initial = null)
+  val existingCradleForm: CradleTrainingFormFacilityDistrict? by viewModel.existingCradleTrainingForm.collectAsState(initial = null)
 
   Scaffold(
     scaffoldState = rememberScaffoldState(snackbarHostState = snackbarHostState),
@@ -232,26 +284,21 @@ fun PatientForm(
         ),
         modifier = Modifier.fillMaxWidth(),
         title = {
-          if (viewModel.isExistingPatientEdit) {
+          if (viewModel.isExistingEdit) {
             Column {
-              existingPatientInfo.let { existingInfo ->
+              existingCradleForm.let { existingInfo ->
                 if (existingInfo != null) {
-                  if (existingInfo.patient.isUploadedToServer) {
-                    Text(stringResource(R.string.edit_outcomes_title))
-                  } else {
-                    Text(stringResource(R.string.edit_patient_title))
+                  Text(stringResource(R.string.edit_cradle_form_title))
+                  existingInfo.facility?.name?.let { facilityName ->
+                    Text(facilityName, style = MaterialTheme.typography.subtitle2)
                   }
-                  Text(
-                    existingInfo.patient.initials,
-                    style = MaterialTheme.typography.subtitle2
-                  )
                 } else {
-                  Text(stringResource(R.string.edit_patient_title))
+                  Text(stringResource(R.string.edit_cradle_form_title))
                 }
               }
             }
           } else {
-            Text(stringResource(R.string.new_patient_title))
+            Text(stringResource(R.string.new_cradle_form_title))
           }
         },
         navigationIcon = {
@@ -284,262 +331,311 @@ fun PatientForm(
 
       item {
         BaseDetailsCard(
-          stringResource(R.string.patient_registration_card_title),
+          stringResource(R.string.cradle_form_title),
           Modifier.padding(16.dp)
         ) {
-          if (existingPatientInfo?.patient?.isUploadedToServer == true) {
-            Text("Patient registration info has already been uploaded; only the outcomes can be edited")
-            return@BaseDetailsCard
-          }
-
-          existingPatientInfo?.patient?.serverErrorMessage?.let { serverErrorMessage ->
+          existingCradleForm?.form?.serverErrorMessage?.let { serverErrorMessage ->
             LabelAndValueOrNone(stringResource(R.string.errors_from_sync_label), serverErrorMessage)
             Spacer(Modifier.height(categoryToCategorySpacerHeight))
           }
 
-          val patientFields = viewModel.formFields.patientFields
-          OutlinedTextFieldWithErrorHint(
-            value = patientFields.initials.stateValue,
-            onValueChange = {
-              // TODO: Hard limit text
-              patientFields.initials.stateValue = it.uppercase()
-            },
-            label = { RequiredText(stringResource(R.string.patient_registration_initials_label)) },
-            textFieldModifier = Modifier
-              .then(patientFields.initials.createFocusChangeModifier())
-              .bringIntoViewRequester(bringIntoViewRequester)
-              .fillMaxWidth(),
-            // textStyle = MaterialTheme.typography.body2,
-            errorHint = patientFields.initials.getError(),
-            keyboardOptions = KeyboardOptions.Default.copy(
-              imeAction = ImeAction.Next,
-              capitalization = KeyboardCapitalization.Characters,
-              keyboardType = KeyboardType.Text
-            ),
-            singleLine = true,
-            keyboardActions = KeyboardActions(
-              onDone = {
-                focusRequester.requestFocus()
-              }
-            )
+          val fields = viewModel.formFieldsNew
+
+          DistrictAndFacilityFormPair(
+            districtState = fields.district,
+            districtLabel = { RequiredText(stringResource(R.string.cradle_form_district_label)) },
+            facilityState = fields.facility,
+            facilityCustomTextState = null,
+            facilityLabel = { RequiredText(stringResource(R.string.cradle_form_healthcare_facility_label)) },
+            viewModel.districtsPagerFlow,
+            { district -> viewModel.getFacilitiesPagingDataForDistrict(district) },
+            textFieldToTextFieldHeight
           )
 
           Spacer(Modifier.height(textFieldToTextFieldHeight))
 
           DateOutlinedTextField(
-            text = patientFields.presentationDate.stateValue,
-            onValueChange = { patientFields.presentationDate.stateValue = it },
+            text = fields.dateOfTraining.stateValue,
+            onValueChange = { fields.dateOfTraining.stateValue = it },
             timestampToDateStringMapper = timestampToFormDateMapper,
             dateStringToTimestampMapper = formDateToTimestampMapper,
             maxLength = FormDate.MAX_STRING_LEN_NO_SLASHES,
-            onPickerClose = { patientFields.presentationDate.enableShowErrors(force = true) },
-            label = {
-              Text(stringResource(id = R.string.patient_registration_presentation_date_label))
-            },
+            onPickerClose = { fields.dateOfTraining.enableShowErrors(force = true) },
+            label = { Text(stringResource(id = R.string.cradle_form_date_of_training_label)) },
             modifier = Modifier.fillMaxWidth(),
-            textFieldModifier = patientFields.presentationDate
+            textFieldModifier = fields.dateOfTraining
               .createFocusChangeModifier()
               .fillMaxWidth(),
-            // textStyle = MaterialTheme.typography.body2,
-            errorHint = patientFields.presentationDate.getError(),
+            errorHint = fields.dateOfTraining.getError(),
             keyboardOptions = KeyboardOptions.Default,
-            keyboardActions = KeyboardActions(
-              onDone = {
-                // onImeAction()
-              }
-            )
+          )
+
+          Spacer(Modifier.height(textFieldToTextFieldHeight))
+          Spacer(Modifier.height(textFieldToTextFieldHeight))
+
+          Text(
+            stringResource(R.string.cradle_form_today_during_the_cradle_training_subtitle),
+            fontWeight = FontWeight.Bold
           )
 
           Spacer(Modifier.height(textFieldToTextFieldHeight))
 
-          Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
-          ) {
-            var isAgeUnknown by patientFields.isAgeUnknown
-            OutlinedTextFieldWithErrorHint(
-              value = patientFields.age.stateValue,
-              onValueChange = { newAge ->
-                if (newAge.length <= 2) {
-                  patientFields.age.stateValue = newAge
-                  patientFields.isAgeUnknown.value = false
-                }
-              },
-              enabled = !isAgeUnknown,
-              label = {
-                if (isAgeUnknown) {
-                  Text(stringResource(id = R.string.patient_registration_age_label))
-                } else {
-                  RequiredText(stringResource(id = R.string.patient_registration_age_label))
-                }
-              },
-              modifier = Modifier.weight(1f),
-              textFieldModifier = patientFields.age
-                .createFocusChangeModifier()
-                .fillMaxWidth(),
-              // textStyle = MaterialTheme.typography.body2,
-              errorHint = patientFields.age.getError(),
-              keyboardOptions = KeyboardOptions.Default.copy(
-                imeAction = ImeAction.Next,
-                keyboardType = KeyboardType.Number
-              ),
-              keyboardActions = KeyboardActions(
-                onDone = {
-                  focusRequester.requestFocus()
-                }
-              )
-            )
-
-            val focusManager = LocalFocusManager.current
-            Checkbox(
-              checked = isAgeUnknown,
-              onCheckedChange = { newState ->
-                isAgeUnknown = newState
-                focusManager.clearFocus()
-                if (newState) {
-                  patientFields.age.stateValue = ""
-                }
-              },
-            )
-
-            Text(stringResource(R.string.unknown))
-          }
-
-          val (address, onAddressChange) = patientFields.address
-          BringIntoViewOutlinedTextField(
-            value = address,
-            onValueChange = onAddressChange,
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text(stringResource(R.string.patient_address_label)) },
-            colors = darkerDisabledOutlinedTextFieldColors()
+          val commonIntFieldKeyboardOptions = KeyboardOptions.Default.copy(
+            imeAction = ImeAction.Next,
+            keyboardType = KeyboardType.Number
           )
+          val commonKeyboardActions = KeyboardActions(onDone = { focusRequester.requestFocus() })
 
-          FacilityListDropdown(
-            state = patientFields.healthcareFacility,
-            pagingItemFlow = viewModel.facilitiesForSelfDistrictPagerFlow,
-            label = {
-              RequiredText(stringResource(R.string.patient_registration_healthcare_facility_label))
-            },
-            modifier = Modifier.fillMaxWidth(),
-            textFieldModifier = Modifier
-              .fillMaxWidth()
-              .then(patientFields.healthcareFacility.createFocusChangeModifier())
-          )
-
-          Spacer(Modifier.height(textFieldToTextFieldHeight))
-
-          PatientReferralInfoForm(
-            referralInfoFields = patientFields.referralInfo,
-            districtPagingFlow = viewModel.districtsPagerFlow,
-            facilityPagingFlowGetter = { viewModel.getFacilitiesPagingDataForDistrict(it) },
-            textFieldToTextFieldHeight = textFieldToTextFieldHeight,
-          )
-        }
-      }
-
-      item {
-        BaseDetailsCard(
-          stringResource(R.string.outcomes_card_title),
-          Modifier.padding(16.dp)
-        ) {
-          existingPatientInfo?.outcomes?.serverErrorMessage?.let { serverErrorMessage ->
-            LabelAndValueOrNone(stringResource(R.string.errors_from_sync_label), serverErrorMessage)
-            Spacer(Modifier.height(categoryToCategorySpacerHeight))
-          }
-
-          CategoryHeader(stringResource(R.string.outcomes_perinatal_death_label))
-          val perinatalDeath = viewModel.formFields.perinatalDeath
-          PerinatalDeathForm(
-            isFormEnabled = perinatalDeath.isEnabled.value,
-            onFormEnabledChange = {
-              perinatalDeath.isEnabled.value = it
-              if (!it) perinatalDeath.clearFormsAndSetCheckbox(newEnabledState = false)
-            },
-            dateState = perinatalDeath.date,
-            outcomeState = perinatalDeath.outcome,
-            causeOfStillbirth = perinatalDeath.causeOfStillBirth,
-            causesOfNeonatalDeathState = perinatalDeath.causeOfNeonatalDeath,
-            additionalInfo = perinatalDeath.additionalInfo.value ?: "",
-            onAdditionalInfoChanged = { perinatalDeath.additionalInfo.value = it }
-          )
-          Spacer(Modifier.height(categoryToCategorySpacerHeight))
-          CategoryHeader(stringResource(R.string.outcomes_birthweight_label))
-          BirthWeightForm(
-            birthWeightState = viewModel.formFields.birthWeight.birthWeight,
-            isNotReported = viewModel.formFields.birthWeight.isNotReported,
-          )
-          Spacer(Modifier.height(categoryToCategorySpacerHeight))
-          CategoryHeader(stringResource(R.string.outcomes_age_at_delivery_label))
-          AgeAtDeliveryForm(
-            ageAtDeliveryState = viewModel.formFields.ageAtDelivery.ageAtDelivery,
-            isNotReported = viewModel.formFields.ageAtDelivery.isNotReported,
-          )
-          Spacer(Modifier.height(categoryToCategorySpacerHeight))
-
-          CategoryHeader(stringResource(R.string.outcomes_eclampsia_label))
-          val eclampsia = viewModel.formFields.eclampsia
-          EclampsiaForm(
-            isFormEnabled = eclampsia.isEnabled.value,
-            onFormEnabledStateChange = {
-              eclampsia.isEnabled.value = it
-              if (!it) eclampsia.clearFormsAndSetCheckbox(newEnabledState = false)
-            },
-            didTheWomanFitState = eclampsia.didTheWomanFit,
-            whenWasFirstFitState = eclampsia.whenWasFirstFit,
-            placeOfFirstFitState = eclampsia.placeOfFirstFit,
-            serverEnumCollection = serverEnumCollection,
-            textFieldModifier = Modifier.bringIntoViewRequester(bringIntoViewRequester)
-          )
-
-          Spacer(Modifier.height(categoryToCategorySpacerHeight))
-
-          CategoryHeader(stringResource(R.string.outcomes_maternal_death_label))
-          val maternalDeath = viewModel.formFields.maternalDeath
-          MaternalDeathForm(
-            isFormEnabled = maternalDeath.isEnabled.value,
-            onFormEnabledChange = {
-              maternalDeath.isEnabled.value = it
-              if (!it) maternalDeath.clearFormsAndSetCheckbox(newEnabledState = false)
-            },
-            dateState = maternalDeath.date,
-            underlyingCauseState = maternalDeath.underlyingCause,
-            placeOfDeathState = maternalDeath.placeOfDeath,
-            mdsrFindingsState = maternalDeath.summaryOfMdsrFindings,
-          )
-
-          Spacer(Modifier.height(categoryToCategorySpacerHeight))
-
-          CategoryHeader(stringResource(R.string.outcomes_hysterectomy_label))
-          val hysterectomy = viewModel.formFields.hysterectomy
-          HysterectomyForm(
-            isFormEnabled = hysterectomy.isEnabled.value,
-            onFormEnabledChange = {
-              hysterectomy.isEnabled.value = it
-              if (!it) hysterectomy.clearFormsAndSetCheckbox(newEnabledState = false)
-            },
-            dateState = hysterectomy.date,
-            causeState = hysterectomy.cause,
-            textFieldModifier = Modifier
+          IntegerField(
+            field = fields.numOfBpDevicesFunction,
+            label = stringResource(R.string.cradle_form_number_of_functioning_bp_devices_label),
+            textFieldModifier = fields.numOfBpDevicesFunction
+              .createFocusChangeModifier()
               .bringIntoViewRequester(bringIntoViewRequester)
-              /*
-              .onFocusEvent {
-                if (it.isFocused) {
-                  scope.launch {
-                    delay(150L)
-                    bringIntoViewRequester.bringIntoView()
-                  }
-                }
-              }
-
-               */
+              .fillMaxWidth(),
+            keyboardOptions = commonIntFieldKeyboardOptions,
+            keyboardActions = commonKeyboardActions
           )
+
+          Spacer(Modifier.height(textFieldToTextFieldHeight))
+
+          IntegerField(
+            field = fields.numOfCradleDevicesFunctioning,
+            label = stringResource(R.string.cradle_form_number_of_functioning_cradle_devices_label),
+            textFieldModifier = fields.numOfCradleDevicesFunctioning
+              .createFocusChangeModifier()
+              .bringIntoViewRequester(bringIntoViewRequester)
+              .fillMaxWidth(),
+            keyboardOptions = commonIntFieldKeyboardOptions,
+            keyboardActions = commonKeyboardActions
+          )
+
+          Spacer(Modifier.height(textFieldToTextFieldHeight))
+
+          IntegerField(
+            field = fields.numOfCradleDevicesBroken,
+            label = stringResource(R.string.cradle_form_number_of_broken_cradle_devices_label),
+
+            textFieldModifier = fields.numOfCradleDevicesBroken
+              .createFocusChangeModifier()
+              .bringIntoViewRequester(bringIntoViewRequester)
+              .fillMaxWidth(),
+            keyboardOptions = commonIntFieldKeyboardOptions,
+            keyboardActions = commonKeyboardActions
+          )
+
+          Spacer(Modifier.height(textFieldToTextFieldHeight))
+
+          Text(stringResource(R.string.cradle_form_power_supply_label),)
+
+          PowerSupplyList(
+            powerSupply = fields.powerSupply.value,
+            onPowerSupplyChanged = { fields.powerSupply.value = it },
+          )
+
+          Spacer(Modifier.height(textFieldToTextFieldHeight))
+
+          IntegerField(
+            field = fields.totalStaffWorking,
+            label = stringResource(R.string.cradle_form_total_staff_working_at_facility_label),
+            textFieldModifier = fields.totalStaffWorking
+              .createFocusChangeModifier()
+              .bringIntoViewRequester(bringIntoViewRequester)
+              .fillMaxWidth(),
+            keyboardOptions = commonIntFieldKeyboardOptions,
+            keyboardActions = commonKeyboardActions
+          )
+          IntegerField(
+            field = fields.totalStaffProvidingMaternityServices,
+            label = stringResource(R.string.cradle_form_total_staff_providing_maternity_services_at_facility_label),
+            textFieldModifier = fields.totalStaffProvidingMaternityServices
+              .createFocusChangeModifier()
+              .bringIntoViewRequester(bringIntoViewRequester)
+              .fillMaxWidth(),
+            keyboardOptions = commonIntFieldKeyboardOptions,
+            keyboardActions = commonKeyboardActions
+          )
+
+          Spacer(Modifier.height(textFieldToTextFieldHeight))
+
+          CategoryHeader(stringResource(R.string.cradle_form_staff_trained_title))
+
+          Spacer(Modifier.height(textFieldToTextFieldHeight))
+
+          IntegerField(
+            field = fields.totalStaffTrainedToday,
+            label = stringResource(R.string.cradle_form_total_staff_trained_today_label),
+            textFieldModifier = fields.totalStaffTrainedToday
+              .createFocusChangeModifier()
+              .bringIntoViewRequester(bringIntoViewRequester)
+              .fillMaxWidth(),
+            keyboardOptions = commonIntFieldKeyboardOptions,
+            keyboardActions = commonKeyboardActions
+          )
+
+          Spacer(Modifier.height(textFieldToTextFieldHeight))
+          IntegerField(
+            field = fields.totalStaffTrainedTodayDoctors,
+            label = stringResource(R.string.cradle_form_total_doctors_trained_today_label),
+            textFieldModifier = fields.totalStaffTrainedTodayDoctors
+              .createFocusChangeModifier()
+              .bringIntoViewRequester(bringIntoViewRequester)
+              .fillMaxWidth(),
+            keyboardOptions = commonIntFieldKeyboardOptions,
+            keyboardActions = commonKeyboardActions
+          )
+
+          Spacer(Modifier.height(textFieldToTextFieldHeight))
+
+          IntegerField(
+            field = fields.totalStaffTrainedTodayMidwives,
+            label = stringResource(R.string.cradle_form_total_midwives_trained_today_label),
+            textFieldModifier = fields.totalStaffTrainedTodayMidwives
+              .createFocusChangeModifier()
+              .bringIntoViewRequester(bringIntoViewRequester)
+              .fillMaxWidth(),
+            keyboardOptions = commonIntFieldKeyboardOptions,
+            keyboardActions = commonKeyboardActions
+          )
+
+          Spacer(Modifier.height(textFieldToTextFieldHeight))
+
+          IntegerField(
+            field = fields.totalStaffTrainedTodaySACHOS,
+            label = stringResource(R.string.cradle_form_total_SACHOS_trained_today_label),
+            textFieldModifier = fields.totalStaffTrainedTodaySACHOS
+              .createFocusChangeModifier()
+              .bringIntoViewRequester(bringIntoViewRequester)
+              .fillMaxWidth(),
+            keyboardOptions = commonIntFieldKeyboardOptions,
+            keyboardActions = commonKeyboardActions
+          )
+
+          Spacer(Modifier.height(textFieldToTextFieldHeight))
+
+          IntegerField(
+            field = fields.totalStaffTrainedTodaySECHNMidwives,
+            label = stringResource(R.string.cradle_form_total_SECHN_midwives_trained_today_label),
+            textFieldModifier = fields.totalStaffTrainedTodaySECHNMidwives
+              .createFocusChangeModifier()
+              .bringIntoViewRequester(bringIntoViewRequester)
+              .fillMaxWidth(),
+            keyboardOptions = commonIntFieldKeyboardOptions,
+            keyboardActions = commonKeyboardActions
+          )
+
+          Spacer(Modifier.height(textFieldToTextFieldHeight))
+
+          IntegerField(
+            field = fields.totalStaffTrainedTodaySRNs,
+            label = stringResource(R.string.cradle_form_total_SRNs_trained_today_label),
+            textFieldModifier = fields.totalStaffTrainedTodaySRNs
+              .createFocusChangeModifier()
+              .bringIntoViewRequester(bringIntoViewRequester)
+              .fillMaxWidth(),
+            keyboardOptions = commonIntFieldKeyboardOptions,
+            keyboardActions = commonKeyboardActions
+          )
+
+          Spacer(Modifier.height(textFieldToTextFieldHeight))
+
+          IntegerField(
+            field = fields.totalStaffTrainedTodayCHOs,
+            label = stringResource(R.string.cradle_form_total_CHOs_trained_today_label),
+            textFieldModifier = fields.totalStaffTrainedTodayCHOs
+              .createFocusChangeModifier()
+              .bringIntoViewRequester(bringIntoViewRequester)
+              .fillMaxWidth(),
+            keyboardOptions = commonIntFieldKeyboardOptions,
+            keyboardActions = commonKeyboardActions
+          )
+
+          Spacer(Modifier.height(textFieldToTextFieldHeight))
+
+          IntegerField(
+            field = fields.totalStaffTrainedTodayCHAs,
+            label = stringResource(R.string.cradle_form_total_CHAs_trained_today_label),
+            textFieldModifier = fields.totalStaffTrainedTodayCHAs
+              .createFocusChangeModifier()
+              .bringIntoViewRequester(bringIntoViewRequester)
+              .fillMaxWidth(),
+            keyboardOptions = commonIntFieldKeyboardOptions,
+            keyboardActions = commonKeyboardActions
+          )
+
+          Spacer(Modifier.height(textFieldToTextFieldHeight))
+
+          IntegerField(
+            field = fields.totalStaffTrainedTodayCSECHNs,
+            label = stringResource(R.string.cradle_form_total_CSECHNs_trained_today_label),
+            textFieldModifier = fields.totalStaffTrainedTodayCSECHNs
+              .createFocusChangeModifier()
+              .bringIntoViewRequester(bringIntoViewRequester)
+              .fillMaxWidth(),
+            keyboardOptions = commonIntFieldKeyboardOptions,
+            keyboardActions = commonKeyboardActions
+          )
+
+          Spacer(Modifier.height(textFieldToTextFieldHeight))
+
+          IntegerField(
+            field = fields.totalStaffTrainedTodayMCHAides,
+            label = stringResource(R.string.cradle_form_total_MCH_aides_trained_today_label),
+            textFieldModifier = fields.totalStaffTrainedTodayMCHAides
+              .createFocusChangeModifier()
+              .bringIntoViewRequester(bringIntoViewRequester)
+              .fillMaxWidth(),
+            keyboardOptions = commonIntFieldKeyboardOptions,
+            keyboardActions = commonKeyboardActions
+          )
+
+          Spacer(Modifier.height(textFieldToTextFieldHeight))
+
+          IntegerField(
+            field = fields.totalStaffTrainedTodayTBA,
+            label = stringResource(R.string.cradle_form_total_TBA_trained_today_label),
+            textFieldModifier = fields.totalStaffTrainedTodayTBA
+              .createFocusChangeModifier()
+              .bringIntoViewRequester(bringIntoViewRequester)
+              .fillMaxWidth(),
+            keyboardOptions = commonIntFieldKeyboardOptions,
+            keyboardActions = commonKeyboardActions
+          )
+
+          Spacer(Modifier.height(textFieldToTextFieldHeight))
+
+          IntegerField(
+            field = fields.totalStaffTrainedBefore,
+            label = stringResource(R.string.cradle_form_total_trained_before_label),
+            textFieldModifier = fields.totalStaffTrainedBefore
+              .createFocusChangeModifier()
+              .bringIntoViewRequester(bringIntoViewRequester)
+              .fillMaxWidth(),
+            keyboardOptions = commonIntFieldKeyboardOptions,
+            keyboardActions = commonKeyboardActions
+          )
+
+          Spacer(Modifier.height(textFieldToTextFieldHeight))
+
+          IntegerField(
+            field = fields.totalStaffTrainedScoredMoreThan8,
+            label = stringResource(R.string.cradle_form_total_trained_score_more_than_8_label),
+            textFieldModifier = fields.totalStaffTrainedScoredMoreThan8
+              .createFocusChangeModifier()
+              .bringIntoViewRequester(bringIntoViewRequester)
+              .fillMaxWidth(),
+            keyboardOptions = commonIntFieldKeyboardOptions,
+            keyboardActions = commonKeyboardActions
+          )
+
+          Spacer(Modifier.height(textFieldToTextFieldHeight))
         }
       }
 
       item {
         formState.value.let { currentFormState ->
           val detailsContent: @Composable (ColumnScope.() -> Unit)? = when (currentFormState) {
-            is PatientFormViewModel.FormState.FailedValidation -> {
+            is CradleTrainingFormViewModel.FormState.FailedValidation -> {
               {
                 for ((section, errors) in currentFormState.errorsBySectionStringId) {
                   CategoryHeader(stringResource(section))
@@ -550,7 +646,7 @@ fun PatientForm(
                 }
               }
             }
-            is PatientFormViewModel.FormState.FailedException -> {
+            is CradleTrainingFormViewModel.FormState.FailedException -> {
               {
                 val horizontalScrollState = rememberScrollState()
                 SelectionContainer {
@@ -575,7 +671,7 @@ fun PatientForm(
               backgroundColor = MaterialTheme.colors.error.copy(alpha = 0.3f),
               columnContent = {
                 columnContent()
-                if (existingPatientInfo?.patient?.isUploadedToServer != true) {
+                if (existingCradleForm?.form?.isUploadedToServer != true) {
                   Spacer(Modifier.height(16.dp))
                   Divider(
                     color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
@@ -591,10 +687,10 @@ fun PatientForm(
       }
 
       item {
-        val (isDraft, setIsDraft) = viewModel.formFields.patientFields.isDraft
-        val (localNotes, setLocalNotes) = viewModel.formFields.patientFields.localNotes
+        val (isDraft, setIsDraft) = viewModel.formFieldsNew.isDraft
+        val (localNotes, setLocalNotes) = viewModel.formFieldsNew.localNotes
         OtherCard(
-          hideDraft = existingPatientInfo?.patient?.isUploadedToServer == true,
+          hideDraft = existingCradleForm?.form?.isUploadedToServer == true,
           isDraft = isDraft,
           onIsDraftChange = setIsDraft,
           localNotes = localNotes,
@@ -606,16 +702,16 @@ fun PatientForm(
       item {
         val focusManager = LocalFocusManager.current
         SaveButtonCard(
-          isEnabled = formState.value !is PatientFormViewModel.FormState.Loading &&
-            formState.value !is PatientFormViewModel.FormState.Saving,
+          isEnabled = formState.value !is CradleTrainingFormViewModel.FormState.Loading &&
+            formState.value !is CradleTrainingFormViewModel.FormState.Saving,
           onSaveButtonClick = {
             focusManager.clearFocus()
             viewModel.save()
           },
-          text = if (viewModel.isExistingPatientEdit) {
-            stringResource(id = R.string.patient_form_save_edits)
+          text = if (viewModel.isExistingEdit) {
+            stringResource(id = R.string.cradle_form_save_edits)
           } else {
-            stringResource(R.string.patient_form_save_new_patient_button)
+            stringResource(R.string.cradle_form_save_new_form_button)
           }
         )
       }
@@ -623,14 +719,14 @@ fun PatientForm(
 
     formState.value.let { currentFormState ->
       when (currentFormState) {
-        is PatientFormViewModel.FormState.SavedEditsToExistingPatient -> {
+        is CradleTrainingFormViewModel.FormState.SavedEditsToExistingPatient -> {
           LaunchedEffect(null) {
-            onNavigateToPatient(currentFormState.primaryKeyOfPatient)
+            onNavigateToCompleteForm(currentFormState.primaryKeyOfForm)
           }
         }
-        is PatientFormViewModel.FormState.SavedNewPatient -> {
+        is CradleTrainingFormViewModel.FormState.SavedNewPatient -> {
           LaunchedEffect(null) {
-            onNavigateToPatient(currentFormState.primaryKeyOfPatient)
+            onNavigateToCompleteForm(currentFormState.primaryKeyOfForm)
           }
         }
         else -> {}
@@ -640,69 +736,60 @@ fun PatientForm(
 }
 
 @Composable
-fun PatientReferralInfoForm(
-  referralInfoFields: PatientFormViewModel.PatientFields.ReferralInfoFields,
-  districtPagingFlow: Flow<PagingData<District>>,
-  facilityPagingFlowGetter: (District?) -> Flow<PagingData<Facility>>,
-  textFieldToTextFieldHeight: Dp,
+fun PowerSupplyList(
+  powerSupply: PowerSupply?,
+  onPowerSupplyChanged: (new: PowerSupply) -> Unit,
   modifier: Modifier = Modifier,
-  textFieldModifier: Modifier = Modifier,
+  enabled: Boolean = true,
 ) {
-  val (
-    isFormEnabledState,
-    fromDistrictState: DistrictState,
-    fromFacilityState: HealthcareFacilityState,
-    fromFacilityTextState: NonEmptyTextState,
-    toDistrictState: DistrictState,
-    toFacilityState: HealthcareFacilityState,
-    toFacilityTextState: NonEmptyTextState,
-  ) = referralInfoFields
-  var isFormEnabled by isFormEnabledState
   Column(modifier) {
-    RequiredText(text = stringResource(R.string.patient_referral_checkbox_label))
-    BooleanRadioButtonRow(isTrue = isFormEnabled, onBooleanChange = { newValue ->
-      val oldValue = isFormEnabled
-      isFormEnabled = newValue
-      if (oldValue != newValue) {
-        referralInfoFields.clearFormsAndSetCheckbox(newEnabledState = newValue)
-      }
-    })
-
-    if (isFormEnabled == true) {
-      DistrictAndFacilityFormPair(
-        districtState = fromDistrictState,
-        districtLabel = { RequiredText(stringResource(R.string.patient_referral_info_from_district_label)) },
-        facilityState = fromFacilityState,
-        facilityCustomTextState = fromFacilityTextState,
-        facilityLabel = { RequiredText(stringResource(R.string.patient_referral_info_from_facility_label)) },
-        districtPagingFlow,
-        facilityPagingFlowGetter,
-        textFieldToTextFieldHeight
-      )
-
-      Spacer(Modifier.height(textFieldToTextFieldHeight))
-
-      DistrictAndFacilityFormPair(
-        districtState = toDistrictState,
-        districtLabel = { RequiredText(stringResource(R.string.patient_referral_info_to_district_label)) },
-        facilityState = toFacilityState,
-        facilityCustomTextState = toFacilityTextState,
-        facilityLabel = { RequiredText(stringResource(R.string.patient_referral_info_to_facility_label)) },
-        districtPagingFlow,
-        facilityPagingFlowGetter,
-        textFieldToTextFieldHeight
-      )
-    }
+    // refactoring this is a bit pointless without reflection
+    CheckboxTextRow(
+      checked = powerSupply?.generator == true,
+      onCheckedChange = {
+        onPowerSupplyChanged(powerSupply?.copy(generator = it, none = false) ?: PowerSupply(generator = it))
+      },
+      label = stringResource(R.string.cradle_form_power_supply_generator),
+      enabled = enabled,
+    )
+    CheckboxTextRow(
+      checked = powerSupply?.solar == true,
+      onCheckedChange = {
+        onPowerSupplyChanged(powerSupply?.copy(solar = it, none = false) ?: PowerSupply(solar = it))
+      },
+      label = stringResource(R.string.cradle_form_power_supply_solar),
+      enabled = enabled,
+    )
+    CheckboxTextRow(
+      checked = powerSupply?.grid == true,
+      onCheckedChange = {
+        onPowerSupplyChanged(powerSupply?.copy(grid = it, none = false) ?: PowerSupply(grid = it))
+      },
+      label = stringResource(R.string.cradle_form_power_supply_grid),
+      enabled = enabled,
+    )
+    CheckboxTextRow(
+      checked = powerSupply?.none == true,
+      onCheckedChange = {
+        // don't copy to clear out everything else
+        onPowerSupplyChanged(PowerSupply(none = it))
+      },
+      label = stringResource(R.string.cradle_form_power_supply_none),
+      enabled = enabled,
+    )
   }
 }
 
+/**
+ * If [facilityCustomTextState] is null, the OTHER option won't be available.
+ */
 @Composable
 fun DistrictAndFacilityFormPair(
   districtState: DistrictState,
-  districtLabel: @Composable() (() -> Unit)?,
+  districtLabel: @Composable (() -> Unit)?,
   facilityState: HealthcareFacilityState,
-  facilityCustomTextState: NonEmptyTextState,
-  facilityLabel: @Composable() (() -> Unit)?,
+  facilityCustomTextState: NonEmptyTextState?,
+  facilityLabel: @Composable (() -> Unit)?,
   districtPagingFlow: Flow<PagingData<District>>,
   facilityPagingFlowGetter: (District?) -> Flow<PagingData<Facility>>,
   textFieldToTextFieldHeight: Dp,
@@ -718,14 +805,14 @@ fun DistrictAndFacilityFormPair(
     extraOnItemSelected = { old, new ->
       if (old != new) {
         facilityState.reset()
-        facilityCustomTextState.reset()
+        facilityCustomTextState?.reset()
       }
     },
   )
 
   Spacer(Modifier.height(textFieldToTextFieldHeight))
 
-  if (districtState.stateValue?.district?.isOther == true) {
+  if (facilityCustomTextState != null && districtState.stateValue?.district?.isOther == true) {
     OutlinedTextFieldWithErrorHint(
       value = facilityCustomTextState.stateValue ?: "",
       onValueChange = { facilityCustomTextState.stateValue = it },
@@ -1054,6 +1141,33 @@ fun PerinatalDeathForm(
 }
 
 @Composable
+fun CheckboxTextRow(
+  label: String,
+  checked: Boolean,
+  onCheckedChange: (Boolean) -> Unit,
+  modifier: Modifier = Modifier,
+  enabled: Boolean = true,
+) = Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
+  val interactionSource = remember { MutableInteractionSource() }
+  Checkbox(
+    checked = checked,
+    onCheckedChange = onCheckedChange,
+    interactionSource = interactionSource,
+    enabled = enabled,
+  )
+  Text(
+    label,
+    Modifier
+      .clickable(
+        indication = null,
+        interactionSource = interactionSource,
+        enabled = enabled
+      ) { onCheckedChange(!checked) }
+      .fillMaxWidth()
+  )
+}
+
+@Composable
 fun PerinatalNeonatalDeathList(
   causesOfNeonatalDeath: CausesOfNeonatalDeath?,
   onCausesChanged: (newCauses: CausesOfNeonatalDeath) -> Unit,
@@ -1061,33 +1175,6 @@ fun PerinatalNeonatalDeathList(
   enabled: Boolean = true,
 ) {
   Column(modifier) {
-    @Composable
-    fun CheckboxTextRow(
-      label: String,
-      checked: Boolean,
-      onCheckedChange: (Boolean) -> Unit,
-      modifier: Modifier = Modifier,
-      enabled: Boolean = true,
-    ) = Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
-      val interactionSource = remember { MutableInteractionSource() }
-      Checkbox(
-        checked = checked,
-        onCheckedChange = onCheckedChange,
-        interactionSource = interactionSource,
-        enabled = enabled,
-      )
-      Text(
-        label,
-        Modifier
-          .clickable(
-            indication = null,
-            interactionSource = interactionSource,
-            enabled = enabled
-          ) { onCheckedChange(!checked) }
-          .fillMaxWidth()
-      )
-    }
-
     // refactoring this is a bit pointless without reflection
     CheckboxTextRow(
       checked = causesOfNeonatalDeath?.respiratoryDistressSyndrome == true,
@@ -1313,7 +1400,7 @@ fun EclampsiaFormPreview() {
 fun PatientFormPreview() {
   CradleTrialAppTheme {
     Scaffold {
-      PatientForm(ServerEnumCollection.defaultInstance, onNavigateBack = {}, onNavigateToPatient = {})
+      CradleTrainingForm(ServerEnumCollection.defaultInstance, onNavigateBack = {}, onNavigateToCompleteForm = {})
     }
   }
 }
@@ -1339,7 +1426,7 @@ fun DistrictListDropdown(
   formatTextForListItem = District::name,
   title = {
     Text(
-      stringResource(R.string.patient_registration_district_dialog_title),
+      stringResource(R.string.district_dialog_title),
       style = MaterialTheme.typography.subtitle1
     )
   },
@@ -1366,7 +1453,7 @@ fun FacilityListDropdown(
   formatTextForListItem = Facility::name,
   title = {
     Text(
-      stringResource(R.string.patient_registration_health_facility_dialog_title),
+      stringResource(R.string.health_facility_dialog_title),
       style = MaterialTheme.typography.subtitle1
     )
   },
@@ -1446,20 +1533,6 @@ class DistrictState(
   override fun isMissing(): Boolean {
     return stateValue == null
   }
-}
-
-class InitialsState(
-  isMandatory: Boolean,
-  backingState: MutableState<String> = mutableStateOf(""),
-  isFormDraftState: State<Boolean?>
-) : TextFieldState(
-  validator = { it.length in 1..MAX_INITIALS_LENGTH },
-  errorFor = { ctx, _, -> ctx.getString(R.string.patient_registration_initials_error) },
-  backingState = backingState,
-  isFormDraftState = isFormDraftState,
-  isMandatory = isMandatory,
-) {
-  override val showErrorOnInput: Boolean = false
 }
 
 class NoFutureDateAndAheadOfMaternalDeathState(
@@ -1648,6 +1721,59 @@ class LimitedAgeDateState(
     stateValue = formDate?.toString(withSlashes = false) ?: ""
   }
 }
+
+class LimitedIntStateWithStateUpperBound(
+  isMandatory: Boolean,
+  val limit: IntRange,
+  backingState: MutableState<String> = mutableStateOf(""),
+  isFormDraftState: State<Boolean?>,
+  stateUpperBound: TextFieldState,
+  @StringRes upperBoundErrorString: Int,
+) : TextFieldState(
+  validator = { possibleInt ->
+    run {
+      if ((isFormDraftState.value == true || !isMandatory) && possibleInt.isBlank()) return@run true
+      val age = possibleInt.toIntOrNull() ?: return@run false
+      if (age !in limit) return@run false
+      val upper = stateUpperBound.stateValue.toIntOrNull()
+      if (upper == null) true else age <= upper
+    }
+  },
+  errorFor = { ctx, possibleInt ->
+    run {
+      val age = possibleInt.toIntOrNull() ?: return@run ctx.getString(R.string.input_must_be_in_range_d_and_d, limit.first, limit.last)
+      if (age !in limit) return@run ctx.getString(R.string.input_must_be_in_range_d_and_d, limit.first, limit.last)
+      val upper = stateUpperBound.stateValue.toIntOrNull()
+      if (upper == null) {
+        ctx.getString(R.string.input_must_be_in_range_d_and_d, limit.first, limit.last)
+      } else {
+        ctx.getString(upperBoundErrorString)
+      }
+    }
+  },
+  backingState = backingState,
+  isFormDraftState = isFormDraftState,
+  isMandatory = isMandatory
+)
+
+class LimitedIntState(
+  isMandatory: Boolean,
+  val limit: IntRange,
+  backingState: MutableState<String> = mutableStateOf(""),
+  isFormDraftState: State<Boolean?>,
+) : TextFieldState(
+  validator = { possibleInt ->
+    run {
+      if ((isFormDraftState.value == true || !isMandatory) && possibleInt.isBlank()) return@run true
+      val age = possibleInt.toIntOrNull() ?: return@run false
+      age in limit
+    }
+  },
+  errorFor = { ctx, _ -> ctx.getString(R.string.input_must_be_in_range_d_and_d, limit.first, limit.last) },
+  backingState = backingState,
+  isFormDraftState = isFormDraftState,
+  isMandatory = isMandatory
+)
 
 class LimitedAgeIntState(
   isMandatory: Boolean,

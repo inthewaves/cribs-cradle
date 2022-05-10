@@ -1,4 +1,4 @@
-package org.welbodipartnership.cradle5.patients.details
+package org.welbodipartnership.cradle5.cradleform.details
 
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
@@ -27,7 +27,6 @@ import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.outlined.Edit
@@ -49,25 +48,21 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.accompanist.insets.LocalWindowInsets
 import com.google.accompanist.insets.rememberInsetsPaddingValues
 import com.google.accompanist.insets.ui.TopAppBar
-import org.welbodipartnership.cradle5.LocalServerEnumCollection
 import org.welbodipartnership.cradle5.R
-import org.welbodipartnership.cradle5.data.database.entities.District
-import org.welbodipartnership.cradle5.data.database.entities.Facility
-import org.welbodipartnership.cradle5.data.database.entities.Outcomes
-import org.welbodipartnership.cradle5.data.database.entities.Patient
+import org.welbodipartnership.cradle5.cradleform.CradleFormPreviewClasses
+import org.welbodipartnership.cradle5.data.database.entities.CradleTrainingForm
 import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
-import org.welbodipartnership.cradle5.data.database.resultentities.PatientFacilityDistrictOutcomes
+import org.welbodipartnership.cradle5.data.database.resultentities.CradleTrainingFormFacilityDistrict
 import org.welbodipartnership.cradle5.domain.sync.SyncRepository
-import org.welbodipartnership.cradle5.patients.PatientPreviewClasses
 import org.welbodipartnership.cradle5.ui.composables.AnimatedVisibilityFadingWrapper
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
 
 @Composable
-fun PatientDetailsScreen(
+fun CradleFormDetailsScreen(
   onBackPressed: () -> Unit,
-  onPatientEdit: (patientPrimaryKey: Long) -> Unit,
-  onPatientOtherInfoEditPress: (patientPrimaryKey: Long) -> Unit,
-  viewModel: PatientDetailsViewModel = hiltViewModel()
+  onEdit: (primaryKey: Long) -> Unit,
+  onOtherInfoEditPress: (primaryKey: Long) -> Unit,
+  viewModel: CradleFormDetailsViewModel = hiltViewModel()
 ) {
   Scaffold(
     topBar = {
@@ -91,31 +86,28 @@ fun PatientDetailsScreen(
       )
     }
   ) { padding ->
-    val state by viewModel.patientOutcomesStateFlow.collectAsState()
+    val state by viewModel.formDetailsStateFlow.collectAsState()
     val editState by viewModel.editStateFlow.collectAsState()
 
     LaunchedEffect(state) {
       Log.d("PatientDetailsViewModel", "new state $state")
     }
-    state.let { patientState ->
-      when (patientState) {
-        is PatientDetailsViewModel.State.Ready -> {
-          PatientDetailsScreen(
-            patientState.patientFacilityOutcomes,
+    state.let { formState ->
+      when (formState) {
+        is CradleFormDetailsViewModel.State.Ready -> {
+          CradleFormDetailsScreen(
+            formState.formFacilityDistrict,
             editState = editState,
-            onPatientEditPress = onPatientEdit,
-            onPatientOtherInfoEditPress = onPatientOtherInfoEditPress,
+            onFormEditPress = onEdit,
+            onOtherInfoEditPress = onOtherInfoEditPress,
             onPatientDeletePress = {
-              viewModel.deletePatient(
-                patientState.patientFacilityOutcomes.patient,
-                patientState.patientFacilityOutcomes.outcomes
-              )
+              viewModel.deleteForm(formState.formFacilityDistrict.form)
               onBackPressed()
             },
             contentPadding = padding
           )
         }
-        PatientDetailsViewModel.State.Failed -> {
+        CradleFormDetailsViewModel.State.Failed -> {
           Column(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
@@ -123,7 +115,7 @@ fun PatientDetailsScreen(
             Text("Failed to load patient")
           }
         }
-        PatientDetailsViewModel.State.Loading -> {
+        CradleFormDetailsViewModel.State.Loading -> {
           Column(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
@@ -137,17 +129,16 @@ fun PatientDetailsScreen(
 }
 
 @Composable
-private fun PatientDetailsScreen(
-  patientAndRelatedInfo: PatientFacilityDistrictOutcomes,
+private fun CradleFormDetailsScreen(
+  formAndRelatedInfo: CradleTrainingFormFacilityDistrict,
   editState: SyncRepository.FormEditState?,
-  onPatientEditPress: (patientPrimaryKey: Long) -> Unit,
-  onPatientOtherInfoEditPress: (patientPrimaryKey: Long) -> Unit,
+  onFormEditPress: (patientPrimaryKey: Long) -> Unit,
+  onOtherInfoEditPress: (patientPrimaryKey: Long) -> Unit,
   onPatientDeletePress: (patientPrimaryKey: Long) -> Unit,
   modifier: Modifier = Modifier,
   contentPadding: PaddingValues = PaddingValues()
 ) {
-  val patient: Patient = patientAndRelatedInfo.patient
-  val outcomes: Outcomes? = patientAndRelatedInfo.outcomes
+  val form: CradleTrainingForm = formAndRelatedInfo.form
 
   var isDeleteConfirmDialogShowing by rememberSaveable { mutableStateOf(false) }
   if (isDeleteConfirmDialogShowing) {
@@ -157,7 +148,7 @@ private fun PatientDetailsScreen(
       text = { Text(stringResource(id = R.string.delete_info_dialog_body)) },
       confirmButton = {
         TextButton(
-          onClick = { onPatientDeletePress(patient.id) },
+          onClick = { onPatientDeletePress(form.id) },
           colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colors.error)
         ) {
           Text(stringResource(id = R.string.delete_info_dialog_confirm_button))
@@ -176,26 +167,16 @@ private fun PatientDetailsScreen(
       BaseDetailsCard(title = null, modifier = modifier) {
         // Don't allow editing patients already uploaded.
 
-        val isRegistrationUploadedButNotOutcomes = patient.isUploadedToServer &&
-          outcomes?.isUploadedToServer != true
+        val canEdit = !form.isUploadedToServer && editState?.canEdit == true
         OutlinedButton(
-          enabled = (!patient.isUploadedToServer || isRegistrationUploadedButNotOutcomes) &&
-            editState?.canEdit == true,
-          onClick = { onPatientEditPress(patient.id) }
+          enabled = canEdit,
+          onClick = { onFormEditPress(form.id) }
         ) {
-          Text(
-            stringResource(
-              if (isRegistrationUploadedButNotOutcomes) {
-                R.string.patient_details_screen_edit_outcomes_button
-              } else {
-                R.string.patient_details_screen_edit_button
-              }
-            )
-          )
+          Text(stringResource(R.string.cradle_form_details_screen_edit_button))
         }
 
         OutlinedButton(
-          enabled = !patient.isUploadedToServer && editState?.canEdit == true,
+          enabled = canEdit,
           onClick = { isDeleteConfirmDialogShowing = true },
           colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colors.error),
         ) {
@@ -208,28 +189,22 @@ private fun PatientDetailsScreen(
           val text: String
           val isError: Boolean
           when {
-            isRegistrationUploadedButNotOutcomes -> {
-              icon = Icons.Default.Error
-              contentDescription = "Patient registration locked, but outcomes have errors"
-              text = "Patient registration has been uploaded to MedSciNet, but there were errors with the outcomes during sync"
-              isError = true
-            }
-            patient.isUploadedToServer -> {
+            form.isUploadedToServer -> {
               icon = Icons.Default.Lock
               contentDescription = "Patient locked"
-              text = "Patient has been uploaded to MedSciNet and is locked for editing on the app"
+              text = "Form has been uploaded to MedSciNet and is locked for editing on the app"
               isError = false
             }
-            patient.isDraft -> {
+            form.isDraft -> {
               icon = Icons.Outlined.Edit
               contentDescription = "Patient marked as draft"
-              text = "Patient is marked as draft and won't be included in the next sync"
+              text = "Form is marked as draft and won't be included in the next sync"
               isError = false
             }
             else -> {
               icon = Icons.Default.LockOpen
               contentDescription = "Patient ready for upload"
-              text = "Patient is ready for upload"
+              text = "Form is ready for upload"
               isError = false
             }
           }
@@ -243,7 +218,7 @@ private fun PatientDetailsScreen(
         }
 
         AnimatedVisibilityFadingWrapper(
-          visible = editState?.canEdit == false && (!patient.isUploadedToServer || outcomes?.isUploadedToServer == false)
+          visible = editState?.canEdit == false && !form.isUploadedToServer
         ) {
           Spacer(Modifier.width(4.dp))
           CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
@@ -266,29 +241,17 @@ private fun PatientDetailsScreen(
 
     item {
       OtherInfoCard(
-        isPatientUploadedToServer = patient.isUploadedToServer,
-        isDraft = patient.isDraft,
-        localNotes = patient.localNotes,
-        onEditOtherInfoButtonClick = { onPatientOtherInfoEditPress(patient.id) },
+        isUploadedToServer = form.isUploadedToServer,
+        isDraft = form.isDraft,
+        localNotes = form.localNotes,
+        onEditOtherInfoButtonClick = { onOtherInfoEditPress(form.id) },
         modifier = Modifier.padding(16.dp)
       )
     }
 
     item { Spacer(Modifier.height(8.dp)) }
 
-    item {
-      PatientCard(patientAndRelatedInfo, modifier = Modifier.padding(16.dp))
-    }
-
-    item { Spacer(Modifier.height(8.dp)) }
-
-    item {
-      OutcomesCard(
-        outcomes = outcomes,
-        enumCollection = LocalServerEnumCollection.current,
-        modifier = Modifier.padding(16.dp)
-      )
-    }
+    item { CradleFormCard(formAndRelatedInfo, modifier = Modifier.padding(16.dp)) }
   }
 }
 
@@ -297,19 +260,15 @@ private fun PatientDetailsScreen(
 fun PatientDetailsScreenNotUploadedPreview() {
   CradleTrialAppTheme {
     Surface {
-      PatientDetailsScreen(
-        PatientFacilityDistrictOutcomes(
-          patient = PatientPreviewClasses.createTestPatient(),
-          facility = Facility(5, "Test facility", 0, 2, false, "My notes"),
-          referralFromDistrict = null,
-          referralFromFacility = null,
-          referralToDistrict = null,
-          referralToFacility = null,
-          outcomes = PatientPreviewClasses.createTestOutcomes(),
+      CradleFormDetailsScreen(
+        CradleTrainingFormFacilityDistrict(
+          CradleFormPreviewClasses.createTestCradleForm(),
+          CradleFormPreviewClasses.createTestFacility(),
+          CradleFormPreviewClasses.createTestDistrict(),
         ),
         editState = SyncRepository.FormEditState.CAN_EDIT,
-        onPatientEditPress = {},
-        onPatientOtherInfoEditPress = {},
+        onFormEditPress = {},
+        onOtherInfoEditPress = {},
         onPatientDeletePress = {}
       )
     }
@@ -321,24 +280,15 @@ fun PatientDetailsScreenNotUploadedPreview() {
 fun PatientDetailsScreenUploadedPreview() {
   CradleTrialAppTheme {
     Surface {
-      PatientDetailsScreen(
-        PatientFacilityDistrictOutcomes(
-          patient = PatientPreviewClasses.createTestPatient(serverInfo = ServerInfo(nodeId = 5L, objectId = null)),
-          facility = Facility(5, "Test facility", 0, 2, false, "My notes"),
-          outcomes = PatientPreviewClasses.createTestOutcomes(),
-          referralFromDistrict = District(PatientPreviewClasses.FROM_DISTRICT_ID, "Test 'from' district"),
-          referralFromFacility = Facility(
-            PatientPreviewClasses.FROM_FACILITY_ID, "Test 'from' facility", districtId = 2, hasVisited = false, listOrder = 1,
-          ),
-          referralToDistrict = District(PatientPreviewClasses.TO_DISTRICT_ID, "Test 'to' district"),
-          referralToFacility = Facility(
-            PatientPreviewClasses.TO_FACILITY_ID, "Test 'to' facility",
-            districtId = 2, hasVisited = false, listOrder = 1,
-          ),
+      CradleFormDetailsScreen(
+        CradleTrainingFormFacilityDistrict(
+          CradleFormPreviewClasses.createTestCradleForm(serverInfo = ServerInfo(nodeId = null, 5L, null, null)),
+          CradleFormPreviewClasses.createTestFacility(),
+          CradleFormPreviewClasses.createTestDistrict(),
         ),
         editState = SyncRepository.FormEditState.CAN_EDIT,
-        onPatientEditPress = {},
-        onPatientOtherInfoEditPress = {},
+        onFormEditPress = {},
+        onOtherInfoEditPress = {},
         onPatientDeletePress = {}
       )
     }
@@ -350,25 +300,15 @@ fun PatientDetailsScreenUploadedPreview() {
 fun PatientDetailsScreenSyncingPreview() {
   CradleTrialAppTheme {
     Surface {
-      PatientDetailsScreen(
-        PatientFacilityDistrictOutcomes(
-          patient = PatientPreviewClasses.createTestPatient(isDraft = false),
-          facility = Facility(5, "Test facility", 0, 2, false, "My notes"),
-          outcomes = PatientPreviewClasses.createTestOutcomes(),
-          referralFromDistrict = District(PatientPreviewClasses.FROM_DISTRICT_ID, "Test 'from' district"),
-          referralFromFacility = Facility(
-            PatientPreviewClasses.FROM_FACILITY_ID, "Test 'from' facility",
-            hasVisited = false, districtId = 2, listOrder = 1,
-          ),
-          referralToDistrict = District(PatientPreviewClasses.TO_DISTRICT_ID, "Test 'to' district"),
-          referralToFacility = Facility(
-            PatientPreviewClasses.TO_FACILITY_ID, "Test 'to' facility",
-            hasVisited = false, districtId = 2, listOrder = 1,
-          ),
+      CradleFormDetailsScreen(
+        CradleTrainingFormFacilityDistrict(
+          CradleFormPreviewClasses.createTestCradleForm(),
+          CradleFormPreviewClasses.createTestFacility(),
+          CradleFormPreviewClasses.createTestDistrict(),
         ),
         editState = SyncRepository.FormEditState.CANT_EDIT_SYNC_IN_PROGRESS,
-        onPatientEditPress = {},
-        onPatientOtherInfoEditPress = {},
+        onFormEditPress = {},
+        onOtherInfoEditPress = {},
         onPatientDeletePress = {},
       )
     }

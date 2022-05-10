@@ -26,31 +26,25 @@ class SyncScreenViewModel @Inject constructor(
         null
       )
 
-  val patientsToUploadCountFlow: StateFlow<Int?> = dbWrapper.patientsDao().countPatientsToUpload()
+  val formsToUploadNoErrorsFlow: StateFlow<Int?> = dbWrapper.cradleTrainingFormDao()
+    .countFormsToUploadWithoutErrors()
     .stateIn(
       viewModelScope,
       SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000L),
       null
     )
 
-  val incompletePatientsToUploadCountFlow: StateFlow<Int?> = dbWrapper.patientsDao()
-    .countPartialPatientsToUpload()
+  val formsToUploadWithErrorsFlow: StateFlow<Int?> = dbWrapper.cradleTrainingFormDao()
+    .countFormsToUploadWithErrors()
     .stateIn(
       viewModelScope,
       SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000L),
       null
     )
 
-  val patientsWithOutcomesNotFullyUploadedWithErrorsCountFlow: StateFlow<Int?> = dbWrapper.outcomesDao()
-    .countOutcomesNotFullyUploadedWithErrors()
-    .stateIn(
-      viewModelScope,
-      SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000L),
-      null
-    )
-
-  val patientsWithOutcomesNotFullyUploadedWithoutErrorsCountFlow: StateFlow<Int?> = dbWrapper.outcomesDao()
-    .countOutcomesNotFullyUploadedWithoutErrors()
+  val incompleteFormsToUploadCountFlow: StateFlow<Int?> = dbWrapper
+    .cradleTrainingFormDao()
+    .countPartialFormsToUpload()
     .stateIn(
       viewModelScope,
       SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000L),

@@ -426,7 +426,7 @@ private val HomeNavigationItems = listOf(
   HomeNavigationItem.ImageVectorIcon(
     screen = Screen.Patients,
     labelResId = R.string.patients_title,
-    contentDescriptionResId = R.string.cd_patients_nav_button,
+    contentDescriptionResId = R.string.cd_cradle_form_nav_button,
     iconImageVector = Icons.Outlined.Groups,
     selectedImageVector = Icons.Default.Groups,
   ),

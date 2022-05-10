@@ -66,7 +66,7 @@ data class CradleImplementationData(
   @Json(name = "Control2207")
   val totalStaffTrainedBefore: Int?,
   @Json(name = "Control2208")
-  val totalStaffTrainedScored8: Int?,
+  val totalStaffTrainedScoredMoreThan8: Int?,
 ) {
   companion object {
     val controlIdToNameMap: Map<String, String> = ArrayMap<String, String>().apply {

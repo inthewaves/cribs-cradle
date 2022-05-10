@@ -24,11 +24,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.welbodipartnership.cradle5.R
+import org.welbodipartnership.cradle5.cradleform.form.withRequiredStar
 import org.welbodipartnership.cradle5.data.database.entities.embedded.EnumSelection
 import org.welbodipartnership.cradle5.data.serverenums.DropdownType
 import org.welbodipartnership.cradle5.data.serverenums.ServerEnum
 import org.welbodipartnership.cradle5.data.serverenums.ServerEnumCollection
-import org.welbodipartnership.cradle5.patients.form.withRequiredStar
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
 
 @Composable

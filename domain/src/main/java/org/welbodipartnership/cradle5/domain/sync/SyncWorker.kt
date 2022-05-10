@@ -27,7 +27,6 @@ import org.welbodipartnership.cradle5.data.settings.AppValuesStore
 import org.welbodipartnership.cradle5.domain.RestApi
 import org.welbodipartnership.cradle5.domain.auth.AuthRepository
 import org.welbodipartnership.cradle5.domain.cradletraining.CradleTrainingFormManager
-import org.welbodipartnership.cradle5.domain.patients.PatientsManager
 import org.welbodipartnership.cradle5.domain.toApiBody
 import java.security.SecureRandom
 import javax.annotation.concurrent.Immutable
@@ -249,7 +248,6 @@ class SyncWorker @AssistedInject constructor(
      * ObjectId. An ObjectId is strictly required for posting an outcome for a patient.
      */
     UPLOADING_INCOMPLETE_PATIENTS,
-    UPLOADING_INCOMPLETE_OUTCOMES,
     UPLOADING_LOCATION_CHECK_INS,
     PERFORMING_INFO_SYNC
   }
@@ -298,7 +296,6 @@ class SyncWorker @AssistedInject constructor(
         Stage.STARTING,
         Stage.UPLOADING_NEW_PATIENTS,
         Stage.UPLOADING_INCOMPLETE_PATIENTS,
-        Stage.UPLOADING_INCOMPLETE_OUTCOMES,
         Stage.UPLOADING_LOCATION_CHECK_INS -> {
           val doneSoFar = progress.getInt(PROGRESS_DATA_PROGRESS_KEY, Int.MIN_VALUE)
           if (doneSoFar == Int.MIN_VALUE) {

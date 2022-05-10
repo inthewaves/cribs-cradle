@@ -1,4 +1,4 @@
-package org.welbodipartnership.cradle5.patients.list
+package org.welbodipartnership.cradle5.cradleform.list
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -75,10 +75,11 @@ import com.google.accompanist.insets.rememberInsetsPaddingValues
 import com.google.accompanist.insets.ui.TopAppBar
 import org.welbodipartnership.cradle5.R
 import org.welbodipartnership.cradle5.compose.rememberFlowWithLifecycle
+import org.welbodipartnership.cradle5.data.database.entities.District
 import org.welbodipartnership.cradle5.data.database.entities.Facility
 import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
-import org.welbodipartnership.cradle5.data.database.resultentities.ListPatient
-import org.welbodipartnership.cradle5.data.database.resultentities.ListPatientAndOutcomeError
+import org.welbodipartnership.cradle5.data.database.resultentities.FacilityIdAndName
+import org.welbodipartnership.cradle5.data.database.resultentities.ListCradleTrainingForm
 import org.welbodipartnership.cradle5.home.AccountInfoButton
 import org.welbodipartnership.cradle5.ui.composables.AnimatedVisibilityFadingWrapper
 import org.welbodipartnership.cradle5.ui.composables.carousel.Carousel
@@ -91,14 +92,14 @@ import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
 import org.welbodipartnership.cradle5.util.datetime.FormDate
 
 @Composable
-fun PatientsListScreen(
-  onOpenPatientDetails: (patientPrimaryKey: Long) -> Unit,
-  onOpenNewPatientCreation: () -> Unit,
+fun CradleFormListScreen(
+  onOpenDetails: (patientPrimaryKey: Long) -> Unit,
+  onOpenNewFormCreation: () -> Unit,
 ) {
-  PatientsListScreen(
+  CradleFormListScreen(
     viewModel = hiltViewModel(),
-    onOpenPatientDetails = onOpenPatientDetails,
-    onOpenNewPatientCreation = onOpenNewPatientCreation
+    onOpenDetails = onOpenDetails,
+    onOpenNewFormCreation = onOpenNewFormCreation
   )
 }
 
@@ -125,10 +126,10 @@ private fun LazyListState.isScrollingUp(): Boolean {
 }
 
 @Composable
-private fun PatientsListScreen(
-  viewModel: PatientsListViewModel,
-  onOpenPatientDetails: (patientPrimaryKey: Long) -> Unit,
-  onOpenNewPatientCreation: () -> Unit,
+private fun CradleFormListScreen(
+  viewModel: CradleFormListViewModel,
+  onOpenDetails: (patientPrimaryKey: Long) -> Unit,
+  onOpenNewFormCreation: () -> Unit,
 ) {
   val lazyListState = rememberLazyListState()
 
@@ -151,7 +152,7 @@ private fun PatientsListScreen(
         TextButton(
           onClick = {
             showFilterDialog = false
-            viewModel.filterOption.value = PatientsListViewModel.FilterOption.None
+            viewModel.filterOption.value = CradleFormListViewModel.FilterOption.None
           }
         ) { Text(stringResource(R.string.filter_button_clear_filter)) }
       },
@@ -160,7 +161,7 @@ private fun PatientsListScreen(
         // https://developer.android.com/reference/kotlin/androidx/compose/material/package-summary#RadioButton(kotlin.Boolean,kotlin.Function0,androidx.compose.ui.Modifier,kotlin.Boolean,androidx.compose.foundation.interaction.MutableInteractionSource,androidx.compose.material.RadioButtonColors)
         // Note that Modifier.selectableGroup() is essential to ensure correct accessibility behavior
         Column(Modifier.selectableGroup()) {
-          PatientsListViewModel.FilterOption.defaultButtonsList.forEach { currentOpt ->
+          CradleFormListViewModel.FilterOption.defaultButtonsList.forEach { currentOpt ->
             Row(
               Modifier
                 .fillMaxWidth()
@@ -193,26 +194,26 @@ private fun PatientsListScreen(
           }
 
           DatabasePagingListDropdown(
-            selectedItem = (selectedOption as? PatientsListViewModel.FilterOption.ByFacility)
+            selectedItem = (selectedOption as? CradleFormListViewModel.FilterOption.ByFacility)
               ?.facility,
-            positionInList = (selectedOption as? PatientsListViewModel.FilterOption.ByFacility)
+            positionInList = (selectedOption as? CradleFormListViewModel.FilterOption.ByFacility)
               ?.position,
             onItemSelected = { idx, facility ->
-              onOptionSelected(PatientsListViewModel.FilterOption.ByFacility(facility, idx))
+              onOptionSelected(CradleFormListViewModel.FilterOption.ByFacility(facility, idx))
             },
             pagingItemFlow = viewModel.selfFacilityPagingFlow,
             formatTextForListItem = Facility::name,
-            title = { Text(stringResource(R.string.patient_registration_district_dialog_title)) },
+            title = { Text(stringResource(R.string.district_dialog_title)) },
             label = { Text(stringResource(R.string.patients_list_filter_option_facility)) },
             errorHint = null
           )
 
           MonthDropdownMenu(
-            currentMonthNumber = (selectedOption as? PatientsListViewModel.FilterOption.Month)
+            currentMonthNumber = (selectedOption as? CradleFormListViewModel.FilterOption.Month)
               ?.monthOneBased,
             onSelect = { selectedMonthNumber ->
               if (selectedMonthNumber != null) {
-                onOptionSelected(PatientsListViewModel.FilterOption.Month(selectedMonthNumber))
+                onOptionSelected(CradleFormListViewModel.FilterOption.Month(selectedMonthNumber))
               }
             },
             label = { Text(stringResource(R.string.patients_list_filter_option_month)) },
@@ -238,7 +239,7 @@ private fun PatientsListScreen(
       )
     },
     floatingActionButton = {
-      FloatingActionButton(onClick = onOpenNewPatientCreation) {
+      FloatingActionButton(onClick = onOpenNewFormCreation) {
         Row(Modifier.padding(16.dp)) {
           Icon(Icons.Filled.Add, stringResource(R.string.patients_list_add_new_button))
 
@@ -254,7 +255,7 @@ private fun PatientsListScreen(
   ) { padding ->
     Column(Modifier.padding(padding)) {
       val lazyPagingItems = rememberFlowWithLifecycle(
-        viewModel.patientsPagerFlow, minActiveState = Lifecycle.State.RESUMED
+        viewModel.cradleFormPagerFlow, minActiveState = Lifecycle.State.RESUMED
       ).collectAsLazyPagingItems()
       val patientsCount by rememberFlowWithLifecycle(
         viewModel.patientsCountFlow, minActiveState = Lifecycle.State.RESUMED
@@ -268,11 +269,11 @@ private fun PatientsListScreen(
               stringResource(
                 R.string.facilities_list_filter_by_s_button,
                 when (nowOption) {
-                  is PatientsListViewModel.FilterOption.Month -> stringResource(
+                  is CradleFormListViewModel.FilterOption.Month -> stringResource(
                     R.string.patients_list_filter_by_month_s,
                     getMonthNameFromNumber(nowOption.monthOneBased)
                   )
-                  is PatientsListViewModel.FilterOption.ByFacility -> stringResource(
+                  is CradleFormListViewModel.FilterOption.ByFacility -> stringResource(
                     R.string.patients_list_filter_by_facility_s,
                     nowOption.facility.name ?: "ID ${nowOption.facility.id}"
                   )
@@ -310,9 +311,9 @@ private fun PatientsListScreen(
           visible = lazyPagingItems.loadState.refresh !is LoadState.Loading
         ) {
           LazyColumn(state = lazyListState) {
-            items(lazyPagingItems) { listPatient ->
-              if (listPatient != null) {
-                PatientListItem(listPatient, onClick = { onOpenPatientDetails(it.id) })
+            items(lazyPagingItems) { listForm ->
+              if (listForm != null) {
+                PatientListItem(listForm, onClick = { onOpenDetails(it.id) })
               } else {
                 PatientListItemPlaceholder()
               }
@@ -437,9 +438,9 @@ private fun MonthDropdownMenu(
 fun PatientListHeader(modifier: Modifier = Modifier) {
   Card(elevation = 1.dp) {
     BasePatientListItem(
-      id = stringResource(R.string.patient_list_header_id),
-      initials = stringResource(R.string.patient_list_header_initials),
-      age = stringResource(R.string.patient_list_header_age),
+      district = stringResource(R.string.cradle_form_list_header_district),
+      facility = stringResource(R.string.cradle_form_list_header_facility),
+      dateOfTraining = stringResource(R.string.cradle_form_list_header_date_of_training),
       listIconType = ListIconType.DontShow,
       minHeight = 24.dp,
       textStyle = MaterialTheme.typography.subtitle2,
@@ -451,30 +452,24 @@ fun PatientListHeader(modifier: Modifier = Modifier) {
 
 @Composable
 fun PatientListItem(
-  listPatientAndOutcomeError: ListPatientAndOutcomeError,
-  onClick: (listPatient: ListPatient) -> Unit,
+  listForm: ListCradleTrainingForm,
+  onClick: (listPatient: ListCradleTrainingForm) -> Unit,
   modifier: Modifier = Modifier
 ) {
-  val listPatient = listPatientAndOutcomeError.listPatient
-
-  val isPatientUploadedButOutcomeIsNot = listPatient.serverInfo?.objectId != null &&
-    listPatientAndOutcomeError.outcomeError?.serverInfo?.nodeId == null
 
   BasePatientListItem(
-    id = listPatient.serverInfo?.objectId?.toString() ?: stringResource(R.string.not_available_n_slash_a),
-    initials = listPatient.initials,
-    age = listPatient.dateOfBirth?.getAgeInYearsFromNow()?.toString() ?: stringResource(R.string.not_available_n_slash_a),
+    district = listForm.district?.name ?: stringResource(R.string.not_available_n_slash_a),
+    facility = listForm.healthcareFacility?.name ?: stringResource(R.string.not_available_n_slash_a),
+    dateOfTraining = listForm.dateOfTraining?.toString() ?: stringResource(R.string.not_available_n_slash_a),
     listIconType = ListIconType.ShowIcons(
-      isPatientUploaded = listPatient.serverInfo != null,
-      hasLocalNotes = !listPatient.localNotes.isNullOrBlank(),
-      isPatientDraft = listPatient.isDraft,
-      hasErrors = !listPatient.serverErrorMessage.isNullOrBlank() ||
-        !listPatientAndOutcomeError.outcomeError?.serverErrorMessage.isNullOrBlank() ||
-        isPatientUploadedButOutcomeIsNot
+      isPatientUploaded = listForm.serverInfo != null,
+      hasLocalNotes = !listForm.localNotes.isNullOrBlank(),
+      isPatientDraft = listForm.isDraft,
+      hasErrors = !listForm.serverErrorMessage.isNullOrBlank()
     ),
     minHeight = 48.dp,
     textStyle = MaterialTheme.typography.body2,
-    onClick = { onClick(listPatient) },
+    onClick = { onClick(listForm) },
     modifier = modifier
   )
 }
@@ -506,9 +501,9 @@ sealed class ListIconType {
 
 @Composable
 private fun BasePatientListItem(
-  id: String,
-  initials: String,
-  age: String,
+  district: String,
+  facility: String,
+  dateOfTraining: String,
   listIconType: ListIconType,
   minHeight: Dp,
   textStyle: TextStyle,
@@ -521,23 +516,23 @@ private fun BasePatientListItem(
     modifier = modifier
   ) {
     Text(
-      id,
-      modifier = Modifier
-        .weight(0.15f)
-        .align(Alignment.CenterVertically),
-      style = textStyle
-    )
-    Text(
-      initials,
+      district,
       modifier = Modifier
         .weight(0.2f)
         .align(Alignment.CenterVertically),
       style = textStyle
     )
     Text(
-      age,
+      facility,
       modifier = Modifier
-        .weight(0.2f)
+        .weight(0.3f)
+        .align(Alignment.CenterVertically),
+      style = textStyle
+    )
+    Text(
+      dateOfTraining,
+      modifier = Modifier
+        .weight(0.1f)
         .align(Alignment.CenterVertically),
       style = textStyle
     )
@@ -606,32 +601,28 @@ fun PatientListItemPreview() {
       Column {
         PatientListHeader()
         PatientListItem(
-          listPatientAndOutcomeError = ListPatientAndOutcomeError(
-            listPatient = ListPatient(
-              0L,
-              serverInfo = null,
-              serverErrorMessage = "Errors",
-              "AA",
-              FormDate.today(),
-              localNotes = "My notes",
-              isDraft = true
-            ),
-            outcomeError = null
+          listForm = ListCradleTrainingForm(
+            0L,
+            serverInfo = null,
+            district = District(5, "5 - Some district"),
+            healthcareFacility = FacilityIdAndName(5, "MyTestFacility, Something Else (ABC)"),
+            serverErrorMessage = "Errors",
+            dateOfTraining = FormDate.today(),
+            localNotes = "Locacl notes",
+            isDraft = true
           ),
           onClick = {}
         )
         PatientListItem(
-          listPatientAndOutcomeError = ListPatientAndOutcomeError(
-            listPatient = ListPatient(
-              id = 0L,
-              serverInfo = ServerInfo(nodeId = 50, objectId = 50),
-              serverErrorMessage = null,
-              initials = "AA",
-              dateOfBirth = FormDate.today(),
-              localNotes = null,
-              isDraft = false
-            ),
-            outcomeError = null,
+          listForm = ListCradleTrainingForm(
+            0L,
+            serverInfo = ServerInfo(nodeId = null, objectId = 50, null, null),
+            district = District(5, "2 - Ndistrict"),
+            healthcareFacility = FacilityIdAndName(5, "Another facility, Something Else (ABC)"),
+            serverErrorMessage = null,
+            dateOfTraining = FormDate.today(),
+            localNotes = null,
+            isDraft = true
           ),
           onClick = {}
         )

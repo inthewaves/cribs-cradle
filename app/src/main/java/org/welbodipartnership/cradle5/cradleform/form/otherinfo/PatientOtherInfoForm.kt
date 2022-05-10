@@ -1,4 +1,4 @@
-package org.welbodipartnership.cradle5.patients.form.otherinfo
+package org.welbodipartnership.cradle5.cradleform.form.otherinfo
 
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
@@ -31,13 +31,13 @@ import com.google.accompanist.insets.navigationBarsWithImePadding
 import com.google.accompanist.insets.rememberInsetsPaddingValues
 import com.google.accompanist.insets.ui.TopAppBar
 import org.welbodipartnership.cradle5.R
-import org.welbodipartnership.cradle5.patients.form.OtherCard
-import org.welbodipartnership.cradle5.patients.form.SaveButtonCard
+import org.welbodipartnership.cradle5.cradleform.form.OtherCard
+import org.welbodipartnership.cradle5.cradleform.form.SaveButtonCard
 
 @Composable
-fun PatientOtherInfoFormScreen(
+fun CradleOtherInfoFormScreen(
   onNavigateBack: () -> Unit,
-  viewModel: PatientOtherInfoFormViewModel = hiltViewModel()
+  viewModel: CradleOtherInfoFormViewModel = hiltViewModel()
 ) {
   var errorDialogText: String? by rememberSaveable { mutableStateOf(null) }
   errorDialogText?.let { currentError ->
@@ -59,15 +59,15 @@ fun PatientOtherInfoFormScreen(
   LaunchedEffect(formState) {
     formState.let { currentState ->
       when (currentState) {
-        is PatientOtherInfoFormViewModel.FormState.Error -> {
+        is CradleOtherInfoFormViewModel.FormState.Error -> {
           errorDialogText = currentState.errorMessage
         }
-        PatientOtherInfoFormViewModel.FormState.SaveSuccess -> {
+        CradleOtherInfoFormViewModel.FormState.SaveSuccess -> {
           onNavigateBack()
         }
-        PatientOtherInfoFormViewModel.FormState.Loaded,
-        PatientOtherInfoFormViewModel.FormState.Loading,
-        PatientOtherInfoFormViewModel.FormState.Saving -> {}
+        CradleOtherInfoFormViewModel.FormState.Loaded,
+        CradleOtherInfoFormViewModel.FormState.Loading,
+        CradleOtherInfoFormViewModel.FormState.Saving -> {}
       }
     }
   }
@@ -107,13 +107,10 @@ fun PatientOtherInfoFormScreen(
         modifier = Modifier.fillMaxWidth(),
         title = {
           Column {
-            Text(stringResource(R.string.edit_patient_other_info_title))
-            val patientInitials by viewModel.patientInitials.collectAsState()
-            patientInitials?.let { initials ->
-              Text(
-                initials,
-                style = MaterialTheme.typography.subtitle2
-              )
+            Text(stringResource(R.string.edit_cradle_form_other_info_title))
+            val formInfo by viewModel.existingInfo.collectAsState()
+            formInfo?.facility?.name?.let { facilityName ->
+              Text(facilityName, style = MaterialTheme.typography.subtitle2)
             }
           }
         },

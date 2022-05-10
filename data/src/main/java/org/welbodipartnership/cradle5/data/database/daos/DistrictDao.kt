@@ -52,8 +52,8 @@ abstract class DistrictDao {
   protected abstract suspend fun insert(district: District): Long
 
   @Transaction
-  @Query("SELECT * FROM District $DEFAULT_ORDER")
-  abstract fun districtsPagingSource(): PagingSource<Int, District>
+  @Query("SELECT * FROM District WHERE isOther = 0 $DEFAULT_ORDER")
+  abstract fun districtsPagingSourceNoOther(): PagingSource<Int, District>
 
   @RawQuery
   protected abstract suspend fun getDistrictIndexWhenOrderedById(

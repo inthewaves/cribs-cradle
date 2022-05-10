@@ -8,7 +8,7 @@ import org.welbodipartnership.cradle5.data.database.entities.District
 import org.welbodipartnership.cradle5.data.database.entities.Facility
 
 @Immutable
-data class FormFacilityDistrict(
+data class CradleTrainingFormFacilityDistrict(
   @Embedded
   val form: CradleTrainingForm,
   @Relation(parentColumn = "healthcareFacility", entityColumn = "id")

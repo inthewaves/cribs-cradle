@@ -1,4 +1,4 @@
-package org.welbodipartnership.cradle5.patients.form
+package org.welbodipartnership.cradle5.cradleform.form
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding

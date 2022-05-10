@@ -34,10 +34,10 @@ import com.google.accompanist.insets.LocalWindowInsets
 import com.google.accompanist.insets.rememberInsetsPaddingValues
 import com.google.accompanist.insets.ui.TopAppBar
 import org.welbodipartnership.cradle5.R
+import org.welbodipartnership.cradle5.cradleform.details.BaseDetailsCard
 import org.welbodipartnership.cradle5.domain.sync.SyncRepository
 import org.welbodipartnership.cradle5.domain.sync.SyncWorker
 import org.welbodipartnership.cradle5.home.AccountInfoButton
-import org.welbodipartnership.cradle5.patients.details.BaseDetailsCard
 import org.welbodipartnership.cradle5.ui.composables.AnimatedVisibilityFadingWrapper
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
 import org.welbodipartnership.cradle5.util.datetime.UnixTimestamp
@@ -80,14 +80,9 @@ private fun SyncScreen(viewModel: SyncScreenViewModel) {
             ActiveSyncCard(status)
           }
           is SyncRepository.SyncStatus.Inactive, null -> {
-            val patientsToUpload by viewModel.patientsToUploadCountFlow.collectAsState()
-            val partialPatientsToUpload by viewModel.incompletePatientsToUploadCountFlow
-              .collectAsState()
-            val patientsWithOutcomesNotFullyUploadedWithErrors by viewModel
-              .patientsWithOutcomesNotFullyUploadedWithErrorsCountFlow
-              .collectAsState()
-            val patientsWithOutcomesNotFullyUploadedWithoutErrors by viewModel
-              .patientsWithOutcomesNotFullyUploadedWithoutErrorsCountFlow
+            val formsToUploadNoErrors by viewModel.formsToUploadNoErrorsFlow.collectAsState()
+            val formsToUpload by viewModel.formsToUploadWithErrorsFlow.collectAsState()
+            val partialFormsToUpload by viewModel.incompleteFormsToUploadCountFlow
               .collectAsState()
             val locationCheckInsToUpload by viewModel.locationCheckInsToUploadCountFlow
               .collectAsState()
@@ -97,11 +92,10 @@ private fun SyncScreen(viewModel: SyncScreenViewModel) {
               onCancelButtonClicked = { viewModel.cancelSync() },
               syncStatus = status as SyncRepository.SyncStatus.Inactive?,
               lastTimeSyncCompleted = lastTimeSyncCompleted,
-              numPatientsToUpload = patientsToUpload,
-              numIncompletePatientsToUpload = partialPatientsToUpload,
+              numFormsToUploadWithoutErrors = formsToUploadNoErrors,
+              numFormsToUploadWithErrors = formsToUpload,
+              numIncompleteFormsToUpload = partialFormsToUpload,
               numLocationCheckinsToUpload = locationCheckInsToUpload,
-              numPatientsWithOutcomesNotFullyUploadedWithErrors = patientsWithOutcomesNotFullyUploadedWithErrors,
-              numPatientsWithOutcomesNotFullyUploadedWithoutErrors = patientsWithOutcomesNotFullyUploadedWithoutErrors
             )
           }
         }
@@ -128,13 +122,10 @@ private fun ActiveSyncCard(
           Text("Starting")
         }
         SyncWorker.Stage.UPLOADING_NEW_PATIENTS -> {
-          Text("Uploading new patients")
+          Text("Uploading new forms")
         }
         SyncWorker.Stage.UPLOADING_INCOMPLETE_PATIENTS -> {
-          Text("Uploading patients that failed to upload before")
-        }
-        SyncWorker.Stage.UPLOADING_INCOMPLETE_OUTCOMES -> {
-          Text("Uploading patients with outcomes that failed to upload before")
+          Text("Uploading forms that failed to upload before")
         }
         SyncWorker.Stage.UPLOADING_LOCATION_CHECK_INS -> {
           Text("Uploading location check ins")
@@ -161,7 +152,7 @@ private fun ActiveSyncCard(
           AnimatedVisibilityFadingWrapper(visible = progress.numFailed > 0) {
             Text(
               resources.getQuantityString(
-                R.plurals.sync_screen_d_patients_failed_to_upload,
+                R.plurals.sync_screen_d_forms_failed_to_upload,
                 progress.numFailed,
                 progress.numFailed
               ),
@@ -195,10 +186,9 @@ fun InactiveOrNoSyncCard(
   onSyncButtonClicked: () -> Unit,
   onCancelButtonClicked: () -> Unit,
   syncStatus: SyncRepository.SyncStatus.Inactive?,
-  numPatientsToUpload: Int?,
-  numIncompletePatientsToUpload: Int?,
-  numPatientsWithOutcomesNotFullyUploadedWithErrors: Int?,
-  numPatientsWithOutcomesNotFullyUploadedWithoutErrors: Int?,
+  numFormsToUploadWithoutErrors: Int?,
+  numFormsToUploadWithErrors: Int?,
+  numIncompleteFormsToUpload: Int?,
   numLocationCheckinsToUpload: Int?,
   lastTimeSyncCompleted: UnixTimestamp?,
   modifier: Modifier = Modifier,
@@ -230,57 +220,39 @@ fun InactiveOrNoSyncCard(
     }
 
     val resources = LocalContext.current.resources
-    if (numPatientsToUpload != null) {
+    if (numFormsToUploadWithoutErrors != null) {
       Text(
         resources.getQuantityString(
-          R.plurals.sync_screen_there_are_currently_d_patients_to_upload,
-          numPatientsToUpload,
-          numPatientsToUpload
+          R.plurals.sync_screen_there_are_currently_d_forms_to_upload,
+          numFormsToUploadWithoutErrors,
+          numFormsToUploadWithoutErrors
         ),
         textAlign = TextAlign.Center
       )
       Spacer(Modifier.height(24.dp))
     }
 
-    if (numIncompletePatientsToUpload != null && numIncompletePatientsToUpload >= 1) {
+    if (numIncompleteFormsToUpload != null && numIncompleteFormsToUpload >= 1) {
       Text(
         resources.getQuantityString(
-          R.plurals.sync_screen_there_are_currently_d_incomplete_patients_to_upload,
-          numIncompletePatientsToUpload,
-          numIncompletePatientsToUpload
+          R.plurals.sync_screen_there_are_currently_d_incomplete_forms_to_upload,
+          numIncompleteFormsToUpload,
+          numIncompleteFormsToUpload
         ),
         textAlign = TextAlign.Center
       )
       Spacer(Modifier.height(24.dp))
     }
 
-    if (
-      numPatientsWithOutcomesNotFullyUploadedWithErrors != null &&
-      numPatientsWithOutcomesNotFullyUploadedWithErrors >= 1
-    ) {
+    if (numFormsToUploadWithErrors != null && numFormsToUploadWithErrors >= 1) {
       Text(
         resources.getQuantityString(
-          R.plurals.sync_screen_there_are_currently_d_patients_with_not_uploaded_outcomes_errors_need_to_be_addressed,
-          numPatientsWithOutcomesNotFullyUploadedWithErrors,
-          numPatientsWithOutcomesNotFullyUploadedWithErrors
+          R.plurals.sync_screen_there_are_currently_d_forms_with_errors_need_to_be_addressed,
+          numFormsToUploadWithErrors,
+          numFormsToUploadWithErrors
         ),
         textAlign = TextAlign.Center,
         color = MaterialTheme.colors.error
-      )
-      Spacer(Modifier.height(24.dp))
-    }
-
-    if (
-      numPatientsWithOutcomesNotFullyUploadedWithoutErrors != null &&
-      numPatientsWithOutcomesNotFullyUploadedWithoutErrors >= 1
-    ) {
-      Text(
-        resources.getQuantityString(
-          R.plurals.sync_screen_there_are_currently_d_patients_with_not_uploaded_outcomes,
-          numPatientsWithOutcomesNotFullyUploadedWithoutErrors,
-          numPatientsWithOutcomesNotFullyUploadedWithoutErrors
-        ),
-        textAlign = TextAlign.Center
       )
       Spacer(Modifier.height(24.dp))
     }
@@ -347,10 +319,9 @@ fun SyncPagePreview() {
           onCancelButtonClicked = {},
           syncStatus = SyncRepository.SyncStatus.Inactive(WorkInfo.State.SUCCEEDED),
           lastTimeSyncCompleted = UnixTimestamp.now(),
-          numPatientsToUpload = 5,
-          numIncompletePatientsToUpload = 1,
-          numPatientsWithOutcomesNotFullyUploadedWithErrors = 1,
-          numPatientsWithOutcomesNotFullyUploadedWithoutErrors = 1,
+          numFormsToUploadWithoutErrors = 5,
+          numFormsToUploadWithErrors = 1,
+          numIncompleteFormsToUpload = 1,
           numLocationCheckinsToUpload = 1
         )
       }

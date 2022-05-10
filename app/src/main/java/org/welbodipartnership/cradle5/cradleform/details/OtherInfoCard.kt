@@ -1,4 +1,4 @@
-package org.welbodipartnership.cradle5.patients.details
+package org.welbodipartnership.cradle5.cradleform.details
 
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -14,7 +14,7 @@ import org.welbodipartnership.cradle5.ui.composables.LabelAndValueOrNone
 
 @Composable
 fun OtherInfoCard(
-  isPatientUploadedToServer: Boolean,
+  isUploadedToServer: Boolean,
   isDraft: Boolean,
   localNotes: String?,
   onEditOtherInfoButtonClick: () -> Unit,
@@ -22,7 +22,7 @@ fun OtherInfoCard(
 ) {
   BaseDetailsCard(title = null, modifier = modifier) {
     val spacerHeight = 8.dp
-    if (!isPatientUploadedToServer) {
+    if (!isUploadedToServer) {
       LabelAndValueOrNone(
         label = stringResource(R.string.marked_as_draft_label),
         value = stringResource(if (isDraft) R.string.yes else R.string.no)
@@ -33,7 +33,7 @@ fun OtherInfoCard(
       label = stringResource(R.string.local_notes_label),
       value = localNotes?.ifBlank { null }
     )
-    if (isPatientUploadedToServer) {
+    if (isUploadedToServer) {
       Spacer(modifier = Modifier.height(spacerHeight))
       TextButton(
         onClick = onEditOtherInfoButtonClick,

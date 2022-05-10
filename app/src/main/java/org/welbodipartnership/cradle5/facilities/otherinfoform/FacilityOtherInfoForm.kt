@@ -33,8 +33,8 @@ import com.google.accompanist.insets.navigationBarsWithImePadding
 import com.google.accompanist.insets.rememberInsetsPaddingValues
 import com.google.accompanist.insets.ui.TopAppBar
 import org.welbodipartnership.cradle5.R
-import org.welbodipartnership.cradle5.patients.details.BaseDetailsCard
-import org.welbodipartnership.cradle5.patients.form.SaveButtonCard
+import org.welbodipartnership.cradle5.cradleform.details.BaseDetailsCard
+import org.welbodipartnership.cradle5.cradleform.form.SaveButtonCard
 import org.welbodipartnership.cradle5.ui.composables.forms.BooleanRadioButtonRow
 import org.welbodipartnership.cradle5.ui.composables.forms.BringIntoViewOutlinedTextField
 import org.welbodipartnership.cradle5.ui.composables.forms.darkerDisabledOutlinedTextFieldColors

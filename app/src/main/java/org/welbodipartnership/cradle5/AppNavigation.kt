@@ -40,14 +40,14 @@ import androidx.navigation.navArgument
 import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.composable
 import com.google.accompanist.navigation.animation.navigation
+import org.welbodipartnership.cradle5.cradleform.details.CradleFormDetailsScreen
+import org.welbodipartnership.cradle5.cradleform.form.CradleTrainingForm
+import org.welbodipartnership.cradle5.cradleform.form.otherinfo.CradleOtherInfoFormScreen
+import org.welbodipartnership.cradle5.cradleform.list.CradleFormListScreen
 import org.welbodipartnership.cradle5.facilities.details.FacilityDetailsScreen
 import org.welbodipartnership.cradle5.facilities.list.FacilitiesListScreen
 import org.welbodipartnership.cradle5.facilities.otherinfoform.FacilityOtherInfoFormScreen
 import org.welbodipartnership.cradle5.locationcheckin.LocationCheckInScreen
-import org.welbodipartnership.cradle5.patients.details.PatientDetailsScreen
-import org.welbodipartnership.cradle5.patients.form.PatientForm
-import org.welbodipartnership.cradle5.patients.form.otherinfo.PatientOtherInfoFormScreen
-import org.welbodipartnership.cradle5.patients.list.PatientsListScreen
 import org.welbodipartnership.cradle5.sync.SyncScreen
 
 @Keep
@@ -233,11 +233,11 @@ private fun NavGraphBuilder.addPatientsList(
   root: Screen,
 ) {
   composable(route = LeafScreen.Patients.createRoute(root)) {
-    PatientsListScreen(
-      onOpenNewPatientCreation = {
+    CradleFormListScreen(
+      onOpenNewFormCreation = {
         navController.navigate(LeafScreen.PatientCreate.createRoute(root))
       },
-      onOpenPatientDetails = { patientPk ->
+      onOpenDetails = { patientPk ->
         navController.withDebouncedAction {
           navigate(LeafScreen.PatientDetails.createRoute(root, patientPk))
         }
@@ -256,12 +256,12 @@ private fun NavGraphBuilder.addPatientDetails(
       navArgument(LeafScreen.PatientDetails.ARG_PATIENT_PRIMARY_KEY) { type = NavType.LongType }
     )
   ) {
-    PatientDetailsScreen(
+    CradleFormDetailsScreen(
       onBackPressed = { navController.navigateUp() },
-      onPatientEdit = { patientPrimaryKey ->
+      onEdit = { patientPrimaryKey ->
         navController.navigate(LeafScreen.PatientEdit.createRoute(root, patientPrimaryKey))
       },
-      onPatientOtherInfoEditPress = { patientPrimaryKey ->
+      onOtherInfoEditPress = { patientPrimaryKey ->
         navController.navigate(LeafScreen.PatientOtherInfoEdit.createRoute(root, patientPrimaryKey))
       }
     )
@@ -276,10 +276,10 @@ private fun NavGraphBuilder.addPatientCreate(
     route = LeafScreen.PatientCreate.createRoute(root),
   ) {
     // TODO: Use an ambient?
-    PatientForm(
+    CradleTrainingForm(
       LocalServerEnumCollection.current,
       onNavigateBack = { navController.navigateUp() },
-      onNavigateToPatient = { patientPrimaryKey ->
+      onNavigateToCompleteForm = { patientPrimaryKey ->
         navController.withDebouncedAction {
           popBackStack()
           navigate(
@@ -302,10 +302,10 @@ private fun NavGraphBuilder.addPatientEdit(
     )
   ) {
     // TODO: Use an ambient?
-    PatientForm(
+    CradleTrainingForm(
       LocalServerEnumCollection.current,
       onNavigateBack = { navController.navigateUp() },
-      onNavigateToPatient = { navController.navigateUp() }
+      onNavigateToCompleteForm = { navController.navigateUp() }
     )
   }
 }
@@ -322,7 +322,7 @@ private fun NavGraphBuilder.addPatientOtherInfoEdit(
       }
     )
   ) {
-    PatientOtherInfoFormScreen(
+    CradleOtherInfoFormScreen(
       onNavigateBack = { navController.navigateUp() },
     )
   }

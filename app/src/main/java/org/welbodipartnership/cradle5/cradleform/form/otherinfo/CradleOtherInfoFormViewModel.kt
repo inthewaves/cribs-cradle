@@ -1,4 +1,4 @@
-package org.welbodipartnership.cradle5.patients.form.otherinfo
+package org.welbodipartnership.cradle5.cradleform.form.otherinfo
 
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
@@ -17,10 +17,11 @@ import org.welbodipartnership.cradle5.LeafScreen
 import org.welbodipartnership.cradle5.compose.SavedStateMutableState
 import org.welbodipartnership.cradle5.compose.createMutableState
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
+import org.welbodipartnership.cradle5.data.database.resultentities.CradleTrainingFormFacilityDistrict
 import javax.inject.Inject
 
 @HiltViewModel
-class PatientOtherInfoFormViewModel @Inject constructor(
+class CradleOtherInfoFormViewModel @Inject constructor(
   private val dbWrapper: CradleDatabaseWrapper,
   private val handle: SavedStateHandle,
 ) : ViewModel() {
@@ -32,30 +33,30 @@ class PatientOtherInfoFormViewModel @Inject constructor(
     class Error(val errorMessage: String) : FormState()
   }
 
-  private val existingPatientPrimaryKey: Long = requireNotNull(
+  private val existingPrimaryKey: Long = requireNotNull(
     handle[LeafScreen.PatientOtherInfoEdit.ARG_PATIENT_PRIMARY_KEY]
-  ) { "missing existingPatientPrimaryKey" }
+  ) { "missing existingPrimaryKey" }
 
   private val _formState: MutableStateFlow<FormState> = MutableStateFlow(FormState.Loading)
   val formState: StateFlow<FormState> = _formState
 
-  val patientInitials: StateFlow<String?> = dbWrapper.patientsDao()
-    .getPatientInitialsFlow(existingPatientPrimaryKey)
-    .stateIn(viewModelScope, SharingStarted.WhileSubscribed(2000L), null)
+  val existingInfo: StateFlow<CradleTrainingFormFacilityDistrict?> =
+    dbWrapper.cradleTrainingFormDao()
+      .getFormFlow(existingPrimaryKey)
+      .stateIn(viewModelScope, SharingStarted.WhileSubscribed(2000L), null)
 
   val localNotesState: SavedStateMutableState<String> =
     handle.createMutableState("otherInfoLocalNotes", "")
 
   init {
     viewModelScope.launch {
-      val patientOtherInfo = dbWrapper.patientsDao().getPatientOtherInfo(existingPatientPrimaryKey)
+      val otherInfo = dbWrapper.cradleTrainingFormDao().getOtherInfo(existingPrimaryKey)
 
-      _formState.value = if (patientOtherInfo == null) {
-        Log.e(TAG, "no patient with primary key $existingPatientPrimaryKey")
-        FormState.Error("no patient with primary key $existingPatientPrimaryKey")
+      _formState.value = if (otherInfo == null) {
+        Log.e(TAG, "no form with primary key $existingPrimaryKey")
+        FormState.Error("no form with primary key $existingPrimaryKey")
       } else {
-        localNotesState.value = patientOtherInfo.localNotes ?: ""
-
+        localNotesState.value = otherInfo.localNotes ?: ""
         FormState.Loaded
       }
     }
@@ -65,8 +66,8 @@ class PatientOtherInfoFormViewModel @Inject constructor(
     consumeEach {
       _formState.value = FormState.Saving
       _formState.value = try {
-        val updateSuccess = dbWrapper.patientsDao().updatePatientLocalNotesInfo(
-          existingPatientPrimaryKey,
+        val updateSuccess = dbWrapper.cradleTrainingFormDao().updateLocalNotesInfo(
+          existingPrimaryKey,
           localNotes = localNotesState.value.ifBlank { null }
         )
 
@@ -76,7 +77,7 @@ class PatientOtherInfoFormViewModel @Inject constructor(
           FormState.Error("Database failed to update other info")
         }
       } catch (e: Exception) {
-        Log.e(TAG, "rror while saving other info", e)
+        Log.e(TAG, "Error while saving other info", e)
         FormState.Error(
           "${e::class.java.simpleName}: ${e.localizedMessage}: ${e.stackTraceToString()}"
         )

@@ -1,4 +1,4 @@
-package org.welbodipartnership.cradle5.patients.form
+package org.welbodipartnership.cradle5.cradleform.form
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,7 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import org.welbodipartnership.cradle5.R
-import org.welbodipartnership.cradle5.patients.details.BaseDetailsCard
+import org.welbodipartnership.cradle5.cradleform.details.BaseDetailsCard
 import org.welbodipartnership.cradle5.ui.composables.forms.BooleanRadioButtonRow
 import org.welbodipartnership.cradle5.ui.composables.forms.BringIntoViewOutlinedTextField
 import org.welbodipartnership.cradle5.ui.composables.forms.MoreInfoIconButton

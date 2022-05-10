@@ -1,4 +1,4 @@
-package org.welbodipartnership.cradle5.patients.list
+package org.welbodipartnership.cradle5.cradleform.list
 
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
@@ -21,12 +21,12 @@ import kotlinx.coroutines.flow.flatMapLatest
 import org.welbodipartnership.cradle5.R
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
 import org.welbodipartnership.cradle5.data.database.entities.Facility
-import org.welbodipartnership.cradle5.data.database.resultentities.ListPatientAndOutcomeError
+import org.welbodipartnership.cradle5.data.database.resultentities.ListCradleTrainingForm
 import org.welbodipartnership.cradle5.data.settings.AppValuesStore
 import javax.inject.Inject
 
 @HiltViewModel
-class PatientsListViewModel @Inject constructor(
+class CradleFormListViewModel @Inject constructor(
   private val dbWrapper: CradleDatabaseWrapper,
   private val valuesStore: AppValuesStore,
 ) : ViewModel() {
@@ -65,23 +65,24 @@ class PatientsListViewModel @Inject constructor(
     maxSize = 200
   )
 
-  val patientsPagerFlow: Flow<PagingData<ListPatientAndOutcomeError>> = filterOption
+  val cradleFormPagerFlow: Flow<PagingData<ListCradleTrainingForm>> = filterOption
     .flatMapLatest { filterOpt ->
       Pager(pagingConfig) {
+        val dao = dbWrapper.cradleTrainingFormDao()
         when (filterOpt) {
-          FilterOption.None -> dbWrapper.patientsDao().patientsPagingSource()
-          FilterOption.Draft -> dbWrapper.patientsDao().patientsPagingSourceFilterByDraft()
+          FilterOption.None -> dao.cradleFormPagingSource()
+          FilterOption.Draft -> dao.cradleFormPagingSourceFilterByDraft()
           FilterOption.ReadyForUpload ->
-            dbWrapper.patientsDao().patientsPagingSourceFilterByNotUploadedAndNotDraft()
+            dao.cradleFormPagingSourceFilterByNotUploadedAndNotDraft()
           FilterOption.Uploaded ->
-            dbWrapper.patientsDao().patientsPagingSourceFilterByUploaded()
+            dao.cradleFormPagingSourceFilterByUploaded()
           is FilterOption.ByFacility ->
-            dbWrapper.patientsDao().patientsPagingSourceFilterByFacility(filterOpt.facility.id)
+            dao.cradleFormPagingSourceFilterByFacility(filterOpt.facility.id)
           is FilterOption.Month ->
-            dbWrapper.patientsDao().patientsPagingSourceFilterByRegistrationMonth(filterOpt.monthOneBased)
+            dao.cradleFormPagingSourceFilterByTrainingMonth(filterOpt.monthOneBased)
         }
       }.flow
     }.cachedIn(viewModelScope)
 
-  val patientsCountFlow = dbWrapper.patientsDao().countTotalPatients()
+  val patientsCountFlow = dbWrapper.cradleTrainingFormDao().countTotal()
 }

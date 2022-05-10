@@ -1,7 +1,6 @@
 package org.welbodipartnership.api.cradle5
 
 import com.squareup.moshi.JsonAdapter
-import com.squareup.moshi.adapters.Rfc3339DateJsonAdapter
 import org.junit.jupiter.api.Test
 import org.welbodipartnership.api.Json
 import org.welbodipartnership.api.forms.FormGetResponse
@@ -12,10 +11,6 @@ import org.welbodipartnership.api.forms.meta.Operation
 import org.welbodipartnership.api.forms.meta.OperationLog
 import org.welbodipartnership.api.getAdapterForFormType
 import org.welbodipartnership.cradle5.util.datetime.FormDate
-import java.time.LocalDateTime
-import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
-import java.util.Date
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
@@ -53,7 +48,7 @@ internal class CradleImplementationDataTest {
       totalStaffTrainedTodayMCHAides = 9,
       totalStaffTrainedTodayTBA = 10,
       totalStaffTrainedBefore = 1,
-      totalStaffTrainedScored8 = 1
+      totalStaffTrainedScoredMoreThan8 = 1
     )
     val expectedMetaWithoutControls = Meta(
       title = "CRADLE Implementation Data - Bendu",
@@ -90,7 +85,7 @@ internal class CradleImplementationDataTest {
           title = "Save",
           url = null
         ),
-        Operation (
+        Operation(
           id = null,
           title = "Cancel",
           url = null

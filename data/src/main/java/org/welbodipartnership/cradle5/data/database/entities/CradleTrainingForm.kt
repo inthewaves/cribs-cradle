@@ -8,12 +8,15 @@ import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import com.squareup.moshi.Json
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
 import org.welbodipartnership.cradle5.util.datetime.FormDate
-
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.temporal.TemporalAccessor
+import java.util.Locale
 
 @Entity(
   indices = [
@@ -29,10 +32,12 @@ data class CradleTrainingForm(
   @Embedded
   override val serverInfo: ServerInfo?,
   val serverErrorMessage: String?,
-
+  /**
+   * A GMT date string that can be parsed using [recordLastUpdatedFormatter].
+   */
   val recordLastUpdated: String?,
-  val district: Int?,
-  val healthcareFacility: Int?,
+  val district: Long?,
+  val healthcareFacility: Long?,
   val dateOfTraining: FormDate?,
   val numOfBpDevicesFunctioning: Int?,
   val numOfCradleDevicesFunctioning: Int?,
@@ -56,7 +61,7 @@ data class CradleTrainingForm(
    * How many of the staff trained today had ever been trained in CRADLE before?
    */
   val totalStaffTrainedBefore: Int?,
-  val totalStaffTrainedScored8: Int?,
+  val totalStaffTrainedScoredMoreThan8: Int?,
 
   /**
    * A Unix timestamp of when this was last updated
@@ -71,7 +76,16 @@ data class CradleTrainingForm(
    */
   @ColumnInfo(defaultValue = "0")
   val isDraft: Boolean
-) : FormEntity
+) : FormEntity {
+  companion object {
+    val recordLastUpdatedFormatter: DateTimeFormatter = DateTimeFormatter
+      .ofPattern("dd/MM/yyyy HH:mm", Locale.ENGLISH)
+      .withZone(ZoneId.of("GMT"))
+    fun formatTimeAsLastUpdatedDateString(temporalAccessor: TemporalAccessor) =
+      recordLastUpdatedFormatter.format(temporalAccessor)
+    fun formatNowAsLastUpdatedDateString() = formatTimeAsLastUpdatedDateString(Instant.now())
+  }
+}
 
 @Immutable
 @Parcelize

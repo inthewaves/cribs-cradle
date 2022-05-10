@@ -47,9 +47,9 @@ import com.google.accompanist.insets.rememberInsetsPaddingValues
 import com.google.accompanist.insets.ui.TopAppBar
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import org.welbodipartnership.cradle5.R
+import org.welbodipartnership.cradle5.cradleform.details.BaseDetailsCard
 import org.welbodipartnership.cradle5.data.database.entities.LocationCheckIn
 import org.welbodipartnership.cradle5.home.AccountInfoButton
-import org.welbodipartnership.cradle5.patients.details.BaseDetailsCard
 import org.welbodipartnership.cradle5.ui.composables.AnimatedVisibilityFadingWrapper
 import org.welbodipartnership.cradle5.ui.composables.screenlists.ScreenListItem
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
