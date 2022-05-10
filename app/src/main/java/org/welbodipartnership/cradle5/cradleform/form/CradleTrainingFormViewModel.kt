@@ -270,8 +270,9 @@ class CradleTrainingFormViewModel @Inject constructor(
 
   init {
     Log.d(TAG, "initializing with pk = $existingCradleFormPrimaryKey")
-    if (existingCradleFormPrimaryKey != null) {
-      viewModelScope.launch(appCoroutineDispatchers.main) {
+    viewModelScope.launch(appCoroutineDispatchers.main) {
+      if (existingCradleFormPrimaryKey != null) {
+
         val cradleFormAndDependencies: CradleTrainingFormFacilityDistrict? = database.cradleTrainingFormDao()
           .getFormFacilityDistrict(existingCradleFormPrimaryKey)
         _formState.value = if (cradleFormAndDependencies == null) {
@@ -336,9 +337,19 @@ class CradleTrainingFormViewModel @Inject constructor(
 
           FormState.Ready(cradleFormAndDependencies)
         }
+      } else {
+        valuesStore.districtIdFlow.firstOrNull()?.let { districtPk ->
+          dbWrapper.districtDao().getDistrict(districtPk)?.let { district ->
+            formFieldsNew.district.stateValue = DistrictAndPosition(
+              district,
+              district.id
+                .let { id -> dbWrapper.districtDao().getDistrictIndexWhenOrderedById(id) }
+                ?.coerceAtLeast(0)
+            )
+          }
+        }
+        _formState.value = FormState.Ready(null)
       }
-    } else {
-      _formState.value = FormState.Ready(null)
     }
   }
 
