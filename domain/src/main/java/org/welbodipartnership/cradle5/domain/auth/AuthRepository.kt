@@ -429,6 +429,7 @@ class AuthRepository @Inject internal constructor(
       }
 
     // Try to get the facilities associated with this district
+    progressReceiver?.sendProgress(InfoSyncStage.DOWNLOADING_FACILITIES)
     val workSemaphore = Semaphore(permits = 3)
     try {
       withContext(appCoroutineDispatchers.io.limitedParallelism(3)) {
