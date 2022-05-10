@@ -202,7 +202,7 @@ private fun PatientsListScreen(
             },
             pagingItemFlow = viewModel.selfFacilityPagingFlow,
             formatTextForListItem = Facility::name,
-            title = { Text(stringResource(R.string.patient_registration_district_dialog_title)) },
+            title = { Text(stringResource(R.string.patient_registration_health_facility_dialog_title)) },
             label = { Text(stringResource(R.string.patients_list_filter_option_facility)) },
             errorHint = null
           )
