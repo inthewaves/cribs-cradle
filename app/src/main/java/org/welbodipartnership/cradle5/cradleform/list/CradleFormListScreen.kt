@@ -208,7 +208,7 @@ private fun CradleFormListScreen(
             },
             pagingItemFlow = viewModel.selfFacilityPagingFlow,
             formatTextForListItem = Facility::name,
-            title = { Text(stringResource(R.string.district_dialog_title)) },
+            title = { Text(stringResource(R.string.health_facility_dialog_title)) },
             label = { Text(stringResource(R.string.patients_list_filter_option_facility)) },
             errorHint = null
           )
