@@ -1,7 +1,6 @@
 package org.welbodipartnership.cradle5.data.database.entities.embedded
 
 import java.time.ZonedDateTime
-import java.util.Date
 
 /**
  * Contains server info. Every entity on the server represented by a form (a "registration",

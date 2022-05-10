@@ -82,12 +82,18 @@ data class CradleTrainingForm(
     get() = ZonedDateTime.parse(recordLastUpdated, recordLastUpdatedFormatter)
 
   companion object {
+    fun parseRecordLastUpdatedString(dateString: String): ZonedDateTime =
+      ZonedDateTime.parse(dateString, recordLastUpdatedFormatter)
+
+    val friendlyDateFormatterForRecordLastUpdated: DateTimeFormatter =
+      DateTimeFormatter.ofPattern("EEE, dd MMM yyyy, hh:mm:ss a")
+
     val recordLastUpdatedFormatter: DateTimeFormatter = DateTimeFormatter
       .ofPattern("dd/MM/yyyy HH:mm", Locale.ENGLISH)
       .withZone(ZoneId.of("GMT"))
-    fun formatTimeAsLastUpdatedDateString(temporalAccessor: TemporalAccessor) =
+    fun formatTimeAsLastUpdatedDateString(temporalAccessor: TemporalAccessor): String =
       recordLastUpdatedFormatter.format(temporalAccessor)
-    fun formatNowAsLastUpdatedDateString() = formatTimeAsLastUpdatedDateString(Instant.now())
+    fun formatNowAsLastUpdatedDateString(): String = formatTimeAsLastUpdatedDateString(Instant.now())
   }
 }
 

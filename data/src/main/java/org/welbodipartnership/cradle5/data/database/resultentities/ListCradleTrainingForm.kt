@@ -6,6 +6,7 @@ import org.welbodipartnership.cradle5.data.database.entities.CradleTrainingForm
 import org.welbodipartnership.cradle5.data.database.entities.District
 import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
 import org.welbodipartnership.cradle5.util.datetime.FormDate
+import java.time.ZonedDateTime
 
 /**
  * A shortened view of the CRADLE form
@@ -31,6 +32,7 @@ import org.welbodipartnership.cradle5.util.datetime.FormDate
 
       form.serverErrorMessage,
       form.dateOfTraining,
+      form.recordLastUpdated,
       form.localNotes,
       form.isDraft
     FROM
@@ -49,6 +51,10 @@ data class ListCradleTrainingForm(
   val healthcareFacility: FacilityIdAndName?,
   val serverErrorMessage: String?,
   val dateOfTraining: FormDate?,
+  val recordLastUpdated: String?,
   val localNotes: String?,
   val isDraft: Boolean,
-)
+) {
+  val parsedLastUpdated: ZonedDateTime?
+    get() = recordLastUpdated?.let { CradleTrainingForm.parseRecordLastUpdatedString(it) }
+}

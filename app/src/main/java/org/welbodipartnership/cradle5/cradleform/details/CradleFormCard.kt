@@ -1,6 +1,5 @@
 package org.welbodipartnership.cradle5.cradleform.details
 
-import android.text.format.DateUtils
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -27,9 +26,6 @@ import org.welbodipartnership.cradle5.ui.composables.LabelAndValueOrNone
 import org.welbodipartnership.cradle5.ui.composables.LabelAndValueOrUnknown
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-
-private val friendlyDateFormatter = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy, hh:mm:ss a")
 
 /**
  * Shows the details for a [CradleTra]
@@ -62,7 +58,7 @@ fun CradleFormCard(
       label = stringResource(R.string.cradle_form_record_last_updated_label),
       value = form.parsedRecordLastUpdated
         .withZoneSameInstant(ZoneId.systemDefault())
-        .format(friendlyDateFormatter),
+        .format(CradleTrainingForm.friendlyDateFormatterForRecordLastUpdated),
     )
 
     Spacer(modifier = Modifier.height(spacerHeight))

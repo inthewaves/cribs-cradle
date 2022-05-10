@@ -1,6 +1,8 @@
 package org.welbodipartnership.cradle5.cradleform.list
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
@@ -12,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -22,7 +25,6 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
-import androidx.compose.material.Card
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.ExposedDropdownMenuDefaults
@@ -45,7 +47,6 @@ import androidx.compose.material.icons.filled.Note
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -57,11 +58,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -75,6 +78,7 @@ import com.google.accompanist.insets.rememberInsetsPaddingValues
 import com.google.accompanist.insets.ui.TopAppBar
 import org.welbodipartnership.cradle5.R
 import org.welbodipartnership.cradle5.compose.rememberFlowWithLifecycle
+import org.welbodipartnership.cradle5.data.database.entities.CradleTrainingForm
 import org.welbodipartnership.cradle5.data.database.entities.District
 import org.welbodipartnership.cradle5.data.database.entities.Facility
 import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
@@ -90,6 +94,7 @@ import org.welbodipartnership.cradle5.ui.composables.forms.darkerDisabledOutline
 import org.welbodipartnership.cradle5.ui.composables.screenlists.ScreenListItem
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
 import org.welbodipartnership.cradle5.util.datetime.FormDate
+import java.time.ZoneId
 
 @Composable
 fun CradleFormListScreen(
@@ -284,7 +289,6 @@ private fun CradleFormListScreen(
           }
         }
       }
-      PatientListHeader()
       Box(Modifier.fillMaxSize()) {
         AnimatedVisibilityFadingWrapper(
           visible = lazyPagingItems.loadState.refresh is LoadState.Loading
@@ -313,9 +317,9 @@ private fun CradleFormListScreen(
           LazyColumn(state = lazyListState) {
             items(lazyPagingItems) { listForm ->
               if (listForm != null) {
-                PatientListItem(listForm, onClick = { onOpenDetails(it.id) })
+                CradleFormListItem(listForm, onClick = { onOpenDetails(it.id) })
               } else {
-                PatientListItemPlaceholder()
+                CradleFormListItemPlaceholder()
               }
             }
           }
@@ -435,47 +439,105 @@ private fun MonthDropdownMenu(
 }
 
 @Composable
-fun PatientListHeader(modifier: Modifier = Modifier) {
-  Card(elevation = 1.dp) {
-    BasePatientListItem(
-      district = stringResource(R.string.cradle_form_list_header_district),
-      facility = stringResource(R.string.cradle_form_list_header_facility),
-      dateOfTraining = stringResource(R.string.cradle_form_list_header_date_of_training),
-      listIconType = ListIconType.DontShow,
-      minHeight = 24.dp,
-      textStyle = MaterialTheme.typography.subtitle2,
-      onClick = null,
-      modifier = modifier
+fun CradleFormListItem(
+  listForm: ListCradleTrainingForm,
+  onClick: (form: ListCradleTrainingForm) -> Unit,
+  modifier: Modifier = Modifier,
+  minHeight: Dp = 54.dp
+) {
+  Column(modifier) {
+    Row(
+      modifier = Modifier
+        .heightIn(min = minHeight)
+        .padding(4.dp)
+        .clickable { onClick(listForm) },
+      verticalAlignment = Alignment.CenterVertically
+    ) {
+      Column(
+        modifier = Modifier.weight(1f),
+        verticalArrangement = Arrangement.SpaceBetween
+      ) {
+        Column {
+          Text(
+            listForm.healthcareFacility?.name ?: stringResource(R.string.unknown_facility),
+            style = MaterialTheme.typography.subtitle1
+          )
+          Text(
+            listForm.district?.name ?: stringResource(R.string.unknown_district),
+            style = MaterialTheme.typography.subtitle2
+          )
+        }
+        Column {
+          Text(
+            buildAnnotatedString {
+              withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                append(stringResource(R.string.cradle_form_date_of_training_label_short))
+              }
+              append(": ")
+              append(listForm.dateOfTraining?.toString() ?: stringResource(R.string.unknown))
+            },
+            style = MaterialTheme.typography.subtitle2
+          )
+          Text(
+            buildAnnotatedString {
+              withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                append(stringResource(R.string.cradle_form_list_last_update_label))
+              }
+              append(": ")
+              append(
+                listForm.parsedLastUpdated
+                  ?.withZoneSameInstant(ZoneId.systemDefault())
+                  ?.format(CradleTrainingForm.friendlyDateFormatterForRecordLastUpdated)
+                  ?: stringResource(R.string.unknown)
+              )
+            },
+            style = MaterialTheme.typography.subtitle2
+          )
+        }
+      }
+      Column {
+        val isUploaded = listForm.serverInfo != null
+        val hasLocalNotes = !listForm.localNotes.isNullOrBlank()
+        val isDraft = listForm.isDraft
+        val hasErrors = !listForm.serverErrorMessage.isNullOrBlank()
+
+        val hasErrorsIconAlpha = if (hasErrors) 1f else 0f
+        CompositionLocalProvider(LocalContentColor provides MaterialTheme.colors.error) {
+          Icon(
+            imageVector = Icons.Filled.Error, contentDescription = "Error status",
+            modifier = Modifier.alpha(hasErrorsIconAlpha)
+          )
+        }
+
+        Spacer(Modifier.width(5.dp))
+        val hasLocalNotesIconAlpha = if (hasLocalNotes) 1f else 0f
+        Icon(
+          imageVector = Icons.Filled.Note, contentDescription = "Draft status",
+          modifier = Modifier.alpha(hasLocalNotesIconAlpha)
+        )
+
+        Spacer(Modifier.width(5.dp))
+        Icon(
+          imageVector = when {
+            isDraft -> Icons.Outlined.Edit
+            isUploaded -> Icons.Default.Lock
+            else -> Icons.Default.LockOpen
+          },
+          contentDescription = stringResource(R.string.patient_list_icon_locked_cd),
+        )
+      }
+    }
+    Box(
+      Modifier
+        .fillMaxWidth()
+        .height(1.dp)
+        .background(MaterialTheme.colors.onSurface.copy(alpha = 0.1f))
     )
   }
 }
 
 @Composable
-fun PatientListItem(
-  listForm: ListCradleTrainingForm,
-  onClick: (listPatient: ListCradleTrainingForm) -> Unit,
-  modifier: Modifier = Modifier
-) {
-
-  BasePatientListItem(
-    district = listForm.district?.name ?: stringResource(R.string.not_available_n_slash_a),
-    facility = listForm.healthcareFacility?.name ?: stringResource(R.string.not_available_n_slash_a),
-    dateOfTraining = listForm.dateOfTraining?.toString() ?: stringResource(R.string.not_available_n_slash_a),
-    listIconType = ListIconType.ShowIcons(
-      isPatientUploaded = listForm.serverInfo != null,
-      hasLocalNotes = !listForm.localNotes.isNullOrBlank(),
-      isPatientDraft = listForm.isDraft,
-      hasErrors = !listForm.serverErrorMessage.isNullOrBlank()
-    ),
-    minHeight = 48.dp,
-    textStyle = MaterialTheme.typography.body2,
-    onClick = { onClick(listForm) },
-    modifier = modifier
-  )
-}
-
-@Composable
-fun PatientListItemPlaceholder(modifier: Modifier = Modifier) {
+fun CradleFormListItemPlaceholder(modifier: Modifier = Modifier) {
   ScreenListItem(
     minHeight = 48.dp,
     onClick = null,
@@ -486,121 +548,13 @@ fun PatientListItemPlaceholder(modifier: Modifier = Modifier) {
   }
 }
 
-@Immutable
-sealed class ListIconType {
-  @Immutable
-  object DontShow : ListIconType()
-  @Immutable
-  data class ShowIcons(
-    val isPatientDraft: Boolean,
-    val hasLocalNotes: Boolean,
-    val isPatientUploaded: Boolean,
-    val hasErrors: Boolean,
-  ) : ListIconType()
-}
-
-@Composable
-private fun BasePatientListItem(
-  district: String,
-  facility: String,
-  dateOfTraining: String,
-  listIconType: ListIconType,
-  minHeight: Dp,
-  textStyle: TextStyle,
-  onClick: (() -> Unit)?,
-  modifier: Modifier = Modifier,
-) {
-  ScreenListItem(
-    minHeight = minHeight,
-    onClick = onClick,
-    modifier = modifier
-  ) {
-    Text(
-      district,
-      modifier = Modifier
-        .weight(0.2f)
-        .align(Alignment.CenterVertically),
-      style = textStyle
-    )
-    Text(
-      facility,
-      modifier = Modifier
-        .weight(0.3f)
-        .align(Alignment.CenterVertically),
-      style = textStyle
-    )
-    Text(
-      dateOfTraining,
-      modifier = Modifier
-        .weight(0.1f)
-        .align(Alignment.CenterVertically),
-      style = textStyle
-    )
-    Row {
-      Spacer(Modifier.width(5.dp))
-      val hasErrorsIconAlpha = if (
-        listIconType is ListIconType.ShowIcons && listIconType.hasErrors
-      ) {
-        1f
-      } else {
-        0f
-      }
-      CompositionLocalProvider(LocalContentColor provides MaterialTheme.colors.error) {
-        Icon(
-          imageVector = Icons.Filled.Error, contentDescription = "Error status",
-          modifier = Modifier.alpha(hasErrorsIconAlpha)
-        )
-      }
-
-      Spacer(Modifier.width(5.dp))
-      val hasLocalNotesIconAlpha = if (
-        listIconType is ListIconType.ShowIcons && listIconType.hasLocalNotes
-      ) {
-        1f
-      } else {
-        0f
-      }
-      Icon(
-        imageVector = Icons.Filled.Note, contentDescription = "Draft status",
-        modifier = Modifier.alpha(hasLocalNotesIconAlpha)
-      )
-
-      Spacer(Modifier.width(5.dp))
-
-      val uploadedIconAlpha = if (listIconType is ListIconType.DontShow) 0f else 1f
-      val contentDescription: String
-      val icon: ImageVector
-      when (listIconType) {
-        ListIconType.DontShow -> {
-          icon = Icons.Default.LockOpen
-          contentDescription = ""
-        }
-        is ListIconType.ShowIcons -> {
-          icon = when {
-            listIconType.isPatientDraft -> Icons.Outlined.Edit
-            listIconType.isPatientUploaded -> Icons.Default.Lock
-            else -> Icons.Default.LockOpen
-          }
-          contentDescription = stringResource(R.string.patient_list_icon_locked_cd)
-        }
-      }
-
-      Icon(
-        imageVector = icon, contentDescription = contentDescription,
-        modifier = Modifier.alpha(uploadedIconAlpha)
-      )
-    }
-  }
-}
-
 @Preview
 @Composable
-fun PatientListItemPreview() {
+fun CradleFormListItemPreview() {
   CradleTrialAppTheme {
     Surface {
       Column {
-        PatientListHeader()
-        PatientListItem(
+        CradleFormListItem(
           listForm = ListCradleTrainingForm(
             0L,
             serverInfo = null,
@@ -608,12 +562,13 @@ fun PatientListItemPreview() {
             healthcareFacility = FacilityIdAndName(5, "MyTestFacility, Something Else (ABC)"),
             serverErrorMessage = "Errors",
             dateOfTraining = FormDate.today(),
+            recordLastUpdated = "05/05/2000 19:19",
             localNotes = "Locacl notes",
             isDraft = true
           ),
           onClick = {}
         )
-        PatientListItem(
+        CradleFormListItem(
           listForm = ListCradleTrainingForm(
             0L,
             serverInfo = ServerInfo(nodeId = null, objectId = 50, null, null),
@@ -621,12 +576,13 @@ fun PatientListItemPreview() {
             healthcareFacility = FacilityIdAndName(5, "Another facility, Something Else (ABC)"),
             serverErrorMessage = null,
             dateOfTraining = FormDate.today(),
+            recordLastUpdated = "05/05/2000 19:19",
             localNotes = null,
             isDraft = true
           ),
           onClick = {}
         )
-        PatientListItemPlaceholder()
+        CradleFormListItemPlaceholder()
       }
     }
   }
