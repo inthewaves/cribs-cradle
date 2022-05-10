@@ -441,9 +441,9 @@ fun CradleFormListItem(
     Row(
       modifier = Modifier
         .heightIn(min = minHeight)
-        .padding(12.dp)
-        .clickable { onClick(listForm) },
-      verticalAlignment = Alignment.CenterVertically
+        .clickable { onClick(listForm) }
+        .padding(12.dp),
+      verticalAlignment = Alignment.Bottom
     ) {
       Column(
         modifier = Modifier.weight(1f),
@@ -487,7 +487,7 @@ fun CradleFormListItem(
           )
         }
       }
-      Column {
+      Column(verticalArrangement = Arrangement.Bottom) {
         val isUploaded = listForm.serverInfo != null
         val hasLocalNotes = !listForm.localNotes.isNullOrBlank()
         val isDraft = listForm.isDraft
@@ -557,6 +557,20 @@ fun CradleFormListItemPreview() {
             recordLastUpdated = ZonedDateTime.now(),
             localNotes = "Locacl notes",
             isDraft = true
+          ),
+          onClick = {}
+        )
+        CradleFormListItem(
+          listForm = ListCradleTrainingForm(
+            0L,
+            serverInfo = null,
+            district = District(5, "2 - Ndistrict"),
+            healthcareFacility = FacilityIdAndName(5, "Helo Helo faith Clinic, Helo Helo Abcdef make a new line (Clinic)"),
+            serverErrorMessage = null,
+            dateOfTraining = FormDate.today(),
+            recordLastUpdated = ZonedDateTime.now(),
+            localNotes = "Notes",
+            isDraft = false
           ),
           onClick = {}
         )
