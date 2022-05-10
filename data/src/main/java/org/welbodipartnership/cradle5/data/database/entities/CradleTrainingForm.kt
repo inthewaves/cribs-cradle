@@ -86,7 +86,7 @@ data class CradleTrainingForm(
       ZonedDateTime.parse(dateString, recordLastUpdatedFormatter)
 
     val friendlyDateFormatterForRecordLastUpdated: DateTimeFormatter =
-      DateTimeFormatter.ofPattern("EEE, dd MMM yyyy, hh:mm:ss a")
+      DateTimeFormatter.ofPattern("EEE, dd MMM yyyy, hh:mm a")
 
     val recordLastUpdatedFormatter: DateTimeFormatter = DateTimeFormatter
       .ofPattern("dd/MM/yyyy HH:mm", Locale.ENGLISH)

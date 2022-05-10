@@ -64,6 +64,7 @@ fun CradleFormDetailsScreen(
   onOtherInfoEditPress: (primaryKey: Long) -> Unit,
   viewModel: CradleFormDetailsViewModel = hiltViewModel()
 ) {
+  val state: CradleFormDetailsViewModel.State by viewModel.formDetailsStateFlow.collectAsState()
   Scaffold(
     topBar = {
       TopAppBar(
@@ -82,11 +83,21 @@ fun CradleFormDetailsScreen(
           }
         },
         modifier = Modifier.fillMaxWidth(),
-        title = { Text(text = stringResource(R.string.patient_details_title)) },
+        title = {
+          Column {
+            Text(text = stringResource(R.string.cradle_form_details_title))
+            (state as? CradleFormDetailsViewModel.State.Ready)
+              ?.formFacilityDistrict
+              ?.facility
+              ?.name
+              ?.let { facilityName ->
+                Text(facilityName, style = MaterialTheme.typography.subtitle2)
+              }
+          }
+        },
       )
     }
   ) { padding ->
-    val state by viewModel.formDetailsStateFlow.collectAsState()
     val editState by viewModel.editStateFlow.collectAsState()
 
     LaunchedEffect(state) {

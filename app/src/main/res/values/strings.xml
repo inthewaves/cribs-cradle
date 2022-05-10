@@ -36,9 +36,7 @@
     <string name="mark_as_draft_no_patient_will_be_synced">Patient will be included in sync</string>
     <string name="marked_as_draft_label">Marked as draft</string>
     <string name="patient_registration_date_of_birth_label">Date of birth (dd/mm/yyyy)</string>
-    <string name="patients_list_title">Patients list</string>
-    <string name="patient_details_title">Patient details</string>
-    <string name="outcomes_card_no_outcomes">No outcomes recorded for this patient</string>
+    <string name="cradle_form_details_title">CRADLE form details</string>
     <string name="back_button">Back button</string>
     <string name="patient_list_header_id">ID</string>
     <string name="patient_list_header_initials">Initials</string>

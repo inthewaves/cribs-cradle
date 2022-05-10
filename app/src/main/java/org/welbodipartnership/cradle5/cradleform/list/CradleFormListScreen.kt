@@ -449,7 +449,7 @@ fun CradleFormListItem(
     Row(
       modifier = Modifier
         .heightIn(min = minHeight)
-        .padding(4.dp)
+        .padding(12.dp)
         .clickable { onClick(listForm) },
       verticalAlignment = Alignment.CenterVertically
     ) {
