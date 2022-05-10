@@ -202,7 +202,6 @@ class LocationCheckInViewModel @Inject constructor(
         }
       }
 
-      _screenState.value = ScreenState.GettingLocation(provider)
       val isLocationEnabled = LocationManagerCompat.isLocationEnabled(locationManager)
       Log.d(TAG, "provider = $provider, isLocationEnabled = $isLocationEnabled")
 
@@ -261,6 +260,7 @@ class LocationCheckInViewModel @Inject constructor(
   )
   private suspend fun getLocationWithPlayServices(): LocationType.GooglePlay? {
     Log.d(TAG, "Getting location with FusedLocationProvider")
+    _screenState.value = ScreenState.GettingLocation("Google Play services")
     val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
     val cts = CancellationTokenSource()
 
@@ -298,6 +298,7 @@ class LocationCheckInViewModel @Inject constructor(
   )
   private suspend fun getLocationWithoutPlayServices(provider: String): LocationType.System? {
     Log.d(TAG, "Getting location without Google Play services")
+    _screenState.value = ScreenState.GettingLocation(provider)
     if (locationManager == null) {
       Log.w(TAG, "location manager is missing")
       return null
