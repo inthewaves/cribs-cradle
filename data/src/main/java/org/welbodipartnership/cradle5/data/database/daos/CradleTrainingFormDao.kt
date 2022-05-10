@@ -61,32 +61,32 @@ abstract class CradleTrainingFormDao {
 
   @RewriteQueriesToDropUnusedColumns
   @Transaction
-  @Query("SELECT * FROM ListCradleTrainingForm ORDER BY id DESC")
+  @Query("SELECT * FROM ListCradleTrainingForm ORDER BY recordLastUpdated DESC")
   abstract fun cradleFormPagingSource(): PagingSource<Int, ListCradleTrainingForm>
 
   @RewriteQueriesToDropUnusedColumns
   @Transaction
-  @Query("SELECT * FROM ListCradleTrainingForm WHERE objectId IS NULL AND isDraft = 1 ORDER BY id DESC")
+  @Query("SELECT * FROM ListCradleTrainingForm WHERE objectId IS NULL AND isDraft = 1 ORDER BY recordLastUpdated DESC")
   abstract fun cradleFormPagingSourceFilterByDraft(): PagingSource<Int, ListCradleTrainingForm>
 
   @RewriteQueriesToDropUnusedColumns
   @Transaction
-  @Query("SELECT * FROM ListCradleTrainingForm WHERE objectId IS NOT NULL ORDER BY id DESC")
+  @Query("SELECT * FROM ListCradleTrainingForm WHERE objectId IS NOT NULL ORDER BY recordLastUpdated DESC")
   abstract fun cradleFormPagingSourceFilterByUploaded(): PagingSource<Int, ListCradleTrainingForm>
 
   @RewriteQueriesToDropUnusedColumns
   @Transaction
-  @Query("SELECT * FROM ListCradleTrainingForm WHERE objectId IS NULL AND isDraft = 0 ORDER BY id DESC")
+  @Query("SELECT * FROM ListCradleTrainingForm WHERE objectId IS NULL AND isDraft = 0 ORDER BY recordLastUpdated DESC")
   abstract fun cradleFormPagingSourceFilterByNotUploadedAndNotDraft(): PagingSource<Int, ListCradleTrainingForm>
 
   @RewriteQueriesToDropUnusedColumns
   @Transaction
-  @Query("SELECT * FROM ListCradleTrainingForm WHERE facility_id = :facilityId ORDER BY id DESC")
+  @Query("SELECT * FROM ListCradleTrainingForm WHERE facility_id = :facilityId ORDER BY recordLastUpdated DESC")
   abstract fun cradleFormPagingSourceFilterByFacility(facilityId: Long): PagingSource<Int, ListCradleTrainingForm>
 
   @RewriteQueriesToDropUnusedColumns
   @Transaction
-  @Query("SELECT * FROM ListCradleTrainingForm WHERE CAST(SUBSTR(dateOfTraining, 4, 2) AS INT) = :monthOneBased ORDER BY id DESC")
+  @Query("SELECT * FROM ListCradleTrainingForm WHERE CAST(SUBSTR(dateOfTraining, 4, 2) AS INT) = :monthOneBased ORDER BY recordLastUpdated DESC")
   abstract fun cradleFormPagingSourceFilterByTrainingMonth(
     monthOneBased: Int
   ): PagingSource<Int, ListCradleTrainingForm>
@@ -185,14 +185,14 @@ abstract class CradleTrainingFormDao {
   abstract fun countFormsToUploadWithErrors(): Flow<Int>
 
   @Transaction
-  @Query("SELECT * FROM CradleTrainingForm WHERE objectId IS NULL AND isDraft = 0 ORDER BY id")
+  @Query("SELECT * FROM CradleTrainingForm WHERE objectId IS NULL AND isDraft = 0 ORDER BY recordLastUpdated DESC")
   abstract suspend fun getNewFormsToUploadOrderedById(): List<CradleTrainingForm>
 
   @Query("SELECT COUNT(*) FROM CradleTrainingForm WHERE $WHERE_PARTIAL_FORM_CLAUSE")
   abstract fun countPartialFormsToUpload(): Flow<Int>
 
   @Transaction
-  @Query("SELECT * FROM CradleTrainingForm WHERE $WHERE_PARTIAL_FORM_CLAUSE ORDER BY id")
+  @Query("SELECT * FROM CradleTrainingForm WHERE $WHERE_PARTIAL_FORM_CLAUSE ORDER BY recordLastUpdated DESC")
   abstract suspend fun getFormsWithPartialServerInfoOrderedById(): List<CradleTrainingForm>
 
   companion object {
