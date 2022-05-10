@@ -284,7 +284,7 @@ class CradleTrainingFormViewModel @Inject constructor(
         } else if (cradleFormAndDependencies.form.serverInfo != null) {
           Log.w(TAG, "trying to edit a form with server info")
           FormState.FailedLoading(
-            context.getString(R.string.patient_form_cannot_edit_patient_already_on_server)
+            context.getString(R.string.cradle_form_cannot_edit_already_on_server)
           )
         } else {
           val (

@@ -301,7 +301,7 @@ private fun CradleFormListScreen(
         ) {
           Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-              stringResource(R.string.patient_list_no_patients_available),
+              stringResource(R.string.cradle_forms_list_no_forms_available),
               textAlign = TextAlign.Center
             )
             Text(
@@ -523,7 +523,7 @@ fun CradleFormListItem(
             isUploaded -> Icons.Default.Lock
             else -> Icons.Default.LockOpen
           },
-          contentDescription = stringResource(R.string.patient_list_icon_locked_cd),
+          contentDescription = stringResource(R.string.cradle_form_list_icon_locked_cd),
         )
       }
     }

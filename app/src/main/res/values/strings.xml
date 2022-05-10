@@ -31,9 +31,9 @@
     <string name="patient_registration_card_title">Registration</string>
     <string name="other_card_title">Other</string>
     <string name="mark_as_draft_label">Mark as draft</string>
-    <string name="mark_as_draft_description">When a patient is marked as draft, they won\'t be uploaded to MedSciNet when you sync.</string>
-    <string name="mark_as_draft_yes_patient_will_not_be_synced">Patient will not be included in sync</string>
-    <string name="mark_as_draft_no_patient_will_be_synced">Patient will be included in sync</string>
+    <string name="mark_as_draft_description">When a form is marked as draft, it won\'t be uploaded to MedSciNet when you sync.</string>
+    <string name="mark_as_draft_yes_patient_will_not_be_synced">Form will not be included in sync</string>
+    <string name="mark_as_draft_no_patient_will_be_synced">Form will be included in sync</string>
     <string name="marked_as_draft_label">Marked as draft</string>
     <string name="patient_registration_date_of_birth_label">Date of birth (dd/mm/yyyy)</string>
     <string name="cradle_form_details_title">CRADLE form details</string>
@@ -95,7 +95,7 @@
     <string name="patient_registration_healthcare_facility_label">Healthcare facility</string>
     <string name="health_facility_dialog_title">Select a health facility</string>
     <string name="patient_registration_server_id_not_available">N/A (not yet uploaded)</string>
-    <string name="patient_form_cannot_edit_patient_already_on_server">Unable to edit patient and their outcomes that are already on the server</string>
+    <string name="cradle_form_cannot_edit_already_on_server">Unable to edit form that is already uploaded to the server</string>
     <string name="cradle_form_snackbar_failed_to_save_exception">Failed to save due to an exception</string>
     <string name="sync_screen_start_sync_button">Sync</string>
     <string name="unknown_district">Unknown district</string>
@@ -103,7 +103,7 @@
     <string name="logout_dialog_title">Do you want to logout?</string>
     <string name="logout_dialog_body">Logging out will delete all local data on this device. Any data that hasn\'t been uploaded will be lost.</string>
     <string name="logout_dialog_delete_and_logout_button">Delete and logout</string>
-    <string name="patient_list_no_patients_available">No patients available</string>
+    <string name="cradle_forms_list_no_forms_available">No forms available</string>
     <string name="facility_list_no_facilities_available">No facilities available (an error?)</string>
     <string name="cradle_form_list_no_forms_app_doesnt_download_from_medscinet">The app doesn\'t download forms from MedSciNet</string>
     <string name="sync_screen_cancel_sync_button">Cancel</string>
@@ -114,7 +114,7 @@
     <string name="error_dialog_title">Error</string>
     <string name="app_icon_cd">Icon for the app</string>
     <string name="not_available_n_slash_a">N/A</string>
-    <string name="patient_list_icon_locked_cd">Patient has been uploaded and is locked for editing</string>
+    <string name="cradle_form_list_icon_locked_cd">Form has been uploaded and is locked for editing</string>
     <string name="location_checkin_nav_button_title">Check in</string>
     <string name="location_checkin_title">Location check in</string>
     <string name="facility_card_id_label">ID</string>
@@ -241,8 +241,8 @@
         <item quantity="other">%1$d forms failed to upload and have errors that may need addressing</item>
     </plurals>
     <plurals name="sync_screen_there_are_currently_d_incomplete_forms_to_upload">
-        <item quantity="one">There is %1$d partially uploaded form who needs an upload retry</item>
-        <item quantity="other">There are %1$d partially uploaded forms who need an upload retry</item>
+        <item quantity="one">There is %1$d partially uploaded form that needs an upload retry</item>
+        <item quantity="other">There are %1$d partially uploaded forms that need an upload retry</item>
     </plurals>
     <plurals name="sync_screen_d_forms_failed_to_upload">
         <item quantity="one">%1$d form failed to upload and need a retry</item>
