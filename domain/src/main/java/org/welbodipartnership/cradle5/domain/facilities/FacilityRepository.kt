@@ -4,7 +4,6 @@ import android.content.Context
 import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.flow.firstOrNull
 import org.welbodipartnership.api.cradle5.CradleImplementationData
 import org.welbodipartnership.api.forms.meta.DynamicLookupListEntry
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
@@ -16,7 +15,6 @@ import org.welbodipartnership.cradle5.domain.FormId
 import org.welbodipartnership.cradle5.domain.NetworkResult
 import org.welbodipartnership.cradle5.domain.ObjectId
 import org.welbodipartnership.cradle5.domain.RestApi
-import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -67,10 +65,10 @@ class FacilityRepository @Inject constructor(
           result.value.forEachIndexed { index, apiFacilityListItem ->
             dao.upsert(
               FacilityDao.FacilityUpdate(
-              id = apiFacilityListItem.id.toLong(),
-              name = apiFacilityListItem.name,
-              districtId = districtId,
-              listOrder = index
+                id = apiFacilityListItem.id.toLong(),
+                name = apiFacilityListItem.name,
+                districtId = districtId,
+                listOrder = index
               )
             )
           }

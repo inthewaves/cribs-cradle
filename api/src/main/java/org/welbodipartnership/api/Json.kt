@@ -7,7 +7,6 @@ import com.squareup.moshi.JsonWriter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import com.squareup.moshi.adapters.EnumJsonAdapter
-import com.squareup.moshi.adapters.Rfc3339DateJsonAdapter
 import org.welbodipartnership.api.forms.FormGetResponse
 import org.welbodipartnership.api.forms.meta.ControlType
 import org.welbodipartnership.api.forms.meta.DataType
@@ -164,7 +163,8 @@ internal object CustomIsoUtils {
         hour = parseInt(
           date,
           1.let { offset += it; offset },
-          2.let { offset += it; offset })
+          2.let { offset += it; offset }
+        )
         if (checkOffset(date, offset, ':')) {
           offset += 1
         }

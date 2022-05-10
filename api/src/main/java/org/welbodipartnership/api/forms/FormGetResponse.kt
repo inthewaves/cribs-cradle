@@ -6,7 +6,6 @@ import com.squareup.moshi.JsonClass
 import com.squareup.moshi.JsonDataException
 import com.squareup.moshi.JsonReader
 import com.squareup.moshi.JsonWriter
-import com.squareup.moshi.Moshi
 import com.squareup.moshi.internal.Util
 import org.welbodipartnership.api.forms.meta.Meta
 import org.welbodipartnership.api.forms.meta.OperationLog

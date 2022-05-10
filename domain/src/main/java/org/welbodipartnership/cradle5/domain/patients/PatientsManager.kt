@@ -1,13 +1,8 @@
 package org.welbodipartnership.cradle5.domain.patients
 
 import android.content.Context
-import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
-import org.welbodipartnership.cradle5.data.database.entities.Outcomes
-import org.welbodipartnership.cradle5.data.database.entities.Patient
-import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
-import org.welbodipartnership.cradle5.domain.ObjectId
 import org.welbodipartnership.cradle5.domain.RestApi
 import org.welbodipartnership.cradle5.domain.sync.SyncRepository
 import javax.inject.Inject

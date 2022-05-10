@@ -12,10 +12,9 @@ import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 import org.welbodipartnership.cradle5.data.database.entities.CradleTrainingForm
 import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
-import org.welbodipartnership.cradle5.data.database.resultentities.FormFacilityDistrict
+import org.welbodipartnership.cradle5.data.database.resultentities.CradleFormOtherInfo
+import org.welbodipartnership.cradle5.data.database.resultentities.CradleTrainingFormFacilityDistrict
 import org.welbodipartnership.cradle5.data.database.resultentities.ListCradleTrainingForm
-import org.welbodipartnership.cradle5.data.database.resultentities.PatientFacilityDistrictOutcomes
-import org.welbodipartnership.cradle5.data.database.resultentities.PatientOtherInfo
 
 @Dao
 abstract class CradleTrainingFormDao {
@@ -72,32 +71,30 @@ abstract class CradleTrainingFormDao {
   @RewriteQueriesToDropUnusedColumns
   @Transaction
   @Query("SELECT * FROM ListCradleTrainingForm WHERE objectId IS NOT NULL ORDER BY id DESC")
-  abstract fun patientsPagingSourceFilterByUploaded(): PagingSource<Int, ListCradleTrainingForm>
+  abstract fun cradleFormPagingSourceFilterByUploaded(): PagingSource<Int, ListCradleTrainingForm>
 
   @RewriteQueriesToDropUnusedColumns
   @Transaction
   @Query("SELECT * FROM ListCradleTrainingForm WHERE objectId IS NULL AND isDraft = 0 ORDER BY id DESC")
-  abstract fun patientsPagingSourceFilterByNotUploadedAndNotDraft(): PagingSource<Int, ListCradleTrainingForm>
+  abstract fun cradleFormPagingSourceFilterByNotUploadedAndNotDraft(): PagingSource<Int, ListCradleTrainingForm>
 
   @RewriteQueriesToDropUnusedColumns
   @Transaction
   @Query("SELECT * FROM ListCradleTrainingForm WHERE facility_id = :facilityId ORDER BY id DESC")
-  abstract fun patientsPagingSourceFilterByFacility(facilityId: Long): PagingSource<Int, ListCradleTrainingForm>
+  abstract fun cradleFormPagingSourceFilterByFacility(facilityId: Long): PagingSource<Int, ListCradleTrainingForm>
 
-  /*
   @RewriteQueriesToDropUnusedColumns
   @Transaction
-  @Query("SELECT * FROM CradleTrainingForm WHERE CAST(SUBSTR(registrationDate, 4, 2) AS INT) = :monthOneBased ORDER BY id DESC")
-  abstract fun patientsPagingSourceFilterByRegistrationMonth(
+  @Query("SELECT * FROM CradleTrainingForm WHERE CAST(SUBSTR(dateOfTraining, 4, 2) AS INT) = :monthOneBased ORDER BY id DESC")
+  abstract fun cradleFormPagingSourceFilterByTrainingMonth(
     monthOneBased: Int
-  ): PagingSource<Int, ListPatientAndOutcomeError>
-   */
+  ): PagingSource<Int, ListCradleTrainingForm>
 
   // ---- Patient + outcomes observations
 
   @Transaction
   @Query("SELECT * FROM CradleTrainingForm WHERE id = :formPk")
-  abstract fun getFormFlow(formPk: Long): Flow<FormFacilityDistrict?>
+  abstract fun getFormFlow(formPk: Long): Flow<CradleTrainingFormFacilityDistrict?>
 
   /*
   @Query("SELECT initials FROM Patient WHERE id = :patientPk")
@@ -111,23 +108,23 @@ abstract class CradleTrainingFormDao {
   abstract suspend fun clearDraftStatus(formPk: Long): Int
 
   @Query("UPDATE CradleTrainingForm SET localNotes = :localNotes WHERE id = :formPk")
-  protected abstract suspend fun updatePatientLocalNotesInner(
+  protected abstract suspend fun updateLocalNotesInner(
     formPk: Long,
     localNotes: String?
   ): Int
 
-  suspend fun updatePatientLocalNotesInfo(
+  suspend fun updateLocalNotesInfo(
     patientPk: Long,
     localNotes: String?
-  ): Boolean = updatePatientLocalNotesInner(patientPk, localNotes) == 1
+  ): Boolean = updateLocalNotesInner(patientPk, localNotes) == 1
 
   @RewriteQueriesToDropUnusedColumns
   @Query("SELECT * FROM CradleTrainingForm WHERE id = :formPk")
-  abstract suspend fun getOtherInfo(formPk: Long): PatientOtherInfo?
+  abstract suspend fun getOtherInfo(formPk: Long): CradleFormOtherInfo?
 
   @Transaction
   @Query("SELECT * FROM CradleTrainingForm WHERE id = :formPk")
-  abstract suspend fun getFormFacilityDistrict(formPk: Long): FormFacilityDistrict?
+  abstract suspend fun getFormFacilityDistrict(formPk: Long): CradleTrainingFormFacilityDistrict?
 
   /**
    * @return the number of rows that were updated. Note that WHERE is set to the primary key,
@@ -166,8 +163,11 @@ abstract class CradleTrainingFormDao {
   @Query("SELECT COUNT(*) FROM CradleTrainingForm")
   abstract fun countTotal(): Flow<Int>
 
-  @Query("SELECT COUNT(*) FROM CradleTrainingForm WHERE objectId IS NULL AND isDraft = 0")
-  abstract fun countFormsToUpload(): Flow<Int>
+  @Query("SELECT COUNT(*) FROM CradleTrainingForm WHERE objectId IS NULL AND isDraft = 0 AND serverErrorMessage IS NULL")
+  abstract fun countFormsToUploadWithoutErrors(): Flow<Int>
+
+  @Query("SELECT COUNT(*) FROM CradleTrainingForm WHERE objectId IS NULL AND isDraft = 0 AND serverErrorMessage IS NOT NULL")
+  abstract fun countFormsToUploadWithErrors(): Flow<Int>
 
   @Transaction
   @Query("SELECT * FROM CradleTrainingForm WHERE objectId IS NULL AND isDraft = 0 ORDER BY id")

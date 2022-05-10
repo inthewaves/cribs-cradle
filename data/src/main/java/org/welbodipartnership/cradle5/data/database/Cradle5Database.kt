@@ -1,31 +1,23 @@
 package org.welbodipartnership.cradle5.data.database
 
 import android.content.Context
-import android.util.Log
-import androidx.room.AutoMigration
 import androidx.room.Database
-import androidx.room.DeleteColumn
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import androidx.room.migration.AutoMigrationSpec
 import androidx.room.migration.Migration
 import androidx.room.withTransaction
 import androidx.sqlite.db.SupportSQLiteDatabase
 import net.sqlcipher.database.SupportFactory
+import org.welbodipartnership.cradle5.data.database.daos.CradleTrainingFormDao
 import org.welbodipartnership.cradle5.data.database.daos.DistrictDao
 import org.welbodipartnership.cradle5.data.database.daos.FacilityDao
 import org.welbodipartnership.cradle5.data.database.daos.LocationCheckInDao
-import org.welbodipartnership.cradle5.data.database.daos.OutcomesDao
-import org.welbodipartnership.cradle5.data.database.daos.CradleTrainingFormDao
 import org.welbodipartnership.cradle5.data.database.entities.CradleTrainingForm
 import org.welbodipartnership.cradle5.data.database.entities.District
 import org.welbodipartnership.cradle5.data.database.entities.Facility
 import org.welbodipartnership.cradle5.data.database.entities.LocationCheckIn
-import org.welbodipartnership.cradle5.data.database.entities.Outcomes
-import org.welbodipartnership.cradle5.data.database.entities.Patient
 import org.welbodipartnership.cradle5.data.database.resultentities.ListCradleTrainingForm
-import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
 
