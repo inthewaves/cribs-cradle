@@ -6,6 +6,7 @@ import org.welbodipartnership.cradle5.data.database.entities.Facility
 import org.welbodipartnership.cradle5.data.database.entities.PowerSupply
 import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
 import org.welbodipartnership.cradle5.util.datetime.FormDate
+import java.time.ZonedDateTime
 
 object CradleFormPreviewClasses {
   const val DISTRICT_ID = 3L
@@ -23,7 +24,7 @@ object CradleFormPreviewClasses {
     id = 5L,
     serverInfo = serverInfo,
     serverErrorMessage = serverErrorMessage,
-    recordLastUpdated = CradleTrainingForm.formatNowAsLastUpdatedDateString(),
+    recordLastUpdated = ZonedDateTime.now(),
     district = DISTRICT_ID,
     healthcareFacility = FACILITY_ID,
     dateOfTraining = FormDate.today(),

@@ -34,9 +34,9 @@ data class CradleTrainingForm(
   override val serverInfo: ServerInfo?,
   val serverErrorMessage: String?,
   /**
-   * A GMT date string that can be parsed using [recordLastUpdatedFormatter].
+   * Convert to a string using [recordLastUpdatedFormatter].
    */
-  val recordLastUpdated: String?,
+  val recordLastUpdated: ZonedDateTime?,
   val district: Long?,
   val healthcareFacility: Long?,
   val dateOfTraining: FormDate?,
@@ -78,8 +78,9 @@ data class CradleTrainingForm(
   @ColumnInfo(defaultValue = "0")
   val isDraft: Boolean
 ) : FormEntity {
-  val parsedRecordLastUpdated: ZonedDateTime
-    get() = ZonedDateTime.parse(recordLastUpdated, recordLastUpdatedFormatter)
+  val recordLastUpdatedString get() = recordLastUpdated
+    ?.withZoneSameInstant(ZoneId.of("GMT"))
+    ?.format(recordLastUpdatedFormatter)
 
   companion object {
     fun parseRecordLastUpdatedString(dateString: String): ZonedDateTime =
@@ -93,7 +94,6 @@ data class CradleTrainingForm(
       .withZone(ZoneId.of("GMT"))
     fun formatTimeAsLastUpdatedDateString(temporalAccessor: TemporalAccessor): String =
       recordLastUpdatedFormatter.format(temporalAccessor)
-    fun formatNowAsLastUpdatedDateString(): String = formatTimeAsLastUpdatedDateString(Instant.now())
   }
 }
 

@@ -41,6 +41,7 @@ import org.welbodipartnership.cradle5.data.serverenums.DropdownType
 import org.welbodipartnership.cradle5.data.settings.AppValuesStore
 import org.welbodipartnership.cradle5.ui.composables.forms.TextFieldState
 import org.welbodipartnership.cradle5.util.coroutines.AppCoroutineDispatchers
+import java.time.ZonedDateTime
 import javax.inject.Inject
 
 private const val PATIENT_MAX_INITIALS_LENGTH = 5
@@ -550,7 +551,7 @@ class CradleTrainingFormViewModel @Inject constructor(
               id = existingForm?.form?.id ?: 0L,
               serverInfo = existingForm?.form?.serverInfo,
               serverErrorMessage = null,
-              recordLastUpdated = CradleTrainingForm.formatNowAsLastUpdatedDateString(),
+              recordLastUpdated = ZonedDateTime.now(),
               district = district.stateValue?.district?.id,
               healthcareFacility = facility.stateValue?.facility?.id,
               dateOfTraining = dateOfTraining.dateFromStateOrNull(),

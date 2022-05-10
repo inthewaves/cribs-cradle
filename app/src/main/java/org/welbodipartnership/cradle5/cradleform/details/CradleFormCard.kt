@@ -56,9 +56,9 @@ fun CradleFormCard(
 
     LabelAndValueOrUnknown(
       label = stringResource(R.string.cradle_form_record_last_updated_label),
-      value = form.parsedRecordLastUpdated
-        .withZoneSameInstant(ZoneId.systemDefault())
-        .format(CradleTrainingForm.friendlyDateFormatterForRecordLastUpdated),
+      value = form.recordLastUpdated
+        ?.withZoneSameInstant(ZoneId.systemDefault())
+        ?.format(CradleTrainingForm.friendlyDateFormatterForRecordLastUpdated),
     )
 
     Spacer(modifier = Modifier.height(spacerHeight))
