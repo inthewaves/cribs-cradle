@@ -280,21 +280,28 @@ class LocationCheckInViewModel @Inject constructor(
       LocationRequest.PRIORITY_HIGH_ACCURACY,
       cts.token
     )
+
+    fun processResult(location: Location?): LocationType.GooglePlay? =
+      if (location != null) {
+        Log.d(TAG, "Successfully retrieved location from FusedLocationProvider (provider ${location.provider})")
+        LocationType.GooglePlay(location)
+      } else {
+        Log.d(TAG, "Failed to retrieve location from FusedLocationProvider (returned null)")
+        null
+      }
+
     return try {
       if (task.isComplete) {
         if (task.isSuccessful) {
-          LocationType.GooglePlay(task.result)
+          processResult(task.result)
         } else {
           throw task.exception ?: IOException("failed to get location and task had no error")
         }
       } else {
-        suspendCancellableCoroutine { cont ->
+        suspendCancellableCoroutine<LocationType.GooglePlay?> { cont ->
           cont.invokeOnCancellation { cts.cancel() }
           task
-            .addOnSuccessListener { location ->
-              Log.d(TAG, "Successfully retrieved location from FusedLocationProvider (provider ${location.provider})")
-              cont.resume(LocationType.GooglePlay(location))
-            }
+            .addOnSuccessListener { location -> cont.resume(processResult(location)) }
             .addOnFailureListener { cause -> cont.resumeWithException(cause) }
         }
       }
@@ -318,20 +325,29 @@ class LocationCheckInViewModel @Inject constructor(
     return try {
       suspendCancellableCoroutine { cont ->
         val cancellationSignal = CancellationSignal()
+        cont.invokeOnCancellation { cancellationSignal.cancel() }
         try {
           LocationManagerCompat.getCurrentLocation(
             locationManager,
             provider,
             cancellationSignal,
             executors.locationExecutor,
-          ) { location ->
-            cont.resume(LocationType.System(location), null)
+          ) { location: Location? ->
+            cont.resume(
+              if (location != null) {
+                Log.d(TAG, "Successfully retrieved location from system (provider ${location.provider})")
+                LocationType.System(location)
+              } else {
+                Log.d(TAG, "Failed to retrieve location from system (returned null)")
+                null
+              },
+              null
+            )
           }
         } catch (e: Exception) {
           Log.w(TAG, "${e::class.java.simpleName} while getting location", e)
           cont.resumeWithException(e)
         }
-        cont.invokeOnCancellation { cancellationSignal.cancel() }
       }
     } catch (e: Exception) {
       Log.e(TAG, "${e::class.java.simpleName} while getting location, outside", e)
