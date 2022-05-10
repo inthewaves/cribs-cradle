@@ -86,7 +86,7 @@ abstract class CradleTrainingFormDao {
 
   @RewriteQueriesToDropUnusedColumns
   @Transaction
-  @Query("SELECT * FROM CradleTrainingForm WHERE CAST(SUBSTR(dateOfTraining, 4, 2) AS INT) = :monthOneBased ORDER BY id DESC")
+  @Query("SELECT * FROM ListCradleTrainingForm WHERE CAST(SUBSTR(dateOfTraining, 4, 2) AS INT) = :monthOneBased ORDER BY id DESC")
   abstract fun cradleFormPagingSourceFilterByTrainingMonth(
     monthOneBased: Int
   ): PagingSource<Int, ListCradleTrainingForm>
