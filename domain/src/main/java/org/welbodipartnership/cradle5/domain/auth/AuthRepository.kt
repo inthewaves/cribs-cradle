@@ -45,7 +45,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.seconds
 
-private val AUTH_TIMEOUT: Duration = 1.days
+private val AUTH_TIMEOUT: Duration = 14.days
 
 /**
  * If the time since the token was issued is less than this threshold, then we do not perform
