@@ -56,6 +56,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
@@ -306,8 +307,6 @@ fun CradleTrainingForm(
     },
 
   ) { padding ->
-    val focusRequester = remember { FocusRequester() }
-
     val textFieldToTextFieldHeight = 8.dp
     val categoryToCategorySpacerHeight = 16.dp
 
@@ -369,7 +368,7 @@ fun CradleTrainingForm(
             imeAction = ImeAction.Next,
             keyboardType = KeyboardType.Number
           )
-          val commonKeyboardActions = KeyboardActions(onDone = { focusRequester.requestFocus() })
+          val commonKeyboardActions = KeyboardActions.Default
 
           IntegerField(
             field = fields.numOfBpDevicesFunction,
@@ -602,6 +601,7 @@ fun CradleTrainingForm(
 
           Spacer(Modifier.height(textFieldToTextFieldHeight))
 
+          val focusManager = LocalFocusManager.current
           IntegerField(
             field = fields.totalStaffTrainedScoredMoreThan8,
             label = stringResource(R.string.cradle_form_total_trained_score_more_than_8_label),
@@ -609,8 +609,8 @@ fun CradleTrainingForm(
               .createFocusChangeModifier()
               .bringIntoViewRequester(bringIntoViewRequester)
               .fillMaxWidth(),
-            keyboardOptions = commonIntFieldKeyboardOptions,
-            keyboardActions = commonKeyboardActions
+            keyboardOptions = commonIntFieldKeyboardOptions.copy(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
           )
 
           Spacer(Modifier.height(textFieldToTextFieldHeight))
