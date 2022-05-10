@@ -352,12 +352,11 @@ class RestApi @Inject internal constructor(
     ) : PostResult
 
     /**
-     * Guaranteed to have objectId and nodeId non-null
+     * Guaranteed to have objectId non-null
      */
     @JvmInline
     value class Success(val serverInfo: ServerInfo) : PostResult {
       init {
-        requireNotNull(serverInfo.nodeId) { "missing nodeId for Success" }
         requireNotNull(serverInfo.objectId) { "missing objectId for Success" }
       }
     }
@@ -391,6 +390,11 @@ class RestApi @Inject internal constructor(
       serverInfo?.objectId != null &&
       (serverInfo.createdTime == null || serverInfo.updateTime == null)
     ) {
+      Log.w(
+        TAG,
+        "multiStageNewFormSubmission: " +
+          "attempting to recover Meta info for ${PostType::class.java.simpleName}"
+      )
       ObjectId(serverInfo.objectId.toInt())
     } else {
       val submission: PostType = try {

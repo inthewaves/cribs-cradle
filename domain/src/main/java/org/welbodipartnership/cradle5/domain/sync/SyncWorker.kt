@@ -57,9 +57,9 @@ class SyncWorker @AssistedInject constructor(
     Log.d(TAG, "starting SyncWorker")
     reportProgress(Stage.STARTING)
 
-    Log.d(TAG, "uploading patients")
+    Log.d(TAG, "uploading forms")
     val newPatientsUploadResult = runUploadForForms(
-      Stage.UPLOADING_NEW_PATIENTS,
+      Stage.UPLOADING_NEW_CRADLE_FORMS,
       dbWrapper
         .cradleTrainingFormDao()
         .getNewFormsToUploadOrderedById()
@@ -96,7 +96,7 @@ class SyncWorker @AssistedInject constructor(
     return Result.success()
   }
 
-  private data class PatientUploadResult(
+  private data class CradleFormUploadResult(
     val successfulPatientIds: Set<Long>,
     val failedPatientIds: Set<Long>
   )
@@ -104,7 +104,7 @@ class SyncWorker @AssistedInject constructor(
   private suspend fun runUploadForForms(
     stage: Stage,
     forms: List<CradleTrainingForm>
-  ): PatientUploadResult = coroutineScope {
+  ): CradleFormUploadResult = coroutineScope {
     val successfulPatientIds = linkedSetOf<Long>()
     val failedPatientIds = linkedSetOf<Long>()
     reportProgress(stage, doneSoFar = 0, totalToDo = forms.size)
@@ -136,7 +136,7 @@ class SyncWorker @AssistedInject constructor(
     }
     updateChannel.close()
 
-    PatientUploadResult(successfulPatientIds, failedPatientIds)
+    CradleFormUploadResult(successfulPatientIds, failedPatientIds)
   }
 
   private suspend fun runUploadForCheckIns(checkIns: List<LocationCheckIn>): Unit = coroutineScope {
@@ -242,7 +242,7 @@ class SyncWorker @AssistedInject constructor(
   @Immutable
   enum class Stage {
     STARTING,
-    UPLOADING_NEW_PATIENTS,
+    UPLOADING_NEW_CRADLE_FORMS,
     /**
      * The stage when we are uploading patients for which we have stored a NodeId but not an
      * ObjectId. An ObjectId is strictly required for posting an outcome for a patient.
@@ -294,7 +294,7 @@ class SyncWorker @AssistedInject constructor(
           )
         }
         Stage.STARTING,
-        Stage.UPLOADING_NEW_PATIENTS,
+        Stage.UPLOADING_NEW_CRADLE_FORMS,
         Stage.UPLOADING_INCOMPLETE_PATIENTS,
         Stage.UPLOADING_LOCATION_CHECK_INS -> {
           val doneSoFar = progress.getInt(PROGRESS_DATA_PROGRESS_KEY, Int.MIN_VALUE)

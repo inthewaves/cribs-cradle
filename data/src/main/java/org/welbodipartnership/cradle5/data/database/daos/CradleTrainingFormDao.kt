@@ -181,7 +181,6 @@ abstract class CradleTrainingFormDao {
   abstract suspend fun getFormsWithPartialServerInfoOrderedById(): List<CradleTrainingForm>
 
   companion object {
-    private const val WHERE_PARTIAL_FORM_CLAUSE =
-      "objectId IS NOT NULL AND (updateTime IS NULL OR createdTime IS NULL)"
+    private const val WHERE_PARTIAL_FORM_CLAUSE = "objectId IS NOT NULL AND createdTime IS NULL"
   }
 }

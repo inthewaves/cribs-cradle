@@ -121,7 +121,7 @@ private fun ActiveSyncCard(
         SyncWorker.Stage.STARTING -> {
           Text("Starting")
         }
-        SyncWorker.Stage.UPLOADING_NEW_PATIENTS -> {
+        SyncWorker.Stage.UPLOADING_NEW_CRADLE_FORMS -> {
           Text("Uploading new forms")
         }
         SyncWorker.Stage.UPLOADING_INCOMPLETE_PATIENTS -> {
@@ -295,7 +295,7 @@ fun SyncPagePreview() {
         ActiveSyncCard(
           syncStatus = SyncRepository.SyncStatus.Active(
             progress = SyncWorker.Progress.WithFiniteProgress(
-              stage = SyncWorker.Stage.UPLOADING_NEW_PATIENTS,
+              stage = SyncWorker.Stage.UPLOADING_NEW_CRADLE_FORMS,
               doneSoFar = 5,
               totalToDo = 10,
               numFailed = 0,
@@ -306,7 +306,7 @@ fun SyncPagePreview() {
         ActiveSyncCard(
           syncStatus = SyncRepository.SyncStatus.Active(
             progress = SyncWorker.Progress.WithFiniteProgress(
-              stage = SyncWorker.Stage.UPLOADING_NEW_PATIENTS,
+              stage = SyncWorker.Stage.UPLOADING_NEW_CRADLE_FORMS,
               doneSoFar = 5,
               totalToDo = 10,
               numFailed = 5,
