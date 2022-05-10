@@ -465,17 +465,6 @@ class AuthRepository @Inject internal constructor(
       return e.result
     }
 
-    progressReceiver?.sendProgress(InfoSyncStage.DOWNLOADING_DROPDOWN_VALUES)
-    when (val result = enumRepository.downloadAndSaveEnumsFromServer(progressReceiver?.stringChannel)) {
-      EnumRepository.DownloadResult.Success -> {}
-      is EnumRepository.DownloadResult.Exception -> {
-        return LoginResult.Exception(gotTokenFromServer = true, result.errorMessage)
-      }
-      is EnumRepository.DownloadResult.Invalid -> {
-        return LoginResult.Invalid(gotTokenFromServer = true, result.errorMessage, result.errorCode)
-      }
-    }
-
     return LoginResult.Success
   }
 

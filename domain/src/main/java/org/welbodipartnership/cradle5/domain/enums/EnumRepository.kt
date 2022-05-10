@@ -72,7 +72,7 @@ class EnumRepository @Inject constructor(
 
       DropdownType.values().forEach { dropdownType ->
         val matchingEnumFromServer = this.find { it.id == dropdownType.serverLookupId }
-        val defaultEnum = ServerEnumCollection.defaultInstance[dropdownType]
+        val defaultEnum = ServerEnumCollection(emptySet())[dropdownType]
         if (matchingEnumFromServer == null) {
           if (defaultEnum != null) {
             Log.w(TAG, "Server is missing enum $dropdownType, id = ${dropdownType.serverLookupId}. Inserting fake entry.")
