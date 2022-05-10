@@ -91,6 +91,9 @@ class LocationCheckInViewModel @Inject constructor(
 
   private val locationManager = ContextCompat.getSystemService(context, LocationManager::class.java)
 
+  private val _locationEnabledState = MutableStateFlow(false)
+  val locationEnabledState: StateFlow<Boolean> = _locationEnabledState
+
   private val _locationProviderListText = MutableStateFlow("")
   val locationProviderListText = _locationProviderListText.asStateFlow()
   init {
@@ -99,11 +102,20 @@ class LocationCheckInViewModel @Inject constructor(
     }
   }
 
-  private fun updateLocationProviderList() {
+  fun refreshLocationEnabledState(): Boolean {
+    locationManager ?: return _locationEnabledState.value
+    val enabled = LocationManagerCompat.isLocationEnabled(locationManager)
+    _locationEnabledState.value = LocationManagerCompat.isLocationEnabled(locationManager)
+    return enabled
+  }
+
+  fun updateLocationProviderList() {
     if (locationManager == null) {
       _locationProviderListText.value = "No location manager available"
       return
     }
+
+    refreshLocationEnabledState()
 
     val allProviders: List<String> = try {
       locationManager.allProviders
@@ -202,7 +214,7 @@ class LocationCheckInViewModel @Inject constructor(
         }
       }
 
-      val isLocationEnabled = LocationManagerCompat.isLocationEnabled(locationManager)
+      val isLocationEnabled = refreshLocationEnabledState()
       Log.d(TAG, "provider = $provider, isLocationEnabled = $isLocationEnabled")
 
       val locationType: LocationType? = getLocationWithPlayServices()
@@ -239,7 +251,7 @@ class LocationCheckInViewModel @Inject constructor(
 
         ScreenState.Success
       } else {
-        if (isLocationEnabled) {
+        if (_locationEnabledState.value) {
           ScreenState.Error("Failed to get location")
         } else {
           ScreenState.ErrorLocationDisabled
