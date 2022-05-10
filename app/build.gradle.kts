@@ -43,7 +43,7 @@ android {
         // export NDK symbols for Play Store console
         ndk.debugSymbolLevel = "FULL"
 
-        buildConfigField("String", "PRIVACY_POLICY_URL", "\"https://docs.google.com/document/d/e/2PACX-1vSD9nLQwORfZff2LX72EgLyzas405yutCRUNbXY4XTzNcPnqfpiTymCw4bvqxiwdh0wvk9QS-ufnyRR/pub\"")
+        buildConfigField("String", "PRIVACY_POLICY_URL", "\"https://docs.google.com/document/d/e/2PACX-1vRNTfMA1Ark5ZsuBP9cuZfGQ1cHd7_pCQFW7vQ9c2mUR2uRtqzSh_p1L39jG-nZ7Ss6iW_52hn3Ad9M/pub\"")
         buildConfigField("String", "PRODUCTION_API_URL", "\"$PRODUCTION_URL\"")
         buildConfigField("String", "TEST_API_URL", "\"$TEST_URL\"")
 
