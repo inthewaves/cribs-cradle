@@ -51,10 +51,7 @@ data class ListCradleTrainingForm(
   val healthcareFacility: FacilityIdAndName?,
   val serverErrorMessage: String?,
   val dateOfTraining: FormDate?,
-  val recordLastUpdated: String?,
+  val recordLastUpdated: ZonedDateTime?,
   val localNotes: String?,
   val isDraft: Boolean,
-) {
-  val parsedLastUpdated: ZonedDateTime?
-    get() = recordLastUpdated?.let { CradleTrainingForm.parseRecordLastUpdatedString(it) }
-}
+)

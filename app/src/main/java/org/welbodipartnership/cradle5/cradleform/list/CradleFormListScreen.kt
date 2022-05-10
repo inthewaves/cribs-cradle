@@ -95,6 +95,7 @@ import org.welbodipartnership.cradle5.ui.composables.screenlists.ScreenListItem
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
 import org.welbodipartnership.cradle5.util.datetime.FormDate
 import java.time.ZoneId
+import java.time.ZonedDateTime
 
 @Composable
 fun CradleFormListScreen(
@@ -485,7 +486,7 @@ fun CradleFormListItem(
               }
               append(": ")
               append(
-                listForm.parsedLastUpdated
+                listForm.recordLastUpdated
                   ?.withZoneSameInstant(ZoneId.systemDefault())
                   ?.format(CradleTrainingForm.friendlyDateFormatterForRecordLastUpdated)
                   ?: stringResource(R.string.unknown)
@@ -562,7 +563,7 @@ fun CradleFormListItemPreview() {
             healthcareFacility = FacilityIdAndName(5, "MyTestFacility, Something Else (ABC)"),
             serverErrorMessage = "Errors",
             dateOfTraining = FormDate.today(),
-            recordLastUpdated = "05/05/2000 19:19",
+            recordLastUpdated = ZonedDateTime.now(),
             localNotes = "Locacl notes",
             isDraft = true
           ),
@@ -576,7 +577,7 @@ fun CradleFormListItemPreview() {
             healthcareFacility = FacilityIdAndName(5, "Another facility, Something Else (ABC)"),
             serverErrorMessage = null,
             dateOfTraining = FormDate.today(),
-            recordLastUpdated = "05/05/2000 19:19",
+            recordLastUpdated = ZonedDateTime.now(),
             localNotes = null,
             isDraft = true
           ),
