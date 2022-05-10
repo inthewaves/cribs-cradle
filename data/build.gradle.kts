@@ -107,7 +107,7 @@ dependencies {
     implementation(libs.androidx.room.paging)
     implementation(libs.androidx.paging.runtime)
     ksp(libs.androidx.room.compiler)
-    implementation(libs.sqlcipher)
+    // implementation(libs.sqlcipher)
 
     implementation(libs.hilt.library)
     kapt(libs.hilt.compiler)

@@ -8,7 +8,6 @@ import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.room.withTransaction
 import androidx.sqlite.db.SupportSQLiteDatabase
-import net.sqlcipher.database.SupportFactory
 import org.welbodipartnership.cradle5.data.database.daos.CradleTrainingFormDao
 import org.welbodipartnership.cradle5.data.database.daos.DistrictDao
 import org.welbodipartnership.cradle5.data.database.daos.FacilityDao
@@ -51,20 +50,7 @@ class CradleDatabaseWrapper @Inject constructor() {
         return
       }
       database = Room.databaseBuilder(context, Cradle5Database::class.java, DATABASE_NAME)
-        .build()
-    }
-  }
-
-  internal fun setup(context: Context, supportFactory: SupportFactory) {
-    if (database != null) {
-      return
-    }
-    synchronized(CradleDatabaseWrapper::class.java) {
-      if (database != null) {
-        return
-      }
-      database = Room.databaseBuilder(context, Cradle5Database::class.java, DATABASE_NAME)
-        .openHelperFactory(supportFactory)
+        // .openHelperFactory(supportFactory)
         .addMigrations(*MIGRATIONS)
         .build()
     }

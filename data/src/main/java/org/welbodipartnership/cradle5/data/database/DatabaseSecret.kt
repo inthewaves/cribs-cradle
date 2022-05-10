@@ -1,16 +1,10 @@
 package org.welbodipartnership.cradle5.data.database
 
 import com.google.crypto.tink.subtle.Hex
-import net.sqlcipher.database.SQLiteDatabaseHook
-import net.sqlcipher.database.SupportFactory
 import java.security.SecureRandom
 
 @JvmInline
 internal value class DatabaseSecret(val secretBytes: ByteArray) {
-  fun createSupportFactory(hook: SQLiteDatabaseHook): SupportFactory {
-    return SupportFactory(secretBytes, hook, false)
-  }
-
   companion object {
     /**
      * https://www.zetetic.net/sqlcipher/sqlcipher-api/#key
