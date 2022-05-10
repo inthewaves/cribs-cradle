@@ -94,8 +94,10 @@ import org.welbodipartnership.cradle5.ui.composables.forms.darkerDisabledOutline
 import org.welbodipartnership.cradle5.ui.composables.screenlists.ScreenListItem
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
 import org.welbodipartnership.cradle5.util.datetime.FormDate
+import java.text.DateFormatSymbols
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import java.util.Locale
 
 @Composable
 fun CradleFormListScreen(
@@ -343,20 +345,10 @@ private fun CradleFormListScreen(
   }
 }
 
-fun getMonthNameFromNumber(monthNumber: Int?) = when (monthNumber) {
-  1 -> "January"
-  2 -> "February"
-  3 -> "March"
-  4 -> "April"
-  5 -> "May"
-  6 -> "June"
-  7 -> "July"
-  8 -> "August"
-  9 -> "September"
-  10 -> "October"
-  11 -> "November"
-  12 -> "December"
-  else -> ""
+fun getMonthNameFromNumber(monthNumber: Int?) = if (monthNumber != null && monthNumber in 1..12) {
+  DateFormatSymbols(Locale.getDefault()).months[monthNumber - 1]
+} else {
+  ""
 }
 
 @Composable
@@ -389,6 +381,7 @@ private fun MonthDropdownMenu(
     enabled = enabled,
     modifier = modifier,
   ) {
+
     OutlinedTextFieldWithErrorHint(
       readOnly = true,
       value = getMonthNameFromNumber(currentMonthNumber),
@@ -423,18 +416,16 @@ private fun MonthDropdownMenu(
       onDismissRequest = { expanded = false },
       modifier = dropdownTextModifier,
     ) {
-      generateSequence(1) { it + 1 }
-        .takeWhile { it in 1..12 }
-        .forEach { monthNumber ->
-          DropdownMenuItem(
-            onClick = {
-              expanded = false
-              onSelect(monthNumber)
-            },
-          ) {
-            Text(text = getMonthNameFromNumber(monthNumber))
-          }
+      (1..12).forEach { monthNumber ->
+        DropdownMenuItem(
+          onClick = {
+            expanded = false
+            onSelect(monthNumber)
+          },
+        ) {
+          Text(text = getMonthNameFromNumber(monthNumber))
         }
+      }
     }
   }
 }
