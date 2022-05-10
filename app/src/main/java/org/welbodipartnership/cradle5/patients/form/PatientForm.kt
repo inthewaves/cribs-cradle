@@ -1038,7 +1038,13 @@ fun PerinatalDeathForm(
     ) {
       PerinatalNeonatalDeathList(
         causesOfNeonatalDeath,
-        onCausesChanged = { causesOfNeonatalDeath = it }
+        onCausesChanged = {
+          causesOfNeonatalDeath = if (!it.areAllFieldsFalse && it.notReported) {
+            it.copy(notReported = false)
+          } else {
+            it
+          }
+        }
       )
     }
 
