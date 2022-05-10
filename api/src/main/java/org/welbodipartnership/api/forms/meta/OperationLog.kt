@@ -2,6 +2,11 @@ package org.welbodipartnership.api.forms.meta
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
+import com.squareup.moshi.JsonDataException
+import org.welbodipartnership.api.CustomIsoUtils
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.util.Date
 
 /**
  * Additional information about who and when inserted/updated/signed a form’s data record.
@@ -19,12 +24,15 @@ data class OperationLog(
   data class Entry(
     /** The user's ID that made the record */
     @Json(name = "UserId")
-    val userId: Long,
+    val userId: Long?,
     /** Full user's name with username */
     @Json(name = "User")
-    val user: String,
-    /** The date with time when the record was made */
+    val user: String?,
+    /** The date with time when the record was made. Parse it with  */
     @Json(name = "Date")
-    val date: String,
-  )
+    val date: String?,
+  ) {
+    val parsedDate: ZonedDateTime? get() = date
+      ?.let { ZonedDateTime.ofInstant(CustomIsoUtils.parse(it).toInstant(), ZoneId.of("UTC")) }
+  }
 }

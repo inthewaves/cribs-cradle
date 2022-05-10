@@ -1,5 +1,8 @@
 package org.welbodipartnership.cradle5.data.database.entities.embedded
 
+import java.time.ZonedDateTime
+import java.util.Date
+
 /**
  * Contains server info. Every entity on the server represented by a form (a "registration",
  * "outcome"), and every form represents a node on the server.
@@ -18,8 +21,11 @@ data class ServerInfo(
    * Non-nullable, because server returns the ID
    */
   val objectId: Long,
+  /**
+   * Nullable because this requires an extra stage during upload to resolve. However, this might be
+   * null if it's the first time uploading.
+   */
+  val updateTime: ZonedDateTime?,
   /** Nullable because this requires an extra stage during upload to resolve */
-  val updateTime: String?,
-  /** Nullable because this requires an extra stage during upload to resolve */
-  val createdTime: String?
+  val createdTime: ZonedDateTime?
 )

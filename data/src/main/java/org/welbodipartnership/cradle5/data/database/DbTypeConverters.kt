@@ -5,6 +5,9 @@ import org.welbodipartnership.cradle5.data.database.entities.TouchedState
 import org.welbodipartnership.cradle5.data.database.entities.embedded.EnumSelection
 import org.welbodipartnership.cradle5.util.datetime.FormDate
 import org.welbodipartnership.cradle5.util.datetime.toFormDateOrThrow
+import java.time.Instant
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
 
 @Suppress("UNUSED")
 object DbTypeConverters {
@@ -17,6 +20,17 @@ object DbTypeConverters {
   @JvmStatic
   @JvmName("fromFormDate")
   fun fromFormDate(value: FormDate?): String? = value?.toString()
+
+  @TypeConverter
+  @JvmStatic
+  @JvmName("toZonedDateTime")
+  fun toZonedDateTime(epochSecond: Long?): ZonedDateTime? =
+    epochSecond?.let { ZonedDateTime.ofInstant(Instant.ofEpochSecond(it), ZoneOffset.UTC) }
+
+  @TypeConverter
+  @JvmStatic
+  @JvmName("fromZonedDateTime")
+  fun fromZonedDateTime(date: ZonedDateTime?): Long? = date?.toEpochSecond()
 
   @TypeConverter
   @JvmStatic

@@ -15,6 +15,8 @@ import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
 import org.welbodipartnership.cradle5.data.database.resultentities.CradleFormOtherInfo
 import org.welbodipartnership.cradle5.data.database.resultentities.CradleTrainingFormFacilityDistrict
 import org.welbodipartnership.cradle5.data.database.resultentities.ListCradleTrainingForm
+import org.welbodipartnership.cradle5.util.datetime.FormDate
+import java.time.ZonedDateTime
 
 @Dao
 abstract class CradleTrainingFormDao {
@@ -135,8 +137,14 @@ abstract class CradleTrainingFormDao {
     formId: Long,
     nodeId: Long?,
     objectId: Long,
-    updateTime: String?,
-    createdTime: String?
+    updateTime: ZonedDateTime?,
+    createdTime: ZonedDateTime?
+  ): Int
+
+  @Query("UPDATE CradleTrainingForm SET recordLastUpdated = :lastUpdated WHERE id = :formId")
+  protected abstract suspend fun updateRecordLastUpdatedString(
+    formId: Long,
+    lastUpdated: String
   ): Int
 
   @Query("UPDATE CradleTrainingForm SET serverErrorMessage = :serverErrorMessage WHERE id = :formId")
@@ -150,14 +158,22 @@ abstract class CradleTrainingFormDao {
    *
    * @return whether the update was successful
    */
-  suspend fun updateWithServerInfo(formId: Long, serverInfo: ServerInfo): Boolean {
-    return updateWithServerInfo(
-      formId = formId,
-      nodeId = serverInfo.nodeId,
-      objectId = serverInfo.objectId,
-      updateTime = serverInfo.updateTime,
-      createdTime = serverInfo.createdTime
-    ) == 1
+  @Transaction
+  open suspend fun updateWithServerInfo(formId: Long, serverInfo: ServerInfo): Boolean {
+    if (
+      updateWithServerInfo(
+        formId = formId,
+        nodeId = serverInfo.nodeId,
+        objectId = serverInfo.objectId,
+        updateTime = serverInfo.updateTime,
+        createdTime = serverInfo.createdTime
+      ) != 1
+    ) {
+      return false
+    }
+    val newUpdateTime = serverInfo.updateTime ?: serverInfo.createdTime ?: return true
+    val newLastUpdateDate = newUpdateTime.format(CradleTrainingForm.recordLastUpdatedFormatter)
+    return updateRecordLastUpdatedString(formId, newLastUpdateDate) == 1
   }
 
   @Query("SELECT COUNT(*) FROM CradleTrainingForm")

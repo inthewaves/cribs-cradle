@@ -1,5 +1,6 @@
 package org.welbodipartnership.cradle5.cradleform.details
 
+import android.text.format.DateUtils
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -25,6 +26,10 @@ import org.welbodipartnership.cradle5.data.database.resultentities.CradleTrainin
 import org.welbodipartnership.cradle5.ui.composables.LabelAndValueOrNone
 import org.welbodipartnership.cradle5.ui.composables.LabelAndValueOrUnknown
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+
+private val friendlyDateFormatter = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy, hh:mm:ss a")
 
 /**
  * Shows the details for a [CradleTra]
@@ -55,7 +60,9 @@ fun CradleFormCard(
 
     LabelAndValueOrUnknown(
       label = stringResource(R.string.cradle_form_record_last_updated_label),
-      value = form.recordLastUpdated,
+      value = form.parsedRecordLastUpdated
+        .withZoneSameInstant(ZoneId.systemDefault())
+        .format(friendlyDateFormatter),
     )
 
     Spacer(modifier = Modifier.height(spacerHeight))
@@ -76,9 +83,10 @@ fun CradleFormCard(
       value = form.dateOfTraining?.toString(),
     )
 
-    Spacer(modifier = Modifier.height(spacerHeight))
+    Spacer(modifier = Modifier.height(24.dp))
     Text(
       stringResource(R.string.cradle_form_today_during_the_cradle_training_subtitle),
+      style = MaterialTheme.typography.h6,
       fontWeight = FontWeight.Bold
     )
 

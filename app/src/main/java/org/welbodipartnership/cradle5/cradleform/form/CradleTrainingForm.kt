@@ -370,13 +370,9 @@ fun CradleTrainingForm(
             keyboardOptions = KeyboardOptions.Default,
           )
 
-          Spacer(Modifier.height(textFieldToTextFieldHeight))
-          Spacer(Modifier.height(textFieldToTextFieldHeight))
+          Spacer(Modifier.height(textFieldToTextFieldHeight * 2))
 
-          Text(
-            stringResource(R.string.cradle_form_today_during_the_cradle_training_subtitle),
-            fontWeight = FontWeight.Bold
-          )
+          CategoryHeader(stringResource(R.string.cradle_form_today_during_the_cradle_training_subtitle))
 
           Spacer(Modifier.height(textFieldToTextFieldHeight))
 

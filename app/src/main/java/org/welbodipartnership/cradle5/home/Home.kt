@@ -425,7 +425,7 @@ private sealed class HomeNavigationItem(
 private val HomeNavigationItems = listOf(
   HomeNavigationItem.ImageVectorIcon(
     screen = Screen.Patients,
-    labelResId = R.string.patients_title,
+    labelResId = R.string.cradle_form_nav_button,
     contentDescriptionResId = R.string.cd_cradle_form_nav_button,
     iconImageVector = Icons.Outlined.Groups,
     selectedImageVector = Icons.Default.Groups,

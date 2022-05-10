@@ -14,6 +14,7 @@ import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
 import org.welbodipartnership.cradle5.util.datetime.FormDate
 import java.time.Instant
 import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAccessor
 import java.util.Locale
@@ -77,6 +78,9 @@ data class CradleTrainingForm(
   @ColumnInfo(defaultValue = "0")
   val isDraft: Boolean
 ) : FormEntity {
+  val parsedRecordLastUpdated: ZonedDateTime
+    get() = ZonedDateTime.parse(recordLastUpdated, recordLastUpdatedFormatter)
+
   companion object {
     val recordLastUpdatedFormatter: DateTimeFormatter = DateTimeFormatter
       .ofPattern("dd/MM/yyyy HH:mm", Locale.ENGLISH)

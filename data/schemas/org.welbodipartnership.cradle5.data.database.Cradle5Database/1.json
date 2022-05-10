@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "8790287f576652be8151f0d92a744bd3",
+    "identityHash": "20dd95a702c9cd9c31ae2b3cd79cb6be",
     "entities": [
       {
         "tableName": "CradleTrainingForm",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `serverErrorMessage` TEXT, `recordLastUpdated` TEXT, `district` INTEGER, `healthcareFacility` INTEGER, `dateOfTraining` TEXT, `numOfBpDevicesFunctioning` INTEGER, `numOfCradleDevicesFunctioning` INTEGER, `numOfCradleDevicesBroken` INTEGER, `totalStaffWorking` INTEGER, `totalStaffProvidingMaternityServices` INTEGER, `totalStaffTrainedToday` INTEGER, `totalStaffTrainedTodayDoctors` INTEGER, `totalStaffTrainedTodayMidwives` INTEGER, `totalStaffTrainedTodaySACHOS` INTEGER, `totalStaffTrainedTodaySECHNMidwives` INTEGER, `totalStaffTrainedTodaySRNs` INTEGER, `totalStaffTrainedTodayCHOs` INTEGER, `totalStaffTrainedTodayCHAs` INTEGER, `totalStaffTrainedTodayCSECHNs` INTEGER, `totalStaffTrainedTodayMCHAides` INTEGER, `totalStaffTrainedTodayTBA` INTEGER, `totalStaffTrainedBefore` INTEGER, `totalStaffTrainedScoredMoreThan8` INTEGER, `lastUpdatedTimestamp` INTEGER NOT NULL, `localNotes` TEXT, `isDraft` INTEGER NOT NULL DEFAULT 0, `nodeId` INTEGER, `objectId` INTEGER, `updateTime` TEXT, `createdTime` TEXT, `powersupply_generator` INTEGER DEFAULT 0, `powersupply_solar` INTEGER DEFAULT 0, `powersupply_grid` INTEGER DEFAULT 0, `powersupply_none` INTEGER DEFAULT 0)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `serverErrorMessage` TEXT, `recordLastUpdated` TEXT, `district` INTEGER, `healthcareFacility` INTEGER, `dateOfTraining` TEXT, `numOfBpDevicesFunctioning` INTEGER, `numOfCradleDevicesFunctioning` INTEGER, `numOfCradleDevicesBroken` INTEGER, `totalStaffWorking` INTEGER, `totalStaffProvidingMaternityServices` INTEGER, `totalStaffTrainedToday` INTEGER, `totalStaffTrainedTodayDoctors` INTEGER, `totalStaffTrainedTodayMidwives` INTEGER, `totalStaffTrainedTodaySACHOS` INTEGER, `totalStaffTrainedTodaySECHNMidwives` INTEGER, `totalStaffTrainedTodaySRNs` INTEGER, `totalStaffTrainedTodayCHOs` INTEGER, `totalStaffTrainedTodayCHAs` INTEGER, `totalStaffTrainedTodayCSECHNs` INTEGER, `totalStaffTrainedTodayMCHAides` INTEGER, `totalStaffTrainedTodayTBA` INTEGER, `totalStaffTrainedBefore` INTEGER, `totalStaffTrainedScoredMoreThan8` INTEGER, `lastUpdatedTimestamp` INTEGER NOT NULL, `localNotes` TEXT, `isDraft` INTEGER NOT NULL DEFAULT 0, `nodeId` INTEGER, `objectId` INTEGER, `updateTime` INTEGER, `createdTime` INTEGER, `powersupply_generator` INTEGER DEFAULT 0, `powersupply_solar` INTEGER DEFAULT 0, `powersupply_grid` INTEGER DEFAULT 0, `powersupply_none` INTEGER DEFAULT 0)",
         "fields": [
           {
             "fieldPath": "id",
@@ -186,13 +186,13 @@
           {
             "fieldPath": "serverInfo.updateTime",
             "columnName": "updateTime",
-            "affinity": "TEXT",
+            "affinity": "INTEGER",
             "notNull": false
           },
           {
             "fieldPath": "serverInfo.createdTime",
             "columnName": "createdTime",
-            "affinity": "TEXT",
+            "affinity": "INTEGER",
             "notNull": false
           },
           {
@@ -403,7 +403,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8790287f576652be8151f0d92a744bd3')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '20dd95a702c9cd9c31ae2b3cd79cb6be')"
     ]
   }
 }

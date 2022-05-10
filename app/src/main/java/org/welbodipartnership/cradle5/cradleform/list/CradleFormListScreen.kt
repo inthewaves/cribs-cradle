@@ -234,18 +234,18 @@ private fun CradleFormListScreen(
           applyBottom = false,
         ),
         modifier = Modifier.fillMaxWidth(),
-        title = { Text(text = stringResource(R.string.patients_title)) },
+        title = { Text(text = stringResource(R.string.cradle_form_nav_button)) },
         actions = { AccountInfoButton() }
       )
     },
     floatingActionButton = {
       FloatingActionButton(onClick = onOpenNewFormCreation) {
         Row(Modifier.padding(16.dp)) {
-          Icon(Icons.Filled.Add, stringResource(R.string.patients_list_add_new_button))
+          Icon(Icons.Filled.Add, stringResource(R.string.cradle_form_list_add_new_button))
 
           AnimatedVisibility(visible = lazyListState.isScrollingUp()) {
             Text(
-              text = stringResource(R.string.patients_list_add_new_button),
+              text = stringResource(R.string.cradle_form_list_add_new_button),
               modifier = Modifier.padding(start = 4.dp, top = 2.dp)
             )
           }
@@ -301,7 +301,7 @@ private fun CradleFormListScreen(
               textAlign = TextAlign.Center
             )
             Text(
-              stringResource(R.string.patient_list_no_patients_app_doesnt_download_from_medscinet),
+              stringResource(R.string.cradle_form_list_no_forms_app_doesnt_download_from_medscinet),
               textAlign = TextAlign.Center
             )
           }

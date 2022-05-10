@@ -386,10 +386,7 @@ class RestApi @Inject internal constructor(
           "trying to post ${PostType::class.java.simpleName} that has already been uploaded"
       )
       return PostResult.AlreadyUploaded(serverInfo)
-    } else if (
-      serverInfo?.objectId != null &&
-      (serverInfo.createdTime == null || serverInfo.updateTime == null)
-    ) {
+    } else if (serverInfo?.objectId != null && serverInfo.createdTime == null) {
       Log.w(
         TAG,
         "multiStageNewFormSubmission: " +
@@ -485,7 +482,7 @@ class RestApi @Inject internal constructor(
       }
     }
 
-    val operationLog = when (
+    val operationLog: OperationLog = when (
       val result = getOperationLog<CradleImplementationData>(objectId = objectId)
     ) {
       is NetworkResult.Success -> result.value
@@ -513,8 +510,8 @@ class RestApi @Inject internal constructor(
       ServerInfo(
         nodeId = null,
         objectId = objectId.id.toLong(),
-        updateTime = operationLog.updated?.date,
-        createdTime = operationLog.inserted?.date
+        updateTime = operationLog.updated?.parsedDate,
+        createdTime = operationLog.inserted?.parsedDate
       )
     )
   }
