@@ -333,6 +333,9 @@ class CradleTrainingFormViewModel @Inject constructor(
             totalStaffTrainedTodayTBA.backingState.value = cradleForm.totalStaffTrainedTodayTBA?.toString() ?: ""
             totalStaffTrainedBefore.backingState.value = cradleForm.totalStaffTrainedBefore?.toString() ?: ""
             totalStaffTrainedScoredMoreThan8.backingState.value = cradleForm.totalStaffTrainedScoredMoreThan8?.toString() ?: ""
+
+            localNotes.value = cradleForm.localNotes ?: ""
+            isDraft.value = cradleForm.isDraft
           }
 
           FormState.Ready(cradleFormAndDependencies)
