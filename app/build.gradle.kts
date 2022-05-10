@@ -35,7 +35,7 @@ android {
         minSdk = appconfig.versions.minSdkVersion.get().toInt()
         targetSdk = appconfig.versions.targetSdkVersion.get().toInt()
         versionCode = 19
-        versionName = "1.0.2"
+        versionName = "1.0.2-location"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
@@ -169,6 +169,10 @@ dependencies {
 
     implementation(libs.google.tink)
     implementation(libs.signal.argon2)
+
+    implementation(libs.gms.location)
+
+    implementation("com.google.android.play:app-update-ktx:2.0.0")
 
     testImplementation(libs.junit.android)
     androidTestImplementation(libs.androidx.test.ext.junit)

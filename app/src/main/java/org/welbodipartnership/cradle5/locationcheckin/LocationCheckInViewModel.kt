@@ -9,6 +9,7 @@ import android.location.Location
 import android.location.LocationManager
 import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresPermission
 import androidx.core.content.ContextCompat
 import androidx.core.location.LocationManagerCompat
 import androidx.core.os.CancellationSignal
@@ -18,8 +19,13 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.tasks.CancellationTokenSource
+import com.google.android.gms.tasks.Task
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.actor
@@ -41,13 +47,16 @@ import org.welbodipartnership.cradle5.data.database.entities.LocationCheckIn
 import org.welbodipartnership.cradle5.domain.sync.SyncRepository
 import org.welbodipartnership.cradle5.util.datetime.UnixTimestamp
 import org.welbodipartnership.cradle5.util.executors.AppExecutors
+import java.io.IOException
 import javax.annotation.concurrent.Immutable
 import javax.inject.Inject
+import kotlin.coroutines.coroutineContext
+import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 @HiltViewModel
 class LocationCheckInViewModel @Inject constructor(
-  @ApplicationContext context: Context,
+  @ApplicationContext private val context: Context,
   private val executors: AppExecutors,
   private val dbWrapper: CradleDatabaseWrapper,
   private val syncRepository: SyncRepository,
@@ -106,7 +115,7 @@ class LocationCheckInViewModel @Inject constructor(
     }
 
     _locationProviderListText.value = allProviders.asSequence()
-      .mapNotNull {
+      .map {
         // isProviderEnabled should not throw on Android >= 5
         try {
           if (locationManager.isProviderEnabled(it)) {
@@ -197,39 +206,24 @@ class LocationCheckInViewModel @Inject constructor(
       val isLocationEnabled = LocationManagerCompat.isLocationEnabled(locationManager)
       Log.d(TAG, "provider = $provider, isLocationEnabled = $isLocationEnabled")
 
-      val location: Location? = try {
-        suspendCancellableCoroutine<Location?> { cont ->
-          val cancellationSignal = CancellationSignal()
-          try {
-            LocationManagerCompat.getCurrentLocation(
-              locationManager,
-              provider,
-              cancellationSignal,
-              executors.locationExecutor,
-            ) { location ->
-              cont.resume(location, null)
-            }
-          } catch (e: Exception) {
-            Log.w(TAG, "${e::class.java.simpleName} while getting location", e)
-            cont.resumeWithException(e)
-          }
-          cont.invokeOnCancellation { cancellationSignal.cancel() }
-        }
-      } catch (e: Exception) {
-        Log.e(TAG, "${e::class.java.simpleName} while getting location, outside", e)
-        ensureActive()
-        null
-      }
+      val locationType: LocationType? = getLocationWithPlayServices()
+        ?: getLocationWithoutPlayServices(provider)
 
-      _screenState.value = if (location != null) {
-        val checkIn = LocationCheckIn(
-          isUploaded = false,
-          timestamp = UnixTimestamp.now().timestamp,
-          providerName = location.provider ?: provider,
-          accuracy = if (location.hasAccuracy()) location.accuracy.toDouble() else null,
-          latitude = location.latitude,
-          longitude = location.longitude,
-        )
+      _screenState.value = if (locationType != null) {
+        val typeName = when (locationType) {
+          is LocationType.GooglePlay -> "Google Play"
+          is LocationType.System -> "System"
+        }
+        val checkIn = with(locationType) {
+          LocationCheckIn(
+            isUploaded = false,
+            timestamp = UnixTimestamp.now().timestamp,
+            providerName = "${location.provider ?: provider} ($typeName)",
+            accuracy = if (location.hasAccuracy()) location.accuracy.toDouble() else null,
+            latitude = location.latitude,
+            longitude = location.longitude,
+          )
+        }
         dbWrapper.locationCheckInDao().insertCheckIn(checkIn)
 
         resetStateJob?.cancel()
@@ -252,6 +246,84 @@ class LocationCheckInViewModel @Inject constructor(
           ScreenState.ErrorLocationDisabled
         }
       }
+    }
+  }
+
+  sealed class LocationType {
+    abstract val location: Location
+
+    data class GooglePlay(override val location: Location) : LocationType()
+    data class System(override val location: Location) : LocationType()
+  }
+
+  @RequiresPermission(
+    allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION]
+  )
+  private suspend fun getLocationWithPlayServices(): LocationType.GooglePlay? {
+    Log.d(TAG, "Getting location with FusedLocationProvider")
+    val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+    val cts = CancellationTokenSource()
+
+    val task: Task<Location> = fusedLocationClient.getCurrentLocation(
+      LocationRequest.PRIORITY_HIGH_ACCURACY,
+      cts.token
+    )
+    return try {
+      if (task.isComplete) {
+        if (task.isSuccessful) {
+          LocationType.GooglePlay(task.result)
+        } else {
+          throw task.exception ?: IOException("failed to get location and task had no error")
+        }
+      } else {
+        suspendCancellableCoroutine { cont ->
+          cont.invokeOnCancellation { cts.cancel() }
+          task
+            .addOnSuccessListener { location ->
+              Log.d(TAG, "Successfully retrieved location from FusedLocationProvider (provider ${location.provider})")
+              cont.resume(LocationType.GooglePlay(location))
+            }
+            .addOnFailureListener { cause -> cont.resumeWithException(cause) }
+        }
+      }
+    } catch (e: Exception) {
+      if (e is CancellationException) throw e
+      Log.e(TAG, "failed to get location with Play services", e)
+      null
+    }
+  }
+
+  @RequiresPermission(
+    allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION]
+  )
+  private suspend fun getLocationWithoutPlayServices(provider: String): LocationType.System? {
+    Log.d(TAG, "Getting location without Google Play services")
+    if (locationManager == null) {
+      Log.w(TAG, "location manager is missing")
+      return null
+    }
+    return try {
+      suspendCancellableCoroutine { cont ->
+        val cancellationSignal = CancellationSignal()
+        try {
+          LocationManagerCompat.getCurrentLocation(
+            locationManager,
+            provider,
+            cancellationSignal,
+            executors.locationExecutor,
+          ) { location ->
+            cont.resume(LocationType.System(location), null)
+          }
+        } catch (e: Exception) {
+          Log.w(TAG, "${e::class.java.simpleName} while getting location", e)
+          cont.resumeWithException(e)
+        }
+        cont.invokeOnCancellation { cancellationSignal.cancel() }
+      }
+    } catch (e: Exception) {
+      Log.e(TAG, "${e::class.java.simpleName} while getting location, outside", e)
+      coroutineContext.ensureActive()
+      null
     }
   }
 
