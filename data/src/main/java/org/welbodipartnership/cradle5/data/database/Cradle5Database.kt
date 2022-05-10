@@ -41,18 +41,21 @@ class CradleDatabaseWrapper @Inject constructor() {
     }
   }
 
-  internal fun setup(context: Context) {
+  internal fun setup(context: Context): Cradle5Database {
     if (database != null) {
-      return
+      return database!!
     }
     synchronized(CradleDatabaseWrapper::class.java) {
       if (database != null) {
-        return
+        return database!!
       }
-      database = Room.databaseBuilder(context, Cradle5Database::class.java, DATABASE_NAME)
+
+      val db = Room.databaseBuilder(context, Cradle5Database::class.java, DATABASE_NAME)
         // .openHelperFactory(supportFactory)
         .addMigrations(*MIGRATIONS)
         .build()
+      database = db
+      return db
     }
   }
 }

@@ -3,12 +3,14 @@ package org.welbodipartnership.cradle5.data.appinit
 import android.app.Application
 import android.util.Log
 import com.google.crypto.tink.streamingaead.StreamingAeadConfig
+import kotlinx.coroutines.flow.first
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
 import org.welbodipartnership.cradle5.data.settings.EncryptedSettingsManager
 import org.welbodipartnership.cradle5.data.settings.UnencryptedSettingsManager
 import org.welbodipartnership.cradle5.util.appinit.AppInitTask
 import javax.inject.Inject
 import kotlin.time.measureTime
+import kotlin.time.measureTimedValue
 
 class DataAndEncryptionSetupTask @Inject internal constructor(
   private val unencryptedSettings: UnencryptedSettingsManager,
@@ -28,7 +30,7 @@ class DataAndEncryptionSetupTask @Inject internal constructor(
     Log.d(TAG, "Done decrypting encrypted settings in $encryptedSettingsTime")
 
     Log.d(TAG, "Opening / decrypting database")
-    val dbOpenTime = measureTime {
+    val (db, dbOpenTime) = measureTimedValue {
     /*
     val databaseSecret = unencryptedSettings.getOrCreateDatabaseKey()
     val supportFactory = databaseSecret.createSupportFactory(object : SQLiteDatabaseHook {
@@ -59,6 +61,11 @@ class DataAndEncryptionSetupTask @Inject internal constructor(
     // We don't actually need the unencrypted settings anymore, as it just stores the ciphertext for
     // the keys.
     unencryptedSettings.closeDataStore()
+
+    // If an exception occurs due to inconsisten schema (Room validates schema), this will be caught
+    // by the AppInitManager
+    Log.d(TAG, "Checking database integrity")
+    Log.d(TAG, "There are ${db.districtDao().countTotalDistricts().first()} districts")
   }
 
   companion object {
