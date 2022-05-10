@@ -61,6 +61,7 @@ android {
             }
         }
     }
+  namespace = "org.welbodipartnership.cradle5.data"
 }
 
 ksp {
