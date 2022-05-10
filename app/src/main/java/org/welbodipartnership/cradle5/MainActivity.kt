@@ -527,6 +527,8 @@ private fun LoginForm(
       Spacer(Modifier.height(12.dp))
     }
 
+    Text("Version: ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")
+    Spacer(Modifier.height(12.dp))
     UsingServerText(LocalUrlProvider.current)
     Spacer(Modifier.height(12.dp))
 
