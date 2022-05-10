@@ -3,6 +3,7 @@ package org.welbodipartnership.cradle5.locationcheckin
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.os.Build
+import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
@@ -28,6 +29,7 @@ import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -35,11 +37,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.items
 import com.google.accompanist.insets.LocalWindowInsets
@@ -65,6 +70,21 @@ private fun LocationCheckInScreen(
   viewModel: LocationCheckInViewModel,
   onOpenSettingsForApp: () -> Unit,
 ) {
+  val locationEnabled by viewModel.locationEnabledState.collectAsState()
+  // Check if location state has changed when the lifecycle is resumed.
+  val locationCheckObserver = remember {
+    LifecycleEventObserver { _, event ->
+      if (event == Lifecycle.Event.ON_RESUME) {
+        viewModel.updateLocationProviderList()
+      }
+    }
+  }
+  val lifecycle = LocalLifecycleOwner.current.lifecycle
+  DisposableEffect(lifecycle, locationCheckObserver) {
+    lifecycle.addObserver(locationCheckObserver)
+    onDispose { lifecycle.removeObserver(locationCheckObserver) }
+  }
+
   val snackbarHostState = remember { SnackbarHostState() }
 
   val undoState by viewModel.undoCheckIn.collectAsState()
@@ -133,8 +153,20 @@ private fun LocationCheckInScreen(
                   Spacer(Modifier.height(8.dp))
                   CircularProgressIndicator()
                 }
-                LocationCheckInViewModel.ScreenState.Success -> {}
-                LocationCheckInViewModel.ScreenState.Ready -> {}
+                LocationCheckInViewModel.ScreenState.Success,
+                LocationCheckInViewModel.ScreenState.Ready -> {
+                  AnimatedVisibilityFadingWrapper(visible = !locationEnabled) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                      Text(
+                        "Location may be disabled on the device and might have to be enabled " +
+                          "in the system settings.",
+                        textAlign = TextAlign.Center
+                      )
+                      Spacer(Modifier.height(8.dp))
+                      OpenLocationSettingsButton()
+                    }
+                  }
+                }
                 LocationCheckInViewModel.ScreenState.ErrorLocationDisabled -> {
                   Text(
                     "Unable to get location: " +
@@ -143,25 +175,7 @@ private fun LocationCheckInScreen(
                     textAlign = TextAlign.Center
                   )
                   Spacer(Modifier.height(8.dp))
-                  val context = LocalContext.current
-                  Button(
-                    onClick = {
-                      val intent = Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-                      try {
-                        context.startActivity(intent)
-                      } catch (e: ActivityNotFoundException) {
-                        Log.e("LocationCheckInScreen", "unable to find location source")
-                        Toast
-                          .makeText(
-                            context,
-                            "Unable to open system location settings",
-                            Toast.LENGTH_SHORT
-                          ).show()
-                      }
-                    }
-                  ) {
-                    Text("Open settings")
-                  }
+                  OpenLocationSettingsButton()
                 }
               }
               AnimatedVisibilityFadingWrapper(
@@ -242,6 +256,30 @@ private fun LocationCheckInScreen(
         }
       }
     }
+  }
+}
+
+@Composable
+private fun OpenLocationSettingsButton(modifier: Modifier = Modifier) {
+  val context = LocalContext.current
+  Button(
+    onClick = {
+      val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+      try {
+        context.startActivity(intent)
+      } catch (e: ActivityNotFoundException) {
+        Log.e("LocationCheckInScreen", "unable to find location source")
+        Toast
+          .makeText(
+            context,
+            "Unable to open system location settings",
+            Toast.LENGTH_SHORT
+          ).show()
+      }
+    },
+    modifier = modifier
+  ) {
+    Text("Open settings")
   }
 }
 
