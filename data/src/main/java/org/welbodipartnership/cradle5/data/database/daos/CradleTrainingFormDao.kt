@@ -143,7 +143,7 @@ abstract class CradleTrainingFormDao {
   @Query("UPDATE CradleTrainingForm SET recordLastUpdated = :lastUpdated WHERE id = :formId")
   protected abstract suspend fun updateRecordLastUpdatedString(
     formId: Long,
-    lastUpdated: String
+    lastUpdated: ZonedDateTime
   ): Int
 
   @Query("UPDATE CradleTrainingForm SET serverErrorMessage = :serverErrorMessage WHERE id = :formId")
@@ -171,8 +171,7 @@ abstract class CradleTrainingFormDao {
       return false
     }
     val newUpdateTime = serverInfo.updateTime ?: serverInfo.createdTime ?: return true
-    val newLastUpdateDate = newUpdateTime.format(CradleTrainingForm.recordLastUpdatedFormatter)
-    return updateRecordLastUpdatedString(formId, newLastUpdateDate) == 1
+    return updateRecordLastUpdatedString(formId, newUpdateTime) == 1
   }
 
   @Query("SELECT COUNT(*) FROM CradleTrainingForm")
