@@ -29,7 +29,7 @@ import javax.inject.Singleton
 
 const val TAG = "Cradle5Database"
 
-const val DATABASE_VERSION = 12
+const val DATABASE_VERSION = 13
 const val DATABASE_NAME = "cradle5.db"
 
 @Singleton
@@ -114,6 +114,7 @@ private val MIGRATIONS = arrayOf(
     AutoMigration(from = 9, to = 10, spec = Cradle5Database.Version9To10::class),
     AutoMigration(from = 10, to = 11, spec = Cradle5Database.Version10To11::class),
     AutoMigration(from = 11, to = 12, spec = Cradle5Database.Version11To12::class),
+    AutoMigration(from = 12, to = 13),
   ]
 )
 @TypeConverters(DbTypeConverters::class)

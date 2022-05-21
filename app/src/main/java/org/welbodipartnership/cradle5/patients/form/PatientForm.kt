@@ -4,9 +4,12 @@ import android.content.Context
 import android.os.Parcelable
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
+import androidx.annotation.StringRes
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -35,6 +38,7 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.SnackbarHostState
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
+import androidx.compose.material.TextFieldColors
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.rememberScaffoldState
@@ -44,6 +48,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -54,14 +59,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
@@ -298,6 +306,23 @@ fun PatientForm(
           }
 
           val patientFields = viewModel.formFields.patientFields
+
+          FacilityBpInfoForm(
+            fields = patientFields.bpInfo,
+            textFieldToTextFieldHeight
+          )
+
+          Spacer(modifier = Modifier.height(textFieldToTextFieldHeight * 2))
+
+          Box(
+            Modifier
+              .fillMaxWidth()
+              .height(2.dp)
+              .background(MaterialTheme.colors.primary.copy(alpha = 0.5f))
+          )
+
+          Spacer(modifier = Modifier.height(textFieldToTextFieldHeight * 2))
+
           OutlinedTextFieldWithErrorHint(
             value = patientFields.initials.stateValue,
             onValueChange = {
@@ -635,6 +660,101 @@ fun PatientForm(
         }
         else -> {}
       }
+    }
+  }
+}
+
+@Composable
+fun IntegerField(
+  field: TextFieldState,
+  label: String,
+  modifier: Modifier = Modifier,
+  textFieldModifier: Modifier = Modifier,
+  enabled: Boolean = true,
+  readOnly: Boolean = false,
+  textStyle: TextStyle = MaterialTheme.typography.body2,
+  placeholder: @Composable (() -> Unit)? = null,
+  leadingIcon: @Composable (() -> Unit)? = null,
+  trailingIcon: @Composable (() -> Unit)? = null,
+  visualTransformation: VisualTransformation = VisualTransformation.None,
+  keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+  keyboardActions: KeyboardActions = KeyboardActions.Default,
+  singleLine: Boolean = true,
+  maxLines: Int = Int.MAX_VALUE,
+  interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+  shape: Shape = MaterialTheme.shapes.small,
+  colors: TextFieldColors = darkerDisabledOutlinedTextFieldColors()
+) {
+  OutlinedTextFieldWithErrorHint(
+    value = field.stateValue,
+    onValueChange = { newValue -> field.stateValue = newValue },
+    modifier = modifier,
+    textFieldModifier = textFieldModifier.then(field.createFocusChangeModifier()),
+    enabled = enabled,
+    readOnly = readOnly,
+    textStyle = textStyle,
+    label = { RequiredText(label, required = field.isMandatory) },
+    placeholder = placeholder,
+    leadingIcon = leadingIcon,
+    trailingIcon = trailingIcon,
+    errorHint = field.getError(),
+    visualTransformation = visualTransformation,
+    keyboardOptions = keyboardOptions.copy(keyboardType = KeyboardType.Number),
+    keyboardActions = keyboardActions,
+    singleLine = singleLine,
+    maxLines,
+    interactionSource,
+    shape,
+    colors
+  )
+}
+
+@Composable
+fun FacilityBpInfoForm(
+  fields: PatientFormViewModel.PatientFields.BpInfoFields,
+  textFieldToTextFieldHeight: Dp,
+  modifier: Modifier = Modifier,
+  textFieldModifier: Modifier = Modifier,
+) {
+  val (
+    isFormEnabledState,
+    numBpReadingsTakenInFacilitySinceLastVisit,
+    numBpReadingsEndIn0Or5,
+    numBpReadingsWithAssociatedColorAndArrow
+  ) = fields
+  var hasFilledOutToday by isFormEnabledState
+  Column(modifier) {
+    RequiredText(text = stringResource(R.string.facility_bp_info_checkbox_label))
+    // using negation, because No means have to fill it out
+    BooleanRadioButtonRow(
+      isTrue = hasFilledOutToday,
+      onBooleanChange = { newValue ->
+          val oldValue = hasFilledOutToday
+          hasFilledOutToday = newValue
+          if (oldValue != newValue) fields.clearFormsAndSetCheckbox(newEnabledState = newValue)
+      }
+    )
+
+    val commonKeyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
+    if (hasFilledOutToday == false) {
+      Spacer(Modifier.height(textFieldToTextFieldHeight))
+      IntegerField(
+        field = numBpReadingsTakenInFacilitySinceLastVisit,
+        label = stringResource(R.string.facility_bp_info_bp_readings_in_facility_today_since_last_visited_label),
+        keyboardOptions = commonKeyboardOptions
+      )
+      Spacer(Modifier.height(textFieldToTextFieldHeight))
+      IntegerField(
+        field = numBpReadingsEndIn0Or5,
+        label = stringResource(R.string.facility_bp_info_bp_readings_end_in_a_0_or_a_5_label),
+        keyboardOptions = commonKeyboardOptions
+      )
+      Spacer(Modifier.height(textFieldToTextFieldHeight))
+      IntegerField(
+        field = numBpReadingsWithAssociatedColorAndArrow,
+        label = stringResource(R.string.facility_bp_info_bp_readings_have_color_or_arrow_label),
+        keyboardOptions = commonKeyboardOptions
+      )
     }
   }
 }
@@ -1594,6 +1714,53 @@ open class NoFutureDateState(
   fun setStateFromFormDate(formDate: FormDate?) {
     stateValue = formDate?.toString(withSlashes = false) ?: ""
   }
+}
+
+class LimitedIntState(
+  isMandatory: Boolean,
+  val limit: IntRange,
+  backingState: MutableState<String> = mutableStateOf(""),
+  isFormDraftState: State<Boolean?>,
+  private val upperBoundInfo: UpperBoundInfo? = null,
+) : TextFieldState(
+  validator = { possibleInt ->
+    run {
+      if ((isFormDraftState.value == true || !isMandatory) && possibleInt.isBlank()) return@run true
+      val value = possibleInt.toIntOrNull() ?: return@run false
+      if (value !in limit) return@run false
+      if (upperBoundInfo != null) {
+        val upper = upperBoundInfo.stateUpperBound.stateValue.toIntOrNull()
+        if (upper == null) true else value <= upper
+      } else {
+        true
+      }
+    }
+  },
+  errorFor = { ctx, possibleInt ->
+    run {
+      val age = possibleInt.toIntOrNull() ?: return@run ctx.getString(R.string.input_must_be_in_range_d_and_d, limit.first, limit.last)
+      if (age !in limit) return@run ctx.getString(R.string.input_must_be_in_range_d_and_d, limit.first, limit.last)
+      if (upperBoundInfo != null) {
+        val upper = upperBoundInfo.stateUpperBound.stateValue.toIntOrNull()
+        if (upper == null) {
+          ctx.getString(R.string.input_must_be_in_range_d_and_d, limit.first, limit.last)
+        } else {
+          ctx.getString(upperBoundInfo.upperBoundErrorString)
+        }
+      } else {
+        ctx.getString(R.string.input_must_be_in_range_d_and_d, limit.first, limit.last)
+      }
+    }
+  },
+  backingState = backingState,
+  isFormDraftState = isFormDraftState,
+  isMandatory = isMandatory
+) {
+  @Stable
+  data class UpperBoundInfo(
+    val stateUpperBound: TextFieldState,
+    @StringRes val upperBoundErrorString: Int,
+  )
 }
 
 class LimitedAgeDateState(

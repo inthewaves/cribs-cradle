@@ -1,6 +1,9 @@
 package org.welbodipartnership.cradle5.patients.details
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -51,6 +54,41 @@ fun PatientCard(
         )
       }
     }
+
+    // using negation, because No means had to fill it out today
+    val shouldShowFacilityBpInfo = patient.facilityBpInfoToday != null ||
+      patient.facilityBpInfoTodayTouched.nullEnabledState == false
+    LabelAndValueOrUnknown(
+      label = stringResource(R.string.facility_bp_info_checkbox_label),
+      value = stringResource(if (shouldShowFacilityBpInfo) R.string.yes else R.string.no),
+    )
+    if (shouldShowFacilityBpInfo) {
+      LabelAndValueOrUnknown(
+        label = stringResource(R.string.facility_bp_info_bp_readings_in_facility_today_since_last_visited_label),
+        value = patient.facilityBpInfoToday?.numBpReadingsTakenInFacilitySinceLastVisit?.toString(),
+      )
+      Spacer(modifier = Modifier.height(spacerHeight))
+      LabelAndValueOrUnknown(
+        label = stringResource(R.string.facility_bp_info_bp_readings_end_in_a_0_or_a_5_label),
+        value = patient.facilityBpInfoToday?.numBpReadingsEndIn0Or5?.toString(),
+      )
+      Spacer(modifier = Modifier.height(spacerHeight))
+      LabelAndValueOrUnknown(
+        label = stringResource(R.string.facility_bp_info_bp_readings_have_color_or_arrow_label),
+        value = patient.facilityBpInfoToday?.numBpReadingsWithColorAndArrow?.toString(),
+      )
+    }
+
+    Spacer(modifier = Modifier.height(spacerHeight * 2))
+
+    Box(
+      Modifier
+        .fillMaxWidth()
+        .height(2.dp)
+        .background(MaterialTheme.colors.primary.copy(alpha = 0.5f))
+    )
+
+    Spacer(modifier = Modifier.height(spacerHeight * 2))
 
     LabelAndValueOrNone(
       label = stringResource(R.string.patient_registration_card_id_label),

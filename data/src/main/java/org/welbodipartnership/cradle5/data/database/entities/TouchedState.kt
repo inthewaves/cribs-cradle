@@ -26,4 +26,9 @@ enum class TouchedState(
    * "No"
    */
   TOUCHED_ENABLED(true);
+
+  companion object {
+    /** Corresponds to [TOUCHED], the ordinal of the enum. */
+    const val DEFAULT_VALUE = "1"
+  }
 }

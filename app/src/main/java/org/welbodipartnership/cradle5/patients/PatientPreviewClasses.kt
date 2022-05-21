@@ -4,6 +4,7 @@ import org.welbodipartnership.cradle5.data.database.entities.AgeAtDelivery
 import org.welbodipartnership.cradle5.data.database.entities.BirthWeight
 import org.welbodipartnership.cradle5.data.database.entities.CausesOfNeonatalDeath
 import org.welbodipartnership.cradle5.data.database.entities.EclampsiaFit
+import org.welbodipartnership.cradle5.data.database.entities.FacilityBpInfo
 import org.welbodipartnership.cradle5.data.database.entities.Hysterectomy
 import org.welbodipartnership.cradle5.data.database.entities.MaternalDeath
 import org.welbodipartnership.cradle5.data.database.entities.Outcomes
@@ -35,6 +36,12 @@ object PatientPreviewClasses {
     serverErrorMessage: String? = null,
     isDraft: Boolean = false,
   ) = Patient(
+    facilityBpInfoTodayTouched = TouchedState.TOUCHED,
+    facilityBpInfoToday = FacilityBpInfo(
+      numBpReadingsTakenInFacilitySinceLastVisit = 5,
+      numBpReadingsEndIn0Or5 = 2,
+      numBpReadingsWithColorAndArrow = 1
+    ),
     initials = "AA",
     serverInfo = serverInfo,
     serverErrorMessage = serverErrorMessage,

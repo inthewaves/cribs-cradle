@@ -38,6 +38,11 @@ data class Patient(
   @ColumnInfo(defaultValue = "23/03/2022")
   val registrationDate: FormDate = FormDate.today(),
 
+  @ColumnInfo(defaultValue = "1")
+  val facilityBpInfoTodayTouched: TouchedState,
+  @Embedded(prefix = "facility_bp_info_")
+  val facilityBpInfoToday: FacilityBpInfo?,
+
   val initials: String,
   val presentationDate: FormDate?,
 
@@ -132,6 +137,12 @@ data class Patient(
     }
   }
 }
+
+data class FacilityBpInfo(
+  val numBpReadingsTakenInFacilitySinceLastVisit: Int?,
+  val numBpReadingsEndIn0Or5: Int?,
+  val numBpReadingsWithColorAndArrow: Int?
+)
 
 @Immutable
 data class PatientReferralInfo(

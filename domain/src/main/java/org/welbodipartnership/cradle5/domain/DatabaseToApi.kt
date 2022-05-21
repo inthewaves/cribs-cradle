@@ -9,6 +9,11 @@ import org.welbodipartnership.cradle5.data.database.entities.Patient
 import org.welbodipartnership.cradle5.util.datetime.toUnixTimestamp
 
 fun Patient.toApiBody() = Registration(
+  bloodPressureDataRecordedToday = facilityBpInfoToday == null,
+  numOfBpReadings = facilityBpInfoToday?.numBpReadingsTakenInFacilitySinceLastVisit,
+  numOfBpReadingsEndInA0Or5 = facilityBpInfoToday?.numBpReadingsEndIn0Or5,
+  numOfBpReadingsHavingColorAndArrow = facilityBpInfoToday?.numBpReadingsWithColorAndArrow,
+
   initials = initials,
   presentationDate = presentationDate,
   age = dateOfBirth?.getAgeInYearsFromNow()?.toInt(),

@@ -11,6 +11,15 @@ import org.welbodipartnership.cradle5.util.datetime.FormDate
 @FormId(63)
 @PostOperationId(173)
 data class Registration(
+  @Json(name = "Control2211")
+  val bloodPressureDataRecordedToday: Boolean,
+  @Json(name = "Control2212")
+  val numOfBpReadings: Int?,
+  @Json(name = "Control2213")
+  val numOfBpReadingsEndInA0Or5: Int?,
+  @Json(name = "Control2214")
+  val numOfBpReadingsHavingColorAndArrow: Int?,
+
   @Json(name = "Control1336")
   val initials: String,
   @Json(name = "Control1646")
@@ -54,6 +63,11 @@ data class Registration(
 ) {
   companion object {
     val controlIdToNameMap: Map<String, String> = ArrayMap<String, String>(11).apply {
+      put("Control2211", "Today, have you already recorded blood pressure data in this facility for this visit?")
+      put("Control2212", "How many blood pressure readings have been taken in this facility since last visit?")
+      put("Control2213", "How many of those blood pressure readings end in a 0 or a 5?")
+      put("Control2214", "How many of those blood pressure readings have an associated colour and arrow?")
+
       put("Control1336", "Initials")
       put("Control1646", "Presentation date")
       put("Control1648", "Age")
