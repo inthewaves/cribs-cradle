@@ -722,21 +722,23 @@ fun FacilityBpInfoForm(
     numBpReadingsEndIn0Or5,
     numBpReadingsWithAssociatedColorAndArrow
   ) = fields
-  var hasFilledOutToday by isFormEnabledState
+  var isFormEnabled by isFormEnabledState
   Column(modifier) {
     RequiredText(text = stringResource(R.string.facility_bp_info_checkbox_label))
-    // using negation, because No means have to fill it out
+    // using negation, because No means have to fill it out, but we want to preserve semantics of
+    // "isFormEnabled"
     BooleanRadioButtonRow(
-      isTrue = hasFilledOutToday,
+      isTrue = isFormEnabled?.not(),
       onBooleanChange = { newValue ->
-          val oldValue = hasFilledOutToday
-          hasFilledOutToday = newValue
-          if (oldValue != newValue) fields.clearFormsAndSetCheckbox(newEnabledState = newValue)
+        val actualNewValue = !newValue
+        val oldValue = isFormEnabled?.not()
+        isFormEnabled = actualNewValue
+        if (oldValue != actualNewValue) fields.clearFormsAndSetCheckbox(newEnabledState = actualNewValue)
       }
     )
 
     val commonKeyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
-    if (hasFilledOutToday == false) {
+    if (isFormEnabled == true) {
       Spacer(Modifier.height(textFieldToTextFieldHeight))
       IntegerField(
         field = numBpReadingsTakenInFacilitySinceLastVisit,
