@@ -34,8 +34,8 @@ android {
         applicationId = "org.welbodipartnership.cradle5"
         minSdk = appconfig.versions.minSdkVersion.get().toInt()
         targetSdk = appconfig.versions.targetSdkVersion.get().toInt()
-        versionCode = 20
-        versionName = "1.1.0"
+        versionCode = 21
+        versionName = "1.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
