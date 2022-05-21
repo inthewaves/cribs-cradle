@@ -155,7 +155,6 @@ class PatientFormViewModel @Inject constructor(
     summaryOfMdsrFindings = handle.createMutableState("maternalDealthSummaryOfMdsr", null)
   )
 
-
   val formFields = PatientFormFields(
     patientFields = PatientFields(
       bpInfo = run {
