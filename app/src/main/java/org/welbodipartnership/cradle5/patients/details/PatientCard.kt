@@ -56,11 +56,12 @@ fun PatientCard(
     }
 
     // using negation, because No means had to fill it out today
+    // Also, the user can check the checkbox, but the actual data is all empty
     val shouldShowFacilityBpInfo = patient.facilityBpInfoToday != null ||
-      patient.facilityBpInfoTodayTouched.nullEnabledState == false
+      patient.facilityBpInfoTodayTouched.nullEnabledState == true
     LabelAndValueOrUnknown(
       label = stringResource(R.string.facility_bp_info_checkbox_label),
-      value = stringResource(if (shouldShowFacilityBpInfo) R.string.yes else R.string.no),
+      value = stringResource(if (shouldShowFacilityBpInfo) R.string.no else R.string.yes),
     )
     if (shouldShowFacilityBpInfo) {
       LabelAndValueOrUnknown(
