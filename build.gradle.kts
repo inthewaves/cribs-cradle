@@ -10,7 +10,7 @@ buildscript {
         classpath(libs.kotlin.serialization.base)
 
         classpath(libs.dagger.android.gradlePlugin)
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.10")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.21")
 
         classpath(libs.junit5.androidGradlePlugin)
         // NOTE: Do not place your application dependencies here; they belong

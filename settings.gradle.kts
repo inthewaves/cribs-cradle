@@ -21,17 +21,17 @@ dependencyResolutionManagement {
 
             library("desugar", "com.android.tools:desugar_jdk_libs:1.1.5")
 
-            version("kotlin", "1.6.10")
+            version("kotlin", "1.6.21")
             // Support for using version catalogs in buildscript and plugin blocks is in 7.2.0
             // https://github.com/gradle/gradle/pull/17394
             // https://github.com/gradle/gradle/commit/269148642b4499861bced4b028a400f856273bb2
             library("kotlin-gradle-plugin", "org.jetbrains.kotlin", "kotlin-gradle-plugin").versionRef("kotlin")
             library("kotlin-serialization-base", "org.jetbrains.kotlin", "kotlin-serialization").versionRef("kotlin")
-            library("kotlinx-serialization-json", "org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2")
-            library("kotlinx-coroutines-android", "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.1")
+            library("kotlinx-serialization-json", "org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.3")
+            library("kotlinx-coroutines-android", "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.2")
 
-            library("androidx-core-ktx", "androidx.core:core-ktx:1.7.0")
-            library("androidx-appcompat", "androidx.appcompat:appcompat:1.4.1")
+            library("androidx-core-ktx", "androidx.core:core-ktx:1.8.0")
+            library("androidx-appcompat", "androidx.appcompat:appcompat:1.4.2")
 
             version("androidxlifecycle", "2.4.1")
             library("androidx-lifecycle-runtime-ktx", "androidx.lifecycle", "lifecycle-runtime-ktx").versionRef("androidxlifecycle")
@@ -42,7 +42,7 @@ dependencyResolutionManagement {
 
             library("androidx-work-runtime", "androidx.work:work-runtime-ktx:2.7.1")
 
-            library("google-android-material", "com.google.android.material:material:1.6.0")
+            library("google-android-material", "com.google.android.material:material:1.6.1")
 
             version("accompanist", "0.23.1")
             library("accompanist-navigation-animation", "com.google.accompanist", "accompanist-navigation-animation").versionRef("accompanist")
@@ -55,7 +55,7 @@ dependencyResolutionManagement {
 
             library("signal-argon2", "org.signal:argon2:13.1")
 
-            version("hilt", "2.41")
+            version("hilt", "2.42")
             library("dagger-android-gradlePlugin", "com.google.dagger", "hilt-android-gradle-plugin").versionRef("hilt")
             plugin("dagger-android-plugin", "dagger.hilt.android.plugin").versionRef("hilt")
             library("hilt-library", "com.google.dagger", "hilt-android").versionRef("hilt")
@@ -89,9 +89,9 @@ dependencyResolutionManagement {
             version("paging", "3.1.1")
             library("androidx-paging-common", "androidx.paging", "paging-common-ktx").versionRef("paging")
             library("androidx-paging-runtime", "androidx.paging", "paging-runtime-ktx").versionRef("paging")
-            library("androidx-paging-compose", "androidx.paging:paging-compose:1.0.0-alpha14")
+            library("androidx-paging-compose", "androidx.paging:paging-compose:1.0.0-alpha15")
 
-            library("androidx-constraintlayout-compose", "androidx.constraintlayout:constraintlayout-compose:1.0.0")
+            library("androidx-constraintlayout-compose", "androidx.constraintlayout:constraintlayout-compose:1.0.1")
 
             version("compose", "1.1.1")
             library("compose-runtime", "androidx.compose.runtime", "runtime").versionRef("compose")
@@ -114,7 +114,7 @@ dependencyResolutionManagement {
             library("moshi-adapters", "com.squareup.moshi", "moshi-adapters").versionRef("moshi")
             // library("valiktor", "org.valiktor:valiktor-core:0.12.0")
 
-            version("protobuf", "3.20.1")
+            version("protobuf", "3.21.1")
             library("protobuf-kotlin-lite", "com.google.protobuf", "protobuf-kotlin-lite").versionRef("protobuf")
             library("protobuf-compiler", "com.google.protobuf", "protoc").versionRef("protobuf")
             plugin("protobuf", "com.google.protobuf").version("0.8.18")
@@ -130,7 +130,7 @@ dependencyResolutionManagement {
             library("junit5-engine", "org.junit.jupiter", "junit-jupiter-engine").versionRef("junit5")
             library("junit5-params", "org.junit.jupiter", "junit-jupiter-params").versionRef("junit5")
 
-            version("mockk", "1.12.1")
+            version("mockk", "1.12.4")
             library("mockk-mockk", "io.mockk", "mockk").versionRef("mockk")
             library("mockk-agent-jvm", "io.mockk", "mockk-agent-jvm").versionRef("mockk")
 
