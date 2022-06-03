@@ -55,31 +55,6 @@ fun PatientCard(
       }
     }
 
-    // using negation, because No means had to fill it out today
-    // Also, the user can check the checkbox, but the actual data is all empty
-    val shouldShowFacilityBpInfo = patient.facilityBpInfoToday != null ||
-      patient.facilityBpInfoTodayTouched.nullEnabledState == true
-    LabelAndValueOrUnknown(
-      label = stringResource(R.string.facility_bp_info_checkbox_label),
-      value = stringResource(if (shouldShowFacilityBpInfo) R.string.no else R.string.yes),
-    )
-    if (shouldShowFacilityBpInfo) {
-      LabelAndValueOrUnknown(
-        label = stringResource(R.string.facility_bp_info_bp_readings_in_facility_today_since_last_visited_label),
-        value = patient.facilityBpInfoToday?.numBpReadingsTakenInFacilitySinceLastVisit?.toString(),
-      )
-      Spacer(modifier = Modifier.height(spacerHeight))
-      LabelAndValueOrUnknown(
-        label = stringResource(R.string.facility_bp_info_bp_readings_end_in_a_0_or_a_5_label),
-        value = patient.facilityBpInfoToday?.numBpReadingsEndIn0Or5?.toString(),
-      )
-      Spacer(modifier = Modifier.height(spacerHeight))
-      LabelAndValueOrUnknown(
-        label = stringResource(R.string.facility_bp_info_bp_readings_have_color_or_arrow_label),
-        value = patient.facilityBpInfoToday?.numBpReadingsWithColorAndArrow?.toString(),
-      )
-    }
-
     Spacer(modifier = Modifier.height(spacerHeight * 2))
 
     Box(

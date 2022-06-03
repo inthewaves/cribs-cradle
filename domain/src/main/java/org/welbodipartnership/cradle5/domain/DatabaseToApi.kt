@@ -1,19 +1,16 @@
 package org.welbodipartnership.cradle5.domain
 
+import org.welbodipartnership.api.cradle5.FacilityBpData
 import org.welbodipartnership.api.cradle5.GpsForm
 import org.welbodipartnership.api.cradle5.Outcome
 import org.welbodipartnership.api.cradle5.Registration
+import org.welbodipartnership.cradle5.data.database.entities.FacilityBpInfo
 import org.welbodipartnership.cradle5.data.database.entities.LocationCheckIn
 import org.welbodipartnership.cradle5.data.database.entities.Outcomes
 import org.welbodipartnership.cradle5.data.database.entities.Patient
 import org.welbodipartnership.cradle5.util.datetime.toUnixTimestamp
 
 fun Patient.toApiBody() = Registration(
-  bloodPressureDataRecordedToday = facilityBpInfoToday == null,
-  numOfBpReadings = facilityBpInfoToday?.numBpReadingsTakenInFacilitySinceLastVisit,
-  numOfBpReadingsEndInA0Or5 = facilityBpInfoToday?.numBpReadingsEndIn0Or5,
-  numOfBpReadingsHavingColorAndArrow = facilityBpInfoToday?.numBpReadingsWithColorAndArrow,
-
   initials = initials,
   presentationDate = presentationDate,
   age = dateOfBirth?.getAgeInYearsFromNow()?.toInt(),
@@ -75,4 +72,15 @@ fun LocationCheckIn.toApiBody(userId: Int) = GpsForm(
   userId = userId.toString(),
   dateTimeIso8601 = this.timestamp.toUnixTimestamp().formatAsIso8601Date(),
   coordinates = "${this.latitude},${this.longitude}"
+)
+
+fun FacilityBpInfo.toApiBody() = FacilityBpData(
+  districtName = null,
+  recordLastUpdated = null,
+  districtId = district?.toInt(),
+  facilityId = facility?.toInt(),
+  dateOfDataCollection = dataCollectionDate?.toString(),
+  numOfBpReadings = numBpReadingsTakenInFacilitySinceLastVisit,
+  numOfBpReadingsEndInA0Or5 = numBpReadingsEndIn0Or5,
+  numOfBpReadingsHavingColorAndArrow = numBpReadingsWithColorAndArrow
 )

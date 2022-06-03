@@ -1,4 +1,4 @@
-package org.welbodipartnership.cradle5.patients.details
+package org.welbodipartnership.cradle5.ui.composables
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row

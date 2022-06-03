@@ -48,13 +48,23 @@
     <string name="form_date_cannot_be_in_future_error">Date cannot be in the future</string>
     <string name="age_must_be_in_range_d_and_d">Age must be in range %1$d to %2$d</string>
     <string name="input_must_be_in_range_d_and_d">Input must be in range %1$d to %2$d</string>
+    <string name="bp_info_add_new_button">New blood pressure reading data</string>
     <string name="bp_info_error_cannot_exceed_readings_taken_today">Cannot exceed number of blood pressure readings taken today</string>
-    <string name="facility_bp_info_label">Recorded blood pressure today at this facility</string>
-    <string name="facility_bp_info_checkbox_missing">Recorded blood pressure today at this facility checkbox required</string>
-    <string name="facility_bp_info_checkbox_label">Today, at this facility, have you recorded blood pressure data yet?</string>
-    <string name="facility_bp_info_bp_readings_in_facility_today_since_last_visited_label">How many blood pressure readings have been taken in this facility since you last visited?</string>
-    <string name="facility_bp_info_bp_readings_end_in_a_0_or_a_5_label">How many of those blood pressure readings end in a 0 or a 5?</string>
-    <string name="facility_bp_info_bp_readings_have_color_or_arrow_label">How many of those blood pressure readings have an associated colour and arrow?</string>
+    <string name="bp_info_label">Recorded blood pressure today at this facility</string>
+    <string name="bp_info_checkbox_missing">Recorded blood pressure today at this facility checkbox required</string>
+    <string name="bp_info_checkbox_label">Today, at this facility, have you recorded blood pressure data yet?</string>
+    <string name="bp_info_form_title">Blood pressure data</string>
+    <string name="bp_info_bp_readings_in_facility_today_since_last_visited_label">How many blood pressure readings have been taken in this facility since you last visited?</string>
+    <string name="bp_info_bp_readings_end_in_a_0_or_a_5_label">How many of those blood pressure readings end in a 0 or a 5?</string>
+    <string name="bp_info_bp_readings_have_color_or_arrow_label">How many of those blood pressure readings have an associated colour and arrow?</string>
+    <string name="bp_info_district_label">District</string>
+    <string name="bp_info_facility_label">Facility</string>
+    <string name="bp_info_collected_on_s">Entry collected on: %1$s</string>
+    <string name="bp_info_d_readings_collected">%1$d readings collected</string>
+    <string name="bp_info_d_readings_end_in_0_or_5">%1$d readings end in a 0 or a 5</string>
+    <string name="bp_info_d_readings_have_color_or_arrow">%1$d readings have an associated colour and arrow</string>
+    <string name="bp_form_failed_to_load_with_pk_d">Failed to load form with primary key %1$d</string>
+    <string name="bp_info_date_of_data_collection_label">Date of data collection</string>
     <string name="date_text_field_tap_to_set_date_placeholder">Tap here to select a date</string>
     <string name="new_patient_title">New patient</string>
     <string name="patient_registration_age_label">Age</string>
@@ -76,6 +86,8 @@
     <string name="errors_card_title">Errors</string>
     <string name="patient_details_screen_edit_button">Edit registration and outcomes</string>
     <string name="patient_form_save_edits">Save edits</string>
+    <string name="bp_info_save_new_form_button">Save new form</string>
+    <string name="bp_info_save_edits_button">Save edits</string>
     <string name="edit_patient_title">Editing patient</string>
     <string name="edit_patient_other_info_title">Editing other info for patient</string>
     <string name="discard">Discard</string>
@@ -104,8 +116,8 @@
     <string name="patient_registration_healthcare_facility_label">Healthcare facility</string>
     <string name="patient_registration_health_facility_dialog_title">Select a health facility</string>
     <string name="patient_registration_server_id_not_available">N/A (not yet uploaded)</string>
-    <string name="patient_form_cannot_edit_patient_already_on_server">Unable to edit patient and their outcomes that are already on the server</string>
-    <string name="patient_form_snackbar_failed_to_save_exception">Failed to save due to an exception</string>
+    <string name="form_cannot_edit_patient_already_on_server">Unable to edit patient and their outcomes that are already on the server</string>
+    <string name="form_snackbar_failed_to_save_exception">Failed to save due to an exception / error</string>
     <string name="sync_screen_start_sync_button">Sync</string>
     <string name="unknown_district">Unknown district</string>
     <string name="district_label_s">District: %1$s</string>
@@ -184,8 +196,10 @@
     <string name="patients_list_filter_by_facility_s">Facility (%1$s)</string>
     <string name="filter_button_clear_filter">Clear filter</string>
     <string name="missing_text_error">Missing input</string>
+    <string name="bp_info_title_edit">Edit blood pressure data</string>
+    <string name="bp_info_title_new">New blood pressure data</string>
 
-    <plurals name="patient_form_snackbar_failed_to_save_there_are_d_errors">
+    <plurals name="form_snackbar_failed_to_save_there_are_d_errors">
         <item quantity="one">Failed to save, as there is %1$d error.</item>
         <item quantity="other">Failed to save, as there are %1$d errors.</item>
     </plurals>

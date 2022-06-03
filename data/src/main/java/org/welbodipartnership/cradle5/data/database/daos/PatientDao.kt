@@ -134,7 +134,7 @@ abstract class PatientDao {
   @Query("UPDATE Patient SET nodeId = :nodeId, objectId = :objectId WHERE id = :patientId")
   protected abstract suspend fun updatePatientWithServerInfo(
     patientId: Long,
-    nodeId: Long,
+    nodeId: Long?,
     objectId: Long?
   ): Int
 

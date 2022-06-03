@@ -3,13 +3,14 @@ package org.welbodipartnership.cradle5.domain.facilities
 import android.content.Context
 import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
+import org.welbodipartnership.api.cradle5.FacilityBpData
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
 import org.welbodipartnership.cradle5.data.database.daos.FacilityBpInfoDao
 import org.welbodipartnership.cradle5.data.database.entities.FacilityBpInfo
 import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
 import org.welbodipartnership.cradle5.domain.RestApi
+import org.welbodipartnership.cradle5.domain.getErrorMessageOrNull
 import org.welbodipartnership.cradle5.domain.sync.SyncRepository
-import java.time.ZoneId
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -20,9 +21,6 @@ class BpInfoManager @Inject constructor(
   private val syncRepository: SyncRepository,
   @ApplicationContext private val context: Context,
 ) {
-
-  val editFormOutcomesState = syncRepository.editFormState
-
   sealed class UploadResult {
     data class Failure(
       val error: RestApi.PostResult,
@@ -33,19 +31,20 @@ class BpInfoManager @Inject constructor(
     object Success : UploadResult()
   }
 
-  suspend fun uploadCradleForm(form: FacilityBpInfo): UploadResult {
+  suspend fun uploadForm(form: FacilityBpInfo): UploadResult {
     val dao: FacilityBpInfoDao = dbWrapper.bpInfoDao()
     Log.d(TAG, "uploadCradleForm() with form primary key ${form.id}")
 
     var isMetaMissing = false
+    val serverErrorMessage: String?
     val serverInfo: ServerInfo = when (
-      val result = restApi.multiStagePostCradleTrainingForm(form)
+      val result = restApi.multiStagePostBpInfoForm(form)
     ) {
       is RestApi.PostResult.AllFailed -> {
-        val serverErrorMessage = result.failureBody?.modelState?.asSequence()
+        serverErrorMessage = result.failureBody?.modelState?.asSequence()
           ?.map { (controlId, errorMessageList) ->
             val fieldName =
-              CradleImplementationData.controlIdToNameMap.getOrDefault(controlId, controlId)
+              FacilityBpData.controlIdToNameMap.getOrDefault(controlId, controlId)
             val errorMessages = errorMessageList.joinToString()
             "$fieldName: $errorMessages"
           }
@@ -54,37 +53,37 @@ class BpInfoManager @Inject constructor(
 
         if (serverErrorMessage != null) {
           Log.w(TAG, "received error message from server; inserting")
-          dao.updateWithServerInfo(form.id, serverErrorMessage)
         }
         return UploadResult.Failure(result, serverErrorMessage)
       }
       is RestApi.PostResult.MetaInfoRetrievalFailed -> {
         Log.w(TAG, "only got partial patient info")
+        serverErrorMessage = result.failOrException?.getErrorMessageOrNull(context)
         dao.updateWithServerErrorMessage(form.id, "Failed to get form created date")
         isMetaMissing = true
         result.partialServerInfo
       }
-      is RestApi.PostResult.Success -> result.serverInfo
-      is RestApi.PostResult.AlreadyUploaded -> result.serverInfo
+      is RestApi.PostResult.Success -> {
+        serverErrorMessage = null
+        result.serverInfo
+      }
+      is RestApi.PostResult.AlreadyUploaded -> {
+        serverErrorMessage = null
+        result.serverInfo
+      }
     }
-
-    serverInfo.createdTime?.toInstant()?.let {
-      val isInDaylight = ZoneId.of("Europe/London").rules.isDaylightSavings(it)
-      Log.d(TAG, "Operation log Is ${serverInfo.createdTime} in daylight for Europe/London? $isInDaylight")
-    }
-
 
     dbWrapper.withTransaction {
-      dao.updateWithServerInfo(form.id, serverInfo)
-      if (!isMetaMissing) {
-        dao.updateWithServerErrorMessage(form.id, null)
+      dao.apply {
+        updateWithServerInfo(form.id, serverInfo)
+        updateWithServerErrorMessage(form.id, serverErrorMessage)
+        clearDraftStatus(form.id)
       }
-      dao.clearDraftStatus(form.id)
     }
     return if (!isMetaMissing) UploadResult.Success else UploadResult.NoMetaInfoFailure
   }
 
   companion object {
-    private const val TAG = "CradleTrainingFormManager"
+    private const val TAG = "BpInfoManager"
   }
 }

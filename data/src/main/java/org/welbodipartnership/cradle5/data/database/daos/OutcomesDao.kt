@@ -48,7 +48,7 @@ abstract class OutcomesDao {
   @Query("UPDATE Outcomes SET nodeId = :nodeId, objectId = :objectId WHERE id = :outcomesId")
   protected abstract suspend fun updateWithServerInfo(
     outcomesId: Long,
-    nodeId: Long,
+    nodeId: Long?,
     objectId: Long?
   ): Int
 

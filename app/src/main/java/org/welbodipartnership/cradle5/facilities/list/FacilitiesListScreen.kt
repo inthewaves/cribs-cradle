@@ -1,5 +1,6 @@
 package org.welbodipartnership.cradle5.facilities.list
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +21,7 @@ import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
 import androidx.compose.material.Card
 import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.FloatingActionButton
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.RadioButton
@@ -28,6 +30,7 @@ import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Note
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -58,16 +61,21 @@ import org.welbodipartnership.cradle5.R
 import org.welbodipartnership.cradle5.compose.rememberFlowWithLifecycle
 import org.welbodipartnership.cradle5.data.database.entities.Facility
 import org.welbodipartnership.cradle5.home.AccountInfoButton
+import org.welbodipartnership.cradle5.patients.list.isScrollingUp
 import org.welbodipartnership.cradle5.ui.composables.AnimatedVisibilityFadingWrapper
 import org.welbodipartnership.cradle5.ui.composables.carousel.Carousel
 import org.welbodipartnership.cradle5.ui.composables.screenlists.ScreenListItem
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
 
 @Composable
-fun FacilitiesListScreen(onOpenFacilityDetails: (facilityPk: Long) -> Unit,) {
+fun FacilitiesListScreen(
+  onOpenFacilityDetails: (facilityPk: Long) -> Unit,
+  onNewBpInfoPressed: () -> Unit
+) {
   FacilitiesListScreen(
     viewModel = hiltViewModel(),
-    onOpenFacilityDetails
+    onOpenFacilityDetails,
+    onNewBpInfoPressed
   )
 }
 
@@ -75,6 +83,7 @@ fun FacilitiesListScreen(onOpenFacilityDetails: (facilityPk: Long) -> Unit,) {
 private fun FacilitiesListScreen(
   viewModel: FacilitiesListViewModel,
   onOpenFacilityDetails: (facilityPk: Long) -> Unit,
+  onNewBpInfoPressed: () -> Unit,
 ) {
 
   var showFilterDialog by rememberSaveable { mutableStateOf(false) }
@@ -136,6 +145,7 @@ private fun FacilitiesListScreen(
     )
   }
 
+  val lazyListState = rememberLazyListState()
   Scaffold(
     topBar = {
       TopAppBar(
@@ -149,6 +159,20 @@ private fun FacilitiesListScreen(
         title = { Text(text = stringResource(R.string.facilities_title)) },
         actions = { AccountInfoButton() }
       )
+    },
+    floatingActionButton = {
+      FloatingActionButton(onClick = onNewBpInfoPressed) {
+        Row(Modifier.padding(16.dp)) {
+          Icon(Icons.Filled.Add, stringResource(R.string.patients_list_add_new_button))
+
+          AnimatedVisibility(visible = lazyListState.isScrollingUp()) {
+            Text(
+              text = stringResource(R.string.bp_info_add_new_button),
+              modifier = Modifier.padding(start = 4.dp, top = 2.dp)
+            )
+          }
+        }
+      }
     }
   ) { padding ->
     Column(Modifier.padding(padding)) {
@@ -158,8 +182,6 @@ private fun FacilitiesListScreen(
       val facilitiesCount by rememberFlowWithLifecycle(
         viewModel.facilitiesCountFlow, minActiveState = Lifecycle.State.RESUMED
       ).collectAsState(initial = null)
-
-      val lazyListState = rememberLazyListState()
 
       Row {
         Button(onClick = { showFilterDialog = true }) {

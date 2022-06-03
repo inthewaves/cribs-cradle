@@ -51,7 +51,6 @@ import org.welbodipartnership.cradle5.data.database.entities.CausesOfNeonatalDea
 import org.welbodipartnership.cradle5.data.database.entities.District
 import org.welbodipartnership.cradle5.data.database.entities.EclampsiaFit
 import org.welbodipartnership.cradle5.data.database.entities.Facility
-import org.welbodipartnership.cradle5.data.database.entities.FacilityBpInfo
 import org.welbodipartnership.cradle5.data.database.entities.Hysterectomy
 import org.welbodipartnership.cradle5.data.database.entities.MaternalDeath
 import org.welbodipartnership.cradle5.data.database.entities.Outcomes
@@ -186,31 +185,6 @@ class PatientFormViewModel @Inject constructor(
 
   val formFields = PatientFormFields(
     patientFields = PatientFields(
-      bpInfo = run {
-        val numBpReadings = limitedIntState(
-          "facilityBpInfoNumTakenSinceLastVisit",
-          isMandatory = false,
-          range = REGISTRATION_FACILITY_BP_COUNT_RANGE,
-        )
-        PatientFields.BpInfoFields(
-          isEnabled = enabledState("facilityBpInfoEnabled"),
-          numBpReadingsTakenInFacilitySinceLastVisit = numBpReadings,
-          numBpReadingsEndIn0Or5 = limitedIntState(
-            "facilityBpInfoNumEndIn0Or5",
-            isMandatory = false,
-            range = REGISTRATION_FACILITY_BP_COUNT_RANGE,
-            upperBoundState = numBpReadings,
-            upperBoundErrorString = R.string.bp_info_error_cannot_exceed_readings_taken_today,
-          ),
-          numBpReadingsWithAssociatedColorAndArrow = limitedIntState(
-            "facilityBpInfoNumWithAssociatedColorAndArrow",
-            isMandatory = false,
-            range = REGISTRATION_FACILITY_BP_COUNT_RANGE,
-            upperBoundState = numBpReadings,
-            upperBoundErrorString = R.string.bp_info_error_cannot_exceed_readings_taken_today,
-          ),
-        )
-      },
       initials = InitialsState(
         backingState = handle.createMutableState("patientInitials", ""),
         isFormDraftState = isFormDraftState,
@@ -354,7 +328,7 @@ class PatientFormViewModel @Inject constructor(
         ) {
           Log.w(TAG, "trying to edit a patient with server info")
           FormState.FailedLoading(
-            context.getString(R.string.patient_form_cannot_edit_patient_already_on_server)
+            context.getString(R.string.form_cannot_edit_patient_already_on_server)
           )
         } else {
           val (
@@ -373,17 +347,6 @@ class PatientFormViewModel @Inject constructor(
           }
 
           with(formFields.patientFields) {
-            with(bpInfo) {
-              patient.facilityBpInfoToday?.let {
-                isEnabled.value = true
-                numBpReadingsTakenInFacilitySinceLastVisit.backingState.value = it.numBpReadingsTakenInFacilitySinceLastVisit?.toString() ?: ""
-                numBpReadingsEndIn0Or5.backingState.value = it.numBpReadingsEndIn0Or5?.toString() ?: ""
-                numBpReadingsWithAssociatedColorAndArrow.backingState.value = it.numBpReadingsWithColorAndArrow?.toString() ?: ""
-              } ?: clearFormsAndSetCheckbox(
-                newEnabledState = patient.facilityBpInfoTodayTouched.nullEnabledState
-              )
-            }
-
             initials.backingState.value = patient.initials
             presentationDate.setStateFromFormDate(patient.presentationDate)
             val parsedAge = patient.dateOfBirth?.getAgeInYearsFromNow()?.toString()
@@ -582,7 +545,6 @@ class PatientFormViewModel @Inject constructor(
         is PatientFields.ReferralInfoFields -> R.string.patient_referral_info_labels
         is OutcomeFieldsWithoutCheckbox.AgeAtDelivery -> R.string.outcomes_age_at_delivery_label
         is OutcomeFieldsWithoutCheckbox.BirthWeight -> R.string.outcomes_birthweight_label
-        is PatientFields.BpInfoFields -> R.string.facility_bp_info_label
         else -> R.string.unknown
       }
       fun LinkedHashMap<Int, List<FieldError>>.addFieldError(
@@ -606,53 +568,6 @@ class PatientFormViewModel @Inject constructor(
 
         val patient = if (patientAndOutcomes?.patient?.isUploadedToServer != true) {
           with(formFields.patientFields) {
-            val bpInfoResult: Result<FacilityBpInfo>? = with(bpInfo) {
-              when (isEnabled.value) {
-                null -> {
-                  if (!isDraft) {
-                    fieldToErrorMap.addFieldError(
-                      getCategoryStringRes(),
-                      R.string.facility_bp_info_label,
-                      context.getString(R.string.facility_bp_info_checkbox_missing)
-                    )
-                  }
-                  null
-                }
-                true -> {
-                  if (!numBpReadingsTakenInFacilitySinceLastVisit.isValid) {
-                    fieldToErrorMap.addFieldError(
-                      getCategoryStringRes(),
-                      R.string.facility_bp_info_label,
-                      numBpReadingsTakenInFacilitySinceLastVisit.errorFor(context, numBpReadingsTakenInFacilitySinceLastVisit.stateValue)
-                    )
-                  }
-                  if (!numBpReadingsEndIn0Or5.isValid) {
-                    fieldToErrorMap.addFieldError(
-                      getCategoryStringRes(),
-                      R.string.facility_bp_info_label,
-                      numBpReadingsEndIn0Or5.errorFor(context, numBpReadingsEndIn0Or5.stateValue)
-                    )
-                  }
-                  if (!numBpReadingsWithAssociatedColorAndArrow.isValid) {
-                    fieldToErrorMap.addFieldError(
-                      getCategoryStringRes(),
-                      R.string.facility_bp_info_label,
-                      numBpReadingsWithAssociatedColorAndArrow.errorFor(context, numBpReadingsWithAssociatedColorAndArrow.stateValue)
-                    )
-                  }
-
-                  runCatching {
-                    FacilityBpInfo(
-                      numBpReadingsTakenInFacilitySinceLastVisit = numBpReadingsTakenInFacilitySinceLastVisit.stateValue.toIntOrNull(),
-                      numBpReadingsEndIn0Or5 = numBpReadingsEndIn0Or5.stateValue.toIntOrNull(),
-                      numBpReadingsWithColorAndArrow = numBpReadingsWithAssociatedColorAndArrow.stateValue.toIntOrNull()
-                    )
-                  }
-                }
-                false -> null
-              }
-            }
-
             if (!initials.isValid) {
               fieldToErrorMap.addFieldError(
                 categoryTitle = R.string.patient_registration_card_title,
@@ -782,13 +697,6 @@ class PatientFormViewModel @Inject constructor(
                 serverInfo = patientAndOutcomes?.patient?.serverInfo,
                 serverErrorMessage = null,
                 registrationDate = patientAndOutcomes?.patient?.registrationDate ?: FormDate.today(),
-
-                facilityBpInfoTodayTouched = when (bpInfo.isEnabled.value) {
-                  true -> TouchedState.TOUCHED_ENABLED
-                  false -> TouchedState.TOUCHED
-                  null -> TouchedState.NOT_TOUCHED
-                },
-                facilityBpInfoToday = bpInfoResult?.getOrThrow(),
 
                 initials = initials.stateValue,
                 presentationDate = presentationDate.dateFromStateOrNull(),
@@ -1207,8 +1115,6 @@ class PatientFormViewModel @Inject constructor(
 
   @Stable
   data class PatientFields(
-    val bpInfo: BpInfoFields,
-
     val initials: InitialsState,
     val presentationDate: NoFutureDateState,
     val age: LimitedAgeIntState,
@@ -1219,29 +1125,6 @@ class PatientFormViewModel @Inject constructor(
     val localNotes: MutableState<String>,
     val isDraft: SavedStateMutableState<Boolean?>,
   ) {
-    @Stable
-    data class BpInfoFields(
-      override val isEnabled: MutableState<Boolean?>,
-      val numBpReadingsTakenInFacilitySinceLastVisit: LimitedIntState,
-      val numBpReadingsEndIn0Or5: LimitedIntState,
-      val numBpReadingsWithAssociatedColorAndArrow: LimitedIntState,
-    ) : FieldsWithCheckbox() {
-      override fun clearFormsAndSetCheckbox(newEnabledState: Boolean?) {
-        isEnabled.value = newEnabledState
-        numBpReadingsTakenInFacilitySinceLastVisit.reset()
-        numBpReadingsEndIn0Or5.reset()
-        numBpReadingsWithAssociatedColorAndArrow.reset()
-      }
-
-      override fun forceShowErrors() {
-        if (isEnabled.value == true) {
-          numBpReadingsTakenInFacilitySinceLastVisit.enableShowErrors(force = true)
-          numBpReadingsEndIn0Or5.enableShowErrors(force = true)
-          numBpReadingsWithAssociatedColorAndArrow.enableShowErrors(force = true)
-        }
-      }
-    }
-
     @Stable
     data class ReferralInfoFields(
       override val isEnabled: MutableState<Boolean?>,

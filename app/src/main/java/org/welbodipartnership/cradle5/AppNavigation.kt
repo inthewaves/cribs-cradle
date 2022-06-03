@@ -37,9 +37,11 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
+import androidx.navigation.navOptions
 import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.composable
 import com.google.accompanist.navigation.animation.navigation
+import org.welbodipartnership.cradle5.facilities.bpinfo.FacilityBpInfoForm
 import org.welbodipartnership.cradle5.facilities.details.FacilityDetailsScreen
 import org.welbodipartnership.cradle5.facilities.list.FacilitiesListScreen
 import org.welbodipartnership.cradle5.facilities.otherinfoform.FacilityOtherInfoFormScreen
@@ -125,6 +127,28 @@ internal sealed class LeafScreen(private val route: String) {
       return "${root.route}/facilities/view/$facilityPrimaryKey"
     }
   }
+  object FacilityBpInfoCreate : LeafScreen("facilities/bpinfo/create?facility={facilityPk}") {
+    const val OPTIONAL_ARG_FACILITY_PK = "facilityPk"
+
+    override val matchRegex = createRouteMatcherWithOneNumericalArg()
+    fun createRoute(root: Screen, existingFacilityPk: Long?): String {
+      return buildString {
+        append(root.route)
+        append("/facilities/bpinfo/create")
+        if (existingFacilityPk != null) {
+          append("?facility=")
+          append(existingFacilityPk)
+        }
+      }
+    }
+  }
+  object FacilityBpInfoEdit : LeafScreen("facilities/bpinfo/edit/{pk}") {
+    const val ARG_FORM_PRIMARY_KEY = "pk"
+    override val matchRegex = createRouteMatcherWithOneNumericalArg()
+    fun createRoute(root: Screen, existingFormPk: Long): String {
+      return "${root.route}/facilities/bpinfo/edit/$existingFormPk"
+    }
+  }
   object FacilityOtherInfoEdit : LeafScreen(
     "facilities/other_info/edit/{facilityPk}",
   ) {
@@ -151,6 +175,8 @@ internal sealed class LeafScreen(private val route: String) {
         Facilities -> {}
         FacilityDetails -> {}
         FacilityOtherInfoEdit -> {}
+        FacilityBpInfoCreate -> {}
+        FacilityBpInfoEdit -> {}
       }
 
       listOf(
@@ -163,7 +189,9 @@ internal sealed class LeafScreen(private val route: String) {
         Sync,
         Facilities,
         FacilityDetails,
-        FacilityOtherInfoEdit
+        FacilityOtherInfoEdit,
+        FacilityBpInfoCreate,
+        FacilityBpInfoEdit,
       )
     }
 
@@ -338,6 +366,8 @@ private fun NavGraphBuilder.addFacilitiesTopLevel(
     addFacilitiesList(navController, Screen.Facilities)
     addFacilityDetails(navController, Screen.Facilities)
     addFacilityOtherInfoEdit(navController, Screen.Facilities)
+    addFacilityBpInfoCreate(navController, Screen.Facilities)
+    addFacilityBpInfoEdit(navController, Screen.Facilities)
   }
 }
 
@@ -349,6 +379,9 @@ private fun NavGraphBuilder.addFacilitiesList(
     FacilitiesListScreen(
       onOpenFacilityDetails = { facilityPk ->
         navController.navigate(LeafScreen.FacilityDetails.createRoute(root, facilityPk))
+      },
+      onNewBpInfoPressed = {
+        navController.navigate(LeafScreen.FacilityBpInfoCreate.createRoute(root, null))
       }
     )
   }
@@ -368,7 +401,13 @@ private fun NavGraphBuilder.addFacilityDetails(
       onBackPressed = { navController.navigateUp() },
       onFacilityOtherInfoEditPress = { facilityPrimaryKey ->
         navController.navigate(LeafScreen.FacilityOtherInfoEdit.createRoute(root, facilityPrimaryKey))
-      }
+      },
+      onNewBpInfoPressed = { facilityPk ->
+        navController.navigate(LeafScreen.FacilityBpInfoCreate.createRoute(root, facilityPk))
+      },
+      onEditBpInfoPressed = { bpInfoPk ->
+        navController.navigate(LeafScreen.FacilityBpInfoEdit.createRoute(root, bpInfoPk))
+      },
     )
   }
 }
@@ -387,6 +426,52 @@ private fun NavGraphBuilder.addFacilityOtherInfoEdit(
   ) {
     FacilityOtherInfoFormScreen(
       onNavigateBack = { navController.navigateUp() },
+    )
+  }
+}
+
+private fun NavGraphBuilder.addFacilityBpInfoCreate(
+  navController: NavController,
+  root: Screen,
+) {
+  composable(
+    route = LeafScreen.FacilityBpInfoCreate.createRoute(root),
+    arguments = listOf(
+      navArgument(LeafScreen.FacilityBpInfoCreate.OPTIONAL_ARG_FACILITY_PK) {
+        type = NavType.StringType
+        nullable = true
+      }
+    )
+  ) {
+    FacilityBpInfoForm(
+      onNavigateBack = { navController.navigateUp() },
+      onNavigateToFacilityAfterSaving = { pk ->
+        navController.withDebouncedAction {
+          popBackStack()
+          navigate(
+            LeafScreen.FacilityDetails.createRoute(root, pk),
+            // prevent duplicate screens
+            navOptions { launchSingleTop = true }
+          )
+        }
+      }
+    )
+  }
+}
+
+private fun NavGraphBuilder.addFacilityBpInfoEdit(
+  navController: NavController,
+  root: Screen,
+) {
+  composable(
+    route = LeafScreen.FacilityBpInfoEdit.createRoute(root),
+    arguments = listOf(
+      navArgument(LeafScreen.FacilityBpInfoEdit.ARG_FORM_PRIMARY_KEY) { type = NavType.LongType }
+    )
+  ) {
+    FacilityBpInfoForm(
+      onNavigateBack = { navController.navigateUp() },
+      onNavigateToFacilityAfterSaving = { navController.navigateUp() }
     )
   }
 }

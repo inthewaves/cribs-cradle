@@ -10,6 +10,7 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import org.welbodipartnership.cradle5.data.R
 import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
+import org.welbodipartnership.cradle5.data.database.entities.forms.TreeFormEntity
 import org.welbodipartnership.cradle5.data.verification.HasRequiredFields
 import org.welbodipartnership.cradle5.data.verification.Verifiable
 import org.welbodipartnership.cradle5.data.verification.verifyValue
@@ -69,7 +70,7 @@ data class Patient(
    */
   @ColumnInfo(defaultValue = "0")
   val isDraft: Boolean
-) : FormEntity, Verifiable<Patient>, HasRequiredFields {
+) : TreeFormEntity, Verifiable<Patient>, HasRequiredFields {
   val serverPatientId: Long? get() = serverInfo?.objectId
 
   override fun requiredFieldsPresent(): Boolean {

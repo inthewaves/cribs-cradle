@@ -61,6 +61,7 @@ import org.welbodipartnership.cradle5.domain.sync.SyncRepository
 import org.welbodipartnership.cradle5.patients.PatientPreviewClasses
 import org.welbodipartnership.cradle5.ui.composables.AnimatedVisibilityFadingWrapper
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
+import java.time.ZonedDateTime
 
 @Composable
 fun PatientDetailsScreen(
@@ -323,7 +324,7 @@ fun PatientDetailsScreenUploadedPreview() {
     Surface {
       PatientDetailsScreen(
         PatientFacilityDistrictOutcomes(
-          patient = PatientPreviewClasses.createTestPatient(serverInfo = ServerInfo(nodeId = 5L, objectId = null)),
+          patient = PatientPreviewClasses.createTestPatient(serverInfo = ServerInfo(nodeId = 5L, objectId = null, updateTime = ZonedDateTime.now(), createTime = ZonedDateTime.now())),
           facility = Facility(5, "Test facility", 0, 2, false, "My notes"),
           outcomes = PatientPreviewClasses.createTestOutcomes(),
           referralFromDistrict = District(PatientPreviewClasses.FROM_DISTRICT_ID, "Test 'from' district"),

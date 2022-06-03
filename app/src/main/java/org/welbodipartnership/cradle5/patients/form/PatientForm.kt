@@ -80,16 +80,16 @@ import org.welbodipartnership.cradle5.data.serverenums.DropdownType
 import org.welbodipartnership.cradle5.data.serverenums.ServerEnum
 import org.welbodipartnership.cradle5.data.serverenums.ServerEnumCollection
 import org.welbodipartnership.cradle5.patients.details.BaseDetailsCard
-import org.welbodipartnership.cradle5.patients.details.CategoryHeader
+import org.welbodipartnership.cradle5.ui.composables.CategoryHeader
 import org.welbodipartnership.cradle5.ui.composables.LabelAndValueOrNone
 import org.welbodipartnership.cradle5.ui.composables.forms.AnimatedErrorHint
 import org.welbodipartnership.cradle5.ui.composables.forms.BooleanRadioButtonRow
 import org.welbodipartnership.cradle5.ui.composables.forms.BringIntoViewOutlinedTextField
 import org.welbodipartnership.cradle5.ui.composables.forms.DatabasePagingListDropdown
 import org.welbodipartnership.cradle5.ui.composables.forms.DateOutlinedTextField
+import org.welbodipartnership.cradle5.ui.composables.forms.DistrictAndFacilityFormPair
 import org.welbodipartnership.cradle5.ui.composables.forms.EnumDropdownMenuIdOnly
 import org.welbodipartnership.cradle5.ui.composables.forms.EnumDropdownMenuWithOther
-import org.welbodipartnership.cradle5.ui.composables.forms.IntegerField
 import org.welbodipartnership.cradle5.ui.composables.forms.MoreInfoIconButton
 import org.welbodipartnership.cradle5.ui.composables.forms.OutlinedTextFieldWithErrorHint
 import org.welbodipartnership.cradle5.ui.composables.forms.RequiredText
@@ -132,7 +132,7 @@ fun PatientForm(
           .count()
         snackbarHostState.showSnackbar(
           resources.getQuantityString(
-            R.plurals.patient_form_snackbar_failed_to_save_there_are_d_errors,
+            R.plurals.form_snackbar_failed_to_save_there_are_d_errors,
             totalErrors,
             totalErrors,
           )
@@ -140,7 +140,7 @@ fun PatientForm(
       }
       is PatientFormViewModel.FormState.FailedException -> {
         snackbarHostState.showSnackbar(
-          context.getString(R.string.patient_form_snackbar_failed_to_save_exception)
+          context.getString(R.string.form_snackbar_failed_to_save_exception)
         )
       }
       else -> {}
@@ -255,11 +255,6 @@ fun PatientForm(
           }
 
           val patientFields = viewModel.formFields.patientFields
-
-          FacilityBpInfoForm(
-            fields = patientFields.bpInfo,
-            textFieldToTextFieldHeight
-          )
 
           Spacer(modifier = Modifier.height(textFieldToTextFieldHeight * 2))
 
@@ -614,58 +609,6 @@ fun PatientForm(
 }
 
 @Composable
-fun FacilityBpInfoForm(
-  fields: PatientFormViewModel.PatientFields.BpInfoFields,
-  textFieldToTextFieldHeight: Dp,
-  modifier: Modifier = Modifier,
-  textFieldModifier: Modifier = Modifier,
-) {
-  val (
-    isFormEnabledState,
-    numBpReadingsTakenInFacilitySinceLastVisit,
-    numBpReadingsEndIn0Or5,
-    numBpReadingsWithAssociatedColorAndArrow
-  ) = fields
-  var isFormEnabled by isFormEnabledState
-  Column(modifier) {
-    RequiredText(text = stringResource(R.string.facility_bp_info_checkbox_label))
-    // using negation, because No means have to fill it out, but we want to preserve semantics of
-    // "isFormEnabled"
-    BooleanRadioButtonRow(
-      isTrue = isFormEnabled?.not(),
-      onBooleanChange = { newValue ->
-        val actualNewValue = !newValue
-        val oldValue = isFormEnabled?.not()
-        isFormEnabled = actualNewValue
-        if (oldValue != actualNewValue) fields.clearFormsAndSetCheckbox(newEnabledState = actualNewValue)
-      }
-    )
-
-    val commonKeyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
-    if (isFormEnabled == true) {
-      Spacer(Modifier.height(textFieldToTextFieldHeight))
-      IntegerField(
-        field = numBpReadingsTakenInFacilitySinceLastVisit,
-        label = stringResource(R.string.facility_bp_info_bp_readings_in_facility_today_since_last_visited_label),
-        keyboardOptions = commonKeyboardOptions
-      )
-      Spacer(Modifier.height(textFieldToTextFieldHeight))
-      IntegerField(
-        field = numBpReadingsEndIn0Or5,
-        label = stringResource(R.string.facility_bp_info_bp_readings_end_in_a_0_or_a_5_label),
-        keyboardOptions = commonKeyboardOptions
-      )
-      Spacer(Modifier.height(textFieldToTextFieldHeight))
-      IntegerField(
-        field = numBpReadingsWithAssociatedColorAndArrow,
-        label = stringResource(R.string.facility_bp_info_bp_readings_have_color_or_arrow_label),
-        keyboardOptions = commonKeyboardOptions
-      )
-    }
-  }
-}
-
-@Composable
 fun PatientReferralInfoForm(
   referralInfoFields: PatientFormViewModel.PatientFields.ReferralInfoFields,
   districtPagingFlow: Flow<PagingData<District>>,
@@ -719,61 +662,6 @@ fun PatientReferralInfoForm(
         textFieldToTextFieldHeight
       )
     }
-  }
-}
-
-@Composable
-fun DistrictAndFacilityFormPair(
-  districtState: DistrictState,
-  districtLabel: @Composable() (() -> Unit)?,
-  facilityState: HealthcareFacilityState,
-  facilityCustomTextState: NonEmptyTextState,
-  facilityLabel: @Composable() (() -> Unit)?,
-  districtPagingFlow: Flow<PagingData<District>>,
-  facilityPagingFlowGetter: (District?) -> Flow<PagingData<Facility>>,
-  textFieldToTextFieldHeight: Dp,
-) {
-  DistrictListDropdown(
-    state = districtState,
-    pagingItemFlow = districtPagingFlow,
-    label = districtLabel,
-    modifier = Modifier.fillMaxWidth(),
-    textFieldModifier = Modifier
-      .fillMaxWidth()
-      .then(districtState.createFocusChangeModifier()),
-    extraOnItemSelected = { old, new ->
-      if (old != new) {
-        facilityState.reset()
-        facilityCustomTextState.reset()
-      }
-    },
-  )
-
-  Spacer(Modifier.height(textFieldToTextFieldHeight))
-
-  if (districtState.stateValue?.district?.isOther == true) {
-    OutlinedTextFieldWithErrorHint(
-      value = facilityCustomTextState.stateValue ?: "",
-      onValueChange = { facilityCustomTextState.stateValue = it },
-      modifier = Modifier.fillMaxWidth(),
-      label = facilityLabel,
-      colors = darkerDisabledOutlinedTextFieldColors(),
-      errorHint = facilityCustomTextState.getError()
-    )
-  } else {
-    val fromFacilityFlow = remember(districtState.stateValue) {
-      facilityPagingFlowGetter(districtState.stateValue?.district)
-    }
-
-    FacilityListDropdown(
-      state = facilityState,
-      pagingItemFlow = fromFacilityFlow,
-      label = facilityLabel,
-      modifier = Modifier.fillMaxWidth(),
-      textFieldModifier = Modifier
-        .fillMaxWidth()
-        .then(facilityState.createFocusChangeModifier())
-    )
   }
 }
 
@@ -1409,4 +1297,3 @@ fun FacilityListDropdown(
   modifier = modifier,
   textFieldModifier = textFieldModifier
 )
-

@@ -1,10 +1,12 @@
 package org.welbodipartnership.cradle5.data.database.daos
 
+import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.RewriteQueriesToDropUnusedColumns
 import androidx.room.Transaction
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
@@ -54,10 +56,13 @@ abstract class FacilityBpInfoDao {
   @Delete
   abstract suspend fun delete(bpInfo: FacilityBpInfo): Int
 
+  @Transaction
+  @Query("SELECT * FROM FacilityBpInfo WHERE id = :formPk")
+  abstract fun getFormFlow(formPk: Long): Flow<BpInfoFacilityDistrict?>
 
-  //@Transaction
-  //@Query("SELECT * FROM FacilityBpInfo WHERE id = :formPk")
-  //abstract fun getFormFlow(formPk: Long): Flow<BpInfoFacilityDistrict?>
+  @RewriteQueriesToDropUnusedColumns
+  @Query("SELECT * FROM FacilityBpInfo WHERE facility = :facilityPk ORDER BY recordLastUpdated DESC")
+  abstract fun bpInfoPagingSourceByFacilityId(facilityPk: Long): PagingSource<Int, FacilityBpInfo>
 
   /*
   @Query("SELECT initials FROM Patient WHERE id = :patientPk")
@@ -81,9 +86,9 @@ abstract class FacilityBpInfoDao {
     localNotes: String?
   ): Boolean = updateLocalNotesInner(patientPk, localNotes) == 1
 
-  //@RewriteQueriesToDropUnusedColumns
-  //@Query("SELECT * FROM FacilityBpInfo WHERE id = :formPk")
-  //abstract suspend fun getOtherInfo(formPk: Long): CradleFormOtherInfo?
+  // @RewriteQueriesToDropUnusedColumns
+  // @Query("SELECT * FROM FacilityBpInfo WHERE id = :formPk")
+  // abstract suspend fun getOtherInfo(formPk: Long): CradleFormOtherInfo?
 
   @Transaction
   @Query("SELECT * FROM FacilityBpInfo WHERE id = :formPk")
@@ -139,6 +144,9 @@ abstract class FacilityBpInfoDao {
   @Query("SELECT COUNT(*) FROM FacilityBpInfo")
   abstract fun countTotal(): Flow<Int>
 
+  @Query("SELECT COUNT(*) FROM FacilityBpInfo WHERE facility = :facilityPk")
+  abstract fun countTotalByFacilityId(facilityPk: Long): Flow<Int>
+
   @Query("SELECT COUNT(*) FROM FacilityBpInfo WHERE objectId IS NULL AND isDraft = 0 AND serverErrorMessage IS NULL")
   abstract fun countFormsToUploadWithoutErrors(): Flow<Int>
 
@@ -157,6 +165,6 @@ abstract class FacilityBpInfoDao {
   abstract suspend fun getFormsWithPartialServerInfoOrderedById(): List<FacilityBpInfo>
 
   companion object {
-    private const val WHERE_PARTIAL_FORM_CLAUSE = "objectId IS NOT NULL AND createdTime IS NULL"
+    private const val WHERE_PARTIAL_FORM_CLAUSE = "objectId IS NOT NULL AND createTime IS NULL"
   }
 }

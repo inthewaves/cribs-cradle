@@ -107,7 +107,7 @@ fun PatientsListScreen(
  * From Google's Animation code lab.
  */
 @Composable
-private fun LazyListState.isScrollingUp(): Boolean {
+fun LazyListState.isScrollingUp(): Boolean {
   var previousIndex by remember(this) { mutableStateOf(firstVisibleItemIndex) }
   var previousScrollOffset by remember(this) { mutableStateOf(firstVisibleItemScrollOffset) }
   return remember(this) {
@@ -624,7 +624,7 @@ fun PatientListItemPreview() {
           listPatientAndOutcomeError = ListPatientAndOutcomeError(
             listPatient = ListPatient(
               id = 0L,
-              serverInfo = ServerInfo(nodeId = 50, objectId = 50),
+              serverInfo = ServerInfo(nodeId = 50, objectId = 50, null, null),
               serverErrorMessage = null,
               initials = "AA",
               dateOfBirth = FormDate.today(),

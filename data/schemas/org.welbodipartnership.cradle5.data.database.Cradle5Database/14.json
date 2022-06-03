@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 14,
-    "identityHash": "f25cb721d213c090d33d5a47dc1b3072",
+    "identityHash": "49015d95513668dd7cfe8668180daab4",
     "entities": [
       {
         "tableName": "Patient",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `serverErrorMessage` TEXT, `registrationDate` TEXT NOT NULL DEFAULT '23/03/2022', `initials` TEXT NOT NULL, `presentationDate` TEXT, `dateOfBirth` TEXT, `isAgeUnknown` INTEGER NOT NULL DEFAULT 0, `address` TEXT, `healthcareFacilityId` INTEGER, `referralInfoTouched` INTEGER NOT NULL DEFAULT 1, `lastUpdatedTimestamp` INTEGER NOT NULL, `localNotes` TEXT, `isDraft` INTEGER NOT NULL DEFAULT 0, `nodeId` INTEGER, `objectId` INTEGER, `patient_referral_fromDistrict` INTEGER, `patient_referral_fromFacility` INTEGER, `patient_referral_fromFacilityText` TEXT, `patient_referral_toDistrict` INTEGER, `patient_referral_toFacility` INTEGER, `patient_referral_toFacilityText` TEXT)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `serverErrorMessage` TEXT, `registrationDate` TEXT NOT NULL DEFAULT '23/03/2022', `initials` TEXT NOT NULL, `presentationDate` TEXT, `dateOfBirth` TEXT, `isAgeUnknown` INTEGER NOT NULL DEFAULT 0, `address` TEXT, `healthcareFacilityId` INTEGER, `referralInfoTouched` INTEGER NOT NULL DEFAULT 1, `lastUpdatedTimestamp` INTEGER NOT NULL, `localNotes` TEXT, `isDraft` INTEGER NOT NULL DEFAULT 0, `nodeId` INTEGER, `objectId` INTEGER, `updateTime` INTEGER, `createTime` INTEGER, `patient_referral_fromDistrict` INTEGER, `patient_referral_fromFacility` INTEGER, `patient_referral_fromFacilityText` TEXT, `patient_referral_toDistrict` INTEGER, `patient_referral_toFacility` INTEGER, `patient_referral_toFacilityText` TEXT)",
         "fields": [
           {
             "fieldPath": "id",
@@ -103,6 +103,18 @@
             "notNull": false
           },
           {
+            "fieldPath": "serverInfo.updateTime",
+            "columnName": "updateTime",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "serverInfo.createTime",
+            "columnName": "createTime",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
             "fieldPath": "referralInfo.fromDistrict",
             "columnName": "patient_referral_fromDistrict",
             "affinity": "INTEGER",
@@ -160,7 +172,7 @@
       },
       {
         "tableName": "Outcomes",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `patientId` INTEGER NOT NULL, `serverErrorMessage` TEXT, `eclampsiaFitTouched` INTEGER NOT NULL DEFAULT 1, `hysterectomyTouched` INTEGER NOT NULL DEFAULT 1, `maternalDeathTouched` INTEGER NOT NULL DEFAULT 1, `perinatalDeathTouched` INTEGER NOT NULL DEFAULT 1, `nodeId` INTEGER, `objectId` INTEGER, `eclampsia_didTheWomanFit` INTEGER, `eclampsia_whenWasFirstFit` INTEGER, `eclampsia_place` INTEGER, `hysterectomy_date` TEXT, `hysterectomy_cause_selectionId` INTEGER, `hysterectomy_cause_otherString` TEXT, `maternal_death_date` TEXT, `maternal_death_place` INTEGER, `maternal_death_summaryOfMdsrFindings` TEXT, `maternal_death_cause_selectionId` INTEGER, `maternal_death_cause_otherString` TEXT, `perinatal_death_date` TEXT, `perinatal_death_outcome` INTEGER, `perinatal_death_additionalInfo` TEXT, `perinatal_death_cause_of_stillbirth_selectionId` INTEGER, `perinatal_death_cause_of_neonatal_death_respiratoryDistressSyndrome` INTEGER DEFAULT 0, `perinatal_death_cause_of_neonatal_death_birthAsphyxia` INTEGER DEFAULT 0, `perinatal_death_cause_of_neonatal_death_sepsis` INTEGER DEFAULT 0, `perinatal_death_cause_of_neonatal_death_pneumonia` INTEGER DEFAULT 0, `perinatal_death_cause_of_neonatal_death_meningitis` INTEGER DEFAULT 0, `perinatal_death_cause_of_neonatal_death_malaria` INTEGER DEFAULT 0, `perinatal_death_cause_of_neonatal_death_majorCongenitialMalformation` INTEGER DEFAULT 0, `perinatal_death_cause_of_neonatal_death_prematurity` INTEGER DEFAULT 0, `perinatal_death_cause_of_neonatal_death_causeNotEstablished` INTEGER DEFAULT 0, `perinatal_death_cause_of_neonatal_death_other` INTEGER DEFAULT 0, `perinatal_death_cause_of_neonatal_death_notReported` INTEGER DEFAULT 0, `birthweight_birthWeight` INTEGER, `birthweight_isNotReported` INTEGER, `age_at_delivery_ageAtDelivery` INTEGER, `age_at_delivery_isNotReported` INTEGER)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `patientId` INTEGER NOT NULL, `serverErrorMessage` TEXT, `eclampsiaFitTouched` INTEGER NOT NULL DEFAULT 1, `hysterectomyTouched` INTEGER NOT NULL DEFAULT 1, `maternalDeathTouched` INTEGER NOT NULL DEFAULT 1, `perinatalDeathTouched` INTEGER NOT NULL DEFAULT 1, `nodeId` INTEGER, `objectId` INTEGER, `updateTime` INTEGER, `createTime` INTEGER, `eclampsia_didTheWomanFit` INTEGER, `eclampsia_whenWasFirstFit` INTEGER, `eclampsia_place` INTEGER, `hysterectomy_date` TEXT, `hysterectomy_cause_selectionId` INTEGER, `hysterectomy_cause_otherString` TEXT, `maternal_death_date` TEXT, `maternal_death_place` INTEGER, `maternal_death_summaryOfMdsrFindings` TEXT, `maternal_death_cause_selectionId` INTEGER, `maternal_death_cause_otherString` TEXT, `perinatal_death_date` TEXT, `perinatal_death_outcome` INTEGER, `perinatal_death_additionalInfo` TEXT, `perinatal_death_cause_of_stillbirth_selectionId` INTEGER, `perinatal_death_cause_of_neonatal_death_respiratoryDistressSyndrome` INTEGER DEFAULT 0, `perinatal_death_cause_of_neonatal_death_birthAsphyxia` INTEGER DEFAULT 0, `perinatal_death_cause_of_neonatal_death_sepsis` INTEGER DEFAULT 0, `perinatal_death_cause_of_neonatal_death_pneumonia` INTEGER DEFAULT 0, `perinatal_death_cause_of_neonatal_death_meningitis` INTEGER DEFAULT 0, `perinatal_death_cause_of_neonatal_death_malaria` INTEGER DEFAULT 0, `perinatal_death_cause_of_neonatal_death_majorCongenitialMalformation` INTEGER DEFAULT 0, `perinatal_death_cause_of_neonatal_death_prematurity` INTEGER DEFAULT 0, `perinatal_death_cause_of_neonatal_death_causeNotEstablished` INTEGER DEFAULT 0, `perinatal_death_cause_of_neonatal_death_other` INTEGER DEFAULT 0, `perinatal_death_cause_of_neonatal_death_notReported` INTEGER DEFAULT 0, `birthweight_birthWeight` INTEGER, `birthweight_isNotReported` INTEGER, `age_at_delivery_ageAtDelivery` INTEGER, `age_at_delivery_isNotReported` INTEGER)",
         "fields": [
           {
             "fieldPath": "id",
@@ -217,6 +229,18 @@
           {
             "fieldPath": "serverInfo.objectId",
             "columnName": "objectId",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "serverInfo.updateTime",
+            "columnName": "updateTime",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "serverInfo.createTime",
+            "columnName": "createTime",
             "affinity": "INTEGER",
             "notNull": false
           },
@@ -575,7 +599,7 @@
       },
       {
         "tableName": "FacilityBpInfo",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `serverErrorMessage` TEXT, `isDraft` INTEGER NOT NULL DEFAULT 0, `dataCollectionDate` TEXT, `districtId` INTEGER, `facilityId` INTEGER, `numBpReadingsTakenInFacilitySinceLastVisit` INTEGER, `numBpReadingsEndIn0Or5` INTEGER, `numBpReadingsWithColorAndArrow` INTEGER, `nodeId` INTEGER, `objectId` INTEGER)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `serverErrorMessage` TEXT, `dataCollectionDate` TEXT, `district` INTEGER, `facility` INTEGER, `numBpReadingsTakenInFacilitySinceLastVisit` INTEGER, `numBpReadingsEndIn0Or5` INTEGER, `numBpReadingsWithColorAndArrow` INTEGER, `recordLastUpdated` INTEGER, `localNotes` TEXT, `isDraft` INTEGER NOT NULL DEFAULT 0, `nodeId` INTEGER, `objectId` INTEGER, `updateTime` INTEGER, `createTime` INTEGER)",
         "fields": [
           {
             "fieldPath": "id",
@@ -590,27 +614,20 @@
             "notNull": false
           },
           {
-            "fieldPath": "isDraft",
-            "columnName": "isDraft",
-            "affinity": "INTEGER",
-            "notNull": true,
-            "defaultValue": "0"
-          },
-          {
             "fieldPath": "dataCollectionDate",
             "columnName": "dataCollectionDate",
             "affinity": "TEXT",
             "notNull": false
           },
           {
-            "fieldPath": "districtId",
-            "columnName": "districtId",
+            "fieldPath": "district",
+            "columnName": "district",
             "affinity": "INTEGER",
             "notNull": false
           },
           {
-            "fieldPath": "facilityId",
-            "columnName": "facilityId",
+            "fieldPath": "facility",
+            "columnName": "facility",
             "affinity": "INTEGER",
             "notNull": false
           },
@@ -633,6 +650,25 @@
             "notNull": false
           },
           {
+            "fieldPath": "recordLastUpdated",
+            "columnName": "recordLastUpdated",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "localNotes",
+            "columnName": "localNotes",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "isDraft",
+            "columnName": "isDraft",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
             "fieldPath": "serverInfo.nodeId",
             "columnName": "nodeId",
             "affinity": "INTEGER",
@@ -641,6 +677,18 @@
           {
             "fieldPath": "serverInfo.objectId",
             "columnName": "objectId",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "serverInfo.updateTime",
+            "columnName": "updateTime",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "serverInfo.createTime",
+            "columnName": "createTime",
             "affinity": "INTEGER",
             "notNull": false
           }
@@ -658,7 +706,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'f25cb721d213c090d33d5a47dc1b3072')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '49015d95513668dd7cfe8668180daab4')"
     ]
   }
 }

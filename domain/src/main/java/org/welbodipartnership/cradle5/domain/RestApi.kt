@@ -30,10 +30,11 @@ import org.welbodipartnership.api.forms.meta.OperationLog
 import org.welbodipartnership.api.lookups.LookupResult
 import org.welbodipartnership.api.lookups.LookupsEnumerationEntry
 import org.welbodipartnership.api.lookups.dynamic.DynamicLookupBody
-import org.welbodipartnership.cradle5.data.database.entities.FormEntity
+import org.welbodipartnership.cradle5.data.database.entities.FacilityBpInfo
 import org.welbodipartnership.cradle5.data.database.entities.Outcomes
 import org.welbodipartnership.cradle5.data.database.entities.Patient
 import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
+import org.welbodipartnership.cradle5.data.database.entities.forms.FormEntity
 import org.welbodipartnership.cradle5.data.settings.AppValuesStore
 import org.welbodipartnership.cradle5.data.settings.AuthToken
 import org.welbodipartnership.cradle5.data.settings.authToken
@@ -291,8 +292,8 @@ class RestApi @Inject internal constructor(
     val idString = locationHeader.substringAfterLast('/', "")
       .ifEmpty { null }
       ?: throw IOException("location header $locationHeader doesn't have a path")
-   return idString.toIntOrNull()
-     ?: throw IOException("location header $locationHeader doesn't have a path")
+    return idString.toIntOrNull()
+      ?: throw IOException("location header $locationHeader doesn't have a path")
   }
 
   /**
@@ -783,14 +784,21 @@ class RestApi @Inject internal constructor(
     return multiStageNewFormSubmissionForTreeEntity(
       outcomes,
       { it.toApiBody() },
-      urlProvider = {
-        formId ->
+      urlProvider = { formId ->
         urlProvider.forms(
           formId = formId,
           objectId = ObjectId.NEW_POST,
           basePatientId = patientObjectId
         )
       }
+    )
+  }
+
+  suspend fun multiStagePostBpInfoForm(form: FacilityBpInfo): PostResult {
+    return multiStageNewFormSubmissionForNonTreeEntity(
+      form,
+      { it.toApiBody() },
+      urlProvider = { formId -> urlProvider.forms(formId = formId, objectId = ObjectId.NEW_POST) }
     )
   }
 

@@ -11,8 +11,8 @@ import org.welbodipartnership.cradle5.data.database.entities.FacilityBpInfo
 data class BpInfoFacilityDistrict(
   @Embedded
   val bpInfo: FacilityBpInfo,
-  @Relation(parentColumn = "districtId", entityColumn = "id")
+  @Relation(parentColumn = "district", entityColumn = "id")
   val district: District?,
-  @Relation(parentColumn = "facilityId", entityColumn = "id")
+  @Relation(parentColumn = "facility", entityColumn = "id")
   val facility: Facility?,
 )

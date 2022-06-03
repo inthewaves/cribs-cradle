@@ -13,6 +13,7 @@ import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import org.welbodipartnership.cradle5.data.database.entities.embedded.EnumSelection
 import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
+import org.welbodipartnership.cradle5.data.database.entities.forms.TreeFormEntity
 import org.welbodipartnership.cradle5.data.verification.HasRequiredFields
 import org.welbodipartnership.cradle5.data.verification.Verifiable
 import org.welbodipartnership.cradle5.util.datetime.FormDate
@@ -60,7 +61,7 @@ data class Outcomes(
 
   @Embedded(prefix = "age_at_delivery_")
   val ageAtDelivery: AgeAtDelivery?,
-) : FormEntity, Verifiable<Outcomes>, HasRequiredFields {
+) : TreeFormEntity, Verifiable<Outcomes>, HasRequiredFields {
 
   override fun requiredFieldsPresent(): Boolean {
     return when {

@@ -5,8 +5,10 @@ import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
+import org.welbodipartnership.cradle5.data.database.entities.forms.NonTreeFormEntity
 import org.welbodipartnership.cradle5.util.datetime.FormDate
 import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 
 @Entity
 data class FacilityBpInfo(
@@ -18,8 +20,8 @@ data class FacilityBpInfo(
   val serverErrorMessage: String?,
 
   val dataCollectionDate: FormDate?,
-  val districtId: Long?,
-  val facilityId: Long?,
+  val district: Long?,
+  val facility: Long?,
   val numBpReadingsTakenInFacilitySinceLastVisit: Int?,
   val numBpReadingsEndIn0Or5: Int?,
   val numBpReadingsWithColorAndArrow: Int?,
@@ -34,4 +36,9 @@ data class FacilityBpInfo(
    */
   @ColumnInfo(defaultValue = "0")
   val isDraft: Boolean,
-) : FormEntity
+) : NonTreeFormEntity {
+  companion object {
+    val friendlyDateFormatterForRecordLastUpdated: DateTimeFormatter =
+      DateTimeFormatter.ofPattern("EEE, dd MMM yyyy, hh:mm a")
+  }
+}
