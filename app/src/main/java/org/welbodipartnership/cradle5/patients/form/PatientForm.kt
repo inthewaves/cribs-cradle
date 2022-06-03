@@ -897,7 +897,7 @@ fun PerinatalDeathForm(
     EnumDropdownMenuIdOnly(
       currentSelection = outcomeState.stateValue,
       onSelect = { newState ->
-        val oldState = outcomeState.stateValue
+        val oldState: EnumSelection.IdOnly? = outcomeState.stateValue
         outcomeState.stateValue = newState
         if (oldState != newState) {
           if (newState.isStillbirth(outcomeState.enum!!)) {
@@ -910,7 +910,7 @@ fun PerinatalDeathForm(
               causeOfStillbirth.stateValue = null
               causesOfNeonatalDeathState.value = null
             }
-          } else if (newState == null) { // empty option selected
+          } else { // empty, or "other" selected
             causeOfStillbirth.stateValue = null
             causesOfNeonatalDeathState.value = null
           }
