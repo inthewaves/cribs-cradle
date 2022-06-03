@@ -258,15 +258,6 @@ fun PatientForm(
 
           Spacer(modifier = Modifier.height(textFieldToTextFieldHeight * 2))
 
-          Box(
-            Modifier
-              .fillMaxWidth()
-              .height(2.dp)
-              .background(MaterialTheme.colors.primary.copy(alpha = 0.5f))
-          )
-
-          Spacer(modifier = Modifier.height(textFieldToTextFieldHeight * 2))
-
           OutlinedTextFieldWithErrorHint(
             value = patientFields.initials.stateValue,
             onValueChange = {

@@ -57,15 +57,6 @@ fun PatientCard(
 
     Spacer(modifier = Modifier.height(spacerHeight * 2))
 
-    Box(
-      Modifier
-        .fillMaxWidth()
-        .height(2.dp)
-        .background(MaterialTheme.colors.primary.copy(alpha = 0.5f))
-    )
-
-    Spacer(modifier = Modifier.height(spacerHeight * 2))
-
     LabelAndValueOrNone(
       label = stringResource(R.string.patient_registration_card_id_label),
       value = patient.serverPatientId?.toString()
