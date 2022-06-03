@@ -86,6 +86,10 @@
 -keep class net.sqlcipher.** { *; }
 -dontwarn net.sqlcipher.**
 
+-keep class android.database.sqlite.** { *; }
+-keep class androidx.sqlite.db.** { *; }
+-keep class androidx.sqlite.** { *; }
+
 # Retain annotation default values for all annotations.
 # Required until R8 version >= 3.1.12+ (in AGP 7.1.0+).
 -keep,allowobfuscation,allowshrinking @interface *

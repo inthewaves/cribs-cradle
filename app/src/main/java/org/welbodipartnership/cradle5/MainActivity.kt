@@ -248,20 +248,20 @@ fun LoginOrLockscreen(authState: AuthState) {
   }
 
   // use boolean as key to ensure these gets cleared if logging out from the lockscreen
-  val (username, setUsername) = rememberSaveable(authState is AuthState.LoggedInUnlocked) {
+  val (username, setUsername) = remember(authState is AuthState.LoggedInUnlocked) {
     mutableStateOf("")
   }
-  val (password, setPassword) = rememberSaveable(authState is AuthState.LoggedInUnlocked) {
+  val (password, setPassword) = remember(authState is AuthState.LoggedInUnlocked) {
     mutableStateOf("")
   }
-  var attemptCount by rememberSaveable(authState is AuthState.LoggedOut) { mutableStateOf(0) }
-  var iconTaps by rememberSaveable(authState is AuthState.LoggedOut) { mutableStateOf(0) }
+  var attemptCount by remember(authState is AuthState.LoggedOut) { mutableStateOf(0) }
+  var iconTaps by remember(authState is AuthState.LoggedOut) { mutableStateOf(0) }
 
-  var isServerDialogShowing by rememberSaveable(authState is AuthState.LoggedInUnlocked) {
+  var isServerDialogShowing by remember(authState is AuthState.LoggedInUnlocked) {
     mutableStateOf(false)
   }
 
-  var hasClickedForgotPassword by rememberSaveable(authState is AuthState.LoggedInUnlocked) {
+  var hasClickedForgotPassword by remember(authState is AuthState.LoggedInUnlocked) {
     mutableStateOf(false)
   }
 

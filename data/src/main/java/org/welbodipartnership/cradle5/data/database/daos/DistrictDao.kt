@@ -1,5 +1,6 @@
 package org.welbodipartnership.cradle5.data.database.daos
 
+import android.util.Log
 import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Insert
@@ -71,11 +72,7 @@ abstract class DistrictDao {
   suspend fun getDistrictIndexWhenOrderedById(districtId: Long): Int? {
     // Room doesn't support this type of query
     val query = SimpleSQLiteQuery(
-      """
-        SELECT rowNum FROM (
-          SELECT ROW_NUMBER () OVER ($DEFAULT_ORDER) rowNum, id FROM District
-        ) WHERE id = ?;
-      """.trimIndent(),
+      "SELECT rowNum FROM (SELECT ROW_NUMBER () OVER ($DEFAULT_ORDER) rowNum, id FROM District) WHERE id = ?;",
       arrayOf(districtId)
     )
     // ROW_NUMBER is 1-based
@@ -86,6 +83,7 @@ abstract class DistrictDao {
   abstract fun countTotalDistricts(): Flow<Int>
 
   companion object {
+    private const val TAG = "DistrictDao"
     private const val DEFAULT_ORDER = "ORDER BY id COLLATE NOCASE ASC"
   }
 }
