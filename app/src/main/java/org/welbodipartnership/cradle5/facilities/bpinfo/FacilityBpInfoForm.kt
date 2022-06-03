@@ -193,7 +193,8 @@ fun FacilityBpInfoForm(
             viewModel.districtsPagerFlow,
             { district -> viewModel.getFacilitiesPagingDataForDistrict(district) },
             textFieldToTextFieldHeight,
-            enabled = viewModel.canChangeFacility
+            isDistrictEnabled = false,
+            isFacilityEnabled = viewModel.canChangeFacility
           )
 
           Spacer(Modifier.height(textFieldToTextFieldHeight))
