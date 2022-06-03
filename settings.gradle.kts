@@ -12,7 +12,7 @@ dependencyResolutionManagement {
     versionCatalogs {
         create("appconfig"){
             version("minSdkVersion", "23") // Android 6.0
-            version("compileSdkVersion", "31")
+            version("compileSdkVersion", "32")
             version("targetSdkVersion", "31")
         }
 

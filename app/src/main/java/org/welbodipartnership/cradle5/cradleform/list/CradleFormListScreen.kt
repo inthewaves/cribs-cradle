@@ -295,7 +295,15 @@ private fun CradleFormListScreen(
       Box(Modifier.fillMaxSize()) {
         AnimatedVisibilityFadingWrapper(
           visible = lazyPagingItems.loadState.refresh is LoadState.Loading
-        ) { CircularProgressIndicator(Modifier.align(Alignment.Center)) }
+        ) {
+          Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+          ) {
+            CircularProgressIndicator()
+          }
+        }
 
         AnimatedVisibilityFadingWrapper(
           modifier = Modifier.align(Alignment.Center),
