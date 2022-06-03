@@ -76,7 +76,7 @@ class PatientsManager @Inject constructor(
 
         return UploadResult.PatientFailure(patientResult, serverErrorMessage)
       }
-      is RestApi.PostResult.ObjectIdRetrievalFailed -> {
+      is RestApi.PostResult.MetaInfoRetrievalFailed -> {
         Log.w(TAG, "only got partial patient info")
 
         dbWrapper.patientsDao().updatePatientWithServerErrorMessage(
@@ -124,7 +124,7 @@ class PatientsManager @Inject constructor(
 
         return UploadResult.OutcomesFailure(outcomesResult, serverErrorMessage)
       }
-      is RestApi.PostResult.ObjectIdRetrievalFailed -> {
+      is RestApi.PostResult.MetaInfoRetrievalFailed -> {
         dbWrapper.outcomesDao().updateOutcomesWithServerErrorMessage(
           outcomes.id,
           "Failed to get server ObjectID"

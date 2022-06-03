@@ -11,15 +11,6 @@ import org.welbodipartnership.cradle5.util.datetime.FormDate
 @FormId(63)
 @PostOperationId(173)
 data class Registration(
-  @Json(name = "Control2211")
-  val bloodPressureDataRecordedToday: Boolean,
-  @Json(name = "Control2212")
-  val numOfBpReadings: Int?,
-  @Json(name = "Control2213")
-  val numOfBpReadingsEndInA0Or5: Int?,
-  @Json(name = "Control2214")
-  val numOfBpReadingsHavingColorAndArrow: Int?,
-
   @Json(name = "Control1336")
   val initials: String,
   @Json(name = "Control1646")

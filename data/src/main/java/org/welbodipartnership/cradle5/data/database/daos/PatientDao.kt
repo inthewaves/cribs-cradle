@@ -26,7 +26,8 @@ abstract class PatientDao {
    * by Room, as it is autoincrementing.
    */
   @Update
-  suspend fun upsert(patient: Patient): Long {
+  @Transaction
+  open suspend fun upsert(patient: Patient): Long {
     return if (update(patient) <= 0) {
       insert(patient)
     } else {

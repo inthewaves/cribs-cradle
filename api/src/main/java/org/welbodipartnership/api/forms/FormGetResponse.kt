@@ -8,6 +8,7 @@ import com.squareup.moshi.JsonReader
 import com.squareup.moshi.JsonWriter
 import com.squareup.moshi.internal.Util
 import org.welbodipartnership.api.forms.meta.Meta
+import org.welbodipartnership.api.forms.meta.OperationLog
 
 @JsonClass(generateAdapter = true)
 data class FormGetResponse<T>(
@@ -16,6 +17,11 @@ data class FormGetResponse<T>(
   @Json(name = "Meta")
   val meta: Meta
 ) {
+  @JsonClass(generateAdapter = true)
+  data class WithMinimalMetaOnly(
+    @Json(name = "Meta")
+    val meta: Meta.MinimalInfo
+  )
 
   object MetaObjectIdOnlyAdapter : SingleMetaFieldAdapter<Int>(
     metaFieldName = "ObjectId",
@@ -25,6 +31,14 @@ data class FormGetResponse<T>(
   object MetaTitleOnlyAdapter : SingleMetaFieldAdapter<String>(
     metaFieldName = "Title",
     resultParser = { nextString() }
+  )
+
+  class MetaOperationLogOnlyAdapter(adapter: JsonAdapter<OperationLog>) : SingleMetaFieldAdapter<OperationLog>(
+    metaFieldName = "OperationLog",
+    resultParser = {
+      adapter.fromJson(this)
+        ?: throw Util.unexpectedNull("operationLog_", "OperationLog", this)
+    }
   )
 
   /**

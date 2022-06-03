@@ -14,16 +14,19 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runInterruptible
 import okhttp3.FormBody
 import okhttp3.Headers
-import okio.BufferedSource
 import okio.buffer
 import okio.source
 import org.welbodipartnership.api.ApiAuthToken
 import org.welbodipartnership.api.IndexMenuItem
 import org.welbodipartnership.api.LoginErrorMessage
 import org.welbodipartnership.api.cradle5.GpsForm
+import org.welbodipartnership.api.cradle5.Outcome
+import org.welbodipartnership.api.cradle5.Registration
 import org.welbodipartnership.api.forms.FormGetResponse
 import org.welbodipartnership.api.forms.FormPostBody
 import org.welbodipartnership.api.forms.PostFailureBody
+import org.welbodipartnership.api.forms.meta.Meta
+import org.welbodipartnership.api.forms.meta.OperationLog
 import org.welbodipartnership.api.lookups.LookupResult
 import org.welbodipartnership.api.lookups.LookupsEnumerationEntry
 import org.welbodipartnership.api.lookups.dynamic.DynamicLookupBody
@@ -275,26 +278,32 @@ class RestApi @Inject internal constructor(
   // ---- Post requests for new form entries
 
   /**
-   * A reader to read a newly posted form entry's [NodeId] from the header. When a new form entry
-   * is made via a POST request, the API sends back the NodeId as a link in the Location header.
+   * Read an id from the Location header.
+   *
+   * When a new form entry is made via a POST request, the API sends back the NodeId / ObjectId as a
+   * link in the Location header.
+   *
+   * For forms with a tree structure, this will be a [NodeId]. Otherwise, it will be an [ObjectId].
    */
-  private val nodeIdFromHeaderReader: suspend (BufferedSource, Headers) -> NodeId = { _, headers ->
+  private fun parseIdFromLocationHeaderOrThrow(headers: Headers): Int {
     val locationHeader = headers["Location"]
       ?: throw IOException("missing expected location header")
-    val nodeIdString = locationHeader.substringAfterLast('/', "")
+    val idString = locationHeader.substringAfterLast('/', "")
       .ifEmpty { null }
       ?: throw IOException("location header $locationHeader doesn't have a path")
-    val nodeId = nodeIdString.toIntOrNull()
-      ?: throw IOException("location header $locationHeader doesn't end in an integer")
-    NodeId(nodeId)
+   return idString.toIntOrNull()
+     ?: throw IOException("location header $locationHeader doesn't have a path")
   }
 
   /**
    * Encapsulates the result of a sequence of POST and GET requests for uploading data to the API.
    *
-   * When we send a POST request to the server, the API does not give us the objectId. It only
-   * gives us the nodeId in the form of a URL in the response Location header. We have to follow
-   * the nodeId in order to get the objectId. This
+   * When we send a POST request to the server, the API does not give us the objectId or Meta info.
+   *
+   * For tree-based forms (where multiple forms have a tree hierarchy, e.g. a [Outcome] form entry
+   * is always a child of of a [Registration] entry), the API only gives us the [NodeId] in the form
+   * of a URL in the response Location header. We have to follow the nodeId in order to get the
+   * [ObjectId] and created/updated dates.
    */
   sealed interface PostResult {
     /**
@@ -328,7 +337,7 @@ class RestApi @Inject internal constructor(
     /**
      * R
      */
-    data class ObjectIdRetrievalFailed(
+    data class MetaInfoRetrievalFailed(
       val failOrException: NetworkResult<*, ByteArray>?,
       val otherCause: Exception? = null,
       val partialServerInfo: ServerInfo,
@@ -352,29 +361,31 @@ class RestApi @Inject internal constructor(
   private suspend inline fun <
     reified DbEntity : FormEntity,
     reified PostType
-    > multiStageNewFormSubmission(
+    > multiStageNewFormSubmissionForNonTreeEntity(
     entityToUpload: DbEntity,
     transform: (DbEntity) -> PostType,
     urlProvider: (FormId) -> String,
   ): PostResult {
     val serverInfo = entityToUpload.serverInfo
 
-    val nodeId: NodeId = if (serverInfo?.nodeId != null) {
-      if (serverInfo.objectId != null) {
-        Log.w(
-          TAG,
-          "multiStageNewFormSubmission: " +
-            "trying to post ${PostType::class.java.simpleName} that has already been uploaded"
-        )
-        return PostResult.AlreadyUploaded(serverInfo)
-      }
-      Log.d(
+    val objectId: ObjectId = if (
+      serverInfo?.objectId != null &&
+      serverInfo.createTime != null &&
+      serverInfo.updateTime != null
+    ) {
+      Log.w(
         TAG,
-        "multiStageNewFormSubmission" +
-          "entity ${PostType::class.java.simpleName} with id ${entityToUpload.id} has been " +
-          "partially uploaded"
+        "multiStageNewFormSubmissionForNonTreeEntity: " +
+          "trying to post ${PostType::class.java.simpleName} that has already been uploaded"
       )
-      NodeId(serverInfo.nodeId.toInt())
+      return PostResult.AlreadyUploaded(serverInfo)
+    } else if (serverInfo?.objectId != null && serverInfo.createTime == null) {
+      Log.w(
+        TAG,
+        "multiStageNewFormSubmissionForNonTreeEntity: " +
+          "attempting to recover Meta info for ${PostType::class.java.simpleName}"
+      )
+      ObjectId(serverInfo.objectId!!.toInt())
     } else {
       val submission: PostType = try {
         transform(entityToUpload)
@@ -389,7 +400,7 @@ class RestApi @Inject internal constructor(
       } catch (e: Exception) {
         Log.e(
           TAG,
-          "multiStageNewFormSubmission: " +
+          "multiStageNewFormSubmissionForNonTreeEntity: " +
             "${PostType::class.java.simpleName} does not have an adapter",
           e
         )
@@ -400,7 +411,159 @@ class RestApi @Inject internal constructor(
       } catch (e: Exception) {
         Log.e(
           TAG,
-          "multiStageNewFormSubmission: " +
+          "multiStageNewFormSubmissionForNonTreeEntity: " +
+            "${PostType::class.java.simpleName} missing FormId annotation",
+          e
+        )
+        return PostResult.AllFailed(failOrException = null, failureBody = null, otherCause = e)
+      }
+
+      val body = HttpClient.buildJsonRequestBody { sink -> adapter.toJson(sink, postBody) }
+
+      when (
+        val result = httpClient.makeRequest(
+          method = HttpClient.Method.POST,
+          url = urlProvider(formId),
+          headers = defaultHeadersFlow.first(),
+          requestBody = body,
+          failureReader = { src, _ ->
+            runInterruptible { src.readByteArray() }
+          },
+          successReader = { _, headers -> ObjectId(parseIdFromLocationHeaderOrThrow(headers)) }
+        )
+      ) {
+        is NetworkResult.Success -> {
+          val objectId = ObjectId(result.value.id)
+          Log.d(
+            TAG,
+            "multiStageNewFormSubmissionForNonTreeEntity: " +
+              "POSTed ${PostType::class.java.simpleName} & got ObjectId ${objectId.id}. " +
+              "Now getting updated and created dates from server"
+          )
+          objectId
+        }
+        is NetworkResult.Failure -> {
+          Log.e(
+            TAG,
+            "multiStageNewFormSubmissionForNonTreeEntity: " +
+              "failed to POST ${PostType::class.java.simpleName}: " +
+              result.getErrorMessageOrNull(context)
+          )
+
+          val failureBody: PostFailureBody? = try {
+            if (result.statusCode == 400) {
+              val failureAdapter = moshi.adapter(PostFailureBody::class.java)
+              failureAdapter.fromJson(result.errorValue.inputStream().source().buffer())
+            } else {
+              null
+            }
+          } catch (e: Exception) {
+            Log.e(TAG, "failed to parse error message")
+            null
+          }
+          return PostResult.AllFailed(result, failureBody, null)
+        }
+        is NetworkResult.NetworkException -> {
+          Log.e(
+            TAG,
+            "multiStageNewFormSubmissionForNonTreeEntity: " +
+              "exception during POST ${PostType::class.java.simpleName}: " +
+              result.getErrorMessageOrNull(context)
+          )
+          return PostResult.AllFailed(result, null, null)
+        }
+      }
+    }
+
+    val operationLog: OperationLog = when (
+      val result = getOperationLog<PostType>(objectId = objectId)
+    ) {
+      is NetworkResult.Success -> result.value
+      else -> {
+        Log.e(
+          TAG,
+          "multiStageNewFormSubmission: failed to get OperationLog for " +
+            "${PostType::class.java.simpleName}, $objectId: " +
+            result.getErrorMessageOrNull(context)
+        )
+        return PostResult.MetaInfoRetrievalFailed(
+          failOrException = result,
+          otherCause = null,
+          partialServerInfo = ServerInfo(
+            nodeId = null,
+            objectId = objectId.id.toLong(),
+            updateTime = null,
+            createTime = null
+          )
+        )
+      }
+    }
+
+    return PostResult.Success(
+      ServerInfo(
+        nodeId = null,
+        objectId = objectId.id.toLong(),
+        updateTime = operationLog.updated?.parsedDate,
+        createTime = operationLog.inserted?.parsedDate
+      )
+    )
+  }
+
+  /**
+   * Performs a POST and GET request sequence as documented in [PostResult].
+   */
+  private suspend inline fun <
+    reified DbEntity : FormEntity,
+    reified PostType
+    > multiStageNewFormSubmissionForTreeEntity(
+    entityToUpload: DbEntity,
+    transform: (DbEntity) -> PostType,
+    urlProvider: (FormId) -> String,
+  ): PostResult {
+    val serverInfo = entityToUpload.serverInfo
+
+    val nodeId: NodeId = if (serverInfo?.nodeId != null) {
+      if (serverInfo.objectId != null) {
+        Log.w(
+          TAG,
+          "multiStageNewFormSubmissionForTreeEntity: " +
+            "trying to post ${PostType::class.java.simpleName} that has already been uploaded"
+        )
+        return PostResult.AlreadyUploaded(serverInfo)
+      }
+      Log.d(
+        TAG,
+        "multiStageNewFormSubmissionForTreeEntity" +
+          "entity ${PostType::class.java.simpleName} with id ${entityToUpload.id} has been " +
+          "partially uploaded"
+      )
+      NodeId(serverInfo.nodeId!!.toInt())
+    } else {
+      val submission: PostType = try {
+        transform(entityToUpload)
+      } catch (e: Exception) {
+        Log.e(TAG, "transform failed", e)
+        return PostResult.AllFailed(null, null, e)
+      }
+      val postBody: FormPostBody<PostType>
+      val adapter: JsonAdapter<FormPostBody<PostType>> = try {
+        postBody = FormPostBody.create(submission)
+        moshi.adapter(Types.newParameterizedType(FormPostBody::class.java, PostType::class.java))
+      } catch (e: Exception) {
+        Log.e(
+          TAG,
+          "multiStageNewFormSubmissionForTreeEntity: " +
+            "${PostType::class.java.simpleName} does not have an adapter",
+          e
+        )
+        return PostResult.AllFailed(failOrException = null, failureBody = null, otherCause = e)
+      }
+      val formId = try {
+        FormId.fromAnnotationOrThrow<PostType>()
+      } catch (e: Exception) {
+        Log.e(
+          TAG,
+          "multiStageNewFormSubmissionForTreeEntity: " +
             "${PostType::class.java.simpleName} missing FormId annotation",
           e
         )
@@ -416,14 +579,14 @@ class RestApi @Inject internal constructor(
           headers = defaultHeadersFlow.first(),
           requestBody = body,
           failureReader = { src, _ -> src.readByteArray() },
-          successReader = nodeIdFromHeaderReader
+          successReader = { _, headers -> NodeId(parseIdFromLocationHeaderOrThrow(headers)) }
         )
       ) {
         is NetworkResult.Success -> result.value
         is NetworkResult.Failure -> {
           Log.e(
             TAG,
-            "multiStageNewFormSubmission: " +
+            "multiStageNewFormSubmissionForTreeEntity: " +
               "failed to POST ${PostType::class.java.simpleName}: " +
               result.getErrorMessageOrNull(context)
           )
@@ -445,7 +608,7 @@ class RestApi @Inject internal constructor(
         is NetworkResult.NetworkException -> {
           Log.e(
             TAG,
-            "multiStageNewFormSubmission: " +
+            "multiStageNewFormSubmissionForTreeEntity: " +
               "exception during POST ${PostType::class.java.simpleName}: " +
               result.getErrorMessageOrNull(context)
           )
@@ -454,31 +617,78 @@ class RestApi @Inject internal constructor(
       }.also {
         Log.d(
           TAG,
-          "multiStageNewFormSubmission: " +
+          "multiStageNewFormSubmissionForTreeEntity: " +
             "POSTed ${PostType::class.java.simpleName} & got NodeId ${it.id}. " +
             "Now getting ObjectId"
         )
       }
     }
 
-    val objectId = when (val result = getObjectId(nodeId)) {
+    val meta: Meta.MinimalInfo = when (val result = getMinimalMetaInfo(nodeId)) {
       is NetworkResult.Success -> result.value
       else -> {
         Log.e(
           TAG,
-          "multiStageNewFormSubmission: failed to get ObjectId for NodeId ${nodeId.id}: " +
+          "multiStageNewFormSubmissionForTreeEntity: failed to get ObjectId for NodeId ${nodeId.id}: " +
             result.getErrorMessageOrNull(context)
         )
-        return PostResult.ObjectIdRetrievalFailed(
+        return PostResult.MetaInfoRetrievalFailed(
           result,
           otherCause = null,
-          ServerInfo(nodeId = nodeId.id.toLong(), objectId = null)
+          ServerInfo(
+            nodeId = nodeId.id.toLong(),
+            objectId = null,
+            updateTime = null,
+            createTime = null
+          )
         )
       }
     }
 
     return PostResult.Success(
-      ServerInfo(nodeId = nodeId.id.toLong(), objectId = objectId.id.toLong())
+      ServerInfo(
+        nodeId = nodeId.id.toLong(),
+        objectId = meta.objectId,
+        // For a new submission, the update time might be null
+        updateTime = meta.operationLog.updated?.parsedDate ?: meta.operationLog.inserted?.parsedDate,
+        createTime = meta.operationLog.inserted?.parsedDate
+      )
+    )
+  }
+
+  private val getResponseMinimalMetaAdapter: JsonAdapter<Meta.MinimalInfo> =
+    moshi.adapter(Meta.MinimalInfo::class.java)
+
+  /**
+   * Gets the [Meta.MinimalInfo] for a form with the given [nodeId].
+   */
+  private suspend fun getMinimalMetaInfo(nodeId: NodeId): DefaultNetworkResult<Meta.MinimalInfo> {
+    return httpClient.makeRequest(
+      method = HttpClient.Method.GET,
+      url = urlProvider.forms(nodeId),
+      headers = defaultHeadersFlow.first(),
+      failureReader = { src, _ -> src.readByteArray() },
+      successReader = { src, _ ->
+        getResponseMinimalMetaAdapter.fromJson(src) ?: throw IOException("missing meta")
+      }
+    )
+  }
+
+  /**
+   * Gets the [Meta.MinimalInfo] for a form with the [objectId] for the [FormType]
+   */
+  private suspend inline fun <reified FormType> getMinimalMetaInfo(
+    objectId: ObjectId
+  ): DefaultNetworkResult<Meta.MinimalInfo> {
+    val formId = FormId.fromAnnotationOrThrow<FormType>()
+    return httpClient.makeRequest(
+      method = HttpClient.Method.GET,
+      url = urlProvider.forms(formId, objectId),
+      headers = defaultHeadersFlow.first(),
+      failureReader = { src, _ -> src.readByteArray() },
+      successReader = { src, _ ->
+        getResponseMinimalMetaAdapter.fromJson(src) ?: throw IOException("missing meta")
+      }
     )
   }
 
@@ -500,6 +710,30 @@ class RestApi @Inject internal constructor(
     )
   }
 
+  private val operationLogAdapter = FormGetResponse.MetaOperationLogOnlyAdapter(
+    moshi.adapter(OperationLog::class.java)
+  )
+
+  /**
+   * Gets the [OperationLog] for a form with the given [objectId].
+   */
+  private suspend inline fun <reified T> getOperationLog(
+    formId: FormId = FormId.fromAnnotationOrThrow<T>(),
+    objectId: ObjectId
+  ): DefaultNetworkResult<OperationLog> {
+    return httpClient.makeRequest(
+      method = HttpClient.Method.GET,
+      url = urlProvider.forms(formId, objectId),
+      headers = defaultHeadersFlow.first(),
+      failureReader = { src, _ -> src.readByteArray() },
+      successReader = { src, _ ->
+        // this adapter doesn't consume the entire body
+        runInterruptible { operationLogAdapter.fromJson(src) }
+          ?: throw IOException("missing OperationLog for form ${formId.id}, objectId ${objectId.id}")
+      }
+    )
+  }
+
   /**
    * Gets the Title for a form with the given [formId]
    */
@@ -512,7 +746,7 @@ class RestApi @Inject internal constructor(
       headers = defaultHeadersFlow.first(),
       failureReader = { src, _ -> src.readByteArray() },
       successReader = { src, _ ->
-        // this adapter doesn't consume the entire body
+        // this adapter hopefully doesn't consume the entire body,but everything is buffered
         runInterruptible { FormGetResponse.MetaTitleOnlyAdapter.fromJson(src) }
           ?: throw IOException("missing Title for formId $formId")
       }
@@ -531,7 +765,7 @@ class RestApi @Inject internal constructor(
    * Posting outcomes has to be done by calling [multiStagePostOutcomes].
    */
   suspend fun multiStagePostPatient(patient: Patient): PostResult {
-    return multiStageNewFormSubmission(
+    return multiStageNewFormSubmissionForTreeEntity(
       patient,
       { it.toApiBody() },
       urlProvider = { formId -> urlProvider.forms(formId, ObjectId.NEW_POST) }
@@ -546,7 +780,7 @@ class RestApi @Inject internal constructor(
    * from a successful call to [multiStagePostPatient]
    */
   suspend fun multiStagePostOutcomes(outcomes: Outcomes, patientObjectId: ObjectId): PostResult {
-    return multiStageNewFormSubmission(
+    return multiStageNewFormSubmissionForTreeEntity(
       outcomes,
       { it.toApiBody() },
       urlProvider = {

@@ -42,4 +42,20 @@ data class Meta(
   /** A link to the API endpoint to be used to retrieve a patient's form in hierarchical view */
   @Json(name = "TreeUrl")
   val treeUrl: String?
-)
+) {
+  /**
+   * Variant of [Meta] with only minimal info
+   */
+  @JsonClass(generateAdapter = true)
+  data class MinimalInfo(
+    @Json(name = "Title")
+    val title: String,
+    @Json(name = "FormId")
+    val formId: Long,
+    @Json(name = "ObjectId")
+    val objectId: Long,
+    /** Additional information with links to API endpoints to view historical form’s data. */
+    @Json(name = "OperationLog")
+    val operationLog: OperationLog,
+  )
+}

@@ -14,12 +14,14 @@ import androidx.room.withTransaction
 import androidx.sqlite.db.SupportSQLiteDatabase
 import net.sqlcipher.database.SupportFactory
 import org.welbodipartnership.cradle5.data.database.daos.DistrictDao
+import org.welbodipartnership.cradle5.data.database.daos.FacilityBpInfoDao
 import org.welbodipartnership.cradle5.data.database.daos.FacilityDao
 import org.welbodipartnership.cradle5.data.database.daos.LocationCheckInDao
 import org.welbodipartnership.cradle5.data.database.daos.OutcomesDao
 import org.welbodipartnership.cradle5.data.database.daos.PatientDao
 import org.welbodipartnership.cradle5.data.database.entities.District
 import org.welbodipartnership.cradle5.data.database.entities.Facility
+import org.welbodipartnership.cradle5.data.database.entities.FacilityBpInfo
 import org.welbodipartnership.cradle5.data.database.entities.LocationCheckIn
 import org.welbodipartnership.cradle5.data.database.entities.Outcomes
 import org.welbodipartnership.cradle5.data.database.entities.Patient
@@ -29,7 +31,7 @@ import javax.inject.Singleton
 
 const val TAG = "Cradle5Database"
 
-const val DATABASE_VERSION = 13
+const val DATABASE_VERSION = 14
 const val DATABASE_NAME = "cradle5.db"
 
 @Singleton
@@ -42,6 +44,7 @@ class CradleDatabaseWrapper @Inject constructor() {
   fun facilitiesDao(): FacilityDao = requireNotNull(database).facilitiesDao()
   fun locationCheckInDao(): LocationCheckInDao = requireNotNull(database).locationCheckInDao()
   fun districtDao(): DistrictDao = requireNotNull(database).districtDao()
+  fun bpInfoDao(): FacilityBpInfoDao = requireNotNull(database).bpInfoDao()
 
   suspend fun <T> withTransaction(block: suspend (db: Cradle5Database) -> T): T {
     return database!!.withTransaction {
@@ -102,6 +105,7 @@ private val MIGRATIONS = arrayOf(
     Facility::class,
     LocationCheckIn::class,
     District::class,
+    FacilityBpInfo::class
   ],
   autoMigrations = [
     AutoMigration(from = 1, to = 2),
@@ -115,6 +119,7 @@ private val MIGRATIONS = arrayOf(
     AutoMigration(from = 10, to = 11, spec = Cradle5Database.Version10To11::class),
     AutoMigration(from = 11, to = 12, spec = Cradle5Database.Version11To12::class),
     AutoMigration(from = 12, to = 13),
+    AutoMigration(from = 13, to = 14, spec = Cradle5Database.Version13To14::class),
   ]
 )
 @TypeConverters(DbTypeConverters::class)
@@ -183,11 +188,24 @@ abstract class Cradle5Database : RoomDatabase() {
     }
   }
 
+  @DeleteColumn(
+    tableName = "Patient",
+    columnName = "facility_bp_info_numBpReadingsTakenInFacilitySinceLastVisit"
+  )
+  @DeleteColumn(
+    tableName = "Patient",
+    columnName = "facility_bp_info_numBpReadingsEndIn0Or5"
+  )
+  @DeleteColumn(tableName = "Patient", columnName = "facility_bp_info_numBpReadingsWithColorAndArrow")
+  @DeleteColumn(tableName = "Patient", columnName = "facilityBpInfoTodayTouched")
+  internal class Version13To14 : AutoMigrationSpec
+
   abstract fun patientDao(): PatientDao
   abstract fun outcomesDao(): OutcomesDao
   abstract fun facilitiesDao(): FacilityDao
   abstract fun locationCheckInDao(): LocationCheckInDao
   abstract fun districtDao(): DistrictDao
+  abstract fun bpInfoDao(): FacilityBpInfoDao
 }
 
 /**
