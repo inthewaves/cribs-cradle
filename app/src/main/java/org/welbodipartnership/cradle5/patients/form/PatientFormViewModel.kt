@@ -32,6 +32,18 @@ import org.welbodipartnership.cradle5.LeafScreen
 import org.welbodipartnership.cradle5.R
 import org.welbodipartnership.cradle5.compose.SavedStateMutableState
 import org.welbodipartnership.cradle5.compose.createMutableState
+import org.welbodipartnership.cradle5.compose.forms.state.DistrictState
+import org.welbodipartnership.cradle5.compose.forms.state.EnumIdOnlyState
+import org.welbodipartnership.cradle5.compose.forms.state.EnumWithOtherState
+import org.welbodipartnership.cradle5.compose.forms.state.HealthcareFacilityState
+import org.welbodipartnership.cradle5.compose.forms.state.InitialsState
+import org.welbodipartnership.cradle5.compose.forms.state.LimitedAgeIntState
+import org.welbodipartnership.cradle5.compose.forms.state.LimitedIntState
+import org.welbodipartnership.cradle5.compose.forms.state.NoFutureDateAndAheadOfMaternalDeathState
+import org.welbodipartnership.cradle5.compose.forms.state.NoFutureDateState
+import org.welbodipartnership.cradle5.compose.forms.state.NonEmptyTextState
+import org.welbodipartnership.cradle5.compose.forms.state.NullableToggleState
+import org.welbodipartnership.cradle5.compose.forms.state.TextFieldState
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
 import org.welbodipartnership.cradle5.data.database.entities.AgeAtDelivery
 import org.welbodipartnership.cradle5.data.database.entities.BirthWeight
@@ -50,7 +62,8 @@ import org.welbodipartnership.cradle5.data.database.entities.TouchedState
 import org.welbodipartnership.cradle5.data.database.resultentities.PatientFacilityDistrictOutcomes
 import org.welbodipartnership.cradle5.data.serverenums.DropdownType
 import org.welbodipartnership.cradle5.data.settings.AppValuesStore
-import org.welbodipartnership.cradle5.ui.composables.forms.TextFieldState
+import org.welbodipartnership.cradle5.util.DistrictAndPosition
+import org.welbodipartnership.cradle5.util.FacilityAndPosition
 import org.welbodipartnership.cradle5.util.coroutines.AppCoroutineDispatchers
 import org.welbodipartnership.cradle5.util.datetime.FormDate
 import javax.inject.Inject
@@ -64,6 +77,22 @@ private val REGISTRATION_FACILITY_BP_COUNT_RANGE = 0..999
 private val VALID_LENGTH_OF_ITU_HDU_STAY = 1L..100L
 
 data class FieldError(@StringRes val fieldTitle: Int, val errorMessage: String)
+
+@Stable
+sealed class BaseFields {
+  abstract fun forceShowErrors()
+}
+
+@Stable
+sealed class FieldsWithCheckbox : BaseFields() {
+  abstract val isEnabled: MutableState<Boolean?>
+
+  /**
+   * Resets the error state on the forms, using the [newEnabledState] for the checkbox state (null
+   * means no selection).
+   */
+  abstract fun clearFormsAndSetCheckbox(newEnabledState: Boolean?)
+}
 
 @HiltViewModel
 class PatientFormViewModel @Inject constructor(
@@ -130,7 +159,7 @@ class PatientFormViewModel @Inject constructor(
   private val _formState: MutableStateFlow<FormState> = MutableStateFlow(FormState.Loading)
   val formState: StateFlow<FormState> = _formState
 
-  private val isFormDraftState = enabledState("isFormDraft")
+  private val isFormDraftState: SavedStateMutableState<Boolean?> = enabledState("isFormDraft")
 
   /**
    * putting this outside so that additional validation can work
@@ -186,6 +215,7 @@ class PatientFormViewModel @Inject constructor(
         backingState = handle.createMutableState("patientInitials", ""),
         isFormDraftState = isFormDraftState,
         isMandatory = true,
+        maxInitialsLength = PATIENT_MAX_INITIALS_LENGTH
       ),
       presentationDate = dateState(
         "patientPresentationDate",

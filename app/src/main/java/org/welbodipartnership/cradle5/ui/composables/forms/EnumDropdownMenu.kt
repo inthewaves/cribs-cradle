@@ -28,7 +28,6 @@ import org.welbodipartnership.cradle5.data.database.entities.embedded.EnumSelect
 import org.welbodipartnership.cradle5.data.serverenums.DropdownType
 import org.welbodipartnership.cradle5.data.serverenums.ServerEnum
 import org.welbodipartnership.cradle5.data.serverenums.ServerEnumCollection
-import org.welbodipartnership.cradle5.patients.form.withRequiredStar
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
 
 @Composable
