@@ -168,6 +168,7 @@ class AuthRepository @Inject internal constructor(
       val errorMessage: String?,
       val errorCode: Int?,
       val errorType: String? = null,
+      val invalidLocalPasswordMatch: Boolean = false,
     ) : LoginResult() {
       val isFromBadCredentials: Boolean get() = errorCode == 400 && errorType == "invalid_grant"
     }
@@ -513,7 +514,7 @@ class AuthRepository @Inject internal constructor(
         }
       }
       is LoginResult.Invalid -> {
-        if (!result.gotTokenFromServer) {
+        if (!result.gotTokenFromServer && !result.invalidLocalPasswordMatch) {
           appValuesStore.setWarningMessage(
             buildString {
               append("Got an issue during reauthentication with the server ")
@@ -551,6 +552,8 @@ class AuthRepository @Inject internal constructor(
       TAG,
       "reauthForLockscreen(forceServerRefresh = $forceServerRefresh) -> $isLocalPasswordMatch"
     )
+    // We might have to force a server refresh if they changed password on MedSciNet but their
+    // phone still has the old password hash stored.
     if (isLocalPasswordMatch || forceServerRefresh) {
       if (forceServerRefresh) {
         Log.d(TAG, "doing forced token refresh")
@@ -589,7 +592,12 @@ class AuthRepository @Inject internal constructor(
     return if (isLocalPasswordMatch) {
       LoginResult.Success
     } else {
-      LoginResult.Invalid(gotTokenFromServer = false, "Invalid password", errorCode = null)
+      LoginResult.Invalid(
+        gotTokenFromServer = false,
+        "Invalid password",
+        errorCode = null,
+        invalidLocalPasswordMatch = true
+      )
     }
   }
 
