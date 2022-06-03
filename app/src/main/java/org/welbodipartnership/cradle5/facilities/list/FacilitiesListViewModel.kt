@@ -31,7 +31,8 @@ class FacilitiesListViewModel @Inject constructor(
   enum class FilterOption(@StringRes val selectionStringResId: Int) {
     NONE(R.string.none),
     VISITED(R.string.facility_list_filter_option_visited),
-    NOT_VISITED(R.string.facility_list_filter_option_not_visited)
+    NOT_VISITED(R.string.facility_list_filter_option_not_visited),
+    BP_INFO_NEEDS_UPLOAD(R.string.facility_list_filter_option_bp_info_needs_sync)
   }
 
   private val pagingConfig = PagingConfig(
@@ -53,11 +54,13 @@ class FacilitiesListViewModel @Inject constructor(
       Pager(pagingConfig) {
         when (filterOption) {
           FilterOption.NONE -> dbWrapper.facilitiesDao()
-            .facilitiesPagingSource(districtId = districtId.toLong())
+            .facilitiesPagingSource(districtId = districtId)
           FilterOption.VISITED -> dbWrapper.facilitiesDao()
-            .facilitiesPagingSourceFilterByVisited(visited = true, districtId = districtId.toLong())
+            .facilitiesPagingSourceFilterByVisited(visited = true, districtId = districtId)
           FilterOption.NOT_VISITED -> dbWrapper.facilitiesDao()
-            .facilitiesPagingSourceFilterByVisited(visited = false, districtId = districtId.toLong())
+            .facilitiesPagingSourceFilterByVisited(visited = false, districtId = districtId)
+          FilterOption.BP_INFO_NEEDS_UPLOAD -> dbWrapper.facilitiesDao()
+            .facilitiesPagingSourceFilterByBpInfoNeedsSync(districtId = districtId)
         }
       }.flow
     }

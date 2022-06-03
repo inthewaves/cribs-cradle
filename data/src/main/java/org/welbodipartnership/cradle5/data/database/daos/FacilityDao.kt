@@ -72,6 +72,25 @@ abstract class FacilityDao {
     districtId: Long = Facility.DEFAULT_DISTRICT_ID
   ): PagingSource<Int, Facility>
 
+  @Transaction
+  @Query(
+    """
+      SELECT 
+        f.* 
+      FROM 
+        Facility AS f
+      WHERE
+        f.districtId = :districtId AND
+        EXISTS (
+          SELECT b.id FROM FacilityBpInfo AS b WHERE f.id = b.facility AND b.objectId IS NULL
+        )
+      $DEFAULT_ORDER
+    """
+  )
+  abstract fun facilitiesPagingSourceFilterByBpInfoNeedsSync(
+    districtId: Long = Facility.DEFAULT_DISTRICT_ID
+  ): PagingSource<Int, Facility>
+
   @RawQuery
   protected abstract suspend fun getFacilityIndexWhenOrderedByName(
     query: SupportSQLiteQuery

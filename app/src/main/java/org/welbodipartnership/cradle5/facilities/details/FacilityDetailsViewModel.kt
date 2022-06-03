@@ -11,6 +11,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -18,12 +19,15 @@ import org.welbodipartnership.cradle5.LeafScreen
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
 import org.welbodipartnership.cradle5.data.database.entities.Facility
 import org.welbodipartnership.cradle5.data.database.entities.FacilityBpInfo
+import org.welbodipartnership.cradle5.domain.sync.SyncRepository
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.seconds
 
 @HiltViewModel
 class FacilityDetailsViewModel @Inject constructor(
   savedStateHandle: SavedStateHandle,
   private val dbWrapper: CradleDatabaseWrapper,
+  syncRepository: SyncRepository,
 ) : ViewModel() {
   companion object {
     private const val TAG = "FacilityDetailsViewModel"
@@ -39,6 +43,13 @@ class FacilityDetailsViewModel @Inject constructor(
     super.onCleared()
     Log.d(TAG, "onCleared")
   }
+
+  val canEditBpInfoState = syncRepository.editFormState
+    .stateIn(
+      viewModelScope,
+      SharingStarted.WhileSubscribed(2.seconds),
+      initialValue = null
+    )
 
   private val facilityPrimaryKey: Long? =
     savedStateHandle[LeafScreen.FacilityDetails.ARG_FACILITY_PRIMARY_KEY]

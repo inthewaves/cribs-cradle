@@ -68,10 +68,15 @@ class FacilityBpInfoFormViewModel @Inject constructor(
   private val existingFormPrimaryKey: Long? =
     handle[LeafScreen.FacilityBpInfoEdit.ARG_FORM_PRIMARY_KEY]
 
-  private val selectedFacilityPk: Long? =
+  /**
+   * Primary key of the facility if the user opened from a facility details screen
+   */
+  private val initialFacilityPk: Long? =
     handle.get<String?>(LeafScreen.FacilityBpInfoCreate.OPTIONAL_ARG_FACILITY_PK)?.toLongOrNull()
 
   val isExistingEdit = existingFormPrimaryKey != null
+
+  val canChangeFacility = !isExistingEdit && initialFacilityPk == null
 
   val existingForm: Flow<BpInfoFacilityDistrict?> =
     existingFormPrimaryKey
@@ -260,7 +265,7 @@ class FacilityBpInfoFormViewModel @Inject constructor(
           formFields.dataCollectionDate.setStateFromFormDate(FormDate.today())
         }
 
-        selectedFacilityPk?.let { pk ->
+        initialFacilityPk?.let { pk ->
           dbWrapper.facilitiesDao().getFacility(pk)?.let { populateFacilityField(it) }
         }
 

@@ -57,6 +57,30 @@ class SyncScreenViewModel @Inject constructor(
       null
     )
 
+  val bpInfoFormsToUploadCountFlow = dbWrapper.bpInfoDao()
+    .countFormsToUploadWithoutErrors()
+    .stateIn(
+      viewModelScope,
+      SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000L),
+      null
+    )
+
+  val bpInfoFormsWithErrorsCountFlow = dbWrapper.bpInfoDao()
+    .countFormsToUploadWithErrors()
+    .stateIn(
+      viewModelScope,
+      SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000L),
+      null
+    )
+
+  val bpInfoFormsToReuploadCountFlow = dbWrapper.bpInfoDao()
+    .countPartialFormsToUpload()
+    .stateIn(
+      viewModelScope,
+      SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000L),
+      null
+    )
+
   val lastSyncCompletedTimestamp: StateFlow<UnixTimestamp?> = syncRepository
     .lastTimeSyncCompletedFlow
     .stateIn(

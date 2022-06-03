@@ -10,7 +10,6 @@ import org.welbodipartnership.cradle5.data.database.entities.FacilityBpInfo
 import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
 import org.welbodipartnership.cradle5.domain.RestApi
 import org.welbodipartnership.cradle5.domain.getErrorMessageOrNull
-import org.welbodipartnership.cradle5.domain.sync.SyncRepository
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -18,7 +17,6 @@ import javax.inject.Singleton
 class BpInfoManager @Inject constructor(
   private val restApi: RestApi,
   private val dbWrapper: CradleDatabaseWrapper,
-  private val syncRepository: SyncRepository,
   @ApplicationContext private val context: Context,
 ) {
   sealed class UploadResult {

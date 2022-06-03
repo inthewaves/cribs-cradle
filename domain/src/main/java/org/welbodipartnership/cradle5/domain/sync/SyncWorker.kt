@@ -21,11 +21,13 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.firstOrNull
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
+import org.welbodipartnership.cradle5.data.database.entities.FacilityBpInfo
 import org.welbodipartnership.cradle5.data.database.entities.LocationCheckIn
 import org.welbodipartnership.cradle5.data.database.resultentities.PatientOutcomePair
 import org.welbodipartnership.cradle5.data.settings.AppValuesStore
 import org.welbodipartnership.cradle5.domain.RestApi
 import org.welbodipartnership.cradle5.domain.auth.AuthRepository
+import org.welbodipartnership.cradle5.domain.facilities.BpInfoManager
 import org.welbodipartnership.cradle5.domain.patients.PatientsManager
 import org.welbodipartnership.cradle5.domain.toApiBody
 import java.security.SecureRandom
@@ -39,6 +41,7 @@ class SyncWorker @AssistedInject constructor(
   @Assisted workerParams: WorkerParameters,
   private val appValuesStore: AppValuesStore,
   private val patientsManager: PatientsManager,
+  private val bpInfoManager: BpInfoManager,
   private val dbWrapper: CradleDatabaseWrapper,
   private val restApi: RestApi,
   private val authRepository: AuthRepository,
@@ -84,6 +87,17 @@ class SyncWorker @AssistedInject constructor(
     Log.d(TAG, "uploading check ins")
     runUploadForCheckIns(dbWrapper.locationCheckInDao().getCheckInsForUpload())
 
+    Log.d(TAG, "uploading bp info")
+    runUploadForBpInfoForms(
+      Stage.UPLOADING_BP_INFO, dbWrapper.bpInfoDao().getNewFormsToUploadOrderedById()
+    )
+
+    Log.d(TAG, "uploading incomplete bp info")
+    runUploadForBpInfoForms(
+      Stage.UPLOADING_INCOMPLETE_BP_INFO,
+      dbWrapper.bpInfoDao().getFormsWithPartialServerInfoOrderedById()
+    )
+
     coroutineScope {
       val progressChannel = actor<AuthRepository.InfoSyncProgress>(capacity = Channel.CONFLATED) {
         consumeEach {
@@ -104,15 +118,15 @@ class SyncWorker @AssistedInject constructor(
     return Result.success()
   }
 
-  private data class PatientUploadResult(
-    val successfulPatientIds: Set<Long>,
-    val failedPatientIds: Set<Long>
+  private data class UploadResult(
+    val successfulIds: Set<Long>,
+    val failedIds: Set<Long>
   )
 
   private suspend fun runUploadForPatientsAndOutcomes(
     stage: Stage,
     patientsAndOutcomes: List<PatientOutcomePair>
-  ): PatientUploadResult = coroutineScope {
+  ): UploadResult = coroutineScope {
     val successfulPatientIds = linkedSetOf<Long>()
     val failedPatientIds = linkedSetOf<Long>()
     reportProgress(stage, doneSoFar = 0, totalToDo = patientsAndOutcomes.size)
@@ -152,7 +166,7 @@ class SyncWorker @AssistedInject constructor(
     }
     updateChannel.close()
 
-    PatientUploadResult(successfulPatientIds, failedPatientIds)
+    UploadResult(successfulPatientIds, failedPatientIds)
   }
 
   private suspend fun runUploadForCheckIns(checkIns: List<LocationCheckIn>): Unit = coroutineScope {
@@ -198,6 +212,44 @@ class SyncWorker @AssistedInject constructor(
     } finally {
       updateChannel.close()
     }
+  }
+
+  private suspend fun runUploadForBpInfoForms(
+    stage: Stage,
+    forms: List<FacilityBpInfo>
+  ): UploadResult = coroutineScope {
+    val successfulIds = linkedSetOf<Long>()
+    val failedIds = linkedSetOf<Long>()
+    reportProgress(stage, doneSoFar = 0, totalToDo = forms.size)
+    val updateChannel = actor<Int>(capacity = Channel.CONFLATED) {
+      consumeEach { progress ->
+        reportProgress(
+          stage,
+          doneSoFar = progress.coerceAtMost(forms.size),
+          totalToDo = forms.size,
+          // don't really care about thread-safety here
+          numFailed = failedIds.size
+        )
+        // prevent contention with WorkManager's database
+        delay(75L)
+      }
+    }
+
+    forms.forEachIndexed { index, form ->
+      val result = bpInfoManager.uploadForm(form)
+      Log.d(TAG, "form result: $result")
+      if (result is BpInfoManager.UploadResult.Success) {
+        successfulIds.add(form.id)
+      } else {
+        failedIds.add(form.id)
+        Log.d(TAG, "got a failed result; applying retry jitter")
+        delayWithRetryJitter()
+      }
+      updateChannel.trySend(index + 1)
+    }
+    updateChannel.close()
+
+    UploadResult(successfulIds, failedIds)
   }
 
   private suspend fun reportProgress(
@@ -266,6 +318,8 @@ class SyncWorker @AssistedInject constructor(
     UPLOADING_INCOMPLETE_PATIENTS,
     UPLOADING_INCOMPLETE_OUTCOMES,
     UPLOADING_LOCATION_CHECK_INS,
+    UPLOADING_BP_INFO,
+    UPLOADING_INCOMPLETE_BP_INFO,
     PERFORMING_INFO_SYNC
   }
 
@@ -314,7 +368,9 @@ class SyncWorker @AssistedInject constructor(
         Stage.UPLOADING_NEW_PATIENTS,
         Stage.UPLOADING_INCOMPLETE_PATIENTS,
         Stage.UPLOADING_INCOMPLETE_OUTCOMES,
-        Stage.UPLOADING_LOCATION_CHECK_INS -> {
+        Stage.UPLOADING_LOCATION_CHECK_INS,
+        Stage.UPLOADING_BP_INFO,
+        Stage.UPLOADING_INCOMPLETE_BP_INFO, -> {
           val doneSoFar = progress.getInt(PROGRESS_DATA_PROGRESS_KEY, Int.MIN_VALUE)
           if (doneSoFar == Int.MIN_VALUE) {
             return Progress.WithIndeterminateProgress(stage)

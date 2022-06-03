@@ -192,7 +192,8 @@ fun FacilityBpInfoForm(
             facilityLabel = { RequiredText(stringResource(R.string.bp_info_facility_label)) },
             viewModel.districtsPagerFlow,
             { district -> viewModel.getFacilitiesPagingDataForDistrict(district) },
-            textFieldToTextFieldHeight
+            textFieldToTextFieldHeight,
+            enabled = viewModel.canChangeFacility
           )
 
           Spacer(Modifier.height(textFieldToTextFieldHeight))

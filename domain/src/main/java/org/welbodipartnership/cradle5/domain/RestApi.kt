@@ -345,12 +345,11 @@ class RestApi @Inject internal constructor(
     ) : PostResult
 
     /**
-     * Guaranteed to have objectId and nodeId non-null
+     * ObjectId is never null
      */
     @JvmInline
     value class Success(val serverInfo: ServerInfo) : PostResult {
       init {
-        requireNotNull(serverInfo.nodeId) { "missing nodeId for Success" }
         requireNotNull(serverInfo.objectId) { "missing objectId for Success" }
       }
     }

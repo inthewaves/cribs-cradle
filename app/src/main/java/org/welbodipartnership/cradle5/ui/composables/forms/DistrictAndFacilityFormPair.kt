@@ -27,6 +27,7 @@ fun DistrictAndFacilityFormPair(
   districtPagingFlow: Flow<PagingData<District>>,
   facilityPagingFlowGetter: (District?) -> Flow<PagingData<Facility>>,
   textFieldToTextFieldHeight: Dp,
+  enabled: Boolean = true,
 ) {
   DistrictListDropdown(
     state = districtState,
@@ -42,6 +43,7 @@ fun DistrictAndFacilityFormPair(
         facilityCustomTextState?.reset()
       }
     },
+    enabled = enabled
   )
 
   Spacer(Modifier.height(textFieldToTextFieldHeight))
@@ -53,7 +55,8 @@ fun DistrictAndFacilityFormPair(
       modifier = Modifier.fillMaxWidth(),
       label = facilityLabel,
       colors = darkerDisabledOutlinedTextFieldColors(),
-      errorHint = facilityCustomTextState.getError()
+      errorHint = facilityCustomTextState.getError(),
+      enabled = enabled
     )
   } else {
     val fromFacilityFlow = remember(districtState.stateValue) {
@@ -67,7 +70,8 @@ fun DistrictAndFacilityFormPair(
       modifier = Modifier.fillMaxWidth(),
       textFieldModifier = Modifier
         .fillMaxWidth()
-        .then(facilityState.createFocusChangeModifier())
+        .then(facilityState.createFocusChangeModifier()),
+      enabled = enabled
     )
   }
 }

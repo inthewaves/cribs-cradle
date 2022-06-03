@@ -89,6 +89,9 @@ private fun SyncScreen(viewModel: SyncScreenViewModel) {
             val patientsWithOutcomesNotFullyUploadedWithoutErrors by viewModel
               .patientsWithOutcomesNotFullyUploadedWithoutErrorsCountFlow
               .collectAsState()
+            val bpFormsToUpload by viewModel.bpInfoFormsToUploadCountFlow.collectAsState()
+            val bpFormsWithErrors by viewModel.bpInfoFormsWithErrorsCountFlow.collectAsState()
+            val bpFormsToReupload by viewModel.bpInfoFormsToReuploadCountFlow.collectAsState()
             val locationCheckInsToUpload by viewModel.locationCheckInsToUploadCountFlow
               .collectAsState()
             val lastTimeSyncCompleted by viewModel.lastSyncCompletedTimestamp.collectAsState()
@@ -99,6 +102,9 @@ private fun SyncScreen(viewModel: SyncScreenViewModel) {
               lastTimeSyncCompleted = lastTimeSyncCompleted,
               numPatientsToUpload = patientsToUpload,
               numIncompletePatientsToUpload = partialPatientsToUpload,
+              numBpInfoToUpload = bpFormsToUpload,
+              numBpInfoWithErrors = bpFormsWithErrors,
+              numBpInfoToRetryUpload = bpFormsToReupload,
               numLocationCheckinsToUpload = locationCheckInsToUpload,
               numPatientsWithOutcomesNotFullyUploadedWithErrors = patientsWithOutcomesNotFullyUploadedWithErrors,
               numPatientsWithOutcomesNotFullyUploadedWithoutErrors = patientsWithOutcomesNotFullyUploadedWithoutErrors
@@ -138,6 +144,12 @@ private fun ActiveSyncCard(
         }
         SyncWorker.Stage.UPLOADING_LOCATION_CHECK_INS -> {
           Text("Uploading location check ins")
+        }
+        SyncWorker.Stage.UPLOADING_BP_INFO -> {
+          Text("Uploading blood pressure data")
+        }
+        SyncWorker.Stage.UPLOADING_INCOMPLETE_BP_INFO -> {
+          Text("Uploading blood pressure data that failed before")
         }
         SyncWorker.Stage.PERFORMING_INFO_SYNC -> {
           Text("Updating info")
@@ -199,9 +211,12 @@ fun InactiveOrNoSyncCard(
   numIncompletePatientsToUpload: Int?,
   numPatientsWithOutcomesNotFullyUploadedWithErrors: Int?,
   numPatientsWithOutcomesNotFullyUploadedWithoutErrors: Int?,
-  numLocationCheckinsToUpload: Int?,
+  numBpInfoToUpload: Int?,
+  numBpInfoWithErrors: Int?,
+  numBpInfoToRetryUpload: Int?,
   lastTimeSyncCompleted: UnixTimestamp?,
   modifier: Modifier = Modifier,
+  numLocationCheckinsToUpload: Int?,
 ) {
   BaseDetailsCard(
     title = null,
@@ -285,6 +300,42 @@ fun InactiveOrNoSyncCard(
       Spacer(Modifier.height(24.dp))
     }
 
+    if (numBpInfoToUpload != null) {
+      Text(
+        resources.getQuantityString(
+          R.plurals.sync_screen_there_are_d_bp_forms_to_upload,
+          numBpInfoToUpload,
+          numBpInfoToUpload
+        ),
+        textAlign = TextAlign.Center
+      )
+      Spacer(Modifier.height(24.dp))
+    }
+
+    if (numBpInfoWithErrors != null && numBpInfoWithErrors >= 1) {
+      Text(
+        resources.getQuantityString(
+          R.plurals.sync_screen_d_bp_forms_failed_to_upload_errors,
+          numBpInfoWithErrors,
+          numBpInfoWithErrors
+        ),
+        textAlign = TextAlign.Center
+      )
+      Spacer(Modifier.height(24.dp))
+    }
+
+    if (numBpInfoToRetryUpload != null && numBpInfoToRetryUpload >= 1) {
+      Text(
+        resources.getQuantityString(
+          R.plurals.sync_screen_there_d_bp_forms_to_retry_upload,
+          numBpInfoToRetryUpload,
+          numBpInfoToRetryUpload
+        ),
+        textAlign = TextAlign.Center
+      )
+      Spacer(Modifier.height(24.dp))
+    }
+
     if (numLocationCheckinsToUpload != null) {
       Text(
         if (numLocationCheckinsToUpload == 1) {
@@ -346,11 +397,14 @@ fun SyncPagePreview() {
           onSyncButtonClicked = {},
           onCancelButtonClicked = {},
           syncStatus = SyncRepository.SyncStatus.Inactive(WorkInfo.State.SUCCEEDED),
-          lastTimeSyncCompleted = UnixTimestamp.now(),
           numPatientsToUpload = 5,
           numIncompletePatientsToUpload = 1,
           numPatientsWithOutcomesNotFullyUploadedWithErrors = 1,
           numPatientsWithOutcomesNotFullyUploadedWithoutErrors = 1,
+          numBpInfoToUpload = 4,
+          numBpInfoWithErrors = 2,
+          numBpInfoToRetryUpload = 1,
+          lastTimeSyncCompleted = UnixTimestamp.now(),
           numLocationCheckinsToUpload = 1
         )
       }

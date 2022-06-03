@@ -19,6 +19,7 @@
     <string name="outcomes_hysterectomy_label">Hysterectomy/Sub-total hysterectomy</string>
     <string name="hysterectomy_cause_label">Cause of hysterectomy</string>
     <string name="unknown">Unknown</string>
+    <string name="unknown_date">Unknown date</string>
     <string name="no">No</string>
     <string name="outcomes_maternal_death_label">Maternal death</string>
     <string name="outcomes_perinatal_death_label">Perinatal death</string>
@@ -154,6 +155,7 @@
     <string name="filter_button_ok">Filter</string>
     <string name="facility_list_filter_option_visited">Visited</string>
     <string name="facility_list_filter_option_not_visited">Not visited</string>
+    <string name="facility_list_filter_option_bp_info_needs_sync">Blood pressure info needs sync</string>
     <string name="facilities_list_filter_by_s_button">Filter by: %1$s</string>
     <string name="patients_list_filter_option_draft">Draft</string>
     <string name="patients_list_filter_option_ready_for_upload">Ready for upload</string>
@@ -222,5 +224,17 @@
     <plurals name="sync_screen_there_are_currently_d_patients_with_not_uploaded_outcomes">
         <item quantity="one">%1$d patient has outcomes that failed to upload and needs a retry</item>
         <item quantity="other">%1$d patients have outcomes that failed to upload and need a retry</item>
+    </plurals>
+    <plurals name="sync_screen_there_are_d_bp_forms_to_upload">
+        <item quantity="one">There is %1$d facility blood pressure data form to upload to the server</item>
+        <item quantity="other">There are %1$d facility blood pressure data forms to upload to the server</item>
+    </plurals>
+    <plurals name="sync_screen_d_bp_forms_failed_to_upload_errors">
+        <item quantity="one">%1$d facility blood pressure data form failed to upload and has errors that may need addressing</item>
+        <item quantity="other">%1$d facility blood pressure data forms failed to upload and have errors that may need addressing</item>
+    </plurals>
+    <plurals name="sync_screen_there_d_bp_forms_to_retry_upload">
+        <item quantity="one">There is %1$d facility blood pressure data form that needs a sync retry</item>
+        <item quantity="other">There are %1$d facility blood pressure data forms that need sync retries</item>
     </plurals>
 </resources>

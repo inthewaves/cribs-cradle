@@ -28,6 +28,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -108,8 +109,10 @@ fun FacilityDetailsScreen(
       when (facilityState) {
         is FacilityDetailsViewModel.State.Ready -> {
           val bpInfoCount by viewModel.bpInfoCount.collectAsState(initial = null)
+          val editFormState by viewModel.canEditBpInfoState.collectAsState()
           FacilityDetailsScreen(
             facility = facilityState.facility,
+            areEditButtonsEnabled = editFormState?.canEdit == true,
             onFacilityOtherInfoEditPress = onFacilityOtherInfoEditPress,
             onEditBpInfoPressed = onEditBpInfoPressed,
             onDeleteBpInfoPressed = {},
@@ -146,6 +149,7 @@ fun FacilityDetailsScreen(
 @Composable
 private fun FacilityDetailsScreen(
   facility: Facility,
+  areEditButtonsEnabled: Boolean,
   onFacilityOtherInfoEditPress: (facilityPrimaryKey: Long) -> Unit,
   onEditBpInfoPressed: (pk: Long) -> Unit,
   onDeleteBpInfoPressed: (pk: Long) -> Unit,
@@ -155,6 +159,7 @@ private fun FacilityDetailsScreen(
   modifier: Modifier = Modifier,
   contentPadding: PaddingValues = PaddingValues()
 ) {
+
   LazyColumn(modifier = modifier, contentPadding = contentPadding, state = lazyListState) {
     item("otherinfo") {
       OtherFacilityInfoCard(
@@ -200,13 +205,14 @@ private fun FacilityDetailsScreen(
       items(bpInfoItems, key = { info -> info.id }) { bpInfo: FacilityBpInfo? ->
         BpInfoCard(
           bpInfo = bpInfo,
+          areEditButtonsEnabled = areEditButtonsEnabled,
           onEditPressed = onEditBpInfoPressed,
           onDeletePressed = onDeleteBpInfoPressed,
           modifier = Modifier.padding(16.dp)
         )
       }
       item {
-        Spacer(Modifier.height(50.dp))
+        Spacer(Modifier.height(100.dp))
       }
     }
   }
@@ -232,6 +238,7 @@ fun BpInfoCardPreview() {
           localNotes = null,
           isDraft = true,
         ),
+        areEditButtonsEnabled = true,
         onEditPressed = {},
         onDeletePressed = {}
       )
@@ -242,6 +249,7 @@ fun BpInfoCardPreview() {
 @Composable
 fun BpInfoCard(
   bpInfo: FacilityBpInfo?,
+  areEditButtonsEnabled: Boolean,
   onEditPressed: (pk: Long) -> Unit,
   onDeletePressed: (pk: Long) -> Unit,
   modifier: Modifier = Modifier,
@@ -259,10 +267,8 @@ fun BpInfoCard(
     ) {
       if (bpInfo != null) {
         Text(
-          stringResource(
-            R.string.bp_info_collected_on_s,
-            bpInfo.dataCollectionDate?.toString() ?: stringResource(R.string.unknown)
-          )
+          bpInfo.dataCollectionDate?.toString() ?: stringResource(R.string.unknown_date),
+          style = MaterialTheme.typography.subtitle1
         )
         bpInfo.numBpReadingsTakenInFacilitySinceLastVisit?.let {
           Text(stringResource(R.string.bp_info_d_readings_collected, it))
@@ -288,12 +294,14 @@ fun BpInfoCard(
             horizontalArrangement = Arrangement.End,
           ) {
             TextButton(
+              enabled = areEditButtonsEnabled,
               onClick = { onDeletePressed(bpInfo.id) },
               colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colors.error)
             ) {
               Text("Delete")
             }
             TextButton(
+              enabled = areEditButtonsEnabled,
               onClick = { onEditPressed(bpInfo.id) },
             ) {
               Text("Edit")
