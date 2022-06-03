@@ -1,6 +1,8 @@
 package org.welbodipartnership.cradle5.facilities.details
 
 import android.util.Log
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -9,12 +11,14 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import org.welbodipartnership.cradle5.LeafScreen
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
 import org.welbodipartnership.cradle5.data.database.entities.Facility
@@ -62,6 +66,15 @@ class FacilityDetailsViewModel @Inject constructor(
     Pager(PagingConfig(pageSize = 60, enablePlaceholders = true, maxSize = 200)) {
       dbWrapper.bpInfoDao().bpInfoPagingSourceByFacilityId(it)
     }.flow
+  }
+
+  val bpInfoToDelete: MutableState<FacilityBpInfo?> = mutableStateOf(null)
+
+  fun deleteBpInfo(bpInfo: FacilityBpInfo) {
+    bpInfoToDelete.value = null
+    viewModelScope.launch {
+      dbWrapper.bpInfoDao().delete(bpInfo)
+    }
   }
 
   val facilityStateFlow: StateFlow<State> =

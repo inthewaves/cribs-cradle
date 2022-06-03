@@ -192,6 +192,9 @@
     <string name="delete_info_dialog_title">Delete this patient?</string>
     <string name="delete_info_dialog_body">Are you sure you want to delete this patient? Patients deleted cannot be recovered!</string>
     <string name="delete_info_dialog_confirm_button">Delete patient</string>
+    <string name="delete_bp_info_dialog_title">Delete this blood pressure data entry?</string>
+    <string name="delete_bp_info_dialog_this_will_delete_the_following_entry">This will delete the following entry:</string>
+    <string name="delete_bp_info_dialog_confirm_button">Delete BP info</string>
     <string name="patients_list_filter_option_facility">Facility</string>
     <string name="patients_list_filter_option_month">Month of registration date</string>
     <string name="patients_list_filter_by_month_s">Month of presentation date (%1$s)</string>

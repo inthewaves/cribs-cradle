@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,12 +14,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.AlertDialog
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Card
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.FloatingActionButton
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
+import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Surface
@@ -28,9 +31,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -63,6 +66,34 @@ fun FacilityDetailsScreen(
   onEditBpInfoPressed: (pk: Long) -> Unit,
   viewModel: FacilityDetailsViewModel = hiltViewModel()
 ) {
+  var bpInfoToDelete: FacilityBpInfo? by viewModel.bpInfoToDelete
+  bpInfoToDelete?.let { bpToDelete ->
+    AlertDialog(
+      onDismissRequest = { bpInfoToDelete = null },
+      title = { Text(stringResource(id = R.string.delete_info_dialog_title)) },
+      text = {
+        Column {
+          Text(stringResource(R.string.delete_bp_info_dialog_this_will_delete_the_following_entry))
+          Spacer(Modifier.height(12.dp))
+          BpInfoColumnTexts(bpToDelete, useSubtitleStyle = false)
+        }
+      },
+      confirmButton = {
+        TextButton(
+          onClick = { viewModel.deleteBpInfo(bpToDelete) },
+          colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colors.error)
+        ) {
+          Text(stringResource(id = R.string.delete_bp_info_dialog_confirm_button))
+        }
+      },
+      dismissButton = {
+        TextButton(onClick = { bpInfoToDelete = null }) {
+          Text(stringResource(id = R.string.cancel))
+        }
+      }
+    )
+  }
+
   val lazyListState = rememberLazyListState()
   val state by viewModel.facilityStateFlow.collectAsState()
   Scaffold(
@@ -115,7 +146,7 @@ fun FacilityDetailsScreen(
             areEditButtonsEnabled = editFormState?.canEdit == true,
             onFacilityOtherInfoEditPress = onFacilityOtherInfoEditPress,
             onEditBpInfoPressed = onEditBpInfoPressed,
-            onDeleteBpInfoPressed = {},
+            onDeleteBpInfoPressed = { viewModel.bpInfoToDelete.value = it },
             bpInfoCount = bpInfoCount,
             bpInfoItems = viewModel.bpInfoFlow?.let {
               rememberFlowWithLifecycle(it, minActiveState = Lifecycle.State.RESUMED)
@@ -147,19 +178,35 @@ fun FacilityDetailsScreen(
 }
 
 @Composable
+private fun BpInfoColumnTexts(bpInfo: FacilityBpInfo, useSubtitleStyle: Boolean = true) {
+  Text(
+    bpInfo.dataCollectionDate?.toString() ?: stringResource(R.string.unknown_date),
+    style = if (useSubtitleStyle) MaterialTheme.typography.subtitle1 else LocalTextStyle.current,
+  )
+  bpInfo.numBpReadingsTakenInFacilitySinceLastVisit?.let {
+    Text(stringResource(R.string.bp_info_d_readings_collected, it))
+  }
+  bpInfo.numBpReadingsEndIn0Or5?.let {
+    Text(stringResource(R.string.bp_info_d_readings_end_in_0_or_5, it))
+  }
+  bpInfo.numBpReadingsWithColorAndArrow?.let {
+    Text(stringResource(R.string.bp_info_d_readings_have_color_or_arrow, it))
+  }
+}
+
+@Composable
 private fun FacilityDetailsScreen(
   facility: Facility,
   areEditButtonsEnabled: Boolean,
   onFacilityOtherInfoEditPress: (facilityPrimaryKey: Long) -> Unit,
   onEditBpInfoPressed: (pk: Long) -> Unit,
-  onDeleteBpInfoPressed: (pk: Long) -> Unit,
+  onDeleteBpInfoPressed: (bpInfo: FacilityBpInfo) -> Unit,
   bpInfoCount: Int?,
   bpInfoItems: LazyPagingItems<FacilityBpInfo>?,
   lazyListState: LazyListState,
   modifier: Modifier = Modifier,
   contentPadding: PaddingValues = PaddingValues()
 ) {
-
   LazyColumn(modifier = modifier, contentPadding = contentPadding, state = lazyListState) {
     item("otherinfo") {
       OtherFacilityInfoCard(
@@ -194,7 +241,7 @@ private fun FacilityDetailsScreen(
             Text(
               stringResource(R.string.none),
               modifier = Modifier.padding(horizontal = 16.dp),
-              style = MaterialTheme.typography.h5
+              style = MaterialTheme.typography.h6
             )
           }
         }
@@ -251,7 +298,7 @@ fun BpInfoCard(
   bpInfo: FacilityBpInfo?,
   areEditButtonsEnabled: Boolean,
   onEditPressed: (pk: Long) -> Unit,
-  onDeletePressed: (pk: Long) -> Unit,
+  onDeletePressed: (bpInfo: FacilityBpInfo) -> Unit,
   modifier: Modifier = Modifier,
 ) {
   Card(
@@ -266,18 +313,10 @@ fun BpInfoCard(
         .padding(16.dp)
     ) {
       if (bpInfo != null) {
-        Text(
-          bpInfo.dataCollectionDate?.toString() ?: stringResource(R.string.unknown_date),
-          style = MaterialTheme.typography.subtitle1
-        )
-        bpInfo.numBpReadingsTakenInFacilitySinceLastVisit?.let {
-          Text(stringResource(R.string.bp_info_d_readings_collected, it))
-        }
-        bpInfo.numBpReadingsEndIn0Or5?.let {
-          Text(stringResource(R.string.bp_info_d_readings_end_in_0_or_5, it))
-        }
-        bpInfo.numBpReadingsWithColorAndArrow?.let {
-          Text(stringResource(R.string.bp_info_d_readings_have_color_or_arrow, it))
+        BpInfoColumnTexts(bpInfo)
+        if (!bpInfo.localNotes.isNullOrBlank()) {
+          Spacer(Modifier.height(8.dp))
+          Text(bpInfo.localNotes ?: "")
         }
         if (bpInfo.isDraft) {
           Spacer(Modifier.height(8.dp))
@@ -295,7 +334,7 @@ fun BpInfoCard(
           ) {
             TextButton(
               enabled = areEditButtonsEnabled,
-              onClick = { onDeletePressed(bpInfo.id) },
+              onClick = { onDeletePressed(bpInfo) },
               colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colors.error)
             ) {
               Text("Delete")
