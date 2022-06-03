@@ -21,7 +21,7 @@ dependencyResolutionManagement {
 
             library("desugar", "com.android.tools:desugar_jdk_libs:1.1.5")
 
-            version("kotlin", "1.6.21")
+            version("kotlin", "1.6.10")
             // Support for using version catalogs in buildscript and plugin blocks is in 7.2.0
             // https://github.com/gradle/gradle/pull/17394
             // https://github.com/gradle/gradle/commit/269148642b4499861bced4b028a400f856273bb2
