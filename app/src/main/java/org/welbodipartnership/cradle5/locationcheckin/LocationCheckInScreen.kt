@@ -40,7 +40,10 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -143,6 +146,9 @@ private fun LocationCheckInScreen(
               android.Manifest.permission.ACCESS_COARSE_LOCATION,
             )
           )
+          var permissionRequested by rememberSaveable(multiLocationPermsState.allPermissionsGranted) {
+            mutableStateOf(false)
+          }
           BaseDetailsCard(
             title = null,
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -218,15 +224,18 @@ private fun LocationCheckInScreen(
               // permissions dialog each time your app requested a permission, unless the user had
               // previously selected a "don't ask again" checkbox or option"
               // - https://developer.android.com/training/permissions/requesting#handle-denial
-              multiLocationPermsState.shouldShowRationale ||
-                multiLocationPermsState.revokedPermissions.isEmpty() ||
-                Build.VERSION.SDK_INT < Build.VERSION_CODES.R -> {
+              multiLocationPermsState.shouldShowRationale || !permissionRequested -> {
 
                 Text("The app requires the precise location permission to perform location check ins.")
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Button(onClick = { multiLocationPermsState.launchMultiplePermissionRequest() }) {
+                Button(
+                  onClick = {
+                    multiLocationPermsState.launchMultiplePermissionRequest()
+                    permissionRequested = true
+                  }
+                ) {
                   Text("Request permissions")
                 }
               }
