@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
@@ -63,7 +65,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.paging.PagingData
-import com.google.accompanist.insets.navigationBarsWithImePadding
 import com.google.accompanist.insets.ui.TopAppBar
 import kotlinx.coroutines.flow.Flow
 import org.welbodipartnership.cradle5.R
@@ -237,7 +238,7 @@ fun PatientForm(
 
     LazyColumn(
       contentPadding = padding,
-      modifier = Modifier.navigationBarsWithImePadding()
+      modifier = Modifier.navigationBarsPadding().imePadding()
     ) {
 
       item {
