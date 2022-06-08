@@ -11,8 +11,6 @@ import org.welbodipartnership.cradle5.domain.RestApi
 import org.welbodipartnership.cradle5.domain.getErrorMessageOrNull
 import org.welbodipartnership.cradle5.domain.sync.SyncRepository
 import java.time.ZoneId
-import java.util.Date
-import java.util.SimpleTimeZone
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -75,7 +73,6 @@ class CradleTrainingFormManager @Inject constructor(
       val isInDaylight = ZoneId.of("Europe/London").rules.isDaylightSavings(it)
       Log.d(TAG, "Operation log Is ${serverInfo.createdTime} in daylight for Europe/London? $isInDaylight")
     }
-
 
     dbWrapper.withTransaction {
       dao.updateWithServerInfo(form.id, serverInfo)

@@ -298,19 +298,14 @@ class CradleTrainingFormViewModel @Inject constructor(
             formDistrict?.let { district ->
               this.district.stateValue = DistrictAndPosition(
                 district,
-                district.id
-                  .let { id -> dbWrapper.districtDao().getDistrictIndexWhenOrderedById(id) }
+                dbWrapper.districtDao().getDistrictIndexWhenOrderedById(district)
                   ?.coerceAtLeast(0)
               )
             }
 
-            val facilityPosition = formFacility?.id
-              ?.let { facilityId ->
-                database.facilitiesDao().getFacilityIndexWhenOrderedByName(
-                  facilityId = facilityId,
-                  districtId = valuesStore.districtIdFlow.firstOrNull() ?: Facility.DEFAULT_DISTRICT_ID
-                )
-              }?.toInt()?.coerceAtLeast(0)
+            val facilityPosition = formFacility
+              ?.let { database.facilitiesDao().getFacilityIndexWhenOrderedByName(it) }
+              ?.coerceAtLeast(0)
             facility.stateValue = formFacility?.let { FacilityAndPosition(it, facilityPosition) }
 
             dateOfTraining.setStateFromFormDate(cradleForm.dateOfTraining)
@@ -346,8 +341,7 @@ class CradleTrainingFormViewModel @Inject constructor(
           dbWrapper.districtDao().getDistrict(districtPk)?.let { district ->
             formFieldsNew.district.stateValue = DistrictAndPosition(
               district,
-              district.id
-                .let { id -> dbWrapper.districtDao().getDistrictIndexWhenOrderedById(id) }
+              dbWrapper.districtDao().getDistrictIndexWhenOrderedById(district)
                 ?.coerceAtLeast(0)
             )
           }

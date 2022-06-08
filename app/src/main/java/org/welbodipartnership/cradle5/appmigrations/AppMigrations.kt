@@ -25,8 +25,8 @@ class AppMigrations @Inject internal constructor(
     val lastSeenVersion = appValuesStore.lastAppVersionFlow.firstOrNull() ?: 0
     Log.d(TAG, "lastSeenVersion = $lastSeenVersion, current = $CURRENT_VERSION")
 
-    //if (lastSeenVersion < Version.SOMETHING) {
-    //}
+    // if (lastSeenVersion < Version.SOMETHING) {
+    // }
     appValuesStore.setLastAppMigrationVersion(CURRENT_VERSION)
   }
 }

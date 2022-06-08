@@ -34,7 +34,7 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-  namespace = "org.welbodipartnership.cradle5.domain"
+    namespace = "org.welbodipartnership.cradle5.domain"
 }
 
 dependencies {
