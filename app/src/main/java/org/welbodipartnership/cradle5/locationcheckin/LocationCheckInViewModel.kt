@@ -165,6 +165,8 @@ class LocationCheckInViewModel @Inject constructor(
     consumeEach {
       updateLocationProviderList()
 
+      // not refactoring this, because it doesn't seem like IDE lints for permissions will be able
+      // to see if permissions in a list are being checked
       val hasFineLocation = ContextCompat.checkSelfPermission(
         context,
         Manifest.permission.ACCESS_FINE_LOCATION

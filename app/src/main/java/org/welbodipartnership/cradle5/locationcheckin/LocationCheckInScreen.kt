@@ -24,6 +24,7 @@ import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Card
 import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.SnackbarDuration
@@ -34,6 +35,7 @@ import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -132,112 +134,112 @@ private fun LocationCheckInScreen(
     val isDeleteEnabled by viewModel.canDelete.collectAsState()
     LazyColumn(contentPadding = padding) {
       item {
-        val multiLocationPermsState = rememberMultiplePermissionsState(
-          listOf(
-            android.Manifest.permission.ACCESS_FINE_LOCATION,
-            android.Manifest.permission.ACCESS_COARSE_LOCATION,
-          )
-        )
-        BaseDetailsCard(
-          title = null,
-          horizontalAlignment = Alignment.CenterHorizontally,
-          modifier = Modifier.padding(24.dp)
+        CompositionLocalProvider(
+          LocalTextStyle provides LocalTextStyle.current.copy(textAlign = TextAlign.Center)
         ) {
-          when {
-            multiLocationPermsState.allPermissionsGranted -> {
-              val state = viewModel.screenState.collectAsState().value
-              when (state) {
-                is LocationCheckInViewModel.ScreenState.Error -> {
-                  Text(state.errorMessage, textAlign = TextAlign.Center)
-                }
-                is LocationCheckInViewModel.ScreenState.GettingLocation -> {
-                  Text(
-                    "Getting location (provider: ${state.providerName})",
-                    textAlign = TextAlign.Center
-                  )
-                  Spacer(Modifier.height(8.dp))
-                  CircularProgressIndicator()
-                }
-                LocationCheckInViewModel.ScreenState.Success,
-                LocationCheckInViewModel.ScreenState.Ready -> {
-                  AnimatedVisibilityFadingWrapper(visible = !locationEnabled) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                      Text(
-                        "Location may be disabled on the device and might have to be enabled " +
-                          "in the system settings.",
-                        textAlign = TextAlign.Center
-                      )
-                      Spacer(Modifier.height(8.dp))
-                      OpenLocationSettingsButton()
+          val multiLocationPermsState = rememberMultiplePermissionsState(
+            listOf(
+              android.Manifest.permission.ACCESS_FINE_LOCATION,
+              android.Manifest.permission.ACCESS_COARSE_LOCATION,
+            )
+          )
+          BaseDetailsCard(
+            title = null,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(24.dp)
+          ) {
+            when {
+              multiLocationPermsState.allPermissionsGranted -> {
+                val state = viewModel.screenState.collectAsState().value
+                when (state) {
+                  is LocationCheckInViewModel.ScreenState.Error -> {
+                    Text(state.errorMessage)
+                  }
+                  is LocationCheckInViewModel.ScreenState.GettingLocation -> {
+                    Text("Getting location (provider: ${state.providerName})",)
+                    Spacer(Modifier.height(8.dp))
+                    CircularProgressIndicator()
+                  }
+                  LocationCheckInViewModel.ScreenState.Success,
+                  LocationCheckInViewModel.ScreenState.Ready -> {
+                    AnimatedVisibilityFadingWrapper(visible = !locationEnabled) {
+                      Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                          "Location may be disabled on the device and might have to be enabled " +
+                            "in the system settings."
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        OpenLocationSettingsButton()
+                      }
                     }
                   }
+                  LocationCheckInViewModel.ScreenState.ErrorLocationDisabled -> {
+                    Text(
+                      "Unable to get location: " +
+                        "Location is disabled on the device and needs to be enabled " +
+                        "in the system settings.",
+                      textAlign = TextAlign.Center
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    OpenLocationSettingsButton()
+                  }
                 }
-                LocationCheckInViewModel.ScreenState.ErrorLocationDisabled -> {
+                AnimatedVisibilityFadingWrapper(
+                  visible = state is LocationCheckInViewModel.ScreenState.Success
+                ) {
                   Text(
-                    "Unable to get location: " +
-                      "Location is disabled on the device and needs to be enabled " +
-                      "in the system settings.",
+                    "Successfully created location check in",
                     textAlign = TextAlign.Center
                   )
-                  Spacer(Modifier.height(8.dp))
-                  OpenLocationSettingsButton()
                 }
-              }
-              AnimatedVisibilityFadingWrapper(
-                visible = state is LocationCheckInViewModel.ScreenState.Success
-              ) {
+
+                if (state !is LocationCheckInViewModel.ScreenState.GettingLocation) {
+                  Button(onClick = { viewModel.submitLocationRequest() }) {
+                    Text("Create location check in")
+                  }
+                }
+
+                Spacer(Modifier.height(4.dp))
+                val locationProviderList by viewModel.locationProviderListText.collectAsState()
                 Text(
-                  "Successfully created location check in",
+                  "Available location providers: $locationProviderList",
                   textAlign = TextAlign.Center
                 )
               }
 
-              if (state !is LocationCheckInViewModel.ScreenState.GettingLocation) {
-                Button(onClick = { viewModel.submitLocationRequest() }) {
-                  Text("Create location check in")
+              // If the user denied any permission but a rationale should be shown, or the user sees
+              // the permissions for the first time, explain why the feature is needed by the app and
+              // allow the user decide if they don't want to see the rationale any more.
+              //
+              // "Starting in Android 11 (API level 30), if the user taps Deny for a specific permission
+              // more than once during your app's lifetime of installation on a device, the user doesn't
+              // see the system permissions dialog if your app requests that permission again. The user's
+              // action implies "don't ask again." On previous versions, users would see the system
+              // permissions dialog each time your app requested a permission, unless the user had
+              // previously selected a "don't ask again" checkbox or option"
+              // - https://developer.android.com/training/permissions/requesting#handle-denial
+              multiLocationPermsState.shouldShowRationale ||
+                multiLocationPermsState.revokedPermissions.isEmpty() ||
+                Build.VERSION.SDK_INT < Build.VERSION_CODES.R -> {
+
+                Text("The app requires the precise location permission to perform location check ins.")
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Button(onClick = { multiLocationPermsState.launchMultiplePermissionRequest() }) {
+                  Text("Request permissions")
                 }
               }
-
-              Spacer(Modifier.height(4.dp))
-              val locationProviderList by viewModel.locationProviderListText.collectAsState()
-              Text(
-                "Available location providers: $locationProviderList",
-                textAlign = TextAlign.Center
-              )
-            }
-
-            // If the user denied any permission but a rationale should be shown, or the user sees
-            // the permissions for the first time, explain why the feature is needed by the app and
-            // allow the user decide if they don't want to see the rationale any more.
-            //
-            // "Starting in Android 11 (API level 30), if the user taps Deny for a specific permission
-            // more than once during your app's lifetime of installation on a device, the user doesn't
-            // see the system permissions dialog if your app requests that permission again. The user's
-            // action implies "don't ask again." On previous versions, users would see the system
-            // permissions dialog each time your app requested a permission, unless the user had
-            // previously selected a "don't ask again" checkbox or option"
-            // - https://developer.android.com/training/permissions/requesting#handle-denial
-            multiLocationPermsState.shouldShowRationale ||
-              multiLocationPermsState.revokedPermissions.isEmpty() ||
-              Build.VERSION.SDK_INT < Build.VERSION_CODES.R -> {
-
-              Text("The app requires the precise location permission to perform location check ins.")
-
-              Spacer(modifier = Modifier.height(8.dp))
-
-              Button(onClick = { multiLocationPermsState.launchMultiplePermissionRequest() }) {
-                Text("Request permissions")
-              }
-            }
-            else -> {
-              Text(
-                "Precise location permissions have been denied. This permission is required" +
-                  "to perform location check ins. " +
-                  "Permissions have to be given through the app settings."
-              )
-              Spacer(modifier = Modifier.height(8.dp))
-              Button(onClick = onOpenSettingsForApp) {
-                Text("Open app settings")
+              else -> {
+                Text(
+                  "Precise location permissions have been denied. This permission is required " +
+                    "to perform location check ins. " +
+                    "Permissions have to be given through the app settings."
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(onClick = onOpenSettingsForApp) {
+                  Text("Open app settings")
+                }
               }
             }
           }
