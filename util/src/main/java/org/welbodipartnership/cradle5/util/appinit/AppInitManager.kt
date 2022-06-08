@@ -8,6 +8,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import org.acra.ACRA
+import org.acra.ktx.sendWithAcra
 import org.welbodipartnership.cradle5.util.coroutines.AppCoroutineDispatchers
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -65,6 +67,8 @@ class AppInitManager @Inject constructor(
           coroutineScope { task.init(application) }
         } catch (e: Exception) {
           Log.e(TAG, "Failed to initialize ${task::class.java.canonicalName}", e)
+          ACRA.errorReporter.putCustomData("init_task", task::class.simpleName.toString())
+          e.sendWithAcra()
           _appState.value = AppState.FailedToInitialize(
             classOfTaskThatFailed = task::class,
             cause = e

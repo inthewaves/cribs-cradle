@@ -6,6 +6,7 @@ import com.google.crypto.tink.streamingaead.StreamingAeadConfig
 import kotlinx.coroutines.flow.firstOrNull
 import net.sqlcipher.database.SQLiteDatabase
 import net.sqlcipher.database.SQLiteDatabaseHook
+import org.acra.ACRA
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
 import org.welbodipartnership.cradle5.data.settings.EncryptedSettingsManager
 import org.welbodipartnership.cradle5.data.settings.UnencryptedSettingsManager
@@ -56,6 +57,7 @@ class DataAndEncryptionSetupTask @Inject internal constructor(
       databaseWrapper.setup(application, supportFactory)
     }
     Log.d(TAG, "Done opening database in $dbOpenTime")
+    ACRA.errorReporter.putCustomData("db_open_time", dbOpenTime.toString())
 
     // We don't actually need the unencrypted settings anymore, as it just stores the keys.
     unencryptedSettings.closeDataStore()

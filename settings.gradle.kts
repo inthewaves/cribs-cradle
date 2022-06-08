@@ -30,6 +30,12 @@ dependencyResolutionManagement {
             library("kotlinx-serialization-json", "org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.3")
             library("kotlinx-coroutines-android", "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.2")
 
+            version("acra", "5.9.3")
+            library("acra-http", "ch.acra", "acra-http").versionRef("acra")
+            library("acra-toast", "ch.acra", "acra-toast").versionRef("acra")
+            library("acra-limiter", "ch.acra", "acra-limiter").versionRef("acra")
+            library("acra-advancedscheduler", "ch.acra", "acra-advanced-scheduler").versionRef("acra")
+
             library("androidx-core-ktx", "androidx.core:core-ktx:1.8.0")
             library("androidx-appcompat", "androidx.appcompat:appcompat:1.4.2")
 
