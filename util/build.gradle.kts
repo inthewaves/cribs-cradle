@@ -34,6 +34,11 @@ dependencies {
 
     api(libs.moshi.core)
     ksp(libs.moshi.codegen)
+
+    api(libs.acra.http)
+    api(libs.acra.toast)
+    api(libs.acra.limiter)
+    api(libs.acra.advancedscheduler)
     
     implementation(libs.kotlinx.coroutines.android)
 

@@ -48,6 +48,10 @@ android {
         buildConfigField("String", "TEST_API_URL", "\"$TEST_URL\"")
 
         buildConfigField("String", "DEFAULT_API_URL", "\"$PRODUCTION_URL\"")
+
+        buildConfigField("String", "DEFAULT_ACRA_URL", "\"https://crashes.inthewaves.org/report\"")
+        buildConfigField("String", "ACRA_USER", "\"yq2jO2TVxjjDHHOm\"")
+        buildConfigField("String", "ACRA_PASS", "\"f1abRBqbvvKhJaCy\"")
     }
 
     signingConfigs {
@@ -133,6 +137,11 @@ dependencies {
     // implementation(kotlin("reflect"))
 
     coreLibraryDesugaring(libs.desugar)
+
+    implementation(libs.acra.http)
+    implementation(libs.acra.toast)
+    implementation(libs.acra.limiter)
+    implementation(libs.acra.advancedscheduler)
 
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.appcompat)

@@ -3,6 +3,7 @@ package org.welbodipartnership.cradle5.data.database.daos
 import android.database.sqlite.SQLiteException
 import android.util.Log
 import androidx.sqlite.db.SimpleSQLiteQuery
+import org.acra.ktx.sendSilentlyWithAcra
 import org.welbodipartnership.cradle5.data.database.entities.AppEntity
 import org.welbodipartnership.cradle5.data.database.entities.CradleTrainingForm
 import org.welbodipartnership.cradle5.data.database.entities.District
@@ -38,6 +39,7 @@ internal suspend inline fun <reified T : AppEntity> getRowNumberSafe(
     // ROW_NUMBER is 1-based
     runRawQueryBlock(query)?.let { (it - 1).coerceAtLeast(0) }
   } catch (e: SQLiteException) {
+    e.sendSilentlyWithAcra()
     getRowNumByWorkaround(getAllEntitiesBlock, allEntitiesComparator, entity)
   } catch (e: Throwable) {
     // Strange exception from Google Play console from an Infinix HOT 10 Play device running Android
@@ -48,6 +50,7 @@ internal suspend inline fun <reified T : AppEntity> getRowNumberSafe(
       e.toString().contains("exception.class.missing._Unknown_")
     ) {
       Log.e(TAG, "Got missing class exception, falling back", e)
+      e.sendSilentlyWithAcra()
       getRowNumByWorkaround(getAllEntitiesBlock, allEntitiesComparator, entity)
     } else {
       throw e
