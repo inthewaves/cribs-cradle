@@ -152,7 +152,6 @@ dependencies {
 
     implementation(libs.accompanist.navigation.animation)
     implementation(libs.accompanist.permissions)
-    implementation(libs.accompanist.insets)
     implementation(libs.accompanist.insetsui)
     implementation(libs.accompanist.systemuicontroller)
 
