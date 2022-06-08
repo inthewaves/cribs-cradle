@@ -121,7 +121,7 @@ dependencyResolutionManagement {
 
             library("datastore", "androidx.datastore:datastore:1.0.0")
 
-            library("gms-location", "com.google.android.gms:play-services-location:19.0.1")
+            library("gms-location", "com.google.android.gms:play-services-location:20.0.0")
 
             version("junit5", "5.8.2")
             library("junit5-androidGradlePlugin", "de.mannodermaus.gradle.plugins:android-junit5:1.8.2.0")
