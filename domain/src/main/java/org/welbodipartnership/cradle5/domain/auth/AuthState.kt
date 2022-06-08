@@ -11,13 +11,13 @@ sealed interface AuthState {
   @Immutable
   object LoggedOut : AuthState
   @Immutable
-  data class ForcedRelogin(val username: String) : AuthState
+  class ForcedRelogin(val username: String) : AuthState
   @Immutable
-  data class TokenExpired(val username: String) : AuthState
+  class TokenExpired(val username: String) : AuthState
   @Immutable
-  data class LoggedInUnlocked(val username: String) : AuthState
+  class LoggedInUnlocked(val username: String) : AuthState
   @Immutable
-  data class LoggedInLocked(val username: String) : AuthState
+  class LoggedInLocked(val username: String) : AuthState
   @Immutable
-  data class BlockingWarningMessage(val warningMessage: String) : AuthState
+  class BlockingWarningMessage(val warningMessage: String) : AuthState
 }

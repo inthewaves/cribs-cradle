@@ -20,6 +20,7 @@ import org.acra.data.StringFormat
 import org.acra.ktx.initAcra
 import org.acra.sender.HttpSender
 import org.welbodipartnership.cradle5.appmigrations.AppMigrations
+import org.welbodipartnership.cradle5.data.settings.AppValuesStore
 import org.welbodipartnership.cradle5.domain.auth.AuthRepository
 import org.welbodipartnership.cradle5.util.ApplicationCoroutineScope
 import org.welbodipartnership.cradle5.util.appinit.AppInitManager
@@ -44,6 +45,9 @@ class Cradle5Application : Application(), Configuration.Provider {
   @Inject
   lateinit var authRepository: AuthRepository
 
+  @Inject
+  lateinit var appValuesStore: AppValuesStore
+
   override fun attachBaseContext(base: Context?) {
     super.attachBaseContext(base)
 
@@ -51,6 +55,8 @@ class Cradle5Application : Application(), Configuration.Provider {
       buildConfigClass = BuildConfig::class.java
       reportFormat = StringFormat.JSON
       alsoReportToAndroidFramework = true
+      reportSendSuccessToast = getString(R.string.success_uploading_logs_toast)
+      reportSendFailureToast = getString(R.string.failed_uploading_logs_toast)
       toast {
         text = getString(R.string.s_encountered_error_uploading_logs_toast, getString(R.string.app_name))
         length = Toast.LENGTH_LONG
@@ -70,10 +76,10 @@ class Cradle5Application : Application(), Configuration.Provider {
       }
       limiter {
         enabled = true
-        period = 30
-        periodUnit = TimeUnit.MINUTES
-        exceptionClassLimit = 30
-        ignoredCrashToast = getString(R.string.s_encountered_error_toast)
+        period = 1
+        periodUnit = TimeUnit.HOURS
+        exceptionClassLimit = 12
+        ignoredCrashToast = getString(R.string.s_encountered_error_toast, getString(R.string.app_name))
       }
     }
   }
@@ -97,8 +103,19 @@ class Cradle5Application : Application(), Configuration.Provider {
 
     appCoroutineScope.launch {
       authRepository.authStateFlow.collect { authState ->
-        // this will include username
-        ACRA.errorReporter.putCustomData("authstate", authState.toString())
+        ACRA.errorReporter.putCustomData("authState", authState::class.simpleName.toString())
+      }
+      authRepository.nextExpiryTimeFlow.collect {
+        ACRA.errorReporter.putCustomData("nextExpiryTime", it.toString())
+      }
+      appValuesStore.lastSyncCompletedTimestamp.collect {
+        ACRA.errorReporter.putCustomData("lastSyncCompletedTimestamp", it.toString())
+      }
+      appValuesStore.lastTimeAuthedFlow.collect {
+        ACRA.errorReporter.putCustomData("lastTimeAuthedFlow", it.toString())
+      }
+      appValuesStore.forceReauthFlow.collect {
+        ACRA.errorReporter.putCustomData("forceReauthFlow", it.toString())
       }
     }
   }

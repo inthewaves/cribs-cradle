@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">CRADLE Champions</string>
-    <string name="s_encountered_error_uploading_logs_toast">%1$s has encountered an error; sorry about this! Uploading crash logs.</string>
+    <string name="s_encountered_error_uploading_logs_toast">%1$s has encountered an error; sorry about this! Uploading error logs.</string>
+    <string name="success_uploading_logs_toast">Successfully uploaded error logs.</string>
+    <string name="failed_uploading_logs_toast">Failed to upload error logs.</string>
     <string name="s_encountered_error_toast">%1$s has encountered an error; sorry about this!</string>
     <string name="cradle_form_nav_button">CRADLE</string>
     <string name="cd_cradle_form_nav_button">Show the CRADLE forms list</string>
