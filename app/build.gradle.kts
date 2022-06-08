@@ -34,8 +34,8 @@ android {
         applicationId = "org.welbodipartnership.cradle5.champions"
         minSdk = appconfig.versions.minSdkVersion.get().toInt()
         targetSdk = appconfig.versions.targetSdkVersion.get().toInt()
-        versionCode = 6
-        versionName = "0.3.2"
+        versionCode = 7
+        versionName = "0.3.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
@@ -139,7 +139,7 @@ dependencies {
     coreLibraryDesugaring(libs.desugar)
 
     implementation(libs.acra.http)
-    implementation(libs.acra.toast)
+    implementation(libs.acra.notification)
     implementation(libs.acra.limiter)
     implementation(libs.acra.advancedscheduler)
 

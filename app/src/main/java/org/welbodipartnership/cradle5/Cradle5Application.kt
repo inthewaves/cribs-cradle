@@ -1,10 +1,11 @@
 package org.welbodipartnership.cradle5
 
 import android.app.Application
+import android.app.NotificationManager
 import android.app.job.JobInfo
 import android.content.Context
+import android.os.Build
 import android.util.Log
-import android.widget.Toast
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import dagger.hilt.android.HiltAndroidApp
@@ -14,8 +15,8 @@ import kotlinx.coroutines.runBlocking
 import org.acra.ACRA
 import org.acra.config.httpSender
 import org.acra.config.limiter
+import org.acra.config.notification
 import org.acra.config.scheduler
-import org.acra.config.toast
 import org.acra.data.StringFormat
 import org.acra.ktx.initAcra
 import org.acra.sender.HttpSender
@@ -50,10 +51,27 @@ class Cradle5Application : Application(), Configuration.Provider {
     initAcra {
       buildConfigClass = BuildConfig::class.java
       reportFormat = StringFormat.JSON
-      alsoReportToAndroidFramework = true
-      toast {
-        text = getString(R.string.s_encountered_error_uploading_logs_toast, getString(R.string.app_name))
-        length = Toast.LENGTH_LONG
+
+      // alsoReportToAndroidFramework = true
+      notification {
+        //required
+        title = getString(R.string.error_notification_title__s_has_encountered_an_error, getString(R.string.app_name))
+        //required
+        text = getString(R.string.error_notification_body)
+        //required
+        channelName = getString(R.string.error_notification_channel_name)
+        //optional channel description
+        channelDescription = getString(R.string.error_notification_channel_description)
+        //defaults to NotificationManager.IMPORTANCE_HIGH
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+          channelImportance = NotificationManager.IMPORTANCE_HIGH
+        }
+        resIcon = android.R.drawable.stat_sys_warning
+        //defaults to android.R.string.ok
+        sendButtonText = getString(R.string.error_notification_send_button)
+        //defaults to false
+        sendOnClick = false
+        this.enabled = true
       }
       httpSender {
         uri = BuildConfig.DEFAULT_ACRA_URL
@@ -80,6 +98,15 @@ class Cradle5Application : Application(), Configuration.Provider {
 
   override fun onCreate() {
     super.onCreate()
+
+    // https://github.com/ACRA/acra/issues/855#issuecomment-855434695
+    // "You need this if(ACRA.isACRASenderServiceProcess()) return; before any non-acra
+    // configuration in both attachBaseContext and onCreate. acra configuration should be in
+    // attachBaseContext."
+    if (ACRA.isACRASenderServiceProcess()) {
+      Log.w("Cradle5Application", "Bailing out of onCreate due to isACRASenderServiceProcess")
+      return
+    }
 
     runBlocking {
       appInitManager.init()

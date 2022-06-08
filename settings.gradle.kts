@@ -32,7 +32,7 @@ dependencyResolutionManagement {
 
             version("acra", "5.9.3")
             library("acra-http", "ch.acra", "acra-http").versionRef("acra")
-            library("acra-toast", "ch.acra", "acra-toast").versionRef("acra")
+            library("acra-notification", "ch.acra", "acra-notification").versionRef("acra")
             library("acra-limiter", "ch.acra", "acra-limiter").versionRef("acra")
             library("acra-advancedscheduler", "ch.acra", "acra-advanced-scheduler").versionRef("acra")
 
