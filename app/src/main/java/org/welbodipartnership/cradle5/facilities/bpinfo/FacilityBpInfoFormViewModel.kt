@@ -187,16 +187,10 @@ class FacilityBpInfoFormViewModel @Inject constructor(
   )
 
   private suspend fun populateFacilityField(facility: Facility) {
-    val facilityPosition: Int? = facility.id
-      .let { facilityId ->
-        database.facilitiesDao().getFacilityIndexWhenOrderedByName(
-          facilityId = facilityId,
-          districtId = valuesStore.districtIdFlow.firstOrNull() ?: Facility.DEFAULT_DISTRICT_ID
-        )
-      }
-      ?.toInt()
-      ?.coerceAtLeast(0)
-    formFields.facility.stateValue = FacilityAndPosition(facility, facilityPosition)
+    formFields.facility.stateValue = FacilityAndPosition(
+      facility,
+      database.facilitiesDao().getFacilityIndexWhenOrderedByName(facility)
+    )
   }
 
   init {
@@ -229,9 +223,7 @@ class FacilityBpInfoFormViewModel @Inject constructor(
             formDistrict?.let { district ->
               this.district.stateValue = DistrictAndPosition(
                 district,
-                district.id
-                  .let { id -> dbWrapper.districtDao().getDistrictIndexWhenOrderedById(id) }
-                  ?.coerceAtLeast(0)
+                dbWrapper.districtDao().getDistrictIndexWhenOrderedById(district)
               )
             }
 
@@ -256,9 +248,7 @@ class FacilityBpInfoFormViewModel @Inject constructor(
           dbWrapper.districtDao().getDistrict(districtPk)?.let { district ->
             formFields.district.stateValue = DistrictAndPosition(
               district,
-              dbWrapper.districtDao()
-                .getDistrictIndexWhenOrderedById(district.id)
-                ?.coerceAtLeast(0)
+              dbWrapper.districtDao().getDistrictIndexWhenOrderedById(district)
             )
           }
 

@@ -354,19 +354,11 @@ class PatientFormViewModel @Inject constructor(
             isAgeUnknown.value = parsedAge == null && patient.isAgeUnknown
             address.value = patient.address ?: ""
 
-            val facilityPosition = facility?.id
-              ?.let { facilityId ->
-                database.facilitiesDao().getFacilityIndexWhenOrderedByName(
-                  facilityId = facilityId,
-                  districtId = valuesStore.districtIdFlow.firstOrNull() ?: Facility.DEFAULT_DISTRICT_ID
-                )
-              }
-              ?.toInt()
-              ?.coerceAtLeast(0)
             healthcareFacility.stateValue = facility?.let {
               FacilityAndPosition(
                 it,
-                facilityPosition
+                database.facilitiesDao().getFacilityIndexWhenOrderedByName(it)
+                  ?.coerceAtLeast(0)
               )
             }
 
@@ -376,8 +368,7 @@ class PatientFormViewModel @Inject constructor(
                 referralFromDistrict?.let { district ->
                   fromDistrict.stateValue = DistrictAndPosition(
                     district,
-                    district.id
-                      .let { id -> dbWrapper.districtDao().getDistrictIndexWhenOrderedById(id) }
+                    dbWrapper.districtDao().getDistrictIndexWhenOrderedById(district)
                       ?.coerceAtLeast(0)
                   )
                 }
@@ -389,14 +380,7 @@ class PatientFormViewModel @Inject constructor(
                   referralFromFacility?.let { facility ->
                     fromFacility.stateValue = FacilityAndPosition(
                       facility,
-                      facility.id
-                        .let { id ->
-                          dbWrapper.facilitiesDao().getFacilityIndexWhenOrderedByName(
-                            id,
-                            districtId = referralFromDistrict?.id ?: Facility.DEFAULT_DISTRICT_ID
-                          )
-                        }
-                        ?.toInt()
+                      dbWrapper.facilitiesDao().getFacilityIndexWhenOrderedByName(facility)
                         ?.coerceAtLeast(0)
                     )
                   }
@@ -406,9 +390,7 @@ class PatientFormViewModel @Inject constructor(
                 referralToDistrict?.let { district ->
                   toDistrict.stateValue = DistrictAndPosition(
                     district,
-                    district.id
-                      .let { id -> dbWrapper.districtDao().getDistrictIndexWhenOrderedById(id) }
-                      ?.toInt()
+                    dbWrapper.districtDao().getDistrictIndexWhenOrderedById(district)
                       ?.coerceAtLeast(0)
                   )
                 }
@@ -420,14 +402,7 @@ class PatientFormViewModel @Inject constructor(
                   referralToFacility?.let { facility ->
                     toFacility.stateValue = FacilityAndPosition(
                       facility,
-                      facility.id
-                        .let { id ->
-                          dbWrapper.facilitiesDao().getFacilityIndexWhenOrderedByName(
-                            id,
-                            districtId = referralToDistrict?.id ?: Facility.DEFAULT_DISTRICT_ID
-                          )
-                        }
-                        ?.toInt()
+                      dbWrapper.facilitiesDao().getFacilityIndexWhenOrderedByName(facility)
                         ?.coerceAtLeast(0)
                     )
                   }

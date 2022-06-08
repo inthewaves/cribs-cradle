@@ -16,8 +16,8 @@ import kotlinx.parcelize.Parcelize
 data class District(
   @PrimaryKey
   @ColumnInfo(name = "id")
-  val id: Long,
+  override val id: Long,
   val name: String?,
   @ColumnInfo(defaultValue = "0")
   val isOther: Boolean = false,
-) : Parcelable
+) : Parcelable, AppEntity

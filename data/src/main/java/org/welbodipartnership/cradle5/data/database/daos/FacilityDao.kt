@@ -30,6 +30,9 @@ abstract class FacilityDao {
   @Query("SELECT * FROM Facility WHERE id = :facilityPk")
   abstract suspend fun getFacility(facilityPk: Long): Facility?
 
+  @Query("SELECT * FROM Facility")
+  abstract suspend fun getAllFacilities(): List<Facility>
+
   /**
    * Updates the [facility] or inserts it into the database if the [facility] doesn't yet exist.
    */
@@ -42,6 +45,9 @@ abstract class FacilityDao {
 
   @Update(entity = Facility::class)
   abstract suspend fun update(facility: FacilityUpdate): Int
+
+  @Query("SELECT COUNT(*) FROM Facility")
+  abstract suspend fun countFacilities(): Int
 
   @Query("UPDATE Facility SET hasVisited = :hasVisited, localNotes = :localNotes WHERE id = :facilityPk")
   protected abstract suspend fun updateFacilityOtherInfoInner(
@@ -94,27 +100,30 @@ abstract class FacilityDao {
   @RawQuery
   protected abstract suspend fun getFacilityIndexWhenOrderedByName(
     query: SupportSQLiteQuery
-  ): Long?
+  ): Int?
 
   /**
-   * Gets the index of the facility with the given [facilityId] when the facilities are sorted
+   * Gets the index of the [facility] with the given [districtId] when the facilities are sorted
    * by ascending order of name.
    */
-  suspend fun getFacilityIndexWhenOrderedByName(
-    facilityId: Long,
-    districtId: Long = Facility.DEFAULT_DISTRICT_ID
-  ): Long? {
-    // Room doesn't support this type of query
-    val query = SimpleSQLiteQuery(
-      """
-        SELECT rowNum FROM (
-          SELECT ROW_NUMBER () OVER ($DEFAULT_ORDER) rowNum, id FROM Facility WHERE districtId = ?
-        ) WHERE id = ?;
-      """.trimIndent(),
-      arrayOf(districtId, facilityId)
+  suspend fun getFacilityIndexWhenOrderedByName(facility: Facility): Int? {
+    return getRowNumberSafe(
+      entity = facility,
+      countTotalBlock = { countFacilities() },
+      createRawQueryBlock = {
+        SimpleSQLiteQuery(
+          """
+            SELECT rowNum FROM (
+              SELECT ROW_NUMBER () OVER ($DEFAULT_ORDER) rowNum, id FROM Facility WHERE districtId = ?
+            ) WHERE id = ?;
+          """.trimIndent(),
+          arrayOf(facility.districtId, facility.id)
+        )
+      },
+      runRawQueryBlock = { query -> getFacilityIndexWhenOrderedByName(query) },
+      getAllEntitiesBlock = { getAllFacilities() },
+      allEntitiesComparator = { first, second -> (first.name ?: "").compareTo(second.name ?: "") }
     )
-    // ROW_NUMBER is 1-based
-    return getFacilityIndexWhenOrderedByName(query)?.let { (it - 1).coerceAtLeast(0L) }
   }
 
   @Query("SELECT COUNT(*) FROM Facility")

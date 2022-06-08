@@ -5,7 +5,6 @@ import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
-import org.welbodipartnership.cradle5.data.database.entities.forms.NonTreeFormEntity
 import org.welbodipartnership.cradle5.util.datetime.FormDate
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
