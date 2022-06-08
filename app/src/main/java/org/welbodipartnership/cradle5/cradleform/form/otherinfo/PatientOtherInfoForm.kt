@@ -7,9 +7,11 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Icon
@@ -32,7 +34,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.accompanist.insets.LocalWindowInsets
-import com.google.accompanist.insets.navigationBarsWithImePadding
 import com.google.accompanist.insets.rememberInsetsPaddingValues
 import com.google.accompanist.insets.ui.TopAppBar
 import org.welbodipartnership.cradle5.R
@@ -105,7 +106,7 @@ fun CradleOtherInfoFormScreen(
       TopAppBar(
         backgroundColor = MaterialTheme.colors.surface,
         contentColor = MaterialTheme.colors.onSurface,
-        contentPadding = WindowInsets.statusBars
+        contentPadding = WindowInsets.systemBars
           .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)
           .asPaddingValues(),
         modifier = Modifier.fillMaxWidth(),
@@ -134,7 +135,7 @@ fun CradleOtherInfoFormScreen(
   ) { padding ->
     LazyColumn(
       contentPadding = padding,
-      modifier = Modifier.navigationBarsWithImePadding()
+      modifier = Modifier.navigationBarsPadding().imePadding()
     ) {
       item {
         val (localNotes, setLocalNotes) = viewModel.localNotesState

@@ -32,7 +32,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.BottomDrawer
@@ -286,12 +286,12 @@ fun LoggedInHome(
             )
           }
         },
-      ) {
+      ) { paddingValues ->
         LoggedInNavigation(
           navController,
           onOpenSettingsForApp,
           modifier = Modifier
-            .padding(it)
+            .padding(paddingValues)
             .fillMaxHeight()
         )
       }

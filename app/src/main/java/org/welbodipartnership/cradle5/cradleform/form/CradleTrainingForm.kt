@@ -12,9 +12,17 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
@@ -72,7 +80,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.paging.PagingData
 import com.google.accompanist.insets.LocalWindowInsets
-import com.google.accompanist.insets.navigationBarsWithImePadding
 import com.google.accompanist.insets.rememberInsetsPaddingValues
 import com.google.accompanist.insets.ui.TopAppBar
 import kotlinx.coroutines.flow.Flow
@@ -266,10 +273,9 @@ fun CradleTrainingForm(
       TopAppBar(
         backgroundColor = MaterialTheme.colors.surface,
         contentColor = MaterialTheme.colors.onSurface,
-        contentPadding = rememberInsetsPaddingValues(
-          insets = LocalWindowInsets.current.systemBars,
-          applyBottom = false,
-        ),
+        contentPadding = WindowInsets.systemBars
+          .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)
+          .asPaddingValues(),
         modifier = Modifier.fillMaxWidth(),
         title = {
           if (viewModel.isExistingEdit) {
@@ -312,7 +318,9 @@ fun CradleTrainingForm(
 
     LazyColumn(
       contentPadding = padding,
-      modifier = Modifier.navigationBarsWithImePadding()
+      modifier = Modifier
+        .navigationBarsPadding()
+        .imePadding()
     ) {
 
       item {
