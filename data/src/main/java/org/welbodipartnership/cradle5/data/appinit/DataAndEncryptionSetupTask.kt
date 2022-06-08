@@ -3,7 +3,6 @@ package org.welbodipartnership.cradle5.data.appinit
 import android.app.Application
 import android.util.Log
 import com.google.crypto.tink.streamingaead.StreamingAeadConfig
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import net.sqlcipher.database.SQLiteDatabase
 import net.sqlcipher.database.SQLiteDatabaseHook
