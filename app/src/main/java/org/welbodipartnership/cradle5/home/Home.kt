@@ -87,7 +87,6 @@ import androidx.navigation.NavHostController
 import com.google.accompanist.insets.LocalWindowInsets
 import com.google.accompanist.insets.rememberInsetsPaddingValues
 import com.google.accompanist.insets.ui.BottomNavigation
-import org.acra.ktx.sendWithAcra
 import org.welbodipartnership.cradle5.BuildConfig
 import org.welbodipartnership.cradle5.LeafScreen
 import org.welbodipartnership.cradle5.LoggedInNavigation
@@ -97,7 +96,6 @@ import org.welbodipartnership.cradle5.domain.auth.AuthState
 import org.welbodipartnership.cradle5.ui.composables.LocalUrlProvider
 import org.welbodipartnership.cradle5.ui.composables.UsingServerText
 import org.welbodipartnership.cradle5.util.launchPrivacyPolicyWebIntent
-import java.lang.RuntimeException
 
 @Composable
 fun LoggedInHome(
