@@ -45,8 +45,13 @@ class AppValuesStore @Inject internal constructor(
     .distinctUntilChanged()
     .conflate()
 
-  val passwordHashFlow: Flow<PasswordHash?> = encryptedSettings.encryptedSettingsFlow()
+  val passwordHashFlow: Flow<ArgonHash?> = encryptedSettings.encryptedSettingsFlow()
     .map { settings -> settings.passwordHash.takeIf { settings.hasPasswordHash() } }
+    .distinctUntilChanged()
+    .conflate()
+
+  val usernameHashFlow: Flow<ArgonHash?> = encryptedSettings.encryptedSettingsFlow()
+    .map { settings -> settings.usernameHash.takeIf { settings.hasUsernameHash() } }
     .distinctUntilChanged()
     .conflate()
 
@@ -134,12 +139,17 @@ class AppValuesStore @Inject internal constructor(
    *
    * [hashOfSuccessfulPassword] is the hash of the password used to correctly logged
    */
-  suspend fun insertLoginDetails(authToken: AuthToken, hashOfSuccessfulPassword: PasswordHash) {
+  suspend fun insertLoginDetails(
+    authToken: AuthToken,
+    hashOfSuccessfulPassword: ArgonHash,
+    hashOfUsername: ArgonHash
+  ) {
     encryptedSettings.updateData { settings ->
       settings.toBuilder()
         .setToken(authToken)
         .setLastTimeAuthenticated(UnixTimestamp.now().timestamp)
         .setPasswordHash(hashOfSuccessfulPassword)
+        .setUsernameHash(hashOfUsername)
         .build()
     }
   }

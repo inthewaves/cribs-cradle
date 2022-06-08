@@ -2,20 +2,21 @@ package org.welbodipartnership.cradle5.data.cryptography
 
 import kotlinx.coroutines.withContext
 import org.signal.argon2.Argon2
-import org.welbodipartnership.cradle5.data.settings.PasswordHash
-import org.welbodipartnership.cradle5.data.settings.passwordHash
+import org.welbodipartnership.cradle5.data.settings.ArgonHash
+import org.welbodipartnership.cradle5.data.settings.argonHash
 import org.welbodipartnership.cradle5.util.coroutines.AppCoroutineDispatchers
 import java.security.SecureRandom
 import java.text.Normalizer
 
-class PasswordHasher internal constructor(
+class ArgonHasher internal constructor(
   private val appCoroutineDispatchers: AppCoroutineDispatchers,
   private val argon2: Argon2,
+  private val argon2Username: Argon2,
   val saltLength: Int,
 ) {
   suspend fun verifyPassword(
     password: String,
-    hash: PasswordHash,
+    hash: ArgonHash,
   ): Boolean {
     val normalized = normalizePassword(password)
     return withContext(appCoroutineDispatchers.default) {
@@ -23,15 +24,17 @@ class PasswordHasher internal constructor(
     }
   }
 
-  suspend fun hashPassword(
-    password: String,
+  suspend fun hash(
+    forPassword: Boolean,
+    string: String,
     secureRandom: SecureRandom = SecureRandom()
-  ): PasswordHash {
-    val normalized = normalizePassword(password)
+  ): ArgonHash {
+    val normalized = normalizePassword(string)
 
-    return passwordHash {
+    return argonHash {
       encodedHash = withContext(appCoroutineDispatchers.default) {
-        argon2.hash(
+        val argonInstance = if (forPassword) argon2 else argon2Username
+        argonInstance.hash(
           normalized.toByteArray(Charsets.UTF_8),
           ByteArray(saltLength).apply { secureRandom.nextBytes(this) }
         ).encoded
@@ -41,4 +44,12 @@ class PasswordHasher internal constructor(
 
   private fun normalizePassword(password: String) =
     Normalizer.normalize(password, Normalizer.Form.NFKD)
+}
+
+fun ArgonHash.concatHashAndSalt(): String {
+  val secondPartIndex = encodedHash.lastIndexOf('$')
+  if (secondPartIndex <= 0 || secondPartIndex == encodedHash.lastIndex) return encodedHash
+  val firstPartIndex = encodedHash.lastIndexOf('$', secondPartIndex - 1)
+  if (firstPartIndex == -1) return encodedHash.substring(secondPartIndex + 1)
+  return encodedHash.substring(firstPartIndex + 1, secondPartIndex) + encodedHash.substring(secondPartIndex + 1)
 }

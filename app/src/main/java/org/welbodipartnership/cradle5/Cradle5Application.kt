@@ -20,6 +20,7 @@ import org.acra.data.StringFormat
 import org.acra.ktx.initAcra
 import org.acra.sender.HttpSender
 import org.welbodipartnership.cradle5.appmigrations.AppMigrations
+import org.welbodipartnership.cradle5.data.cryptography.concatHashAndSalt
 import org.welbodipartnership.cradle5.data.settings.AppValuesStore
 import org.welbodipartnership.cradle5.domain.auth.AuthRepository
 import org.welbodipartnership.cradle5.util.ApplicationCoroutineScope
@@ -102,8 +103,11 @@ class Cradle5Application : Application(), Configuration.Provider {
     }
 
     appCoroutineScope.launch {
+      appValuesStore.usernameHashFlow.collect { usernameHash ->
+        ACRA.errorReporter.putCustomData("usernameHash", usernameHash?.concatHashAndSalt().toString())
+      }
       authRepository.authStateFlow.collect { authState ->
-        ACRA.errorReporter.putCustomData("authState", authState::class.simpleName.toString())
+        ACRA.errorReporter.putCustomData("authState", authState?.let { it::class.simpleName}.toString())
       }
       authRepository.nextExpiryTimeFlow.collect {
         ACRA.errorReporter.putCustomData("nextExpiryTime", it.toString())
