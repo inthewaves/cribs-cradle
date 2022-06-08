@@ -1,6 +1,5 @@
 package org.welbodipartnership.cradle5.data.database.daos
 
-import android.util.Log
 import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Insert
@@ -65,28 +64,21 @@ abstract class DistrictDao {
   ): Int?
 
   /**
-   * Gets the index of the district with the given [districtId] when the facilities are sorted
-   * by ascending order of name.
+   * Gets the index of the [district] when the facilities are sorted by ascending order of name.
    */
-  suspend fun getDistrictIndexWhenOrderedById(districtId: Long): Int? {
-    when (countDistricts()) {
-      0 -> {
-        Log.d(TAG, "getDistrictIndexWhenOrderedById(): no districts; using null")
-        return null
-      }
-      1 -> {
-        Log.d(TAG, "getDistrictIndexWhenOrderedById(): only one district; using index of 0")
-        return 0
-      }
-    }
-
-    // Room doesn't support this type of query
-    val query = SimpleSQLiteQuery(
-      "SELECT rowNum FROM (SELECT ROW_NUMBER () OVER ($DEFAULT_ORDER) rowNum, id FROM District) WHERE id = ?;",
-      arrayOf(districtId)
+  suspend fun getDistrictIndexWhenOrderedById(district: District): Int? {
+    return getRowNumberSafe(
+      entity = district,
+      countTotalBlock = { countDistricts() },
+      createRawQueryBlock = {
+        SimpleSQLiteQuery(
+          "SELECT rowNum FROM (SELECT ROW_NUMBER () OVER ($DEFAULT_ORDER) rowNum, id FROM District) WHERE id = ?;",
+          arrayOf(district.id)
+        )
+      },
+      runRawQueryBlock = { query -> getDistrictIndexWhenOrderedById(query) },
+      getAllEntitiesBlock = { getAllDistricts() }
     )
-    // ROW_NUMBER is 1-based
-    return getDistrictIndexWhenOrderedById(query)?.let { (it - 1).coerceAtLeast(0) }
   }
 
   @Query("SELECT COUNT(*) FROM District")

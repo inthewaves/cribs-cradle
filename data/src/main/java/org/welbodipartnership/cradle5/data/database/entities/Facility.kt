@@ -16,7 +16,7 @@ import kotlinx.parcelize.Parcelize
 data class Facility(
   @PrimaryKey
   @ColumnInfo(name = "id")
-  val id: Long,
+  override val id: Long,
   val name: String?,
   @ColumnInfo(defaultValue = DEFAULT_DISTRICT_ID_STRING)
   val districtId: Long = DEFAULT_DISTRICT_ID,
@@ -28,7 +28,7 @@ data class Facility(
    * Local notes the user may have saved for the patient. This is not uploaded to the server.
    */
   val localNotes: String? = null
-) : Parcelable {
+) : Parcelable, AppEntity {
   companion object {
     const val DEFAULT_DISTRICT_ID = -1L
     private const val DEFAULT_DISTRICT_ID_STRING = "$DEFAULT_DISTRICT_ID"
