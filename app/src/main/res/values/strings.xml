@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">CRIBS CRADLE</string>
     <string name="s_encountered_error_uploading_logs_toast">%1$s has encountered an error; sorry about this! Uploading crash logs.</string>
+    <string name="success_uploading_logs_toast">Successfully uploaded error logs.</string>
+    <string name="failed_uploading_logs_toast">Failed to upload error logs.</string>
     <string name="s_encountered_error_toast">%1$s has encountered an error; sorry about this!</string>
     <string name="patients_title">Patients</string>
     <string name="cd_patients_nav_button">Show the patients list</string>
