@@ -136,11 +136,10 @@ fun LoggedInHome(
 
   BottomDrawer(
     drawerContent = {
-      val padding = PaddingValues(bottom = LocalWindowInsets.current.navigationBars.bottom.dp)
       val textPadding = 16.dp
       val interTextPadding = 8.dp
 
-      LazyColumn(contentPadding = padding) {
+      LazyColumn(contentPadding = WindowInsets.navigationBars.asPaddingValues()) {
         item {
           Text(
             stringResource(R.string.bottom_drawer_logged_in_as_s, authState.username),
