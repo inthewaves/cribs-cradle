@@ -81,6 +81,15 @@ class Cradle5Application : Application(), Configuration.Provider {
   override fun onCreate() {
     super.onCreate()
 
+    // https://github.com/ACRA/acra/issues/855#issuecomment-855434695
+    // "You need this if(ACRA.isACRASenderServiceProcess()) return; before any non-acra
+    // configuration in both attachBaseContext and onCreate. acra configuration should be in
+    // attachBaseContext."
+    if (ACRA.isACRASenderServiceProcess()) {
+      Log.w(TAG, "isACRASenderServiceProcess in onCreate; not initializing twice")
+      return
+    }
+
     runBlocking {
       appInitManager.init()
       appMigrations.runMigrations(this@Cradle5Application)
@@ -99,5 +108,9 @@ class Cradle5Application : Application(), Configuration.Provider {
     return Configuration.Builder()
       .setWorkerFactory(workerFactory)
       .build()
+  }
+
+  companion object {
+    private const val TAG = "Cradle5Application"
   }
 }
