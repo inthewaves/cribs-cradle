@@ -21,11 +21,11 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.withContext
 import org.welbodipartnership.api.ApiAuthToken
 import org.welbodipartnership.api.cradle5.HealthcareFacilitySummary
-import org.welbodipartnership.cradle5.data.cryptography.PasswordHasher
+import org.welbodipartnership.cradle5.data.cryptography.ArgonHasher
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
 import org.welbodipartnership.cradle5.data.settings.AppValuesStore
 import org.welbodipartnership.cradle5.data.settings.AuthToken
-import org.welbodipartnership.cradle5.data.settings.PasswordHash
+import org.welbodipartnership.cradle5.data.settings.ArgonHash
 import org.welbodipartnership.cradle5.domain.NetworkResult
 import org.welbodipartnership.cradle5.domain.RestApi
 import org.welbodipartnership.cradle5.domain.UrlProvider
@@ -60,7 +60,7 @@ private val AUTO_REFRESH_THRESHOLD: Duration = 1.days
 class AuthRepository @Inject internal constructor(
   private val restApi: RestApi,
   private val appValuesStore: AppValuesStore,
-  private val passwordHasher: PasswordHasher,
+  private val hasher: ArgonHasher,
   private val networkObserver: NetworkObserver,
   private val dbWrapper: CradleDatabaseWrapper,
   private val dispatchers: AppCoroutineDispatchers,
@@ -222,11 +222,12 @@ class AuthRepository @Inject internal constructor(
       if (!isForTokenRefresh) {
         loginEventMessagesChannel?.trySend("Setting up lockscreen")
       }
-      val hash = passwordHasher.hashPassword(password)
+      val passwordHash = hasher.hash(forPassword = true, password)
+      val usernameHash = hasher.hash(forPassword = false, username)
       // We have to insert the token here for RestApi to be able to authenticate.
       // Note: This function is also used for token refreshes, so the hash will be updated
       // redundantly?
-      appValuesStore.insertLoginDetails(authToken = token, hash)
+      appValuesStore.insertLoginDetails(authToken = token, passwordHash, usernameHash)
 
       val result = doLoginInfoSync(
         loginEventMessagesChannel?.let { InfoSyncProgressReceiver.StringMessages(it) }
@@ -540,14 +541,14 @@ class AuthRepository @Inject internal constructor(
     eventMessagesChannel: SendChannel<String>?
   ): LoginResult {
 
-    val existingHash: PasswordHash? = appValuesStore.passwordHashFlow.firstOrNull()
+    val existingHash: ArgonHash? = appValuesStore.passwordHashFlow.firstOrNull()
     if (existingHash == null) {
       Log.w(TAG, "reauth(): trying to reauthenticate, but there is no stored hash")
       return LoginResult.Exception(gotTokenFromServer = false, "Missing existing login details")
     }
 
     eventMessagesChannel?.trySend("Verifying password")
-    val isLocalPasswordMatch: Boolean = passwordHasher.verifyPassword(password, existingHash)
+    val isLocalPasswordMatch: Boolean = hasher.verifyPassword(password, existingHash)
     Log.d(
       TAG,
       "reauthForLockscreen(forceServerRefresh = $forceServerRefresh) -> $isLocalPasswordMatch"

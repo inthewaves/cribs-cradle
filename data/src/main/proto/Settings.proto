@@ -25,7 +25,7 @@ message EncryptedSettings {
   /* The authentication token from the server. */
   optional AuthToken token = 1;
   /* A hash of the user's login password, stored for lockscreen authentication purposes. */
-  optional PasswordHash password_hash = 2;
+  optional ArgonHash password_hash = 2;
   optional UserInfo user_info = 3;
   /* The last time the user input their password to login to the app */
   optional int64 last_time_authenticated = 4;
@@ -44,6 +44,8 @@ message EncryptedSettings {
   optional ServerType server_override = 11;
   optional int32 last_app_migration_version = 12;
   optional bool force_reauth = 13;
+  /* Hash of the username for crash reporting purposes */
+  optional ArgonHash username_hash = 14;
 }
 
 message UserInfo {
@@ -52,7 +54,7 @@ message UserInfo {
   string district_name = 3;
 }
 
-message PasswordHash {
+message ArgonHash {
   string encoded_hash = 1;
 }
 
