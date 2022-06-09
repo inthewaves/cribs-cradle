@@ -73,11 +73,11 @@ class Cradle5Application : Application(), Configuration.Provider {
       scheduler {
         enabled = true
         restartAfterCrash = false
-        requiresNetworkType = JobInfo.NETWORK_TYPE_ANY
+        requiresNetworkType = JobInfo.NETWORK_TYPE_UNMETERED
       }
       limiter {
         enabled = true
-        period = 1
+        period = 12
         periodUnit = TimeUnit.HOURS
         exceptionClassLimit = 12
         ignoredCrashToast = getString(R.string.s_encountered_error_toast, getString(R.string.app_name))
