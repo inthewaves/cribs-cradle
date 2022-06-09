@@ -35,8 +35,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.work.WorkInfo
-import com.google.accompanist.insets.LocalWindowInsets
-import com.google.accompanist.insets.rememberInsetsPaddingValues
 import com.google.accompanist.insets.ui.TopAppBar
 import org.welbodipartnership.cradle5.R
 import org.welbodipartnership.cradle5.cradleform.details.BaseDetailsCard
@@ -78,29 +76,33 @@ private fun SyncScreen(viewModel: SyncScreenViewModel) {
         .verticalScroll(scrollState),
       horizontalAlignment = Alignment.CenterHorizontally
     ) {
-      syncStatus.let { status ->
-        when (status) {
-          is SyncRepository.SyncStatus.Active -> {
-            ActiveSyncCard(status)
-          }
-          is SyncRepository.SyncStatus.Inactive, null -> {
-            val formsToUploadNoErrors by viewModel.formsToUploadNoErrorsFlow.collectAsState()
-            val formsToUpload by viewModel.formsToUploadWithErrorsFlow.collectAsState()
-            val partialFormsToUpload by viewModel.incompleteFormsToUploadCountFlow
-              .collectAsState()
-            val locationCheckInsToUpload by viewModel.locationCheckInsToUploadCountFlow
-              .collectAsState()
-            val lastTimeSyncCompleted by viewModel.lastSyncCompletedTimestamp.collectAsState()
-            InactiveOrNoSyncCard(
-              onSyncButtonClicked = { viewModel.enqueueSync() },
-              onCancelButtonClicked = { viewModel.cancelSync() },
-              syncStatus = status as SyncRepository.SyncStatus.Inactive?,
-              lastTimeSyncCompleted = lastTimeSyncCompleted,
-              numFormsToUploadWithoutErrors = formsToUploadNoErrors,
-              numFormsToUploadWithErrors = formsToUpload,
-              numIncompleteFormsToUpload = partialFormsToUpload,
-              numLocationCheckinsToUpload = locationCheckInsToUpload,
-            )
+      CompositionLocalProvider(
+        LocalTextStyle provides LocalTextStyle.current.copy(textAlign = TextAlign.Center)
+      ) {
+        syncStatus.let { status ->
+          when (status) {
+            is SyncRepository.SyncStatus.Active -> {
+              ActiveSyncCard(status)
+            }
+            is SyncRepository.SyncStatus.Inactive, null -> {
+              val formsToUploadNoErrors by viewModel.formsToUploadNoErrorsFlow.collectAsState()
+              val formsToUpload by viewModel.formsToUploadWithErrorsFlow.collectAsState()
+              val partialFormsToUpload by viewModel.incompleteFormsToUploadCountFlow
+                .collectAsState()
+              val locationCheckInsToUpload by viewModel.locationCheckInsToUploadCountFlow
+                .collectAsState()
+              val lastTimeSyncCompleted by viewModel.lastSyncCompletedTimestamp.collectAsState()
+              InactiveOrNoSyncCard(
+                onSyncButtonClicked = { viewModel.enqueueSync() },
+                onCancelButtonClicked = { viewModel.cancelSync() },
+                syncStatus = status as SyncRepository.SyncStatus.Inactive?,
+                lastTimeSyncCompleted = lastTimeSyncCompleted,
+                numFormsToUploadWithoutErrors = formsToUploadNoErrors,
+                numFormsToUploadWithErrors = formsToUpload,
+                numIncompleteFormsToUpload = partialFormsToUpload,
+                numLocationCheckinsToUpload = locationCheckInsToUpload,
+              )
+            }
           }
         }
       }
