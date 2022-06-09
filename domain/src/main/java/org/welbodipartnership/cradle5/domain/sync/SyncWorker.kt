@@ -108,6 +108,7 @@ class SyncWorker @AssistedInject constructor(
   ): CradleFormUploadResult = coroutineScope {
     val successfulPatientIds = linkedSetOf<Long>()
     val failedPatientIds = linkedSetOf<Long>()
+    val partialUploadIds = linkedSetOf<Long>()
     reportProgress(stage, doneSoFar = 0, totalToDo = forms.size)
     val updateChannel = actor<Int>(capacity = Channel.CONFLATED) {
       consumeEach { progress ->
@@ -129,7 +130,11 @@ class SyncWorker @AssistedInject constructor(
       if (result is CradleTrainingFormManager.UploadResult.Success) {
         successfulPatientIds.add(form.id)
       } else {
-        failedPatientIds.add(form.id)
+        if (result is CradleTrainingFormManager.UploadResult.NoMetaInfoFailure) {
+          partialUploadIds.add(form.id)
+        } else {
+          failedPatientIds.add(form.id)
+        }
         Log.d(TAG, "got a failed result; applying retry jitter")
         delayWithRetryJitter()
       }
