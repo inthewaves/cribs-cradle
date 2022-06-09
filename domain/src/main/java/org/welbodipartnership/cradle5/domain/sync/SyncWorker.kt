@@ -143,7 +143,7 @@ class SyncWorker @AssistedInject constructor(
         Log.w(TAG, "reporting errors to ACRA them")
         val errorMessage = buildString {
           failedResults.forEach { (formName, id, message) ->
-            append("Failure for form $formName and id $id with message")
+            append("Failure for form $formName and id $id: ")
             appendLine(message)
           }
         }.trimEnd('\n')
