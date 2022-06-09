@@ -308,23 +308,6 @@ private fun CradleFormListScreen(
         }
 
         AnimatedVisibilityFadingWrapper(
-          modifier = Modifier.align(Alignment.Center),
-          visible = lazyPagingItems.loadState.refresh !is LoadState.Loading &&
-            patientsCount == 0
-        ) {
-          Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-              stringResource(R.string.cradle_forms_list_no_forms_available),
-              textAlign = TextAlign.Center
-            )
-            Text(
-              stringResource(R.string.cradle_form_list_no_forms_app_doesnt_download_from_medscinet),
-              textAlign = TextAlign.Center
-            )
-          }
-        }
-
-        AnimatedVisibilityFadingWrapper(
           visible = lazyPagingItems.loadState.refresh !is LoadState.Loading
         ) {
           LazyColumn(state = lazyListState) {
