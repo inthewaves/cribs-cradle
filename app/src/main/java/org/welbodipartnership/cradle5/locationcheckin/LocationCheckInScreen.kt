@@ -2,6 +2,7 @@ package org.welbodipartnership.cradle5.locationcheckin
 
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.net.Uri
 import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
@@ -318,8 +319,9 @@ fun CheckInListItem(
 ) {
   Card(modifier = modifier) {
     Column(columnModifier) {
+      val locationDateString = UnixTimestamp(checkIn.timestamp).formatAsConciseDate()
       Text(
-        UnixTimestamp(checkIn.timestamp).formatAsConciseDate(),
+        locationDateString,
         style = MaterialTheme.typography.h6
       )
 
@@ -342,9 +344,30 @@ fun CheckInListItem(
         uploadedText,
         style = MaterialTheme.typography.body1
       )
-      if (!checkIn.isUploaded) {
-        Spacer(modifier = Modifier.height(16.dp))
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+
+      Spacer(modifier = Modifier.height(16.dp))
+      Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+        val context = LocalContext.current
+        TextButton(
+          onClick = {
+            val intent = Intent(Intent.ACTION_VIEW)
+              .setData(
+                Uri.parse("geo:${checkIn.latitude},${checkIn.longitude}").buildUpon()
+                  .appendQueryParameter("q", "${checkIn.latitude},${checkIn.longitude}(Location check in at $locationDateString)")
+                  .build()
+              )
+            if (intent.resolveActivity(context.packageManager) != null) {
+              context.startActivity(intent)
+            } else {
+              Toast
+                .makeText(context, "Unable to find a maps application", Toast.LENGTH_SHORT)
+                .show()
+            }
+          }
+        ) {
+          Text("Open in maps app")
+        }
+        if (!checkIn.isUploaded) {
           TextButton(
             onClick = { onDeletePressed(checkIn) },
             enabled = isDeleteEnabled,
@@ -354,6 +377,7 @@ fun CheckInListItem(
           }
         }
       }
+
     }
   }
 }
