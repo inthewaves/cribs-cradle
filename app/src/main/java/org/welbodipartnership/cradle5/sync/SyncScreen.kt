@@ -131,7 +131,7 @@ private fun ActiveSyncCard(
           Text("Uploading new forms")
         }
         SyncWorker.Stage.UPLOADING_INCOMPLETE_PATIENTS -> {
-          Text("Uploading forms that failed to upload before")
+          Text("Fixing forms")
         }
         SyncWorker.Stage.UPLOADING_LOCATION_CHECK_INS -> {
           Text("Uploading location check ins")
