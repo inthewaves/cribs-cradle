@@ -186,7 +186,7 @@ fun CradleFormCard(
     Spacer(modifier = Modifier.height(spacerHeight))
     LabelAndValueOrUnknown(
       label = stringResource(R.string.cradle_form_total_trained_score_more_than_8_label),
-      value = form.totalStaffTrainedScoredMoreThan8?.toString(),
+      value = form.totalStaffTrainedScoredMoreThan14?.toString(),
     )
   }
 }

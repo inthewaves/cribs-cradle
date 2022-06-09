@@ -189,7 +189,7 @@
     <string name="staff_working_error_SRNs_too_large">Number of SECHN midwives must be less than or equal to the total number of staff trained today</string>
     <string name="staff_working_error_CHOs_too_large">Number of CHOs must be less than or equal to the total number of staff trained today</string>
     <string name="staff_working_error_CHAs_too_large">Number of CHAs must be less than or equal to the total number of staff trained today</string>
-    <string name="staff_working_error_scored_8_or_higher_too_large">Number of staff who scored more than 8/10 must be less than or equal to the total number of staff trained today</string>
+    <string name="staff_working_error_scored_8_or_higher_too_large">Number of staff who scored more than 14/17 must be less than or equal to the total number of staff trained today</string>
     <string name="staff_working_error_trained_in_cradle_before_too_large">Number of staff who have been trained in CRADLE before must be less than or equal to the total number of staff trained today</string>
     <string name="staff_working_error_TBA_aides_too_large">Number of TBA Aides must be less than or equal to the total number of staff trained today</string>
     <string name="staff_working_error_MCH_aides_too_large">Number of MCH Aides must be less than or equal to the total number of staff trained today</string>
@@ -217,7 +217,7 @@
     <string name="cradle_form_total_MCH_aides_trained_today_label">How many of them were MCH Aides</string>
     <string name="cradle_form_total_TBA_trained_today_label">How many of them were TBA</string>
     <string name="cradle_form_total_trained_before_label">How many of the staff trained today had ever been trained in CRADLE before?</string>
-    <string name="cradle_form_total_trained_score_more_than_8_label">How many of the staff trained today scored more than 8/10 on the CRADLE checklist?</string>
+    <string name="cradle_form_total_trained_score_more_than_8_label">How many of the staff trained today scored more than 14/17 on the CRADLE checklist?</string>
     <string name="cradle_form_today_during_the_cradle_training_subtitle">Today, during the CRADLE training…</string>
     <string name="cradle_form_power_supply_generator">Generator</string>
     <string name="cradle_form_power_supply_solar">Solar</string>

@@ -33,7 +33,7 @@ fun CradleTrainingForm.toApiBody() = CradleImplementationData(
   totalStaffTrainedTodayMCHAides = totalStaffTrainedTodayMCHAides,
   totalStaffTrainedTodayTBA = totalStaffTrainedTodayTBA,
   totalStaffTrainedBefore = totalStaffTrainedBefore,
-  totalStaffTrainedScoredMoreThan8 = totalStaffTrainedScoredMoreThan8
+  totalStaffTrainedScoredMoreThan8 = totalStaffTrainedScoredMoreThan14
 )
 
 fun LocationCheckIn.toApiBody(userId: Int) = GpsForm(

@@ -61,7 +61,7 @@ data class CradleTrainingForm(
    * How many of the staff trained today had ever been trained in CRADLE before?
    */
   val totalStaffTrainedBefore: Int?,
-  val totalStaffTrainedScoredMoreThan8: Int?,
+  val totalStaffTrainedScoredMoreThan14: Int?,
 
   /**
    * A Unix timestamp of when this was last updated

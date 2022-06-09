@@ -328,7 +328,7 @@ class CradleTrainingFormViewModel @Inject constructor(
             totalStaffTrainedTodayMCHAides.backingState.value = cradleForm.totalStaffTrainedTodayMCHAides?.toString() ?: ""
             totalStaffTrainedTodayTBA.backingState.value = cradleForm.totalStaffTrainedTodayTBA?.toString() ?: ""
             totalStaffTrainedBefore.backingState.value = cradleForm.totalStaffTrainedBefore?.toString() ?: ""
-            totalStaffTrainedScoredMoreThan8.backingState.value = cradleForm.totalStaffTrainedScoredMoreThan8?.toString() ?: ""
+            totalStaffTrainedScoredMoreThan8.backingState.value = cradleForm.totalStaffTrainedScoredMoreThan14?.toString() ?: ""
 
             localNotes.value = cradleForm.localNotes ?: ""
             isDraft.value = cradleForm.isDraft
@@ -567,7 +567,7 @@ class CradleTrainingFormViewModel @Inject constructor(
               totalStaffTrainedTodayMCHAides = totalStaffTrainedTodayMCHAides.stateValue.toIntOrNull(),
               totalStaffTrainedTodayTBA = totalStaffTrainedTodayTBA.stateValue.toIntOrNull(),
               totalStaffTrainedBefore = totalStaffTrainedBefore.stateValue.toIntOrNull(),
-              totalStaffTrainedScoredMoreThan8 = totalStaffTrainedScoredMoreThan8.stateValue.toIntOrNull(),
+              totalStaffTrainedScoredMoreThan14 = totalStaffTrainedScoredMoreThan8.stateValue.toIntOrNull(),
               localNotes = localNotes.value,
               isDraft = isDraft
             )

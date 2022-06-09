@@ -46,7 +46,7 @@ object CradleFormPreviewClasses {
     totalStaffTrainedTodayMCHAides = 4,
     totalStaffTrainedTodayTBA = 1,
     totalStaffTrainedBefore = 4,
-    totalStaffTrainedScoredMoreThan8 = 5,
+    totalStaffTrainedScoredMoreThan14 = 5,
     isDraft = isDraft
   )
 }
