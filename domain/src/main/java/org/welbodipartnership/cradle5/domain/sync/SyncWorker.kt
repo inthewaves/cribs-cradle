@@ -14,25 +14,30 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.launch
 import org.acra.ktx.sendSilentlyWithAcra
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
 import org.welbodipartnership.cradle5.data.database.entities.CradleTrainingForm
 import org.welbodipartnership.cradle5.data.database.entities.LocationCheckIn
 import org.welbodipartnership.cradle5.data.settings.AppValuesStore
+import org.welbodipartnership.cradle5.domain.DefaultNetworkResult
 import org.welbodipartnership.cradle5.domain.RestApi
 import org.welbodipartnership.cradle5.domain.auth.AuthRepository
 import org.welbodipartnership.cradle5.domain.cradletraining.CradleTrainingFormManager
 import org.welbodipartnership.cradle5.domain.toApiBody
+import org.welbodipartnership.cradle5.util.ApplicationCoroutineScope
 import java.security.SecureRandom
 import javax.annotation.concurrent.Immutable
 import kotlin.random.asKotlinRandom
 import kotlin.random.nextLong
+import kotlin.time.Duration.Companion.seconds
 
 @HiltWorker
 class SyncWorker @AssistedInject constructor(
@@ -43,6 +48,7 @@ class SyncWorker @AssistedInject constructor(
   private val dbWrapper: CradleDatabaseWrapper,
   private val restApi: RestApi,
   private val authRepository: AuthRepository,
+  @ApplicationCoroutineScope private val appCoroutineScope: CoroutineScope
 ) : CoroutineWorker(appContext, workerParams) {
 
   private val secureRandom = SecureRandom()
@@ -52,6 +58,37 @@ class SyncWorker @AssistedInject constructor(
     val delayMillis = kotlinSecureRadnom.nextLong(1000L..4000L)
     Log.d(TAG, "delaying for $delayMillis ms")
     delay(delayMillis)
+  }
+
+  data class FailureInfo(
+    val formName: String,
+    val id: Long,
+    val failedResultString: String
+  ) {
+    companion object {
+      fun fromCradleFormResult(id: Long, result: CradleTrainingFormManager.UploadResult): FailureInfo {
+        val errorMessage = buildString {
+          when (result) {
+            is CradleTrainingFormManager.UploadResult.Failure -> {
+              append("FormId $id failed to upload with error message[")
+              append(result.serverErrorMessage)
+              append("] and error")
+              append(result.error)
+            }
+            CradleTrainingFormManager.UploadResult.NoMetaInfoFailure -> {
+              append("Failed to retrieve meta info for form $id")
+            }
+            CradleTrainingFormManager.UploadResult.Success -> { /* nothing */
+            }
+          }
+        }
+        return FailureInfo("CradleTrainingForm", id, errorMessage)
+      }
+
+      fun locationFormResult(id: Long, result: DefaultNetworkResult<*>): FailureInfo {
+        return FailureInfo("LocationCheckIn", id, result.toString())
+      }
+    }
   }
 
   override suspend fun doWork(): Result {
@@ -76,7 +113,7 @@ class SyncWorker @AssistedInject constructor(
     )
 
     Log.d(TAG, "uploading check ins")
-    runUploadForCheckIns(dbWrapper.locationCheckInDao().getCheckInsForUpload())
+    val checkInFailures = runUploadForCheckIns(dbWrapper.locationCheckInDao().getCheckInsForUpload())
 
     coroutineScope {
       val progressChannel = actor<AuthRepository.InfoSyncProgress>(capacity = Channel.CONFLATED) {
@@ -95,12 +132,32 @@ class SyncWorker @AssistedInject constructor(
     }
 
     appValuesStore.setLastTimeSyncCompletedToNow()
+
+    if (newPatientsUploadResult.nonSuccessResults.isNotEmpty() || checkInFailures.isNotEmpty()) {
+      val failedResults = newPatientsUploadResult.nonSuccessResults.asSequence() +
+        checkInFailures.asSequence()
+      Log.w(TAG, "encountered errors; launching delayed coroutine to report them")
+      // FIXME: Figure out why ACRA is cancelling our workers.
+      appCoroutineScope.launch {
+        delay(1.seconds)
+        Log.w(TAG, "reporting errors to ACRA them")
+        val errorMessage = buildString {
+          failedResults.forEach { (formName, id, message) ->
+            append("Failure for form $formName and id $id with message")
+            appendLine(message)
+          }
+        }.trimEnd('\n')
+        SyncException(errorMessage).sendSilentlyWithAcra()
+      }
+    }
+
     return Result.success()
   }
 
   private data class CradleFormUploadResult(
     val successfulPatientIds: Set<Long>,
-    val failedPatientIds: Set<Long>
+    val failedPatientIds: Set<Long>,
+    val nonSuccessResults: List<FailureInfo>
   )
 
   private suspend fun runUploadForForms(
@@ -125,14 +182,14 @@ class SyncWorker @AssistedInject constructor(
       }
     }
 
-    val failedResults = mutableListOf<Pair<Long, CradleTrainingFormManager.UploadResult>>()
+    val failedResults = mutableListOf<FailureInfo>()
     forms.forEachIndexed { index, form ->
       val result = cradleFormsManager.uploadCradleForm(form)
       Log.d(TAG, "form result: $result")
       if (result is CradleTrainingFormManager.UploadResult.Success) {
         successfulPatientIds.add(form.id)
       } else {
-        failedResults.add(form.id to result)
+        failedResults.add(FailureInfo.fromCradleFormResult(form.id, result))
         if (result is CradleTrainingFormManager.UploadResult.NoMetaInfoFailure) {
           partialUploadIds.add(form.id)
         } else {
@@ -145,34 +202,14 @@ class SyncWorker @AssistedInject constructor(
     }
     updateChannel.close()
 
-    if (failedResults.isNotEmpty()) {
-      val errorMessage = buildString {
-        failedResults.forEach { (id, result) ->
-          when (result) {
-            is CradleTrainingFormManager.UploadResult.Failure -> {
-              append("FormId $id failed to upload with error message[")
-              append(result.serverErrorMessage)
-              append("] and error")
-              append(result.error)
-            }
-            CradleTrainingFormManager.UploadResult.NoMetaInfoFailure -> {
-              append("Failed to retrieve meta info for form $id")
-            }
-            CradleTrainingFormManager.UploadResult.Success -> { /* nothing */ }
-          }
-          appendLine()
-        }
-      }.trimEnd('\n')
-
-      SyncException(errorMessage).sendSilentlyWithAcra()
-    }
-
-    CradleFormUploadResult(successfulPatientIds, failedPatientIds)
+    CradleFormUploadResult(successfulPatientIds, failedPatientIds, failedResults)
   }
 
   class SyncException(override val message: String) : Exception(message)
 
-  private suspend fun runUploadForCheckIns(checkIns: List<LocationCheckIn>): Unit = coroutineScope {
+  private suspend fun runUploadForCheckIns(
+    checkIns: List<LocationCheckIn>
+  ): List<FailureInfo> = coroutineScope {
     reportProgress(
       Stage.UPLOADING_LOCATION_CHECK_INS,
       doneSoFar = 0,
@@ -194,8 +231,9 @@ class SyncWorker @AssistedInject constructor(
     }
 
     Log.d(TAG, "getting userId")
+    val failureInfo = mutableListOf<FailureInfo>()
     try {
-      val userId = appValuesStore.userIdFlow.firstOrNull() ?: return@coroutineScope
+      val userId = appValuesStore.userIdFlow.firstOrNull() ?: return@coroutineScope emptyList()
       checkIns.forEachIndexed { index, checkIn ->
         if (checkIn.isUploaded) {
           Log.w(TAG, "refusing to upload checkIn ${checkIn.id} because already uploaded")
@@ -205,6 +243,7 @@ class SyncWorker @AssistedInject constructor(
           if (result.isSuccess) {
             dbWrapper.locationCheckInDao().markAsUploaded(checkInId = checkIn.id)
           } else {
+            failureInfo.add(FailureInfo.locationFormResult(checkIn.id, result))
             failedCheckInIds.add(checkIn.id)
             Log.d(TAG, "got a failed result; applying retry jitter")
             delayWithRetryJitter()
@@ -215,6 +254,7 @@ class SyncWorker @AssistedInject constructor(
     } finally {
       updateChannel.close()
     }
+    return@coroutineScope failureInfo
   }
 
   private suspend fun reportProgress(
@@ -362,3 +402,4 @@ class SyncWorker @AssistedInject constructor(
     }
   }
 }
+

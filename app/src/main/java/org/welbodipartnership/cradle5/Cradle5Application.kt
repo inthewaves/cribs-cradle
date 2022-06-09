@@ -125,7 +125,7 @@ class Cradle5Application : Application(), Configuration.Provider {
   }
 
   override fun getWorkManagerConfiguration(): Configuration {
-    Log.d("Cradle5Application", "getWorkManagerConfiguration")
+    Log.d(TAG, "getWorkManagerConfiguration")
     return Configuration.Builder()
       .setWorkerFactory(workerFactory)
       .build()
