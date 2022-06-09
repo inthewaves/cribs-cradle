@@ -6,7 +6,6 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
 import org.welbodipartnership.cradle5.data.cryptography.ArgonHasher
 import org.welbodipartnership.cradle5.data.settings.AppValuesStore
-import org.welbodipartnership.cradle5.domain.auth.AuthRepository
 import org.welbodipartnership.cradle5.util.coroutines.AppCoroutineDispatchers
 import javax.inject.Inject
 

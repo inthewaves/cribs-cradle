@@ -20,6 +20,7 @@ import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.firstOrNull
+import org.acra.ktx.sendSilentlyWithAcra
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
 import org.welbodipartnership.cradle5.data.database.entities.CradleTrainingForm
 import org.welbodipartnership.cradle5.data.database.entities.LocationCheckIn
@@ -124,12 +125,14 @@ class SyncWorker @AssistedInject constructor(
       }
     }
 
+    val failedResults = mutableListOf<Pair<Long, CradleTrainingFormManager.UploadResult>>()
     forms.forEachIndexed { index, form ->
       val result = cradleFormsManager.uploadCradleForm(form)
       Log.d(TAG, "form result: $result")
       if (result is CradleTrainingFormManager.UploadResult.Success) {
         successfulPatientIds.add(form.id)
       } else {
+        failedResults.add(form.id to result)
         if (result is CradleTrainingFormManager.UploadResult.NoMetaInfoFailure) {
           partialUploadIds.add(form.id)
         } else {
@@ -142,8 +145,32 @@ class SyncWorker @AssistedInject constructor(
     }
     updateChannel.close()
 
+    if (failedResults.isNotEmpty()) {
+      val errorMessage = buildString {
+        failedResults.forEach { (id, result) ->
+          when (result) {
+            is CradleTrainingFormManager.UploadResult.Failure -> {
+              append("FormId $id failed to upload with error message[")
+              append(result.serverErrorMessage)
+              append("] and error")
+              append(result.error)
+            }
+            CradleTrainingFormManager.UploadResult.NoMetaInfoFailure -> {
+              append("Failed to retrieve meta info for form $id")
+            }
+            CradleTrainingFormManager.UploadResult.Success -> { /* nothing */ }
+          }
+          appendLine()
+        }
+      }.trimEnd('\n')
+
+      SyncException(errorMessage).sendSilentlyWithAcra()
+    }
+
     CradleFormUploadResult(successfulPatientIds, failedPatientIds)
   }
+
+  class SyncException(override val message: String) : Exception(message)
 
   private suspend fun runUploadForCheckIns(checkIns: List<LocationCheckIn>): Unit = coroutineScope {
     reportProgress(

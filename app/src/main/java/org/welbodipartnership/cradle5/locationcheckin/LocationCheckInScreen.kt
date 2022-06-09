@@ -2,7 +2,6 @@ package org.welbodipartnership.cradle5.locationcheckin
 
 import android.content.ActivityNotFoundException
 import android.content.Intent
-import android.os.Build
 import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
@@ -57,8 +56,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.items
-import com.google.accompanist.insets.LocalWindowInsets
-import com.google.accompanist.insets.rememberInsetsPaddingValues
 import com.google.accompanist.insets.ui.TopAppBar
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import org.welbodipartnership.cradle5.R
