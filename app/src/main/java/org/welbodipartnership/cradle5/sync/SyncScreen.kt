@@ -76,41 +76,45 @@ private fun SyncScreen(viewModel: SyncScreenViewModel) {
         .verticalScroll(scrollState),
       horizontalAlignment = Alignment.CenterHorizontally
     ) {
-      syncStatus.let { status ->
-        when (status) {
-          is SyncRepository.SyncStatus.Active -> {
-            ActiveSyncCard(status)
-          }
-          is SyncRepository.SyncStatus.Inactive, null -> {
-            val patientsToUpload by viewModel.patientsToUploadCountFlow.collectAsState()
-            val partialPatientsToUpload by viewModel.incompletePatientsToUploadCountFlow
-              .collectAsState()
-            val patientsWithOutcomesNotFullyUploadedWithErrors by viewModel
-              .patientsWithOutcomesNotFullyUploadedWithErrorsCountFlow
-              .collectAsState()
-            val patientsWithOutcomesNotFullyUploadedWithoutErrors by viewModel
-              .patientsWithOutcomesNotFullyUploadedWithoutErrorsCountFlow
-              .collectAsState()
-            val bpFormsToUpload by viewModel.bpInfoFormsToUploadCountFlow.collectAsState()
-            val bpFormsWithErrors by viewModel.bpInfoFormsWithErrorsCountFlow.collectAsState()
-            val bpFormsToReupload by viewModel.bpInfoFormsToReuploadCountFlow.collectAsState()
-            val locationCheckInsToUpload by viewModel.locationCheckInsToUploadCountFlow
-              .collectAsState()
-            val lastTimeSyncCompleted by viewModel.lastSyncCompletedTimestamp.collectAsState()
-            InactiveOrNoSyncCard(
-              onSyncButtonClicked = { viewModel.enqueueSync() },
-              onCancelButtonClicked = { viewModel.cancelSync() },
-              syncStatus = status as SyncRepository.SyncStatus.Inactive?,
-              lastTimeSyncCompleted = lastTimeSyncCompleted,
-              numPatientsToUpload = patientsToUpload,
-              numIncompletePatientsToUpload = partialPatientsToUpload,
-              numBpInfoToUpload = bpFormsToUpload,
-              numBpInfoWithErrors = bpFormsWithErrors,
-              numBpInfoToRetryUpload = bpFormsToReupload,
-              numLocationCheckinsToUpload = locationCheckInsToUpload,
-              numPatientsWithOutcomesNotFullyUploadedWithErrors = patientsWithOutcomesNotFullyUploadedWithErrors,
-              numPatientsWithOutcomesNotFullyUploadedWithoutErrors = patientsWithOutcomesNotFullyUploadedWithoutErrors
-            )
+      CompositionLocalProvider(
+        LocalTextStyle provides LocalTextStyle.current.copy(textAlign = TextAlign.Center)
+      ) {
+        syncStatus.let { status ->
+          when (status) {
+            is SyncRepository.SyncStatus.Active -> {
+              ActiveSyncCard(status)
+            }
+            is SyncRepository.SyncStatus.Inactive, null -> {
+              val patientsToUpload by viewModel.patientsToUploadCountFlow.collectAsState()
+              val partialPatientsToUpload by viewModel.incompletePatientsToUploadCountFlow
+                .collectAsState()
+              val patientsWithOutcomesNotFullyUploadedWithErrors by viewModel
+                .patientsWithOutcomesNotFullyUploadedWithErrorsCountFlow
+                .collectAsState()
+              val patientsWithOutcomesNotFullyUploadedWithoutErrors by viewModel
+                .patientsWithOutcomesNotFullyUploadedWithoutErrorsCountFlow
+                .collectAsState()
+              val bpFormsToUpload by viewModel.bpInfoFormsToUploadCountFlow.collectAsState()
+              val bpFormsWithErrors by viewModel.bpInfoFormsWithErrorsCountFlow.collectAsState()
+              val bpFormsToReupload by viewModel.bpInfoFormsToReuploadCountFlow.collectAsState()
+              val locationCheckInsToUpload by viewModel.locationCheckInsToUploadCountFlow
+                .collectAsState()
+              val lastTimeSyncCompleted by viewModel.lastSyncCompletedTimestamp.collectAsState()
+              InactiveOrNoSyncCard(
+                onSyncButtonClicked = { viewModel.enqueueSync() },
+                onCancelButtonClicked = { viewModel.cancelSync() },
+                syncStatus = status as SyncRepository.SyncStatus.Inactive?,
+                lastTimeSyncCompleted = lastTimeSyncCompleted,
+                numPatientsToUpload = patientsToUpload,
+                numIncompletePatientsToUpload = partialPatientsToUpload,
+                numBpInfoToUpload = bpFormsToUpload,
+                numBpInfoWithErrors = bpFormsWithErrors,
+                numBpInfoToRetryUpload = bpFormsToReupload,
+                numLocationCheckinsToUpload = locationCheckInsToUpload,
+                numPatientsWithOutcomesNotFullyUploadedWithErrors = patientsWithOutcomesNotFullyUploadedWithErrors,
+                numPatientsWithOutcomesNotFullyUploadedWithoutErrors = patientsWithOutcomesNotFullyUploadedWithoutErrors
+              )
+            }
           }
         }
       }
