@@ -402,4 +402,3 @@ class SyncWorker @AssistedInject constructor(
     }
   }
 }
-
