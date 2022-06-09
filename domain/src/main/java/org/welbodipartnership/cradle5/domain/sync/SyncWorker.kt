@@ -71,6 +71,7 @@ class SyncWorker @AssistedInject constructor(
       dbWrapper
         .cradleTrainingFormDao()
         .getFormsWithPartialServerInfoOrderedById()
+        .filter { it.id !in newPatientsUploadResult.failedPatientIds }
     )
 
     Log.d(TAG, "uploading check ins")
