@@ -4,6 +4,7 @@ import androidx.room.DatabaseView
 import androidx.room.Embedded
 import org.welbodipartnership.cradle5.data.database.entities.CradleTrainingForm
 import org.welbodipartnership.cradle5.data.database.entities.District
+import org.welbodipartnership.cradle5.data.database.entities.FormEntity
 import org.welbodipartnership.cradle5.data.database.entities.embedded.ServerInfo
 import org.welbodipartnership.cradle5.util.datetime.FormDate
 import java.time.ZonedDateTime
@@ -42,9 +43,9 @@ import java.time.ZonedDateTime
   """
 )
 data class ListCradleTrainingForm(
-  val id: Long = -1,
+  override val id: Long = -1,
   @Embedded
-  val serverInfo: ServerInfo?,
+  override val serverInfo: ServerInfo?,
   @Embedded(prefix = "district_")
   val district: District?,
   @Embedded(prefix = "facility_")
@@ -54,4 +55,4 @@ data class ListCradleTrainingForm(
   val recordLastUpdated: ZonedDateTime?,
   val localNotes: String?,
   val isDraft: Boolean,
-)
+) : FormEntity

@@ -45,7 +45,7 @@ fun CradleFormCard(
     val spacerHeight = 6.dp
     Spacer(modifier = Modifier.height(spacerHeight))
     val serverErrorMessage = form.serverErrorMessage
-    if (serverErrorMessage != null) {
+    if (!form.isUploadedToServer && serverErrorMessage != null) {
       CompositionLocalProvider(LocalContentColor provides MaterialTheme.colors.error) {
         LabelAndValueOrNone(
           label = stringResource(R.string.errors_from_sync_label),

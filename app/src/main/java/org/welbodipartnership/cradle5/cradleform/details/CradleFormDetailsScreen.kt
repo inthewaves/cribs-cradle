@@ -105,7 +105,7 @@ fun CradleFormDetailsScreen(
     val editState by viewModel.editStateFlow.collectAsState()
 
     LaunchedEffect(state) {
-      Log.d("PatientDetailsViewModel", "new state $state")
+      Log.d("CradleFormDetailsScreen", "new state $state")
     }
     state.let { formState ->
       when (formState) {
@@ -127,7 +127,7 @@ fun CradleFormDetailsScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
           ) {
-            Text("Failed to load patient")
+            Text("Failed to load form")
           }
         }
         CradleFormDetailsViewModel.State.Loading -> {
@@ -180,7 +180,7 @@ private fun CradleFormDetailsScreen(
   LazyColumn(modifier = modifier, contentPadding = contentPadding) {
     item {
       BaseDetailsCard(title = null, modifier = modifier) {
-        // Don't allow editing patients already uploaded.
+        // Don't allow editing forms already uploaded.
 
         val canEdit = !form.isUploadedToServer && editState?.canEdit == true
         OutlinedButton(

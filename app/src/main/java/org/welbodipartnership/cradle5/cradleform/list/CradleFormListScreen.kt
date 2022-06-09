@@ -501,7 +501,7 @@ fun CradleFormListItem(
         val isUploaded = listForm.serverInfo != null
         val hasLocalNotes = !listForm.localNotes.isNullOrBlank()
         val isDraft = listForm.isDraft
-        val hasErrors = !listForm.serverErrorMessage.isNullOrBlank()
+        val hasErrors = !listForm.isUploadedToServer && !listForm.serverErrorMessage.isNullOrBlank()
 
         val hasErrorsIconAlpha = if (hasErrors) 1f else 0f
         CompositionLocalProvider(LocalContentColor provides MaterialTheme.colors.error) {
