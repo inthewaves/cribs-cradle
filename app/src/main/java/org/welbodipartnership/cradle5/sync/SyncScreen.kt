@@ -236,18 +236,6 @@ fun InactiveOrNoSyncCard(
       Spacer(Modifier.height(24.dp))
     }
 
-    if (numIncompleteFormsToUpload != null && numIncompleteFormsToUpload >= 1) {
-      Text(
-        resources.getQuantityString(
-          R.plurals.sync_screen_there_are_currently_d_incomplete_forms_to_upload,
-          numIncompleteFormsToUpload,
-          numIncompleteFormsToUpload
-        ),
-        textAlign = TextAlign.Center
-      )
-      Spacer(Modifier.height(24.dp))
-    }
-
     if (numFormsToUploadWithErrors != null && numFormsToUploadWithErrors >= 1) {
       Text(
         resources.getQuantityString(
