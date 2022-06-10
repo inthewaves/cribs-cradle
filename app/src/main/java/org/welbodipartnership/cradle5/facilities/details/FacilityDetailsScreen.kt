@@ -73,7 +73,7 @@ fun FacilityDetailsScreen(
   bpInfoToDelete?.let { bpToDelete ->
     AlertDialog(
       onDismissRequest = { bpInfoToDelete = null },
-      title = { Text(stringResource(id = R.string.delete_info_dialog_title)) },
+      title = { Text(stringResource(id = R.string.delete_bp_info_dialog_title)) },
       text = {
         Column {
           Text(stringResource(R.string.delete_bp_info_dialog_this_will_delete_the_following_entry))

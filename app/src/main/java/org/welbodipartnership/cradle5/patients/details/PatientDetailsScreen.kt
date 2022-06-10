@@ -154,7 +154,7 @@ private fun PatientDetailsScreen(
   if (isDeleteConfirmDialogShowing) {
     AlertDialog(
       onDismissRequest = { isDeleteConfirmDialogShowing = false },
-      title = { Text(stringResource(id = R.string.delete_info_dialog_title)) },
+      title = { Text(stringResource(id = R.string.delete_patient_info_dialog_title)) },
       text = { Text(stringResource(id = R.string.delete_info_dialog_body)) },
       confirmButton = {
         TextButton(

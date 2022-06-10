@@ -193,7 +193,7 @@
     <string name="outcomes_eclampsia_did_woman_fit_label">Did the woman fit?</string>
     <string name="outcomes_not_reported">Not reported</string>
     <string name="delete_info_button">Delete</string>
-    <string name="delete_info_dialog_title">Delete this patient?</string>
+    <string name="delete_patient_info_dialog_title">Delete this patient?</string>
     <string name="delete_info_dialog_body">Are you sure you want to delete this patient? Patients deleted cannot be recovered!</string>
     <string name="delete_info_dialog_confirm_button">Delete patient</string>
     <string name="delete_bp_info_dialog_title">Delete this blood pressure data entry?</string>
