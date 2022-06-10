@@ -23,6 +23,7 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -80,6 +81,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
+import com.google.accompanist.insets.LocalWindowInsets
 import com.google.accompanist.insets.ui.BottomNavigation
 import org.welbodipartnership.cradle5.BuildConfig
 import org.welbodipartnership.cradle5.LeafScreen
@@ -280,12 +282,12 @@ fun LoggedInHome(
             )
           }
         },
-      ) { paddingValues ->
+      ) {
         LoggedInNavigation(
           navController,
           onOpenSettingsForApp,
           modifier = Modifier
-            .padding(paddingValues)
+            .padding(it)
             .fillMaxHeight()
         )
       }
