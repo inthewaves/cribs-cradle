@@ -22,7 +22,7 @@ import com.squareup.moshi.JsonClass
 @JsonClass(generateAdapter = true)
 data class Meta(
   @Json(name = "Title")
-  val title: String,
+  val title: String?,
   @Json(name = "FormId")
   val formId: Long,
   @Json(name = "ObjectId")
@@ -49,7 +49,7 @@ data class Meta(
   @JsonClass(generateAdapter = true)
   data class MinimalInfo(
     @Json(name = "Title")
-    val title: String,
+    val title: String?,
     @Json(name = "FormId")
     val formId: Long,
     @Json(name = "ObjectId")

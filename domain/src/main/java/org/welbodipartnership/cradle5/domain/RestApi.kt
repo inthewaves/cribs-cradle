@@ -656,8 +656,8 @@ class RestApi @Inject internal constructor(
     )
   }
 
-  private val getResponseMinimalMetaAdapter: JsonAdapter<Meta.MinimalInfo> =
-    moshi.adapter(Meta.MinimalInfo::class.java)
+  private val getResponseMinimalMetaAdapter: JsonAdapter<FormGetResponse.WithMinimalMetaOnly> =
+    moshi.adapter(FormGetResponse.WithMinimalMetaOnly::class.java)
 
   /**
    * Gets the [Meta.MinimalInfo] for a form with the given [nodeId].
@@ -669,7 +669,7 @@ class RestApi @Inject internal constructor(
       headers = defaultHeadersFlow.first(),
       failureReader = { src, _ -> src.readByteArray() },
       successReader = { src, _ ->
-        getResponseMinimalMetaAdapter.fromJson(src) ?: throw IOException("missing meta")
+        getResponseMinimalMetaAdapter.fromJson(src)?.meta ?: throw IOException("missing meta")
       }
     )
   }
@@ -687,7 +687,7 @@ class RestApi @Inject internal constructor(
       headers = defaultHeadersFlow.first(),
       failureReader = { src, _ -> src.readByteArray() },
       successReader = { src, _ ->
-        getResponseMinimalMetaAdapter.fromJson(src) ?: throw IOException("missing meta")
+        getResponseMinimalMetaAdapter.fromJson(src)?.meta ?: throw IOException("missing meta")
       }
     )
   }
