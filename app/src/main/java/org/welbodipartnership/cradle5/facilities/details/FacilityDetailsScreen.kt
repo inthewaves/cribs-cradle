@@ -325,16 +325,19 @@ fun BpInfoCard(
           Spacer(Modifier.height(8.dp))
           Text(bpInfo.localNotes ?: "")
         }
-        if (bpInfo.isDraft) {
+        CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+          if (bpInfo.isDraft) {
+            Spacer(Modifier.height(8.dp))
+            Text("Draft")
+          }
           Spacer(Modifier.height(8.dp))
-          Row(
-            Modifier.fillMaxWidth(),
-          ) {
-            CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
-              Text("Draft")
-            }
+          if (bpInfo.isUploadedToServer) {
+            Text("Uploaded")
+          } else {
+            Text("Not yet uploaded")
           }
         }
+
         if (!bpInfo.isUploadedToServer) {
           Spacer(Modifier.height(8.dp))
           Row(
