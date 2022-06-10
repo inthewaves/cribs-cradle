@@ -21,7 +21,7 @@ dependencyResolutionManagement {
 
             library("desugar", "com.android.tools:desugar_jdk_libs:1.1.5")
 
-            version("kotlin", "1.6.21")
+            version("kotlin", "1.6.10")
             // Support for using version catalogs in buildscript and plugin blocks is in 7.2.0
             // https://github.com/gradle/gradle/pull/17394
             // https://github.com/gradle/gradle/commit/269148642b4499861bced4b028a400f856273bb2
@@ -50,10 +50,11 @@ dependencyResolutionManagement {
 
             library("google-android-material", "com.google.android.material:material:1.6.1")
 
-            version("accompanist", "0.24.10-beta")
+            version("accompanist", "0.23.1")
             library("accompanist-navigation-animation", "com.google.accompanist", "accompanist-navigation-animation").versionRef("accompanist")
             library("accompanist-permissions", "com.google.accompanist", "accompanist-permissions").versionRef("accompanist")
             library("accompanist-systemuicontroller", "com.google.accompanist", "accompanist-systemuicontroller").versionRef("accompanist")
+            library("accompanist-insets", "com.google.accompanist", "accompanist-insets").versionRef("accompanist")
             library("accompanist-insetsui", "com.google.accompanist", "accompanist-insets-ui").versionRef("accompanist")
 
             library("google-tink", "com.google.crypto.tink:tink-android:1.6.1")
@@ -98,7 +99,7 @@ dependencyResolutionManagement {
 
             library("androidx-constraintlayout-compose", "androidx.constraintlayout:constraintlayout-compose:1.0.1")
 
-            version("compose", "1.2.0-beta03")
+            version("compose", "1.1.1")
             library("compose-runtime", "androidx.compose.runtime", "runtime").versionRef("compose")
             library("compose-ui-ui", "androidx.compose.ui", "ui").versionRef("compose")
             library("compose-ui-util", "androidx.compose.ui", "ui-util").versionRef("compose")
@@ -112,7 +113,7 @@ dependencyResolutionManagement {
 
             library("okio", "com.squareup.okio:okio:3.1.0")
 
-            plugin("ksp", "com.google.devtools.ksp").version("1.6.21-1.0.5")
+            plugin("ksp", "com.google.devtools.ksp").version("1.6.10-1.0.2")
             version("moshi", "1.13.0")
             library("moshi-core", "com.squareup.moshi", "moshi").versionRef("moshi")
             library("moshi-codegen", "com.squareup.moshi", "moshi-kotlin-codegen").versionRef("moshi")

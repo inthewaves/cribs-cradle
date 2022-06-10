@@ -3,13 +3,8 @@ package org.welbodipartnership.cradle5.patients.form.otherinfo
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Icon
@@ -31,7 +26,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.google.accompanist.insets.LocalWindowInsets
 import com.google.accompanist.insets.navigationBarsWithImePadding
+import com.google.accompanist.insets.rememberInsetsPaddingValues
 import com.google.accompanist.insets.ui.TopAppBar
 import org.welbodipartnership.cradle5.R
 import org.welbodipartnership.cradle5.patients.form.OtherCard
@@ -103,9 +100,10 @@ fun PatientOtherInfoFormScreen(
       TopAppBar(
         backgroundColor = MaterialTheme.colors.surface,
         contentColor = MaterialTheme.colors.onSurface,
-        contentPadding = WindowInsets.statusBars
-          .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)
-          .asPaddingValues(),
+        contentPadding = rememberInsetsPaddingValues(
+          insets = LocalWindowInsets.current.systemBars,
+          applyBottom = false,
+        ),
         modifier = Modifier.fillMaxWidth(),
         title = {
           Column {

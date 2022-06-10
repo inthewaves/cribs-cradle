@@ -20,8 +20,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -67,6 +65,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.google.accompanist.insets.ProvideWindowInsets
+import com.google.accompanist.insets.navigationBarsWithImePadding
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import dagger.hilt.android.AndroidEntryPoint
@@ -104,18 +104,20 @@ class MainActivity : AppCompatActivity() {
 
     setContent {
       CompositionLocalProvider(LocalUrlProvider provides urlProvider) {
-        CradleTrialAppTheme {
-          MainApp(
-            viewModel,
-            onOpenSettingsForApp = {
-              startActivity(
-                Intent(
-                  Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                  Uri.fromParts("package", packageName, null)
+        ProvideWindowInsets(consumeWindowInsets = false, windowInsetsAnimationsEnabled = true) {
+          CradleTrialAppTheme {
+            MainApp(
+              viewModel,
+              onOpenSettingsForApp = {
+                startActivity(
+                  Intent(
+                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    Uri.fromParts("package", packageName, null)
+                  )
                 )
-              )
-            }
-          )
+              }
+            )
+          }
         }
       }
     }
@@ -205,8 +207,7 @@ private fun MainApp(viewModel: MainActivityViewModel, onOpenSettingsForApp: () -
                   modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(scrollState)
-                    .navigationBarsPadding()
-                    .imePadding()
+                    .navigationBarsWithImePadding()
                     .widthIn(max = 600.dp)
                     .padding(horizontal = 24.dp)
                 ) {
@@ -463,8 +464,7 @@ private fun LoginForm(
     horizontalAlignment = Alignment.Start,
     modifier = modifier
       .verticalScroll(scrollState)
-      .navigationBarsPadding()
-      .imePadding()
+      .navigationBarsWithImePadding()
       .widthIn(max = 600.dp)
       .padding(horizontal = 24.dp)
   ) {

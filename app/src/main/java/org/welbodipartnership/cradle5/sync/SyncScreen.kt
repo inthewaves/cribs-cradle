@@ -2,15 +2,10 @@ package org.welbodipartnership.cradle5.sync
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
@@ -35,6 +30,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.work.WorkInfo
+import com.google.accompanist.insets.LocalWindowInsets
+import com.google.accompanist.insets.rememberInsetsPaddingValues
 import com.google.accompanist.insets.ui.TopAppBar
 import org.welbodipartnership.cradle5.R
 import org.welbodipartnership.cradle5.domain.sync.SyncRepository
@@ -57,9 +54,10 @@ private fun SyncScreen(viewModel: SyncScreenViewModel) {
       TopAppBar(
         backgroundColor = MaterialTheme.colors.surface,
         contentColor = MaterialTheme.colors.onSurface,
-        contentPadding = WindowInsets.statusBars
-          .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)
-          .asPaddingValues(),
+        contentPadding = rememberInsetsPaddingValues(
+          insets = LocalWindowInsets.current.systemBars,
+          applyBottom = false,
+        ),
         modifier = Modifier.fillMaxWidth(),
         title = { Text(text = stringResource(R.string.sync_title)) },
         actions = { AccountInfoButton() }

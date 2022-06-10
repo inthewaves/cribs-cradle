@@ -7,15 +7,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -52,6 +47,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.items
+import com.google.accompanist.insets.LocalWindowInsets
+import com.google.accompanist.insets.rememberInsetsPaddingValues
 import com.google.accompanist.insets.ui.TopAppBar
 import org.welbodipartnership.cradle5.R
 import org.welbodipartnership.cradle5.compose.rememberFlowWithLifecycle
@@ -107,9 +104,10 @@ fun FacilityDetailsScreen(
       TopAppBar(
         backgroundColor = MaterialTheme.colors.surface,
         contentColor = MaterialTheme.colors.onSurface,
-        contentPadding = WindowInsets.statusBars
-          .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)
-          .asPaddingValues(),
+        contentPadding = rememberInsetsPaddingValues(
+          insets = LocalWindowInsets.current.systemBars,
+          applyBottom = false,
+        ),
         navigationIcon = {
           IconButton(onClick = onBackPressed) {
             Icon(

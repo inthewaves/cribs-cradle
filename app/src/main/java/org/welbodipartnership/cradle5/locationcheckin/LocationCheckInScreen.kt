@@ -10,14 +10,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.Button
@@ -54,6 +49,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.items
+import com.google.accompanist.insets.LocalWindowInsets
+import com.google.accompanist.insets.rememberInsetsPaddingValues
 import com.google.accompanist.insets.ui.TopAppBar
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import org.welbodipartnership.cradle5.R
@@ -118,10 +115,10 @@ private fun LocationCheckInScreen(
       TopAppBar(
         backgroundColor = MaterialTheme.colors.surface,
         contentColor = MaterialTheme.colors.onSurface,
-        // don't pad the bottom
-        contentPadding = WindowInsets.statusBars
-          .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)
-          .asPaddingValues(),
+        contentPadding = rememberInsetsPaddingValues(
+          insets = LocalWindowInsets.current.systemBars,
+          applyBottom = false,
+        ),
         modifier = Modifier.fillMaxWidth(),
         title = { Text(text = stringResource(R.string.location_checkin_title)) },
         actions = { AccountInfoButton() }
@@ -205,20 +202,19 @@ private fun LocationCheckInScreen(
                 )
               }
 
-              // If the user denied any permission but a rationale should be shown, or the user sees
-              // the permissions for the first time, explain why the feature is needed by the app and
-              // allow the user decide if they don't want to see the rationale any more.
-              //
-              // "Starting in Android 11 (API level 30), if the user taps Deny for a specific permission
-              // more than once during your app's lifetime of installation on a device, the user doesn't
-              // see the system permissions dialog if your app requests that permission again. The user's
-              // action implies "don't ask again." On previous versions, users would see the system
-              // permissions dialog each time your app requested a permission, unless the user had
-              // previously selected a "don't ask again" checkbox or option"
-              // - https://developer.android.com/training/permissions/requesting#handle-denial
-              multiLocationPermsState.shouldShowRationale ||
-                multiLocationPermsState.revokedPermissions.isEmpty() ||
-                Build.VERSION.SDK_INT < Build.VERSION_CODES.R -> {
+            // If the user denied any permission but a rationale should be shown, or the user sees
+            // the permissions for the first time, explain why the feature is needed by the app and
+            // allow the user decide if they don't want to see the rationale any more.
+            //
+            // "Starting in Android 11 (API level 30), if the user taps Deny for a specific permission
+            // more than once during your app's lifetime of installation on a device, the user doesn't
+            // see the system permissions dialog if your app requests that permission again. The user's
+            // action implies "don't ask again." On previous versions, users would see the system
+            // permissions dialog each time your app requested a permission, unless the user had
+            // previously selected a "don't ask again" checkbox or option"
+            // - https://developer.android.com/training/permissions/requesting#handle-denial
+            multiLocationPermsState.shouldShowRationale ||
+              !multiLocationPermsState.permissionRequested -> {
 
                 Text("The app requires the precise location permission to perform location check ins.")
 
