@@ -25,6 +25,7 @@ object CradleFormPreviewClasses {
     serverInfo = serverInfo,
     serverErrorMessage = serverErrorMessage,
     recordLastUpdated = ZonedDateTime.now(),
+    recordCreated = ZonedDateTime.now(),
     district = DISTRICT_ID,
     healthcareFacility = FACILITY_ID,
     dateOfTraining = FormDate.today(),

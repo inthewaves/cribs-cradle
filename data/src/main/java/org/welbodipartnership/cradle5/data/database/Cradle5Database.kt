@@ -25,7 +25,7 @@ import javax.inject.Singleton
 
 const val TAG = "Cradle5Database"
 
-const val DATABASE_VERSION = 2
+const val DATABASE_VERSION = 3
 const val DATABASE_NAME = "cradle5.db"
 
 @Singleton
@@ -76,7 +76,8 @@ private val MIGRATIONS = arrayOf<Migration>()
   ],
   views = [ListCradleTrainingForm::class],
   autoMigrations = [
-    AutoMigration(from = 1, to = 2, spec = Cradle5Database.Version1To2::class)
+    AutoMigration(from = 1, to = 2, spec = Cradle5Database.Version1To2::class),
+    AutoMigration(from = 2, to = DATABASE_VERSION, spec = Cradle5Database.Version2To3::class)
   ]
 )
 @TypeConverters(DbTypeConverters::class)
@@ -92,6 +93,11 @@ abstract class Cradle5Database : RoomDatabase() {
     toColumnName = "totalStaffTrainedScoredMoreThan14"
   )
   class Version1To2 : AutoMigrationSpec
+  class Version2To3 : AutoMigrationSpec {
+    override fun onPostMigrate(db: SupportSQLiteDatabase): Unit = db.run {
+      db.execSQL("UPDATE CradleTrainingForm SET recordCreated = recordLastUpdated")
+    }
+  }
 }
 
 /**

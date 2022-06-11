@@ -546,6 +546,7 @@ class CradleTrainingFormViewModel @Inject constructor(
               serverInfo = existingForm?.form?.serverInfo,
               serverErrorMessage = null,
               recordLastUpdated = ZonedDateTime.now(),
+              recordCreated = existingForm?.form?.recordCreated ?: ZonedDateTime.now(),
               district = district.stateValue?.district?.id,
               healthcareFacility = facility.stateValue?.facility?.id,
               dateOfTraining = dateOfTraining.dateFromStateOrNull(),

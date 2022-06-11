@@ -11,6 +11,8 @@ import org.welbodipartnership.cradle5.util.datetime.FormDate
 @FormId(117)
 @PostOperationId(247)
 data class CradleImplementationData(
+  @Json(name = "Control2249")
+  val recordInsertDate: String?,
   @Json(name = "Control2029")
   val recordLastUpdated: String?,
   @Json(name = "Control2159")
@@ -90,7 +92,7 @@ data class CradleImplementationData(
       put("Control2205", "Number of MCH Aides trained today")
       put("Control2206", "Number of TBA trained today")
       put("Control2207", "How many of the staff trained today had ever been trained in CRADLE before?")
-      put("Control2208", "How many of the staff trained today scored more than 8/10 on the CRADLE checklist?")
+      put("Control2208", "How many of the staff trained today scored more than 14/17 on the CRADLE checklist?")
     }
   }
 }

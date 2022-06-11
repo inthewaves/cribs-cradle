@@ -7,7 +7,8 @@ import org.welbodipartnership.cradle5.data.database.entities.LocationCheckIn
 import org.welbodipartnership.cradle5.util.datetime.toUnixTimestamp
 
 fun CradleTrainingForm.toApiBody() = CradleImplementationData(
-  recordLastUpdated = recordLastUpdatedString,
+  recordInsertDate = recordCreatedDateString,
+  recordLastUpdated = null,
   district = district?.toInt(),
   healthcareFacility = healthcareFacility?.toInt(),
   dateOfTraining = dateOfTraining,

@@ -36,6 +36,7 @@ data class CradleTrainingForm(
    * Convert to a string using [recordLastUpdatedFormatter].
    */
   val recordLastUpdated: ZonedDateTime?,
+  val recordCreated: ZonedDateTime?,
   val district: Long?,
   val healthcareFacility: Long?,
   val dateOfTraining: FormDate?,
@@ -77,8 +78,12 @@ data class CradleTrainingForm(
   @ColumnInfo(defaultValue = "0")
   val isDraft: Boolean
 ) : FormEntity {
-  val recordLastUpdatedString get() = recordLastUpdated
-    ?.withZoneSameInstant(ZoneId.of("GMT"))
+  val recordCreatedDateString: String? get() = recordCreated
+    ?.withZoneSameInstant(ZoneId.of("Europe/London"))
+    ?.format(recordLastUpdatedFormatter)
+
+  val recordLastUpdatedString: String? get() = recordLastUpdated
+    ?.withZoneSameInstant(ZoneId.of("Europe/London"))
     ?.format(recordLastUpdatedFormatter)
 
   companion object {
