@@ -28,9 +28,9 @@ dependencyResolutionManagement {
             library("kotlin-gradle-plugin", "org.jetbrains.kotlin", "kotlin-gradle-plugin").versionRef("kotlin")
             library("kotlin-serialization-base", "org.jetbrains.kotlin", "kotlin-serialization").versionRef("kotlin")
             library("kotlinx-serialization-json", "org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.3")
-            library("kotlinx-coroutines-android", "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.2")
+            library("kotlinx-coroutines-android", "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.3")
 
-            version("acra", "5.9.3")
+            version("acra", "5.9.5")
             library("acra-http", "ch.acra", "acra-http").versionRef("acra")
             library("acra-toast", "ch.acra", "acra-toast").versionRef("acra")
             library("acra-limiter", "ch.acra", "acra-limiter").versionRef("acra")
@@ -39,7 +39,7 @@ dependencyResolutionManagement {
             library("androidx-core-ktx", "androidx.core:core-ktx:1.8.0")
             library("androidx-appcompat", "androidx.appcompat:appcompat:1.4.2")
 
-            version("androidxlifecycle", "2.4.1")
+            version("androidxlifecycle", "2.5.0")
             library("androidx-lifecycle-runtime-ktx", "androidx.lifecycle", "lifecycle-runtime-ktx").versionRef("androidxlifecycle")
             library("androidx-lifecycle-process", "androidx.lifecycle", "lifecycle-process").versionRef("androidxlifecycle")
             library("androidx-lifecycle-runtime", "androidx.lifecycle", "lifecycle-runtime-ktx").versionRef("androidxlifecycle")
@@ -77,7 +77,7 @@ dependencyResolutionManagement {
             // ([^ ]*) = \{ module = "(.*):(.*)", version.ref = "(.*)" \} -> library("$1", "$2", "$3").versionRef("$4")
             // ([^ ]*) = "(.*)" -> library("$1", "$2")
 
-            library("androidx-navigation-compose", "androidx.navigation:navigation-compose:2.4.2")
+            library("androidx-navigation-compose", "androidx.navigation:navigation-compose:2.5.0")
 
             version("room",  "2.4.2")
             library("androidx-room-common", "androidx.room", "room-common").versionRef("room")
@@ -87,7 +87,7 @@ dependencyResolutionManagement {
             library("androidx-room-runtime", "androidx.room", "room-runtime").versionRef("room")
             library("androidx-room-testing", "androidx.room", "room-testing").versionRef("room")
 
-            library("androidx-activity-compose", "androidx.activity:activity-compose:1.4.0")
+            library("androidx-activity-compose", "androidx.activity:activity-compose:1.5.0")
 
             library("sqlcipher", "net.zetetic:android-database-sqlcipher:4.5.1")
 
@@ -106,11 +106,11 @@ dependencyResolutionManagement {
             library("compose-material-iconsext", "androidx.compose.material", "material-icons-extended").versionRef("compose")
             library("compose-ui-tooling-preview", "androidx.compose.ui", "ui-tooling-preview").versionRef("compose")
 
-            version("okhttp", "4.9.3")
+            version("okhttp", "4.10.0")
             library("okhttp-okhttp", "com.squareup.okhttp3", "okhttp").versionRef("okhttp")
             library("okhttp-mockwebserver", "com.squareup.okhttp3", "mockwebserver").versionRef("okhttp")
 
-            library("okio", "com.squareup.okio:okio:3.1.0")
+            library("okio", "com.squareup.okio:okio:3.2.0")
 
             plugin("ksp", "com.google.devtools.ksp").version("1.6.21-1.0.5")
             version("moshi", "1.13.0")
@@ -119,7 +119,7 @@ dependencyResolutionManagement {
             library("moshi-adapters", "com.squareup.moshi", "moshi-adapters").versionRef("moshi")
             // library("valiktor", "org.valiktor:valiktor-core:0.12.0")
 
-            version("protobuf", "3.21.1")
+            version("protobuf", "3.21.2")
             library("protobuf-kotlin-lite", "com.google.protobuf", "protobuf-kotlin-lite").versionRef("protobuf")
             library("protobuf-compiler", "com.google.protobuf", "protoc").versionRef("protobuf")
             plugin("protobuf", "com.google.protobuf").version("0.8.18")
