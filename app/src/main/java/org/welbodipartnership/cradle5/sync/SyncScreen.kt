@@ -38,8 +38,8 @@ import androidx.work.WorkInfo
 import com.google.accompanist.insets.ui.TopAppBar
 import org.welbodipartnership.cradle5.R
 import org.welbodipartnership.cradle5.cradleform.details.BaseDetailsCard
+import org.welbodipartnership.cradle5.domain.sync.BaseSyncWorker
 import org.welbodipartnership.cradle5.domain.sync.SyncRepository
-import org.welbodipartnership.cradle5.domain.sync.SyncWorker
 import org.welbodipartnership.cradle5.home.AccountInfoButton
 import org.welbodipartnership.cradle5.ui.composables.AnimatedVisibilityFadingWrapper
 import org.welbodipartnership.cradle5.ui.theme.CradleTrialAppTheme
@@ -124,19 +124,19 @@ private fun ActiveSyncCard(
       LocalTextStyle provides LocalTextStyle.current.copy(textAlign = TextAlign.Center)
     ) {
       when (syncStatus.progress?.stage) {
-        SyncWorker.Stage.STARTING -> {
+        BaseSyncWorker.Stage.STARTING -> {
           Text("Starting")
         }
-        SyncWorker.Stage.UPLOADING_NEW_CRADLE_FORMS -> {
+        BaseSyncWorker.Stage.UPLOADING_NEW_CRADLE_FORMS -> {
           Text("Uploading new forms")
         }
-        SyncWorker.Stage.UPLOADING_INCOMPLETE_PATIENTS -> {
+        BaseSyncWorker.Stage.UPLOADING_INCOMPLETE_PATIENTS -> {
           Text("Fixing forms")
         }
-        SyncWorker.Stage.UPLOADING_LOCATION_CHECK_INS -> {
+        BaseSyncWorker.Stage.UPLOADING_LOCATION_CHECK_INS -> {
           Text("Uploading location check ins")
         }
-        SyncWorker.Stage.PERFORMING_INFO_SYNC -> {
+        BaseSyncWorker.Stage.PERFORMING_INFO_SYNC -> {
           Text("Updating info")
         }
         null -> {
@@ -148,7 +148,7 @@ private fun ActiveSyncCard(
     Spacer(Modifier.height(24.dp))
 
     when (val progress = syncStatus.progress) {
-      is SyncWorker.Progress.WithFiniteProgress -> {
+      is BaseSyncWorker.Progress.WithFiniteProgress -> {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
           LinearProgressIndicator(progress.progressPercent)
           Spacer(Modifier.height(8.dp))
@@ -167,7 +167,7 @@ private fun ActiveSyncCard(
           }
         }
       }
-      is SyncWorker.Progress.InfoSync -> {
+      is BaseSyncWorker.Progress.InfoSync -> {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
           LinearProgressIndicator()
           Spacer(Modifier.height(8.dp))
@@ -288,8 +288,8 @@ fun SyncPagePreview() {
       Column {
         ActiveSyncCard(
           syncStatus = SyncRepository.SyncStatus.Active(
-            progress = SyncWorker.Progress.WithFiniteProgress(
-              stage = SyncWorker.Stage.UPLOADING_NEW_CRADLE_FORMS,
+            progress = BaseSyncWorker.Progress.WithFiniteProgress(
+              stage = BaseSyncWorker.Stage.UPLOADING_NEW_CRADLE_FORMS,
               doneSoFar = 5,
               totalToDo = 10,
               numFailed = 0,
@@ -299,8 +299,8 @@ fun SyncPagePreview() {
         Spacer(modifier = Modifier.height(24.dp))
         ActiveSyncCard(
           syncStatus = SyncRepository.SyncStatus.Active(
-            progress = SyncWorker.Progress.WithFiniteProgress(
-              stage = SyncWorker.Stage.UPLOADING_NEW_CRADLE_FORMS,
+            progress = BaseSyncWorker.Progress.WithFiniteProgress(
+              stage = BaseSyncWorker.Stage.UPLOADING_NEW_CRADLE_FORMS,
               doneSoFar = 5,
               totalToDo = 10,
               numFailed = 5,

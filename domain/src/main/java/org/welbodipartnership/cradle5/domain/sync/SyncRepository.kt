@@ -24,7 +24,7 @@ class SyncRepository @Inject constructor(
   @Immutable
   sealed class SyncStatus {
     @Immutable
-    data class Active(val progress: SyncWorker.Progress?) : SyncStatus()
+    data class Active(val progress: BaseSyncWorker.Progress?) : SyncStatus()
     @Immutable
     data class Inactive(val workState: WorkInfo.State?) : SyncStatus()
   }
@@ -32,7 +32,7 @@ class SyncRepository @Inject constructor(
   val lastTimeSyncCompletedFlow = appValuesStore.lastSyncCompletedTimestamp
 
   val currentSyncStatusFlow: Flow<SyncStatus> = workManager
-    .getWorkInfosForUniqueWorkLiveData(SyncWorker.UNIQUE_WORK_NAME)
+    .getWorkInfosForUniqueWorkLiveData(BaseSyncWorker.UNIQUE_WORK_NAME)
     .asFlow(appCoroutineDispatchers)
     .map { workInfoList ->
       workInfoList.find { it.state == WorkInfo.State.RUNNING } ?: workInfoList.firstOrNull()
@@ -40,7 +40,7 @@ class SyncRepository @Inject constructor(
     .map { workInfo ->
       when (workInfo?.state) {
         WorkInfo.State.RUNNING -> {
-          SyncStatus.Active(SyncWorker.getProgressFromWorkInfo(workInfo))
+          SyncStatus.Active(BaseSyncWorker.getProgressFromWorkInfo(workInfo))
         }
         WorkInfo.State.ENQUEUED,
         WorkInfo.State.SUCCEEDED,
@@ -86,9 +86,18 @@ class SyncRepository @Inject constructor(
     SyncWorker.enqueue(workManager)
   }
 
+  fun enqueueDownloadSyncJob() {
+    DownloadSyncWorker.enqueue(workManager)
+  }
+
+  fun enqueueDownloadSyncPeriodicJob(forceReplacePendingWork: Boolean = false) {
+    DownloadSyncWorker.enqueuePerioidic(workManager, forceReplacePendingWork)
+  }
+
   suspend fun cancelAllSyncWork() {
     withContext(appCoroutineDispatchers.io) {
-      workManager.cancelUniqueWork(SyncWorker.UNIQUE_WORK_NAME).await()
+      workManager.cancelUniqueWork(BaseSyncWorker.UNIQUE_WORK_NAME).await()
+      workManager.cancelAllWorkByTag(BaseSyncWorker.WORK_TAG).await()
     }
   }
 
