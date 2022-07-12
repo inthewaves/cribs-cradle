@@ -103,10 +103,17 @@ class AuthRepository @Inject internal constructor(
     val warningMessage: String? = args[i++] as String?
     val forceReauth: Boolean = args[i++] as Boolean
 
+    val tokenExpiryTime: UnixTimestamp? = authToken?.let {
+      UnixTimestamp.fromDateTimeString(it.expires, ApiAuthToken.dateTimeFormatter)
+    }
+    val now = UnixTimestamp.now()
+    val isTokenValid = tokenExpiryTime != null && now < tokenExpiryTime
+
     if (!warningMessage.isNullOrBlank()) {
-      AuthState.BlockingWarningMessage(warningMessage)
+      AuthState.BlockingWarningMessage(hasValidToken = isTokenValid,  warningMessage)
     } else if (
       authToken == null ||
+      tokenExpiryTime == null ||
       !authToken.isInitialized ||
       authToken == AuthToken.getDefaultInstance() ||
       !isLoginComplete
@@ -122,13 +129,10 @@ class AuthRepository @Inject internal constructor(
       // fall back to 0 to always force authentication if there is no last authed time for some
       // reason
       val lastTimeAuthedForComparison = lastTimeAuthed ?: UnixTimestamp(0)
-      val tokenExpiryTime: UnixTimestamp = UnixTimestamp
-        .fromDateTimeString(authToken.expires, ApiAuthToken.dateTimeFormatter)
-      val now = UnixTimestamp.now()
 
       when {
-        forceReauth -> AuthState.ForcedRelogin(username)
-        now >= tokenExpiryTime -> AuthState.TokenExpired(username)
+        forceReauth -> AuthState.ForcedRelogin(hasValidToken = isTokenValid, username)
+        !isTokenValid -> AuthState.TokenExpired(username)
         lastTimeAuthedForComparison durationBetween now >= AUTH_TIMEOUT -> {
           AuthState.LoggedInLocked(username)
         }

@@ -4,20 +4,34 @@ import androidx.compose.runtime.Immutable
 
 @Immutable
 sealed interface AuthState {
+  val hasValidToken: Boolean
+
   @Immutable
-  object Initializing : AuthState
+  object Initializing : AuthState {
+    override val hasValidToken = false
+  }
   @Immutable
-  object LoggingIn : AuthState
+  object LoggingIn : AuthState {
+    override val hasValidToken = false
+  }
   @Immutable
-  object LoggedOut : AuthState
+  object LoggedOut : AuthState {
+    override val hasValidToken = false
+  }
   @Immutable
-  class ForcedRelogin(val username: String) : AuthState
+  class ForcedRelogin(override val hasValidToken: Boolean, val username: String) : AuthState
   @Immutable
-  class TokenExpired(val username: String) : AuthState
+  class TokenExpired(val username: String) : AuthState {
+    override val hasValidToken = false
+  }
   @Immutable
-  class LoggedInUnlocked(val username: String) : AuthState
+  class LoggedInUnlocked(val username: String) : AuthState {
+    override val hasValidToken = true
+  }
   @Immutable
-  class LoggedInLocked(val username: String) : AuthState
+  class LoggedInLocked(val username: String) : AuthState {
+    override val hasValidToken = true
+  }
   @Immutable
-  class BlockingWarningMessage(val warningMessage: String) : AuthState
+  class BlockingWarningMessage(override val hasValidToken: Boolean, val warningMessage: String) : AuthState
 }
