@@ -62,13 +62,49 @@ data class CradleImplementationData(
   val totalStaffTrainedTodayMCHAides: Int?,
   @Json(name = "Control2206")
   val totalStaffTrainedTodayTBA: Int?,
-  /**
-   * How many of the staff trained today had ever been trained in CRADLE before?
-   */
   @Json(name = "Control2207")
   val totalStaffTrainedBefore: Int?,
+  @Json(name = "Control2283")
+  val totalStaffObservedAndScored: Int?,
+  /**
+   * How many of the staff trained today scored more than 14/17 on the CRADLE checklist?
+   */
   @Json(name = "Control2208")
-  val totalStaffTrainedScoredMoreThan8: Int?,
+  val totalStaffTrainedScoredMoreThan14OutOf17: Int?,
+  @Json(name = "Control2265")
+  val checklistStep1Missed: Boolean?,
+  @Json(name = "Control2266")
+  val checklistStep2Missed: Boolean?,
+  @Json(name = "Control2267")
+  val checklistStep3Missed: Boolean?,
+  @Json(name = "Control2268")
+  val checklistStep4Missed: Boolean?,
+  @Json(name = "Control2269")
+  val checklistStep5Missed: Boolean?,
+  @Json(name = "Control2270")
+  val checklistStep6Missed: Boolean?,
+  @Json(name = "Control2271")
+  val checklistStep7Missed: Boolean?,
+  @Json(name = "Control2272")
+  val checklistStep8Missed: Boolean?,
+  @Json(name = "Control2273")
+  val checklistStep9Missed: Boolean?,
+  @Json(name = "Control2274")
+  val checklistStep10Missed: Boolean?,
+  @Json(name = "Control2275")
+  val checklistStep11Missed: Boolean?,
+  @Json(name = "Control2276")
+  val checklistStep12Missed: Boolean?,
+  @Json(name = "Control2277")
+  val checklistStep13Missed: Boolean?,
+  @Json(name = "Control2278")
+  val checklistStep14Missed: Boolean?,
+  @Json(name = "Control2279")
+  val checklistStep15Missed: Boolean?,
+  @Json(name = "Control2280")
+  val checklistStep16Missed: Boolean?,
+  @Json(name = "Control2281")
+  val checklistStep17Missed: Boolean?,
 ) {
   companion object {
     val controlIdToNameMap: Map<String, String> = ArrayMap<String, String>().apply {

@@ -32,6 +32,7 @@ import org.welbodipartnership.cradle5.R
 import org.welbodipartnership.cradle5.compose.SavedStateMutableState
 import org.welbodipartnership.cradle5.compose.createMutableState
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
+import org.welbodipartnership.cradle5.data.database.entities.ChecklistMissed
 import org.welbodipartnership.cradle5.data.database.entities.CradleTrainingForm
 import org.welbodipartnership.cradle5.data.database.entities.District
 import org.welbodipartnership.cradle5.data.database.entities.Facility
@@ -258,13 +259,21 @@ class CradleTrainingFormViewModel @Inject constructor(
       upperBoundState = totalNumberOfStaffTrainedState,
       upperBoundErrorString = R.string.staff_working_error_trained_in_cradle_before_too_large
     ),
-    totalStaffTrainedScoredMoreThan8 = limitedIntState(
-      key = "totalStaffTrainedScored8",
+    totalStaffObservedAndScored = limitedIntState(
+      key = "totalStaffObservedAndScored",
+      isMandatory = false,
+      range = VALID_STAFF_NUMBER_RANGE,
+      upperBoundState = totalNumberOfStaffTrainedState,
+      upperBoundErrorString = R.string.staff_working_error_checklist_observed_and_scored_too_large
+    ),
+    totalStaffTrainedScoredMoreThan14OutOf17 = limitedIntState(
+      key = "totalStaffTrainedScoredMoreThan14OutOf17",
       isMandatory = false,
       range = VALID_STAFF_NUMBER_RANGE,
       upperBoundState = totalNumberOfStaffTrainedState,
       upperBoundErrorString = R.string.staff_working_error_scored_8_or_higher_too_large
     ),
+    checklistMissed = parcelableState("checklistMissed"),
     localNotes = handle.createMutableState("formLocalNotes", ""),
     isDraft = isFormDraftState
   )
@@ -328,7 +337,8 @@ class CradleTrainingFormViewModel @Inject constructor(
             totalStaffTrainedTodayMCHAides.backingState.value = cradleForm.totalStaffTrainedTodayMCHAides?.toString() ?: ""
             totalStaffTrainedTodayTBA.backingState.value = cradleForm.totalStaffTrainedTodayTBA?.toString() ?: ""
             totalStaffTrainedBefore.backingState.value = cradleForm.totalStaffTrainedBefore?.toString() ?: ""
-            totalStaffTrainedScoredMoreThan8.backingState.value = cradleForm.totalStaffTrainedScoredMoreThan14?.toString() ?: ""
+            totalStaffTrainedScoredMoreThan14OutOf17.backingState.value = cradleForm.totalStaffTrainedScoredMoreThan14?.toString() ?: ""
+            checklistMissed.value = cradleForm.checklistMissed
 
             localNotes.value = cradleForm.localNotes ?: ""
             isDraft.value = cradleForm.isDraft
@@ -528,19 +538,21 @@ class CradleTrainingFormViewModel @Inject constructor(
           if (!totalStaffTrainedBefore.isValid) {
             fieldToErrorMap.addFieldError(
               R.string.cradle_form_staff_trained_title,
-              R.string.cradle_form_total_trained_before_label,
+              R.string.cradle_form_total_staff_observed_and_scored,
               totalStaffTrainedBefore.errorFor(context, totalStaffTrainedBefore.stateValue)
             )
           }
-          if (!totalStaffTrainedScoredMoreThan8.isValid) {
+          if (!totalStaffTrainedScoredMoreThan14OutOf17.isValid) {
             fieldToErrorMap.addFieldError(
               R.string.cradle_form_staff_trained_title,
               R.string.cradle_form_total_trained_score_more_than_8_label,
-              totalStaffTrainedScoredMoreThan8.errorFor(context, totalStaffTrainedScoredMoreThan8.stateValue)
+              totalStaffTrainedScoredMoreThan14OutOf17.errorFor(context, totalStaffTrainedScoredMoreThan14OutOf17.stateValue)
             )
           }
 
           runCatching {
+            val totalStaffObservedAndScored = totalStaffObservedAndScored.stateValue.toIntOrNull()
+            val checklistScore = totalStaffTrainedScoredMoreThan14OutOf17.stateValue.toIntOrNull()
             CradleTrainingForm(
               id = existingForm?.form?.id ?: 0L,
               serverInfo = existingForm?.form?.serverInfo,
@@ -556,7 +568,7 @@ class CradleTrainingFormViewModel @Inject constructor(
               powerSupply = powerSupply.value,
               totalStaffWorking = totalStaffWorking.stateValue.toIntOrNull(),
               totalStaffProvidingMaternityServices = totalStaffProvidingMaternityServices.stateValue.toIntOrNull(),
-              totalStaffTrainedToday = totalStaffTrainedToday.stateValue.toIntOrNull(),
+              totalStaffTrainedToday = this.totalStaffTrainedToday.stateValue.toIntOrNull(),
               totalStaffTrainedTodayDoctors = totalStaffTrainedTodayDoctors.stateValue.toIntOrNull(),
               totalStaffTrainedTodayMidwives = totalStaffTrainedTodayMidwives.stateValue.toIntOrNull(),
               totalStaffTrainedTodaySACHOS = totalStaffTrainedTodaySACHOS.stateValue.toIntOrNull(),
@@ -568,7 +580,9 @@ class CradleTrainingFormViewModel @Inject constructor(
               totalStaffTrainedTodayMCHAides = totalStaffTrainedTodayMCHAides.stateValue.toIntOrNull(),
               totalStaffTrainedTodayTBA = totalStaffTrainedTodayTBA.stateValue.toIntOrNull(),
               totalStaffTrainedBefore = totalStaffTrainedBefore.stateValue.toIntOrNull(),
-              totalStaffTrainedScoredMoreThan14 = totalStaffTrainedScoredMoreThan8.stateValue.toIntOrNull(),
+              totalStaffObservedAndScored = totalStaffObservedAndScored,
+              totalStaffTrainedScoredMoreThan14 = checklistScore,
+              checklistMissed = checklistMissed.value,
               localNotes = localNotes.value,
               isDraft = isDraft
             )
@@ -711,7 +725,9 @@ class CradleTrainingFormViewModel @Inject constructor(
      * How many of the staff trained today had ever been trained in CRADLE before?
      */
     val totalStaffTrainedBefore: LimitedIntStateWithStateUpperBound,
-    val totalStaffTrainedScoredMoreThan8: LimitedIntStateWithStateUpperBound,
+    val totalStaffObservedAndScored: LimitedIntStateWithStateUpperBound,
+    val totalStaffTrainedScoredMoreThan14OutOf17: LimitedIntStateWithStateUpperBound,
+    val checklistMissed: MutableState<ChecklistMissed?>,
     val localNotes: MutableState<String>,
     val isDraft: SavedStateMutableState<Boolean?>,
   ) {
@@ -736,7 +752,9 @@ class CradleTrainingFormViewModel @Inject constructor(
       totalStaffTrainedTodayMCHAides.enableShowErrors(force = true)
       totalStaffTrainedTodayTBA.enableShowErrors(force = true)
       totalStaffTrainedBefore.enableShowErrors(force = true)
-      totalStaffTrainedScoredMoreThan8.enableShowErrors(force = true)
+      totalStaffObservedAndScored.enableShowErrors(force = true)
+      totalStaffTrainedScoredMoreThan14OutOf17.enableShowErrors(force = true)
+      // checklistMissed: MutableState<ChecklistMissed?> has no errors
     }
   }
 }

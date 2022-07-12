@@ -17,6 +17,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.welbodipartnership.cradle5.R
 import org.welbodipartnership.cradle5.cradleform.CradleFormPreviewClasses
+import org.welbodipartnership.cradle5.cradleform.form.ChecklistMissedList
 import org.welbodipartnership.cradle5.cradleform.form.PowerSupplyList
 import org.welbodipartnership.cradle5.data.database.entities.CradleTrainingForm
 import org.welbodipartnership.cradle5.data.database.entities.District
@@ -185,8 +186,19 @@ fun CradleFormCard(
     )
     Spacer(modifier = Modifier.height(spacerHeight))
     LabelAndValueOrUnknown(
+      label = stringResource(R.string.cradle_form_total_staff_observed_and_scored),
+      value = form.totalStaffObservedAndScored?.toString(),
+    )
+    Spacer(modifier = Modifier.height(spacerHeight))
+    LabelAndValueOrUnknown(
       label = stringResource(R.string.cradle_form_total_trained_score_more_than_8_label),
       value = form.totalStaffTrainedScoredMoreThan14?.toString(),
+    )
+    Spacer(modifier = Modifier.height(spacerHeight))
+    ChecklistMissedList(
+      checklistMissed = form.checklistMissed,
+      onChecklistMissedChanged = {},
+      enabled = false,
     )
   }
 }

@@ -48,7 +48,7 @@ internal class CradleImplementationDataTest {
       totalStaffTrainedTodayMCHAides = 9,
       totalStaffTrainedTodayTBA = 10,
       totalStaffTrainedBefore = 1,
-      totalStaffTrainedScoredMoreThan8 = 1
+      totalStaffTrainedScoredMoreThan14OutOf17 = 1
     )
     val expectedMetaWithoutControls = Meta(
       title = "CRADLE Implementation Data - Bendu",

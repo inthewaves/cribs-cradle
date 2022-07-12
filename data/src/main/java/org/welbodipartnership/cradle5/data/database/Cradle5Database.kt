@@ -1,6 +1,10 @@
 package org.welbodipartnership.cradle5.data.database
 
 import android.content.Context
+import android.database.sqlite.SQLiteDatabase
+import android.util.Log
+import androidx.core.content.contentValuesOf
+import androidx.core.database.getLongOrNull
 import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.RenameColumn
@@ -11,6 +15,7 @@ import androidx.room.migration.AutoMigrationSpec
 import androidx.room.migration.Migration
 import androidx.room.withTransaction
 import androidx.sqlite.db.SupportSQLiteDatabase
+import androidx.sqlite.db.SupportSQLiteQueryBuilder
 import org.welbodipartnership.cradle5.data.database.daos.CradleTrainingFormDao
 import org.welbodipartnership.cradle5.data.database.daos.DistrictDao
 import org.welbodipartnership.cradle5.data.database.daos.FacilityDao
@@ -25,7 +30,7 @@ import javax.inject.Singleton
 
 const val TAG = "Cradle5Database"
 
-const val DATABASE_VERSION = 3
+const val DATABASE_VERSION = 4
 const val DATABASE_NAME = "cradle5.db"
 
 @Singleton
@@ -77,7 +82,8 @@ private val MIGRATIONS = arrayOf<Migration>()
   views = [ListCradleTrainingForm::class],
   autoMigrations = [
     AutoMigration(from = 1, to = 2, spec = Cradle5Database.Version1To2::class),
-    AutoMigration(from = 2, to = DATABASE_VERSION, spec = Cradle5Database.Version2To3::class)
+    AutoMigration(from = 2, to = 3, spec = Cradle5Database.Version2To3::class),
+    AutoMigration(from = 3, to = 4, spec = Cradle5Database.Version3To4::class)
   ]
 )
 @TypeConverters(DbTypeConverters::class)
@@ -96,6 +102,56 @@ abstract class Cradle5Database : RoomDatabase() {
   class Version2To3 : AutoMigrationSpec {
     override fun onPostMigrate(db: SupportSQLiteDatabase): Unit = db.run {
       db.execSQL("UPDATE CradleTrainingForm SET recordCreated = recordLastUpdated")
+    }
+  }
+  class Version3To4 : AutoMigrationSpec {
+    override fun onPostMigrate(db: SupportSQLiteDatabase): Unit = db.run {
+      beginTransaction()
+      try {
+        val districtQuery = SupportSQLiteQueryBuilder.builder("District")
+          .columns(arrayOf("id"))
+          .create()
+        db.query(districtQuery).use { districtCursor ->
+          while (districtCursor != null && districtCursor.moveToNext()) {
+            val districtId = districtCursor.getLongOrNull(districtCursor.getColumnIndexOrThrow("id"))
+
+            val allFacilityNames: List<String> = run {
+              val facilityQuery = SupportSQLiteQueryBuilder.builder("Facility")
+                .columns(arrayOf("name"))
+                .selection("districtId = ?", arrayOf(districtId))
+                .orderBy("name")
+                .create()
+              db.query(facilityQuery).use { facilityCursor ->
+                buildList<String> {
+                  while (facilityCursor != null && facilityCursor.moveToNext()) {
+                    val name = facilityCursor.getString(facilityCursor.getColumnIndexOrThrow("name"))
+                    add(name.lowercase())
+                  }
+                }
+              }
+            }
+            val invertedInsertionPoint = allFacilityNames.binarySearch("other")
+            val listOrder = if (invertedInsertionPoint < 0) {
+              // invertedInsertionPoint =  -insertion point - 1
+              -(invertedInsertionPoint + 1)
+            } else {
+              9999
+            }
+            Log.d(TAG, "Inserting OTHER facility for districtId $districtId with list order $listOrder")
+            val contentValues = contentValuesOf(
+              // 656 seems to be the constant ID for the OTHER facility
+              "id" to 656,
+              "name" to "OTHER",
+              "districtId" to districtId,
+              "listOrder" to listOrder,
+            )
+            db.insert("Facility", SQLiteDatabase.CONFLICT_IGNORE, contentValues)
+          }
+        }
+        setTransactionSuccessful()
+      } finally {
+        endTransaction()
+      }
     }
   }
 }

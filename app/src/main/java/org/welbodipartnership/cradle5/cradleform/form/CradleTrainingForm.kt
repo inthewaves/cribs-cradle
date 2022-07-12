@@ -55,6 +55,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -84,6 +85,7 @@ import kotlinx.parcelize.Parcelize
 import org.welbodipartnership.cradle5.R
 import org.welbodipartnership.cradle5.cradleform.details.BaseDetailsCard
 import org.welbodipartnership.cradle5.cradleform.details.CategoryHeader
+import org.welbodipartnership.cradle5.data.database.entities.ChecklistMissed
 import org.welbodipartnership.cradle5.data.database.entities.District
 import org.welbodipartnership.cradle5.data.database.entities.Facility
 import org.welbodipartnership.cradle5.data.database.entities.PowerSupply
@@ -91,6 +93,7 @@ import org.welbodipartnership.cradle5.data.database.entities.embedded.EnumSelect
 import org.welbodipartnership.cradle5.data.database.resultentities.CradleTrainingFormFacilityDistrict
 import org.welbodipartnership.cradle5.data.serverenums.ServerEnum
 import org.welbodipartnership.cradle5.data.serverenums.ServerEnumCollection
+import org.welbodipartnership.cradle5.ui.composables.AnimatedVisibilityFadingWrapper
 import org.welbodipartnership.cradle5.ui.composables.LabelAndValueOrNone
 import org.welbodipartnership.cradle5.ui.composables.forms.DatabasePagingListDropdown
 import org.welbodipartnership.cradle5.ui.composables.forms.DateOutlinedTextField
@@ -602,18 +605,40 @@ fun CradleTrainingForm(
             keyboardActions = commonKeyboardActions
           )
 
+          IntegerField(
+            field = fields.totalStaffObservedAndScored,
+            label = stringResource(R.string.cradle_form_total_staff_observed_and_scored),
+            textFieldModifier = fields.totalStaffObservedAndScored
+              .createFocusChangeModifier()
+              .bringIntoViewRequester(bringIntoViewRequester)
+              .fillMaxWidth(),
+            keyboardOptions = commonIntFieldKeyboardOptions,
+            keyboardActions = commonKeyboardActions
+          )
+
           Spacer(Modifier.height(textFieldToTextFieldHeight))
 
           val focusManager = LocalFocusManager.current
           IntegerField(
-            field = fields.totalStaffTrainedScoredMoreThan8,
+            field = fields.totalStaffTrainedScoredMoreThan14OutOf17,
             label = stringResource(R.string.cradle_form_total_trained_score_more_than_8_label),
-            textFieldModifier = fields.totalStaffTrainedScoredMoreThan8
+            textFieldModifier = fields.totalStaffTrainedScoredMoreThan14OutOf17
               .createFocusChangeModifier()
               .bringIntoViewRequester(bringIntoViewRequester)
               .fillMaxWidth(),
             keyboardOptions = commonIntFieldKeyboardOptions.copy(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
+          )
+
+          Spacer(Modifier.height(textFieldToTextFieldHeight))
+
+          val (checklistMissed, onChecklistMissedChanged) = fields.checklistMissed
+          ChecklistMissedList(
+            checklistMissed = checklistMissed,
+            onChecklistMissedChanged = {
+              focusManager.clearFocus()
+              onChecklistMissedChanged(it)
+            }
           )
 
           Spacer(Modifier.height(textFieldToTextFieldHeight))
@@ -731,10 +756,12 @@ fun PowerSupplyList(
   enabled: Boolean = true,
 ) {
   Column(modifier) {
+    val focusManager = LocalFocusManager.current
     // refactoring this is a bit pointless without reflection
     CheckboxTextRow(
       checked = powerSupply?.generator == true,
       onCheckedChange = {
+        focusManager.clearFocus()
         onPowerSupplyChanged(powerSupply?.copy(generator = it, none = false) ?: PowerSupply(generator = it))
       },
       label = stringResource(R.string.cradle_form_power_supply_generator),
@@ -743,6 +770,7 @@ fun PowerSupplyList(
     CheckboxTextRow(
       checked = powerSupply?.solar == true,
       onCheckedChange = {
+        focusManager.clearFocus()
         onPowerSupplyChanged(powerSupply?.copy(solar = it, none = false) ?: PowerSupply(solar = it))
       },
       label = stringResource(R.string.cradle_form_power_supply_solar),
@@ -751,6 +779,7 @@ fun PowerSupplyList(
     CheckboxTextRow(
       checked = powerSupply?.grid == true,
       onCheckedChange = {
+        focusManager.clearFocus()
         onPowerSupplyChanged(powerSupply?.copy(grid = it, none = false) ?: PowerSupply(grid = it))
       },
       label = stringResource(R.string.cradle_form_power_supply_grid),
@@ -759,10 +788,164 @@ fun PowerSupplyList(
     CheckboxTextRow(
       checked = powerSupply?.none == true,
       onCheckedChange = {
+        focusManager.clearFocus()
         // don't copy to clear out everything else
         onPowerSupplyChanged(PowerSupply(none = it))
       },
       label = stringResource(R.string.cradle_form_power_supply_none),
+      enabled = enabled,
+    )
+  }
+}
+
+@Composable
+fun ChecklistMissedList(
+  checklistMissed: ChecklistMissed?,
+  onChecklistMissedChanged: (new: ChecklistMissed) -> Unit,
+  modifier: Modifier = Modifier,
+  enabled: Boolean = true,
+) {
+  Column(modifier) {
+    Text(
+      text = stringResource(R.string.cradle_form_which_steps_in_checklist_missed_label),
+      style = MaterialTheme.typography.subtitle1,
+    )
+
+    // refactoring this is a bit pointless without reflection
+    CheckboxTextRow(
+      checked = checklistMissed?.missed1 == true,
+      onCheckedChange = {
+        onChecklistMissedChanged(checklistMissed?.copy(missed1 = it) ?: ChecklistMissed(missed1 = it))
+      },
+      label = "1",
+      enabled = enabled,
+    )
+    CheckboxTextRow(
+      checked = checklistMissed?.missed2 == true,
+      onCheckedChange = {
+        onChecklistMissedChanged(checklistMissed?.copy(missed2 = it) ?: ChecklistMissed(missed2 = it))
+      },
+      label = "2",
+      enabled = enabled,
+    )
+    CheckboxTextRow(
+      checked = checklistMissed?.missed3 == true,
+      onCheckedChange = {
+        onChecklistMissedChanged(checklistMissed?.copy(missed3 = it) ?: ChecklistMissed(missed3 = it))
+      },
+      label = "3",
+      enabled = enabled,
+    )
+    CheckboxTextRow(
+      checked = checklistMissed?.missed4 == true,
+      onCheckedChange = {
+        onChecklistMissedChanged(checklistMissed?.copy(missed4 = it) ?: ChecklistMissed(missed4 = it))
+      },
+      label = "4",
+      enabled = enabled,
+    )
+    CheckboxTextRow(
+      checked = checklistMissed?.missed5 == true,
+      onCheckedChange = {
+        onChecklistMissedChanged(checklistMissed?.copy(missed5 = it) ?: ChecklistMissed(missed5 = it))
+      },
+      label = "5",
+      enabled = enabled,
+    )
+    CheckboxTextRow(
+      checked = checklistMissed?.missed6 == true,
+      onCheckedChange = {
+        onChecklistMissedChanged(checklistMissed?.copy(missed6 = it) ?: ChecklistMissed(missed6 = it))
+      },
+      label = "6",
+      enabled = enabled,
+    )
+    CheckboxTextRow(
+      checked = checklistMissed?.missed7 == true,
+      onCheckedChange = {
+        onChecklistMissedChanged(checklistMissed?.copy(missed7 = it) ?: ChecklistMissed(missed7 = it))
+      },
+      label = "7",
+      enabled = enabled,
+    )
+    CheckboxTextRow(
+      checked = checklistMissed?.missed8 == true,
+      onCheckedChange = {
+        onChecklistMissedChanged(checklistMissed?.copy(missed8 = it) ?: ChecklistMissed(missed8 = it))
+      },
+      label = "8",
+      enabled = enabled,
+    )
+    CheckboxTextRow(
+      checked = checklistMissed?.missed9 == true,
+      onCheckedChange = {
+        onChecklistMissedChanged(checklistMissed?.copy(missed9 = it) ?: ChecklistMissed(missed9 = it))
+      },
+      label = "9",
+      enabled = enabled,
+    )
+    CheckboxTextRow(
+      checked = checklistMissed?.missed10 == true,
+      onCheckedChange = {
+        onChecklistMissedChanged(checklistMissed?.copy(missed10 = it) ?: ChecklistMissed(missed10 = it))
+      },
+      label = "10",
+      enabled = enabled,
+    )
+    CheckboxTextRow(
+      checked = checklistMissed?.missed11 == true,
+      onCheckedChange = {
+        onChecklistMissedChanged(checklistMissed?.copy(missed11 = it) ?: ChecklistMissed(missed11 = it))
+      },
+      label = "11",
+      enabled = enabled,
+    )
+    CheckboxTextRow(
+      checked = checklistMissed?.missed12 == true,
+      onCheckedChange = {
+        onChecklistMissedChanged(checklistMissed?.copy(missed12 = it) ?: ChecklistMissed(missed12 = it))
+      },
+      label = "12",
+      enabled = enabled,
+    )
+    CheckboxTextRow(
+      checked = checklistMissed?.missed13 == true,
+      onCheckedChange = {
+        onChecklistMissedChanged(checklistMissed?.copy(missed13 = it) ?: ChecklistMissed(missed13 = it))
+      },
+      label = "13",
+      enabled = enabled,
+    )
+    CheckboxTextRow(
+      checked = checklistMissed?.missed14 == true,
+      onCheckedChange = {
+        onChecklistMissedChanged(checklistMissed?.copy(missed14 = it) ?: ChecklistMissed(missed14 = it))
+      },
+      label = "14",
+      enabled = enabled,
+    )
+    CheckboxTextRow(
+      checked = checklistMissed?.missed15 == true,
+      onCheckedChange = {
+        onChecklistMissedChanged(checklistMissed?.copy(missed15 = it) ?: ChecklistMissed(missed15 = it))
+      },
+      label = "15",
+      enabled = enabled,
+    )
+    CheckboxTextRow(
+      checked = checklistMissed?.missed16 == true,
+      onCheckedChange = {
+        onChecklistMissedChanged(checklistMissed?.copy(missed16 = it) ?: ChecklistMissed(missed16 = it))
+      },
+      label = "16",
+      enabled = enabled,
+    )
+    CheckboxTextRow(
+      checked = checklistMissed?.missed17 == true,
+      onCheckedChange = {
+        onChecklistMissedChanged(checklistMissed?.copy(missed17 = it) ?: ChecklistMissed(missed17 = it))
+      },
+      label = "17",
       enabled = enabled,
     )
   }
