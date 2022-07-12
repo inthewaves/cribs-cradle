@@ -86,10 +86,6 @@ class SyncRepository @Inject constructor(
     SyncWorker.enqueue(workManager)
   }
 
-  fun enqueueDownloadSyncJob() {
-    DownloadSyncWorker.enqueue(workManager)
-  }
-
   fun enqueueDownloadSyncPeriodicJob(forceReplacePendingWork: Boolean = false) {
     DownloadSyncWorker.enqueuePerioidic(workManager, forceReplacePendingWork)
   }
