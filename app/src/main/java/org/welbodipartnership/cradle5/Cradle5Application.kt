@@ -6,9 +6,13 @@ import android.content.Context
 import android.util.Log
 import android.widget.Toast
 import androidx.hilt.work.HiltWorkerFactory
+import androidx.lifecycle.Observer
 import androidx.work.Configuration
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.acra.ACRA
@@ -23,9 +27,12 @@ import org.welbodipartnership.cradle5.appmigrations.AppMigrations
 import org.welbodipartnership.cradle5.data.cryptography.concatHashAndSalt
 import org.welbodipartnership.cradle5.data.settings.AppValuesStore
 import org.welbodipartnership.cradle5.domain.auth.AuthRepository
+import org.welbodipartnership.cradle5.domain.sync.BaseSyncWorker
 import org.welbodipartnership.cradle5.domain.sync.SyncRepository
 import org.welbodipartnership.cradle5.util.ApplicationCoroutineScope
 import org.welbodipartnership.cradle5.util.appinit.AppInitManager
+import org.welbodipartnership.cradle5.util.coroutines.AppCoroutineDispatchers
+import org.welbodipartnership.cradle5.util.coroutines.asFlow
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -52,6 +59,12 @@ class Cradle5Application : Application(), Configuration.Provider {
 
   @Inject
   lateinit var syncRepository: SyncRepository
+
+  @Inject
+  lateinit var workManager: WorkManager
+
+  @Inject
+  lateinit var appCoroutineDispatchers: AppCoroutineDispatchers
 
   override fun attachBaseContext(base: Context?) {
     super.attachBaseContext(base)
@@ -109,6 +122,11 @@ class Cradle5Application : Application(), Configuration.Provider {
     syncRepository.enqueueDownloadSyncPeriodicJob()
 
     appCoroutineScope.launch {
+      val workInfoList = workManager.getWorkInfosByTagLiveData(BaseSyncWorker.WORK_TAG)
+        .asFlow(appCoroutineDispatchers)
+        .firstOrNull()
+      Log.d(TAG, "WorkManager status: $workInfoList")
+
       appValuesStore.usernameHashFlow.collect { usernameHash ->
         ACRA.errorReporter.putCustomData("usernameHash", usernameHash?.concatHashAndSalt().toString())
       }

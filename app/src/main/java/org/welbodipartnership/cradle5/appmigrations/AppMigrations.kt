@@ -46,7 +46,7 @@ class AppMigrations @Inject internal constructor(
       }
     }
     if (lastSeenVersion < Version.OTHER_FACILITY_SYNC) {
-      syncRepository.enqueueDownloadSyncPeriodicJob(forceReplacePendingWork = true)
+      syncRepository.enqueueDownloadSyncImmediateJob()
     }
 
     appValuesStore.setLastAppMigrationVersion(CURRENT_VERSION)

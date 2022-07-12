@@ -86,8 +86,18 @@ class SyncRepository @Inject constructor(
     SyncWorker.enqueue(workManager)
   }
 
+  fun enqueueDownloadSyncImmediateJob() {
+    DownloadSyncWorker.enqueue(workManager)
+  }
+
   fun enqueueDownloadSyncPeriodicJob(forceReplacePendingWork: Boolean = false) {
     DownloadSyncWorker.enqueuePerioidic(workManager, forceReplacePendingWork)
+  }
+
+  suspend fun cancelTwoWaySyncWork() {
+    withContext(appCoroutineDispatchers.io) {
+      workManager.cancelUniqueWork(BaseSyncWorker.UNIQUE_WORK_NAME).await()
+    }
   }
 
   suspend fun cancelAllSyncWork() {

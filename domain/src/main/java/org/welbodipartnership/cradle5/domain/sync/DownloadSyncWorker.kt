@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.Constraints
+import androidx.work.Data
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
@@ -18,11 +19,13 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.firstOrNull
 import org.welbodipartnership.cradle5.domain.auth.AuthRepository
 import org.welbodipartnership.cradle5.domain.auth.AuthState
 import org.welbodipartnership.cradle5.util.ApplicationCoroutineScope
 import java.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 @HiltWorker
 class DownloadSyncWorker @AssistedInject constructor(
@@ -33,6 +36,9 @@ class DownloadSyncWorker @AssistedInject constructor(
 ) : BaseSyncWorker(appContext, workerParams) {
   companion object {
     private const val TAG = "InfoSyncWorker"
+
+    private const val DATA_KEY_DELAY = "delay"
+
     const val PERIODIC_JOB_NAME = "DownloadSyncWorker-periodic"
 
     fun enqueue(workManager: WorkManager) {
@@ -43,6 +49,7 @@ class DownloadSyncWorker @AssistedInject constructor(
             .build()
         )
         .addTag(WORK_TAG)
+        .setInputData(Data.Builder().putBoolean(DATA_KEY_DELAY, true).build())
         .build()
       workManager.enqueueUniqueWork(UNIQUE_WORK_NAME, ExistingWorkPolicy.KEEP, request)
     }
@@ -66,9 +73,16 @@ class DownloadSyncWorker @AssistedInject constructor(
   }
 
   override suspend fun doWork(): Result {
+    val shouldDelay = inputData.getBoolean(DATA_KEY_DELAY, false)
+    // deal with app starting up first
+    if (shouldDelay) delay(3.seconds)
+
     val authState = authRepository.authStateFlow.firstOrNull() ?: return Result.failure()
     if (!authState.hasValidToken) {
-      Log.w(TAG, "Cancelling work due to invalid auth token")
+      Log.w(
+        TAG,
+        "Cancelling work due to invalid auth token (authState = ${authState::class.java.simpleName}"
+      )
       return Result.failure()
     }
 

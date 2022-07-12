@@ -75,7 +75,7 @@ class SyncScreenViewModel @Inject constructor(
 
   fun cancelSync() {
     viewModelScope.launch {
-      syncRepository.cancelAllSyncWork()
+      syncRepository.cancelTwoWaySyncWork()
     }
   }
 }
