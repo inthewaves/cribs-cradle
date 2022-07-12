@@ -18,7 +18,9 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.firstOrNull
 import org.welbodipartnership.cradle5.domain.auth.AuthRepository
+import org.welbodipartnership.cradle5.domain.auth.AuthState
 import org.welbodipartnership.cradle5.util.ApplicationCoroutineScope
 import java.time.Duration
 
@@ -64,6 +66,12 @@ class DownloadSyncWorker @AssistedInject constructor(
   }
 
   override suspend fun doWork(): Result {
+    val authState = authRepository.authStateFlow.firstOrNull() ?: return Result.failure()
+    if (!authState.hasValidToken) {
+      Log.w(TAG, "Cancelling work due to invalid auth token")
+      return Result.failure()
+    }
+
     coroutineScope {
       val progressChannel = actor<AuthRepository.InfoSyncProgress>(capacity = Channel.CONFLATED) {
         consumeEach {
