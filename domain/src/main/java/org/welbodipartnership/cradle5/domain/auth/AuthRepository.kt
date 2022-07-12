@@ -9,6 +9,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.selects.SelectClause2
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import org.welbodipartnership.api.ApiAuthToken
 import org.welbodipartnership.api.cradle5.HealthcareFacilitySummary
 import org.welbodipartnership.cradle5.data.cryptography.ArgonHasher
@@ -381,6 +383,8 @@ class AuthRepository @Inject internal constructor(
       }
     }
 
+    yield()
+
     // Try to get the user's district
     progressReceiver?.sendProgress(InfoSyncStage.GETTING_USER_DISTRICT)
     val districtName: String? = when (
@@ -415,6 +419,8 @@ class AuthRepository @Inject internal constructor(
       }
     }
 
+    yield()
+
     progressReceiver?.sendProgress(InfoSyncStage.DOWNLOADING_DISTRICTS)
     when (val result = districtRepository.downloadAndSaveDistricts(progressReceiver?.stringChannel)) {
       DistrictRepository.DownloadResult.Success -> {}
@@ -433,6 +439,8 @@ class AuthRepository @Inject internal constructor(
         district.id
       }
 
+    yield()
+
     // Try to get the facilities associated with this district
     progressReceiver?.sendProgress(InfoSyncStage.DOWNLOADING_FACILITIES)
     val workSemaphore = Semaphore(permits = 3)
@@ -440,6 +448,7 @@ class AuthRepository @Inject internal constructor(
       withContext(appCoroutineDispatchers.io.limitedParallelism(3)) {
         dbWrapper.districtDao().getAllDistricts().forEach { district ->
           launchWithPermit(workSemaphore) {
+            ensureActive()
             progressReceiver?.sendProgress("Getting facilities for district ${district.name}")
             when (
               val result = facilityRepository.downloadAndSaveFacilities(

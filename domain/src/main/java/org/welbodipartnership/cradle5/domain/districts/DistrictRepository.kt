@@ -4,6 +4,8 @@ import android.content.Context
 import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.ensureActive
 import org.welbodipartnership.api.cradle5.CradleImplementationData
 import org.welbodipartnership.api.forms.meta.DynamicLookupListEntry
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
@@ -34,7 +36,9 @@ class DistrictRepository @Inject constructor(
   /**
    * TODO: Might be worth streaming this response from the server
    */
-  suspend fun downloadAndSaveDistricts(eventMessagesChannel: SendChannel<String>?): DownloadResult {
+  suspend fun downloadAndSaveDistricts(
+    eventMessagesChannel: SendChannel<String>?
+  ): DownloadResult = coroutineScope {
     when (
       val result: DefaultNetworkResult<List<DynamicLookupListEntry>> = restApi
         .getDynamicLookupData(
@@ -45,11 +49,14 @@ class DistrictRepository @Inject constructor(
         )
     ) {
       is NetworkResult.Success -> {
+        ensureActive()
         Log.d(TAG, "districts count: ${result.value.size}")
         eventMessagesChannel?.trySend("Saving ${result.value.size} districts")
         dbWrapper.withTransaction { db ->
           val dao = db.districtDao()
+
           result.value.forEachIndexed { _, apiFacilityListItem ->
+            ensureActive()
             dao.upsert(District(apiFacilityListItem.id.toLong(), apiFacilityListItem.name))
           }
         }
@@ -58,17 +65,17 @@ class DistrictRepository @Inject constructor(
         val message = result.errorValue.decodeToString()
         val error = "Unable to get districts: HTTP ${result.statusCode} error (message: $message)"
         eventMessagesChannel?.trySend(error)
-        return DownloadResult.Invalid(error, result.statusCode)
+        return@coroutineScope DownloadResult.Invalid(error, result.statusCode)
       }
       is NetworkResult.NetworkException -> {
         val formatted = result.formatErrorMessage(context)
         val errorMessage = "Unable to get districts: $formatted"
         eventMessagesChannel?.trySend(errorMessage)
-        return DownloadResult.Exception(result.cause, errorMessage)
+        return@coroutineScope DownloadResult.Exception(result.cause, errorMessage)
       }
     }
 
-    return DownloadResult.Success
+    return@coroutineScope DownloadResult.Success
   }
 
   companion object {
