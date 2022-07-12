@@ -23,6 +23,7 @@ import org.welbodipartnership.cradle5.appmigrations.AppMigrations
 import org.welbodipartnership.cradle5.data.cryptography.concatHashAndSalt
 import org.welbodipartnership.cradle5.data.settings.AppValuesStore
 import org.welbodipartnership.cradle5.domain.auth.AuthRepository
+import org.welbodipartnership.cradle5.domain.sync.SyncRepository
 import org.welbodipartnership.cradle5.util.ApplicationCoroutineScope
 import org.welbodipartnership.cradle5.util.appinit.AppInitManager
 import java.util.concurrent.TimeUnit
@@ -48,6 +49,9 @@ class Cradle5Application : Application(), Configuration.Provider {
 
   @Inject
   lateinit var appValuesStore: AppValuesStore
+
+  @Inject
+  lateinit var syncRepository: SyncRepository
 
   override fun attachBaseContext(base: Context?) {
     super.attachBaseContext(base)
@@ -101,6 +105,8 @@ class Cradle5Application : Application(), Configuration.Provider {
       appInitManager.init()
       appMigrations.runMigrations(this@Cradle5Application)
     }
+
+    syncRepository.enqueueDownloadSyncPeriodicJob()
 
     appCoroutineScope.launch {
       appValuesStore.usernameHashFlow.collect { usernameHash ->
