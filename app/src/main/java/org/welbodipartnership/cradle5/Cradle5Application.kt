@@ -79,7 +79,7 @@ class Cradle5Application : Application(), Configuration.Provider {
         enabled = true
         period = 12
         periodUnit = TimeUnit.HOURS
-        exceptionClassLimit = 12
+        exceptionClassLimit = 6
         ignoredCrashToast = getString(R.string.s_encountered_error_toast, getString(R.string.app_name))
       }
     }
