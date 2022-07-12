@@ -1,5 +1,6 @@
 package org.welbodipartnership.cradle5.cradleform
 
+import org.welbodipartnership.cradle5.data.database.entities.ChecklistMissed
 import org.welbodipartnership.cradle5.data.database.entities.CradleTrainingForm
 import org.welbodipartnership.cradle5.data.database.entities.District
 import org.welbodipartnership.cradle5.data.database.entities.Facility
@@ -47,7 +48,14 @@ object CradleFormPreviewClasses {
     totalStaffTrainedTodayMCHAides = 4,
     totalStaffTrainedTodayTBA = 1,
     totalStaffTrainedBefore = 4,
-    totalStaffTrainedScoredMoreThan14 = 5,
+    totalStaffTrainedScoredMoreThan14 = 2,
+    totalStaffObservedAndScored = 17-4,
+    checklistMissed = ChecklistMissed(
+      missed1 = true,
+      missed2 = true,
+      missed3 = true,
+      missed4 = true,
+    ),
     isDraft = isDraft
   )
 }

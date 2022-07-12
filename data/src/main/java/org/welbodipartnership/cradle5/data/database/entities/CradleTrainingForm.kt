@@ -62,8 +62,10 @@ data class CradleTrainingForm(
    * How many of the staff trained today had ever been trained in CRADLE before?
    */
   val totalStaffTrainedBefore: Int?,
+  val totalStaffObservedAndScored: Int?,
   val totalStaffTrainedScoredMoreThan14: Int?,
-
+  @Embedded(prefix = "checklist_")
+  val checklistMissed: ChecklistMissed?,
   /**
    * A Unix timestamp of when this was last updated
    */
@@ -113,3 +115,25 @@ data class PowerSupply(
   @Ignore
   val areAllFieldsFalse = !generator && !solar && !grid && !none
 }
+
+@Immutable
+@Parcelize
+data class ChecklistMissed(
+  @ColumnInfo(defaultValue = "0") val missed1: Boolean = false,
+  @ColumnInfo(defaultValue = "0") val missed2: Boolean = false,
+  @ColumnInfo(defaultValue = "0") val missed3: Boolean = false,
+  @ColumnInfo(defaultValue = "0") val missed4: Boolean = false,
+  @ColumnInfo(defaultValue = "0") val missed5: Boolean = false,
+  @ColumnInfo(defaultValue = "0") val missed6: Boolean = false,
+  @ColumnInfo(defaultValue = "0") val missed7: Boolean = false,
+  @ColumnInfo(defaultValue = "0") val missed8: Boolean = false,
+  @ColumnInfo(defaultValue = "0") val missed9: Boolean = false,
+  @ColumnInfo(defaultValue = "0") val missed10: Boolean = false,
+  @ColumnInfo(defaultValue = "0") val missed11: Boolean = false,
+  @ColumnInfo(defaultValue = "0") val missed12: Boolean = false,
+  @ColumnInfo(defaultValue = "0") val missed13: Boolean = false,
+  @ColumnInfo(defaultValue = "0") val missed14: Boolean = false,
+  @ColumnInfo(defaultValue = "0") val missed15: Boolean = false,
+  @ColumnInfo(defaultValue = "0") val missed16: Boolean = false,
+  @ColumnInfo(defaultValue = "0") val missed17: Boolean = false,
+) : Parcelable
