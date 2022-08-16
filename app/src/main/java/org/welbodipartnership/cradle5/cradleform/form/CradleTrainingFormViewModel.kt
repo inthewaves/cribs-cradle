@@ -203,19 +203,19 @@ class CradleTrainingFormViewModel @Inject constructor(
       upperBoundState = totalNumberOfStaffTrainedState,
       upperBoundErrorString = R.string.staff_working_error_SACHOS_too_large
     ),
-    totalStaffTrainedTodaySECHNMidwives = limitedIntState(
-      key = "SECHNMidwivesTrained",
-      isMandatory = false,
-      range = VALID_STAFF_NUMBER_RANGE,
-      upperBoundState = totalNumberOfStaffTrainedState,
-      upperBoundErrorString = R.string.staff_working_error_SECHN_midwives_too_large
-    ),
     totalStaffTrainedTodaySRNs = limitedIntState(
       key = "SRNsTrained",
       isMandatory = false,
       range = VALID_STAFF_NUMBER_RANGE,
       upperBoundState = totalNumberOfStaffTrainedState,
       upperBoundErrorString = R.string.staff_working_error_SRNs_too_large
+    ),
+    totalStaffTrainedTodaySECHNs = limitedIntState(
+      key = "SECHNsTrained",
+      isMandatory = false,
+      range = VALID_STAFF_NUMBER_RANGE,
+      upperBoundState = totalNumberOfStaffTrainedState,
+      upperBoundErrorString = R.string.staff_working_error_SECHNs_too_large
     ),
     totalStaffTrainedTodayCHOs = limitedIntState(
       key = "CHOsTrained",
@@ -231,13 +231,6 @@ class CradleTrainingFormViewModel @Inject constructor(
       upperBoundState = totalNumberOfStaffTrainedState,
       upperBoundErrorString = R.string.staff_working_error_CHAs_too_large
     ),
-    totalStaffTrainedTodayCSECHNs = limitedIntState(
-      key = "CSECHNsTrained",
-      isMandatory = false,
-      range = VALID_STAFF_NUMBER_RANGE,
-      upperBoundState = totalNumberOfStaffTrainedState,
-      upperBoundErrorString = R.string.staff_working_error_CSECHNs_too_large
-    ),
     totalStaffTrainedTodayMCHAides = limitedIntState(
       key = "MCHAidesTrained",
       isMandatory = false,
@@ -251,6 +244,13 @@ class CradleTrainingFormViewModel @Inject constructor(
       range = VALID_STAFF_NUMBER_RANGE,
       upperBoundState = totalNumberOfStaffTrainedState,
       upperBoundErrorString = R.string.staff_working_error_TBA_aides_too_large
+    ),
+    totalStaffTrainedTodayVolunteers = limitedIntState(
+      key = "volunteersTrained",
+      isMandatory = false,
+      range = VALID_STAFF_NUMBER_RANGE,
+      upperBoundState = totalNumberOfStaffTrainedState,
+      upperBoundErrorString = R.string.staff_working_error_volunteers_too_large
     ),
     totalStaffTrainedBefore = limitedIntState(
       key = "totalStaffTrainedBefore",
@@ -329,13 +329,13 @@ class CradleTrainingFormViewModel @Inject constructor(
             totalStaffTrainedTodayDoctors.backingState.value = cradleForm.totalStaffTrainedTodayDoctors?.toString() ?: ""
             totalStaffTrainedTodayMidwives.backingState.value = cradleForm.totalStaffTrainedTodayMidwives?.toString() ?: ""
             totalStaffTrainedTodaySACHOS.backingState.value = cradleForm.totalStaffTrainedTodaySACHOS?.toString() ?: ""
-            totalStaffTrainedTodaySECHNMidwives.backingState.value = cradleForm.totalStaffTrainedTodaySECHNMidwives?.toString() ?: ""
             totalStaffTrainedTodaySRNs.backingState.value = cradleForm.totalStaffTrainedTodaySRNs?.toString() ?: ""
+            totalStaffTrainedTodaySECHNs.backingState.value = cradleForm.totalStaffTrainedTodaySECHNs?.toString() ?: ""
             totalStaffTrainedTodayCHOs.backingState.value = cradleForm.totalStaffTrainedTodayCHOs?.toString() ?: ""
             totalStaffTrainedTodayCHAs.backingState.value = cradleForm.totalStaffTrainedTodayCHAs?.toString() ?: ""
-            totalStaffTrainedTodayCSECHNs.backingState.value = cradleForm.totalStaffTrainedTodayCSECHNs?.toString() ?: ""
             totalStaffTrainedTodayMCHAides.backingState.value = cradleForm.totalStaffTrainedTodayMCHAides?.toString() ?: ""
             totalStaffTrainedTodayTBA.backingState.value = cradleForm.totalStaffTrainedTodayTBA?.toString() ?: ""
+            totalStaffTrainedTodayVolunteers.backingState.value = cradleForm.totalStaffTrainedTodayVolunteers?.toString() ?: ""
             totalStaffTrainedBefore.backingState.value = cradleForm.totalStaffTrainedBefore?.toString() ?: ""
             totalStaffTrainedScoredMoreThan14OutOf17.backingState.value = cradleForm.totalStaffTrainedScoredMoreThan14?.toString() ?: ""
             checklistMissed.value = cradleForm.checklistMissed
@@ -486,18 +486,18 @@ class CradleTrainingFormViewModel @Inject constructor(
               totalStaffTrainedTodaySACHOS.errorFor(context, totalStaffTrainedTodaySACHOS.stateValue)
             )
           }
-          if (!totalStaffTrainedTodaySECHNMidwives.isValid) {
-            fieldToErrorMap.addFieldError(
-              R.string.cradle_form_staff_trained_title,
-              R.string.cradle_form_total_SECHN_midwives_trained_today_label,
-              totalStaffTrainedTodaySECHNMidwives.errorFor(context, totalStaffTrainedTodaySECHNMidwives.stateValue)
-            )
-          }
           if (!totalStaffTrainedTodaySRNs.isValid) {
             fieldToErrorMap.addFieldError(
               R.string.cradle_form_staff_trained_title,
               R.string.cradle_form_total_SRNs_trained_today_label,
               totalStaffTrainedTodaySRNs.errorFor(context, totalStaffTrainedTodaySRNs.stateValue)
+            )
+          }
+          if (!totalStaffTrainedTodaySECHNs.isValid) {
+            fieldToErrorMap.addFieldError(
+              R.string.cradle_form_staff_trained_title,
+              R.string.staff_working_error_SECHNs_too_large,
+              totalStaffTrainedTodaySECHNs.errorFor(context, totalStaffTrainedTodaySECHNs.stateValue)
             )
           }
           if (!totalStaffTrainedTodayCHOs.isValid) {
@@ -514,13 +514,6 @@ class CradleTrainingFormViewModel @Inject constructor(
               totalStaffTrainedTodayCHAs.errorFor(context, totalStaffTrainedTodayCHAs.stateValue)
             )
           }
-          if (!totalStaffTrainedTodayCSECHNs.isValid) {
-            fieldToErrorMap.addFieldError(
-              R.string.cradle_form_staff_trained_title,
-              R.string.cradle_form_total_CSECHNs_trained_today_label,
-              totalStaffTrainedTodayCSECHNs.errorFor(context, totalStaffTrainedTodayCSECHNs.stateValue)
-            )
-          }
           if (!totalStaffTrainedTodayMCHAides.isValid) {
             fieldToErrorMap.addFieldError(
               R.string.cradle_form_staff_trained_title,
@@ -533,6 +526,13 @@ class CradleTrainingFormViewModel @Inject constructor(
               R.string.cradle_form_staff_trained_title,
               R.string.cradle_form_total_TBA_trained_today_label,
               totalStaffTrainedTodayTBA.errorFor(context, totalStaffTrainedTodayTBA.stateValue)
+            )
+          }
+          if (!totalStaffTrainedTodayVolunteers.isValid) {
+            fieldToErrorMap.addFieldError(
+              R.string.cradle_form_staff_trained_title,
+              R.string.cradle_form_total_volunteers_trained_today_label,
+              totalStaffTrainedTodayVolunteers.errorFor(context, totalStaffTrainedTodayVolunteers.stateValue)
             )
           }
           if (!totalStaffTrainedBefore.isValid) {
@@ -572,13 +572,13 @@ class CradleTrainingFormViewModel @Inject constructor(
               totalStaffTrainedTodayDoctors = totalStaffTrainedTodayDoctors.stateValue.toIntOrNull(),
               totalStaffTrainedTodayMidwives = totalStaffTrainedTodayMidwives.stateValue.toIntOrNull(),
               totalStaffTrainedTodaySACHOS = totalStaffTrainedTodaySACHOS.stateValue.toIntOrNull(),
-              totalStaffTrainedTodaySECHNMidwives = totalStaffTrainedTodaySECHNMidwives.stateValue.toIntOrNull(),
               totalStaffTrainedTodaySRNs = totalStaffTrainedTodaySRNs.stateValue.toIntOrNull(),
+              totalStaffTrainedTodaySECHNs = totalStaffTrainedTodaySECHNs.stateValue.toIntOrNull(),
               totalStaffTrainedTodayCHOs = totalStaffTrainedTodayCHOs.stateValue.toIntOrNull(),
               totalStaffTrainedTodayCHAs = totalStaffTrainedTodayCHAs.stateValue.toIntOrNull(),
-              totalStaffTrainedTodayCSECHNs = totalStaffTrainedTodayCSECHNs.stateValue.toIntOrNull(),
               totalStaffTrainedTodayMCHAides = totalStaffTrainedTodayMCHAides.stateValue.toIntOrNull(),
               totalStaffTrainedTodayTBA = totalStaffTrainedTodayTBA.stateValue.toIntOrNull(),
+              totalStaffTrainedTodayVolunteers = totalStaffTrainedTodayVolunteers.stateValue.toIntOrNull(),
               totalStaffTrainedBefore = totalStaffTrainedBefore.stateValue.toIntOrNull(),
               totalStaffObservedAndScored = totalStaffObservedAndScored,
               totalStaffTrainedScoredMoreThan14 = checklistScore,
@@ -714,13 +714,13 @@ class CradleTrainingFormViewModel @Inject constructor(
     val totalStaffTrainedTodayDoctors: LimitedIntStateWithStateUpperBound,
     val totalStaffTrainedTodayMidwives: LimitedIntStateWithStateUpperBound,
     val totalStaffTrainedTodaySACHOS: LimitedIntStateWithStateUpperBound,
-    val totalStaffTrainedTodaySECHNMidwives: LimitedIntStateWithStateUpperBound,
     val totalStaffTrainedTodaySRNs: LimitedIntStateWithStateUpperBound,
+    val totalStaffTrainedTodaySECHNs: LimitedIntStateWithStateUpperBound,
     val totalStaffTrainedTodayCHOs: LimitedIntStateWithStateUpperBound,
     val totalStaffTrainedTodayCHAs: LimitedIntStateWithStateUpperBound,
-    val totalStaffTrainedTodayCSECHNs: LimitedIntStateWithStateUpperBound,
     val totalStaffTrainedTodayMCHAides: LimitedIntStateWithStateUpperBound,
     val totalStaffTrainedTodayTBA: LimitedIntStateWithStateUpperBound,
+    val totalStaffTrainedTodayVolunteers: LimitedIntStateWithStateUpperBound,
     /**
      * How many of the staff trained today had ever been trained in CRADLE before?
      */
@@ -744,13 +744,13 @@ class CradleTrainingFormViewModel @Inject constructor(
       totalStaffTrainedTodayDoctors.enableShowErrors(force = true)
       totalStaffTrainedTodayMidwives.enableShowErrors(force = true)
       totalStaffTrainedTodaySACHOS.enableShowErrors(force = true)
-      totalStaffTrainedTodaySECHNMidwives.enableShowErrors(force = true)
       totalStaffTrainedTodaySRNs.enableShowErrors(force = true)
+      totalStaffTrainedTodaySECHNs.enableShowErrors(force = true)
       totalStaffTrainedTodayCHOs.enableShowErrors(force = true)
       totalStaffTrainedTodayCHAs.enableShowErrors(force = true)
-      totalStaffTrainedTodayCSECHNs.enableShowErrors(force = true)
       totalStaffTrainedTodayMCHAides.enableShowErrors(force = true)
       totalStaffTrainedTodayTBA.enableShowErrors(force = true)
+      totalStaffTrainedTodayVolunteers.enableShowErrors(force = true)
       totalStaffTrainedBefore.enableShowErrors(force = true)
       totalStaffObservedAndScored.enableShowErrors(force = true)
       totalStaffTrainedScoredMoreThan14OutOf17.enableShowErrors(force = true)

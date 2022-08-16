@@ -7,6 +7,7 @@ import androidx.core.content.contentValuesOf
 import androidx.core.database.getLongOrNull
 import androidx.room.AutoMigration
 import androidx.room.Database
+import androidx.room.DeleteColumn
 import androidx.room.RenameColumn
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -30,7 +31,7 @@ import javax.inject.Singleton
 
 const val TAG = "Cradle5Database"
 
-const val DATABASE_VERSION = 4
+const val DATABASE_VERSION = 5
 const val DATABASE_NAME = "cradle5.db"
 
 @Singleton
@@ -83,7 +84,8 @@ private val MIGRATIONS = arrayOf<Migration>()
   autoMigrations = [
     AutoMigration(from = 1, to = 2, spec = Cradle5Database.Version1To2::class),
     AutoMigration(from = 2, to = 3, spec = Cradle5Database.Version2To3::class),
-    AutoMigration(from = 3, to = 4, spec = Cradle5Database.Version3To4::class)
+    AutoMigration(from = 3, to = 4, spec = Cradle5Database.Version3To4::class),
+    AutoMigration(from = 4, to = 5, spec = Cradle5Database.Version4To5::class)
   ]
 )
 @TypeConverters(DbTypeConverters::class)
@@ -154,6 +156,9 @@ abstract class Cradle5Database : RoomDatabase() {
       }
     }
   }
+  @DeleteColumn(tableName = "CradleTrainingForm", columnName = "totalStaffTrainedTodayCSECHNs")
+  @DeleteColumn(tableName = "CradleTrainingForm", columnName = "totalStaffTrainedTodaySECHNMidwives")
+  class Version4To5 : AutoMigrationSpec
 }
 
 /**

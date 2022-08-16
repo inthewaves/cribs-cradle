@@ -146,13 +146,13 @@ fun CradleFormCard(
     )
     Spacer(modifier = Modifier.height(spacerHeight))
     LabelAndValueOrUnknown(
-      label = stringResource(R.string.cradle_form_total_SECHN_midwives_trained_today_label),
-      value = form.totalStaffTrainedTodaySECHNMidwives?.toString(),
+      label = stringResource(R.string.cradle_form_total_SRNs_trained_today_label),
+      value = form.totalStaffTrainedTodaySRNs?.toString(),
     )
     Spacer(modifier = Modifier.height(spacerHeight))
     LabelAndValueOrUnknown(
-      label = stringResource(R.string.cradle_form_total_SRNs_trained_today_label),
-      value = form.totalStaffTrainedTodaySRNs?.toString(),
+      label = stringResource(R.string.cradle_form_total_SECHNs_trained_today_label),
+      value = form.totalStaffTrainedTodaySECHNs?.toString(),
     )
     Spacer(modifier = Modifier.height(spacerHeight))
     LabelAndValueOrUnknown(
@@ -166,11 +166,6 @@ fun CradleFormCard(
     )
     Spacer(modifier = Modifier.height(spacerHeight))
     LabelAndValueOrUnknown(
-      label = stringResource(R.string.cradle_form_total_CSECHNs_trained_today_label),
-      value = form.totalStaffTrainedTodayCSECHNs?.toString(),
-    )
-    Spacer(modifier = Modifier.height(spacerHeight))
-    LabelAndValueOrUnknown(
       label = stringResource(R.string.cradle_form_total_MCH_aides_trained_today_label),
       value = form.totalStaffTrainedTodayMCHAides?.toString(),
     )
@@ -178,6 +173,11 @@ fun CradleFormCard(
     LabelAndValueOrUnknown(
       label = stringResource(R.string.cradle_form_total_TBA_trained_today_label),
       value = form.totalStaffTrainedTodayTBA?.toString(),
+    )
+    Spacer(modifier = Modifier.height(spacerHeight))
+    LabelAndValueOrUnknown(
+      label = stringResource(R.string.cradle_form_total_volunteers_trained_today_label),
+      value = form.totalStaffTrainedTodayVolunteers?.toString(),
     )
     Spacer(modifier = Modifier.height(spacerHeight))
     LabelAndValueOrUnknown(

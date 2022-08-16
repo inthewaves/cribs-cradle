@@ -504,9 +504,9 @@ fun CradleTrainingForm(
           Spacer(Modifier.height(textFieldToTextFieldHeight))
 
           IntegerField(
-            field = fields.totalStaffTrainedTodaySECHNMidwives,
-            label = stringResource(R.string.cradle_form_total_SECHN_midwives_trained_today_label),
-            textFieldModifier = fields.totalStaffTrainedTodaySECHNMidwives
+            field = fields.totalStaffTrainedTodaySRNs,
+            label = stringResource(R.string.cradle_form_total_SRNs_trained_today_label),
+            textFieldModifier = fields.totalStaffTrainedTodaySRNs
               .createFocusChangeModifier()
               .bringIntoViewRequester(bringIntoViewRequester)
               .fillMaxWidth(),
@@ -517,9 +517,9 @@ fun CradleTrainingForm(
           Spacer(Modifier.height(textFieldToTextFieldHeight))
 
           IntegerField(
-            field = fields.totalStaffTrainedTodaySRNs,
-            label = stringResource(R.string.cradle_form_total_SRNs_trained_today_label),
-            textFieldModifier = fields.totalStaffTrainedTodaySRNs
+            field = fields.totalStaffTrainedTodaySECHNs,
+            label = stringResource(R.string.cradle_form_total_SECHNs_trained_today_label),
+            textFieldModifier = fields.totalStaffTrainedTodaySECHNs
               .createFocusChangeModifier()
               .bringIntoViewRequester(bringIntoViewRequester)
               .fillMaxWidth(),
@@ -556,19 +556,6 @@ fun CradleTrainingForm(
           Spacer(Modifier.height(textFieldToTextFieldHeight))
 
           IntegerField(
-            field = fields.totalStaffTrainedTodayCSECHNs,
-            label = stringResource(R.string.cradle_form_total_CSECHNs_trained_today_label),
-            textFieldModifier = fields.totalStaffTrainedTodayCSECHNs
-              .createFocusChangeModifier()
-              .bringIntoViewRequester(bringIntoViewRequester)
-              .fillMaxWidth(),
-            keyboardOptions = commonIntFieldKeyboardOptions,
-            keyboardActions = commonKeyboardActions
-          )
-
-          Spacer(Modifier.height(textFieldToTextFieldHeight))
-
-          IntegerField(
             field = fields.totalStaffTrainedTodayMCHAides,
             label = stringResource(R.string.cradle_form_total_MCH_aides_trained_today_label),
             textFieldModifier = fields.totalStaffTrainedTodayMCHAides
@@ -585,6 +572,17 @@ fun CradleTrainingForm(
             field = fields.totalStaffTrainedTodayTBA,
             label = stringResource(R.string.cradle_form_total_TBA_trained_today_label),
             textFieldModifier = fields.totalStaffTrainedTodayTBA
+              .createFocusChangeModifier()
+              .bringIntoViewRequester(bringIntoViewRequester)
+              .fillMaxWidth(),
+            keyboardOptions = commonIntFieldKeyboardOptions,
+            keyboardActions = commonKeyboardActions
+          )
+
+          IntegerField(
+            field = fields.totalStaffTrainedTodayVolunteers,
+            label = stringResource(R.string.cradle_form_total_volunteers_trained_today_label),
+            textFieldModifier = fields.totalStaffTrainedTodayVolunteers
               .createFocusChangeModifier()
               .bringIntoViewRequester(bringIntoViewRequester)
               .fillMaxWidth(),

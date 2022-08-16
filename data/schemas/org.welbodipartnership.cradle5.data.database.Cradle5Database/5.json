@@ -1,0 +1,540 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 5,
+    "identityHash": "954bc7a83aab9bb38aa5f78c62e994f0",
+    "entities": [
+      {
+        "tableName": "CradleTrainingForm",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `serverErrorMessage` TEXT, `recordLastUpdated` INTEGER, `recordCreated` INTEGER, `district` INTEGER, `healthcareFacility` INTEGER, `dateOfTraining` TEXT, `numOfBpDevicesFunctioning` INTEGER, `numOfCradleDevicesFunctioning` INTEGER, `numOfCradleDevicesBroken` INTEGER, `totalStaffWorking` INTEGER, `totalStaffProvidingMaternityServices` INTEGER, `totalStaffTrainedToday` INTEGER, `totalStaffTrainedTodayDoctors` INTEGER, `totalStaffTrainedTodayMidwives` INTEGER, `totalStaffTrainedTodaySACHOS` INTEGER, `totalStaffTrainedTodaySRNs` INTEGER, `totalStaffTrainedTodaySECHNs` INTEGER, `totalStaffTrainedTodayCHOs` INTEGER, `totalStaffTrainedTodayCHAs` INTEGER, `totalStaffTrainedTodayMCHAides` INTEGER, `totalStaffTrainedTodayTBA` INTEGER, `totalStaffTrainedTodayVolunteers` INTEGER, `totalStaffTrainedBefore` INTEGER, `totalStaffObservedAndScored` INTEGER, `totalStaffTrainedScoredMoreThan14` INTEGER, `lastUpdatedTimestamp` INTEGER NOT NULL, `localNotes` TEXT, `isDraft` INTEGER NOT NULL DEFAULT 0, `nodeId` INTEGER, `objectId` INTEGER, `updateTime` INTEGER, `createdTime` INTEGER, `powersupply_generator` INTEGER DEFAULT 0, `powersupply_solar` INTEGER DEFAULT 0, `powersupply_grid` INTEGER DEFAULT 0, `powersupply_none` INTEGER DEFAULT 0, `checklist_missed1` INTEGER DEFAULT 0, `checklist_missed2` INTEGER DEFAULT 0, `checklist_missed3` INTEGER DEFAULT 0, `checklist_missed4` INTEGER DEFAULT 0, `checklist_missed5` INTEGER DEFAULT 0, `checklist_missed6` INTEGER DEFAULT 0, `checklist_missed7` INTEGER DEFAULT 0, `checklist_missed8` INTEGER DEFAULT 0, `checklist_missed9` INTEGER DEFAULT 0, `checklist_missed10` INTEGER DEFAULT 0, `checklist_missed11` INTEGER DEFAULT 0, `checklist_missed12` INTEGER DEFAULT 0, `checklist_missed13` INTEGER DEFAULT 0, `checklist_missed14` INTEGER DEFAULT 0, `checklist_missed15` INTEGER DEFAULT 0, `checklist_missed16` INTEGER DEFAULT 0, `checklist_missed17` INTEGER DEFAULT 0)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "serverErrorMessage",
+            "columnName": "serverErrorMessage",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "recordLastUpdated",
+            "columnName": "recordLastUpdated",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "recordCreated",
+            "columnName": "recordCreated",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "district",
+            "columnName": "district",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "healthcareFacility",
+            "columnName": "healthcareFacility",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "dateOfTraining",
+            "columnName": "dateOfTraining",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "numOfBpDevicesFunctioning",
+            "columnName": "numOfBpDevicesFunctioning",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "numOfCradleDevicesFunctioning",
+            "columnName": "numOfCradleDevicesFunctioning",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "numOfCradleDevicesBroken",
+            "columnName": "numOfCradleDevicesBroken",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "totalStaffWorking",
+            "columnName": "totalStaffWorking",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "totalStaffProvidingMaternityServices",
+            "columnName": "totalStaffProvidingMaternityServices",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "totalStaffTrainedToday",
+            "columnName": "totalStaffTrainedToday",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "totalStaffTrainedTodayDoctors",
+            "columnName": "totalStaffTrainedTodayDoctors",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "totalStaffTrainedTodayMidwives",
+            "columnName": "totalStaffTrainedTodayMidwives",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "totalStaffTrainedTodaySACHOS",
+            "columnName": "totalStaffTrainedTodaySACHOS",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "totalStaffTrainedTodaySRNs",
+            "columnName": "totalStaffTrainedTodaySRNs",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "totalStaffTrainedTodaySECHNs",
+            "columnName": "totalStaffTrainedTodaySECHNs",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "totalStaffTrainedTodayCHOs",
+            "columnName": "totalStaffTrainedTodayCHOs",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "totalStaffTrainedTodayCHAs",
+            "columnName": "totalStaffTrainedTodayCHAs",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "totalStaffTrainedTodayMCHAides",
+            "columnName": "totalStaffTrainedTodayMCHAides",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "totalStaffTrainedTodayTBA",
+            "columnName": "totalStaffTrainedTodayTBA",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "totalStaffTrainedTodayVolunteers",
+            "columnName": "totalStaffTrainedTodayVolunteers",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "totalStaffTrainedBefore",
+            "columnName": "totalStaffTrainedBefore",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "totalStaffObservedAndScored",
+            "columnName": "totalStaffObservedAndScored",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "totalStaffTrainedScoredMoreThan14",
+            "columnName": "totalStaffTrainedScoredMoreThan14",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "lastUpdatedTimestamp",
+            "columnName": "lastUpdatedTimestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "localNotes",
+            "columnName": "localNotes",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "isDraft",
+            "columnName": "isDraft",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "serverInfo.nodeId",
+            "columnName": "nodeId",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "serverInfo.objectId",
+            "columnName": "objectId",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "serverInfo.updateTime",
+            "columnName": "updateTime",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "serverInfo.createdTime",
+            "columnName": "createdTime",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "powerSupply.generator",
+            "columnName": "powersupply_generator",
+            "affinity": "INTEGER",
+            "notNull": false,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "powerSupply.solar",
+            "columnName": "powersupply_solar",
+            "affinity": "INTEGER",
+            "notNull": false,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "powerSupply.grid",
+            "columnName": "powersupply_grid",
+            "affinity": "INTEGER",
+            "notNull": false,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "powerSupply.none",
+            "columnName": "powersupply_none",
+            "affinity": "INTEGER",
+            "notNull": false,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "checklistMissed.missed1",
+            "columnName": "checklist_missed1",
+            "affinity": "INTEGER",
+            "notNull": false,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "checklistMissed.missed2",
+            "columnName": "checklist_missed2",
+            "affinity": "INTEGER",
+            "notNull": false,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "checklistMissed.missed3",
+            "columnName": "checklist_missed3",
+            "affinity": "INTEGER",
+            "notNull": false,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "checklistMissed.missed4",
+            "columnName": "checklist_missed4",
+            "affinity": "INTEGER",
+            "notNull": false,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "checklistMissed.missed5",
+            "columnName": "checklist_missed5",
+            "affinity": "INTEGER",
+            "notNull": false,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "checklistMissed.missed6",
+            "columnName": "checklist_missed6",
+            "affinity": "INTEGER",
+            "notNull": false,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "checklistMissed.missed7",
+            "columnName": "checklist_missed7",
+            "affinity": "INTEGER",
+            "notNull": false,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "checklistMissed.missed8",
+            "columnName": "checklist_missed8",
+            "affinity": "INTEGER",
+            "notNull": false,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "checklistMissed.missed9",
+            "columnName": "checklist_missed9",
+            "affinity": "INTEGER",
+            "notNull": false,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "checklistMissed.missed10",
+            "columnName": "checklist_missed10",
+            "affinity": "INTEGER",
+            "notNull": false,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "checklistMissed.missed11",
+            "columnName": "checklist_missed11",
+            "affinity": "INTEGER",
+            "notNull": false,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "checklistMissed.missed12",
+            "columnName": "checklist_missed12",
+            "affinity": "INTEGER",
+            "notNull": false,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "checklistMissed.missed13",
+            "columnName": "checklist_missed13",
+            "affinity": "INTEGER",
+            "notNull": false,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "checklistMissed.missed14",
+            "columnName": "checklist_missed14",
+            "affinity": "INTEGER",
+            "notNull": false,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "checklistMissed.missed15",
+            "columnName": "checklist_missed15",
+            "affinity": "INTEGER",
+            "notNull": false,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "checklistMissed.missed16",
+            "columnName": "checklist_missed16",
+            "affinity": "INTEGER",
+            "notNull": false,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "checklistMissed.missed17",
+            "columnName": "checklist_missed17",
+            "affinity": "INTEGER",
+            "notNull": false,
+            "defaultValue": "0"
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [
+          {
+            "name": "index_CradleTrainingForm_district",
+            "unique": false,
+            "columnNames": [
+              "district"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_CradleTrainingForm_district` ON `${TABLE_NAME}` (`district`)"
+          },
+          {
+            "name": "index_CradleTrainingForm_healthcareFacility",
+            "unique": false,
+            "columnNames": [
+              "healthcareFacility"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_CradleTrainingForm_healthcareFacility` ON `${TABLE_NAME}` (`healthcareFacility`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "Facility",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `name` TEXT, `districtId` INTEGER NOT NULL DEFAULT -1, `listOrder` INTEGER NOT NULL DEFAULT 0, `hasVisited` INTEGER NOT NULL DEFAULT 0, `localNotes` TEXT, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "districtId",
+            "columnName": "districtId",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "-1"
+          },
+          {
+            "fieldPath": "listOrder",
+            "columnName": "listOrder",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "hasVisited",
+            "columnName": "hasVisited",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "localNotes",
+            "columnName": "localNotes",
+            "affinity": "TEXT",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "LocationCheckIn",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `isUploaded` INTEGER NOT NULL, `timestamp` INTEGER NOT NULL, `providerName` TEXT NOT NULL, `accuracy` REAL, `latitude` REAL NOT NULL, `longitude` REAL NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isUploaded",
+            "columnName": "isUploaded",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "providerName",
+            "columnName": "providerName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "accuracy",
+            "columnName": "accuracy",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "latitude",
+            "columnName": "latitude",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "longitude",
+            "columnName": "longitude",
+            "affinity": "REAL",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "District",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `name` TEXT, `isOther` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "isOther",
+            "columnName": "isOther",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [],
+        "foreignKeys": []
+      }
+    ],
+    "views": [
+      {
+        "viewName": "ListCradleTrainingForm",
+        "createSql": "CREATE VIEW `${VIEW_NAME}` AS SELECT\n      form.id,\n      \n      form.nodeId,\n      form.objectId,\n      form.updateTime,\n      form.createdTime,\n      \n      d.id AS district_id,\n      d.name AS district_name,\n      d.isOther AS district_isOther,\n      \n      fac.id AS facility_id,\n      fac.name AS facility_name,\n\n      form.serverErrorMessage,\n      form.dateOfTraining,\n      form.recordLastUpdated,\n      form.localNotes,\n      form.isDraft\n    FROM\n      CradleTrainingForm AS form\n      LEFT JOIN District AS d on form.district = d.id\n      LEFT JOIN Facility AS fac on form.healthcareFacility = fac.id"
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '954bc7a83aab9bb38aa5f78c62e994f0')"
+    ]
+  }
+}

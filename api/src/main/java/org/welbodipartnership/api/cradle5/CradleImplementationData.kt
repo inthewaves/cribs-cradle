@@ -48,20 +48,20 @@ data class CradleImplementationData(
   val totalStaffTrainedTodayMidwives: Int?,
   @Json(name = "Control2199")
   val totalStaffTrainedTodaySACHOS: Int?,
-  @Json(name = "Control2200")
-  val totalStaffTrainedTodaySECHNMidwives: Int?,
   @Json(name = "Control2201")
   val totalStaffTrainedTodaySRNs: Int?,
+  @Json(name = "Control2200")
+  val totalStaffTrainedTodaySECHNs: Int?,
   @Json(name = "Control2202")
   val totalStaffTrainedTodayCHOs: Int?,
   @Json(name = "Control2203")
   val totalStaffTrainedTodayCHAs: Int?,
-  @Json(name = "Control2204")
-  val totalStaffTrainedTodayCSECHNs: Int?,
   @Json(name = "Control2205")
   val totalStaffTrainedTodayMCHAides: Int?,
   @Json(name = "Control2206")
   val totalStaffTrainedTodayTBA: Int?,
+  @Json(name = "Control2284")
+  val totalStaffTrainedTodayVolunteers: Int?,
   @Json(name = "Control2207")
   val totalStaffTrainedBefore: Int?,
   @Json(name = "Control2283")

@@ -51,13 +51,13 @@ data class CradleTrainingForm(
   val totalStaffTrainedTodayDoctors: Int?,
   val totalStaffTrainedTodayMidwives: Int?,
   val totalStaffTrainedTodaySACHOS: Int?,
-  val totalStaffTrainedTodaySECHNMidwives: Int?,
   val totalStaffTrainedTodaySRNs: Int?,
+  val totalStaffTrainedTodaySECHNs: Int?,
   val totalStaffTrainedTodayCHOs: Int?,
   val totalStaffTrainedTodayCHAs: Int?,
-  val totalStaffTrainedTodayCSECHNs: Int?,
   val totalStaffTrainedTodayMCHAides: Int?,
   val totalStaffTrainedTodayTBA: Int?,
+  val totalStaffTrainedTodayVolunteers: Int?,
   /**
    * How many of the staff trained today had ever been trained in CRADLE before?
    */
