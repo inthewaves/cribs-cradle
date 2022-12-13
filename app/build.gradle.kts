@@ -182,8 +182,6 @@ dependencies {
 
     implementation(libs.gms.location)
 
-    implementation("com.google.android.play:app-update-ktx:2.0.0")
-
     testImplementation(libs.junit.android)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.espresso.core)

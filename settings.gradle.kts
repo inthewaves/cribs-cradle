@@ -30,14 +30,14 @@ dependencyResolutionManagement {
             library("kotlinx-serialization-json", "org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.3")
             library("kotlinx-coroutines-android", "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.2")
 
-            version("acra", "5.9.3")
+            version("acra", "5.9.6")
             library("acra-http", "ch.acra", "acra-http").versionRef("acra")
             library("acra-toast", "ch.acra", "acra-toast").versionRef("acra")
             library("acra-limiter", "ch.acra", "acra-limiter").versionRef("acra")
             library("acra-advancedscheduler", "ch.acra", "acra-advanced-scheduler").versionRef("acra")
 
-            library("androidx-core-ktx", "androidx.core:core-ktx:1.8.0")
-            library("androidx-appcompat", "androidx.appcompat:appcompat:1.4.2")
+            library("androidx-core-ktx", "androidx.core:core-ktx:1.9.0")
+            library("androidx-appcompat", "androidx.appcompat:appcompat:1.5.1")
 
             version("androidxlifecycle", "2.4.1")
             library("androidx-lifecycle-runtime-ktx", "androidx.lifecycle", "lifecycle-runtime-ktx").versionRef("androidxlifecycle")
@@ -57,7 +57,7 @@ dependencyResolutionManagement {
             library("accompanist-insets", "com.google.accompanist", "accompanist-insets").versionRef("accompanist")
             library("accompanist-insetsui", "com.google.accompanist", "accompanist-insets-ui").versionRef("accompanist")
 
-            library("google-tink", "com.google.crypto.tink:tink-android:1.6.1")
+            library("google-tink", "com.google.crypto.tink:tink-android:1.7.0")
 
             library("signal-argon2", "org.signal:argon2:13.1")
 
@@ -78,7 +78,7 @@ dependencyResolutionManagement {
             // ([^ ]*) = \{ module = "(.*):(.*)", version.ref = "(.*)" \} -> library("$1", "$2", "$3").versionRef("$4")
             // ([^ ]*) = "(.*)" -> library("$1", "$2")
 
-            library("androidx-navigation-compose", "androidx.navigation:navigation-compose:2.4.2")
+            library("androidx-navigation-compose", "androidx.navigation:navigation-compose:2.5.3")
 
             version("room",  "2.4.2")
             library("androidx-room-common", "androidx.room", "room-common").versionRef("room")
@@ -90,12 +90,12 @@ dependencyResolutionManagement {
 
             library("androidx-activity-compose", "androidx.activity:activity-compose:1.4.0")
 
-            library("sqlcipher", "net.zetetic:android-database-sqlcipher:4.5.1")
+            library("sqlcipher", "net.zetetic:android-database-sqlcipher:4.5.2")
 
             version("paging", "3.1.1")
             library("androidx-paging-common", "androidx.paging", "paging-common-ktx").versionRef("paging")
             library("androidx-paging-runtime", "androidx.paging", "paging-runtime-ktx").versionRef("paging")
-            library("androidx-paging-compose", "androidx.paging:paging-compose:1.0.0-alpha15")
+            library("androidx-paging-compose", "androidx.paging:paging-compose:1.0.0-alpha17")
 
             library("androidx-constraintlayout-compose", "androidx.constraintlayout:constraintlayout-compose:1.0.1")
 
@@ -107,11 +107,11 @@ dependencyResolutionManagement {
             library("compose-material-iconsext", "androidx.compose.material", "material-icons-extended").versionRef("compose")
             library("compose-ui-tooling-preview", "androidx.compose.ui", "ui-tooling-preview").versionRef("compose")
 
-            version("okhttp", "4.9.3")
+            version("okhttp", "4.10.0")
             library("okhttp-okhttp", "com.squareup.okhttp3", "okhttp").versionRef("okhttp")
             library("okhttp-mockwebserver", "com.squareup.okhttp3", "mockwebserver").versionRef("okhttp")
 
-            library("okio", "com.squareup.okio:okio:3.1.0")
+            library("okio", "com.squareup.okio:okio:3.2.0")
 
             plugin("ksp", "com.google.devtools.ksp").version("1.6.10-1.0.2")
             version("moshi", "1.13.0")
@@ -120,14 +120,14 @@ dependencyResolutionManagement {
             library("moshi-adapters", "com.squareup.moshi", "moshi-adapters").versionRef("moshi")
             // library("valiktor", "org.valiktor:valiktor-core:0.12.0")
 
-            version("protobuf", "3.21.1")
+            version("protobuf", "3.21.9")
             library("protobuf-kotlin-lite", "com.google.protobuf", "protobuf-kotlin-lite").versionRef("protobuf")
             library("protobuf-compiler", "com.google.protobuf", "protoc").versionRef("protobuf")
             plugin("protobuf", "com.google.protobuf").version("0.8.18")
 
             library("datastore", "androidx.datastore:datastore:1.0.0")
 
-            library("gms-location", "com.google.android.gms:play-services-location:20.0.0")
+            library("gms-location", "com.google.android.gms:play-services-location:21.0.1")
 
             version("junit5", "5.8.2")
             library("junit5-androidGradlePlugin", "de.mannodermaus.gradle.plugins:android-junit5:1.8.2.0")
