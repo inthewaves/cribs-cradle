@@ -50,8 +50,8 @@ android {
         buildConfigField("String", "DEFAULT_API_URL", "\"$PRODUCTION_URL\"")
 
         buildConfigField("String", "DEFAULT_ACRA_URL", "\"https://crashes.inthewaves.org/report\"")
-        buildConfigField("String", "ACRA_USER", "\"yq2jO2TVxjjDHHOm\"")
-        buildConfigField("String", "ACRA_PASS", "\"f1abRBqbvvKhJaCy\"")
+        buildConfigField("String", "ACRA_USER", "\"Hh7oXWAw1npwCcY1\"")
+        buildConfigField("String", "ACRA_PASS", "\"VnYR4klZkwEs8knF\"")
     }
 
     signingConfigs {
