@@ -13,9 +13,7 @@ sealed interface AuthState {
   @Immutable
   class ForcedRelogin(val username: String) : AuthState
   @Immutable
-  class TokenExpired(val username: String) : AuthState
-  @Immutable
-  class LoggedInUnlocked(val username: String) : AuthState
+  class LoggedInUnlocked(val username: String, val isTokenExpired: Boolean) : AuthState
   @Immutable
   class LoggedInLocked(val username: String) : AuthState
   @Immutable

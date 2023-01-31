@@ -75,7 +75,7 @@ class AuthRepository @Inject internal constructor(
   appForegroundedObserver: AppForegroundedObserver
 ) {
 
-  val nextExpiryTimeFlow: Flow<UnixTimestamp?> = appValuesStore.lastTimeAuthedFlow
+  val nextLockTimeFlow: Flow<UnixTimestamp?> = appValuesStore.lastTimeAuthedFlow
     .map { lastTimeAuthed ->
       if (lastTimeAuthed != null) {
         lastTimeAuthed + AUTH_TIMEOUT
@@ -128,11 +128,10 @@ class AuthRepository @Inject internal constructor(
 
       when {
         forceReauth -> AuthState.ForcedRelogin(username)
-        now >= tokenExpiryTime -> AuthState.TokenExpired(username)
         lastTimeAuthedForComparison durationBetween now >= AUTH_TIMEOUT -> {
           AuthState.LoggedInLocked(username)
         }
-        else -> AuthState.LoggedInUnlocked(username)
+        else -> AuthState.LoggedInUnlocked(username, isTokenExpired = now >= tokenExpiryTime)
       }
     }
   }.stateIn(
@@ -728,6 +727,11 @@ class AuthRepository @Inject internal constructor(
     val currentAuthTime = appValuesStore.lastTimeAuthedFlow.first() ?: UnixTimestamp(0)
     val expiredTime: UnixTimestamp = currentAuthTime - AUTH_TIMEOUT
     appValuesStore.setLastTimeAuthenticated(expiredTime)
+  }
+
+  suspend fun forceLockscreenAndServerLogin() {
+    Log.d(TAG, "forceLockscreenAndServerLogin()")
+    appValuesStore.setForceReauth(true)
   }
 
   suspend fun logout() {

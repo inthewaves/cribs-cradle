@@ -33,7 +33,7 @@ class HomeViewModel @Inject constructor(
   }
 
   val lockAppButtonSubtitleTextWithTimeLeftFlow: StateFlow<String> = combine(
-    authRepository.nextExpiryTimeFlow,
+    authRepository.nextLockTimeFlow,
     tickerFLow
   ) { nextExpiryTime, _ ->
     if (nextExpiryTime != null) {

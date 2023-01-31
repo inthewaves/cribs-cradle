@@ -77,6 +77,27 @@ private fun SyncScreen(viewModel: SyncScreenViewModel) {
       CompositionLocalProvider(
         LocalTextStyle provides LocalTextStyle.current.copy(textAlign = TextAlign.Center)
       ) {
+
+        val isAuthTokenExpired by viewModel.isAuthTokenExpiredFlow.collectAsState()
+
+        if (isAuthTokenExpired) {
+          BaseDetailsCard(
+            title = null,
+            horizontalAlignment = Alignment.CenterHorizontally
+          ) {
+            Text(
+              "Your information might be outdated, and syncing might not work until you login " +
+                "with MedSciNet again. Ensure you have internet before proceeding.",
+              textAlign = TextAlign.Center
+            )
+            Spacer(Modifier.height(8.dp))
+            Button(onClick = viewModel::onReloginClicked) {
+              Text(stringResource(R.string.sync_screen_relogin_button))
+            }
+          }
+          Spacer(Modifier.height(24.dp))
+        }
+
         syncStatus.let { status ->
           when (status) {
             is SyncRepository.SyncStatus.Active -> {

@@ -124,6 +124,7 @@
     <string name="form_cannot_edit_patient_already_on_server">Unable to edit patient and their outcomes that are already on the server</string>
     <string name="form_snackbar_failed_to_save_exception">Failed to save due to an exception / error</string>
     <string name="sync_screen_start_sync_button">Sync</string>
+    <string name="sync_screen_relogin_button">Login again</string>
     <string name="unknown_district">Unknown district</string>
     <string name="district_label_s">District: %1$s</string>
     <string name="logout_dialog_title">Do you want to logout?</string>

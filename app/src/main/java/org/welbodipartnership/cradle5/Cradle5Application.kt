@@ -109,7 +109,7 @@ class Cradle5Application : Application(), Configuration.Provider {
       authRepository.authStateFlow.collect { authState ->
         ACRA.errorReporter.putCustomData("authState", authState?.let { it::class.simpleName}.toString())
       }
-      authRepository.nextExpiryTimeFlow.collect {
+      authRepository.nextLockTimeFlow.collect {
         ACRA.errorReporter.putCustomData("nextExpiryTime", it.toString())
       }
       appValuesStore.lastSyncCompletedTimestamp.collect {
