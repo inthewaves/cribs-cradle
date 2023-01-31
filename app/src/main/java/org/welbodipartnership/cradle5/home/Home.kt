@@ -19,16 +19,19 @@
 package org.welbodipartnership.cradle5.home
 
 import android.util.Log
+import android.widget.Toast
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.BottomDrawer
@@ -45,6 +48,8 @@ import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.material.contentColorFor
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Bloodtype
 import androidx.compose.material.icons.filled.LocationCity
 import androidx.compose.material.icons.filled.LocationOn
@@ -81,6 +86,7 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import com.google.accompanist.insets.ui.BottomNavigation
+import org.acra.ktx.sendSilentlyWithAcra
 import org.welbodipartnership.cradle5.BuildConfig
 import org.welbodipartnership.cradle5.LeafScreen
 import org.welbodipartnership.cradle5.LoggedInNavigation
@@ -89,7 +95,11 @@ import org.welbodipartnership.cradle5.Screen
 import org.welbodipartnership.cradle5.domain.auth.AuthState
 import org.welbodipartnership.cradle5.ui.composables.LocalUrlProvider
 import org.welbodipartnership.cradle5.ui.composables.UsingServerText
+import org.welbodipartnership.cradle5.ui.composables.forms.BringIntoViewOutlinedTextField
+import org.welbodipartnership.cradle5.ui.composables.forms.darkerDisabledOutlinedTextFieldColors
 import org.welbodipartnership.cradle5.util.launchPrivacyPolicyWebIntent
+
+class MenuBugReportException(message: String) : Exception(message)
 
 @Composable
 fun LoggedInHome(
@@ -122,6 +132,39 @@ fun LoggedInHome(
       },
       dismissButton = {
         TextButton(onClick = { showLogoutConfirmDialog = false }) {
+          Text(stringResource(id = R.string.cancel))
+        }
+      }
+    )
+  }
+
+  var showBugReportDialog by rememberSaveable { mutableStateOf(false) }
+  if (showBugReportDialog) {
+    val (bugReportText, onBugReportTextChanged) = rememberSaveable { mutableStateOf("") }
+    val context = LocalContext.current
+    AlertDialog(
+      onDismissRequest = { showBugReportDialog = false },
+      title = { Text("Report a bug") },
+      text = {
+        BringIntoViewOutlinedTextField(
+          value = bugReportText,
+          onValueChange = onBugReportTextChanged,
+          modifier = Modifier.fillMaxWidth(),
+          label = { Text("Briefly describe the issue") },
+          colors = darkerDisabledOutlinedTextFieldColors()
+        )
+      },
+      confirmButton = {
+        TextButton(onClick = {
+          MenuBugReportException(bugReportText).sendSilentlyWithAcra()
+          Toast.makeText(context, "Bug report will be uploaded when internet is available", Toast.LENGTH_LONG).show()
+          showBugReportDialog = false
+        }) {
+          Text("Submit")
+        }
+      },
+      dismissButton = {
+        TextButton(onClick = { showBugReportDialog = false }) {
           Text(stringResource(id = R.string.cancel))
         }
       }
@@ -220,6 +263,20 @@ fun LoggedInHome(
           )
         }
 
+        item {
+          ListItem(
+            text = { Text("Upload bug report") },
+            secondaryText = { Text("Click here to notify the developer if you've encountered an issue.") },
+            singleLineSecondaryText = false,
+            icon = {
+              Icon(
+                Icons.Default.BugReport,
+                contentDescription = "Upload bug report"
+              )
+            },
+            modifier = Modifier.clickable(onClick = { showBugReportDialog = true })
+          )
+        }
         item { Divider() }
         item {
           Text(
