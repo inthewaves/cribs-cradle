@@ -839,6 +839,7 @@ fun MaternalDeathForm(
 
     BringIntoViewOutlinedTextField(
       label = { Text(stringResource(R.string.maternal_death_summary_of_mdsr_findings_label)) },
+      enabled = isFormEnabled == true,
       value = mdsrFindingsState.value ?: "",
       onValueChange = { mdsrFindingsState.value = it },
       modifier = Modifier.fillMaxWidth(),
