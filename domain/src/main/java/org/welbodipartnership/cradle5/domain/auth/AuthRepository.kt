@@ -161,9 +161,14 @@ class AuthRepository @Inject internal constructor(
      * the facility, districts, enums download.
      */
     abstract val gotTokenFromServer: Boolean
+    abstract val isLocalPasswordCheckSuccess: Boolean
+
+    abstract fun withSuccessfulLocalPasswordCheck(): LoginResult
 
     object Success : LoginResult() {
       override val gotTokenFromServer: Boolean = true
+      override val isLocalPasswordCheckSuccess: Boolean = true
+      override fun withSuccessfulLocalPasswordCheck(): LoginResult = this
     }
 
     /**
@@ -174,13 +179,20 @@ class AuthRepository @Inject internal constructor(
       val errorMessage: String?,
       val errorCode: Int?,
       val errorType: String? = null,
+      override val isLocalPasswordCheckSuccess: Boolean = false,
     ) : LoginResult() {
       val isFromBadCredentials: Boolean get() = errorCode == 400 && errorType == "invalid_grant"
+      override fun withSuccessfulLocalPasswordCheck(): LoginResult =
+        this.copy(isLocalPasswordCheckSuccess = true)
     }
     data class Exception(
       override val gotTokenFromServer: Boolean,
-      val errorMessage: String?
-    ) : LoginResult()
+      val errorMessage: String?,
+      override val isLocalPasswordCheckSuccess: Boolean = false,
+    ) : LoginResult() {
+      override fun withSuccessfulLocalPasswordCheck(): LoginResult =
+        this.copy(isLocalPasswordCheckSuccess = true)
+    }
   }
 
   suspend fun login(
@@ -491,11 +503,7 @@ class AuthRepository @Inject internal constructor(
     val result = reauthForLockscreenInner(password, forceServerRefresh, eventMessagesChannel)
     when (result) {
       LoginResult.Success -> {
-        Log.w(TAG, "reauth(): successful reauthentication; setting last auth time to now")
-        appValuesStore.apply {
-          setLastTimeAuthenticatedToNow()
-          setForceReauth(false)
-        }
+        Log.w(TAG, "reauth(): successful reauthentication")
       }
       is LoginResult.Exception -> {
         if (!result.gotTokenFromServer) {
@@ -505,7 +513,7 @@ class AuthRepository @Inject internal constructor(
         }
       }
       is LoginResult.Invalid -> {
-        if (!result.gotTokenFromServer) {
+        if (!result.gotTokenFromServer && result.isLocalPasswordCheckSuccess) {
           appValuesStore.setWarningMessage(
             buildString {
               append("Got an issue during reauthentication with the server ")
@@ -522,6 +530,15 @@ class AuthRepository @Inject internal constructor(
         }
       }
     }
+
+    if (result.isLocalPasswordCheckSuccess || result is LoginResult.Success) {
+      Log.w(TAG, "reauth(): local password check was successful")
+      appValuesStore.apply {
+        setLastTimeAuthenticatedToNow()
+        setForceReauth(false)
+      }
+    }
+
     return result
   }
 
@@ -541,7 +558,8 @@ class AuthRepository @Inject internal constructor(
     val isLocalPasswordMatch: Boolean = hasher.verifyPassword(password, existingHash)
     Log.d(
       TAG,
-      "reauthForLockscreen(forceServerRefresh = $forceServerRefresh) -> $isLocalPasswordMatch"
+      "reauthForLockscreen(forceServerRefresh = $forceServerRefresh) " +
+        "-> isLocalPasswordMatch: $isLocalPasswordMatch"
     )
     if (isLocalPasswordMatch || forceServerRefresh) {
       if (forceServerRefresh) {
@@ -551,7 +569,9 @@ class AuthRepository @Inject internal constructor(
           skipTimeChecks = true,
           isLocalPasswordIncorrect = !isLocalPasswordMatch,
           eventMessagesChannel = eventMessagesChannel,
-        )
+        ).let { result ->
+          if (isLocalPasswordMatch) result.withSuccessfulLocalPasswordCheck() else result
+        }
       } else {
         Log.d(TAG, "doing opportunistic token refresh")
 
@@ -560,7 +580,9 @@ class AuthRepository @Inject internal constructor(
           skipTimeChecks = false,
           isLocalPasswordIncorrect = !isLocalPasswordMatch,
           eventMessagesChannel = eventMessagesChannel,
-        )
+        ).let { result ->
+          if (isLocalPasswordMatch) result.withSuccessfulLocalPasswordCheck() else result
+        }
         Log.d(TAG, "opportunistic token refresh result: $result")
 
         if (result is LoginResult.Invalid && result.isFromBadCredentials) {
@@ -581,7 +603,12 @@ class AuthRepository @Inject internal constructor(
     return if (isLocalPasswordMatch) {
       LoginResult.Success
     } else {
-      LoginResult.Invalid(gotTokenFromServer = false, "Invalid password", errorCode = null)
+      LoginResult.Invalid(
+        gotTokenFromServer = false,
+        "Invalid password",
+        errorCode = null,
+        isLocalPasswordCheckSuccess = false
+      )
     }
   }
 
