@@ -21,17 +21,9 @@ sealed interface AuthState {
   @Immutable
   class ForcedRelogin(override val hasValidToken: Boolean, val username: String) : AuthState
   @Immutable
-  class TokenExpired(val username: String) : AuthState {
-    override val hasValidToken = false
-  }
+  class LoggedInUnlocked(val username: String, override val hasValidToken: Boolean) : AuthState
   @Immutable
-  class LoggedInUnlocked(val username: String) : AuthState {
-    override val hasValidToken = true
-  }
-  @Immutable
-  class LoggedInLocked(val username: String) : AuthState {
-    override val hasValidToken = true
-  }
+  class LoggedInLocked(val username: String, override val hasValidToken: Boolean) : AuthState
   @Immutable
   class BlockingWarningMessage(override val hasValidToken: Boolean, val warningMessage: String) : AuthState
 }

@@ -102,6 +102,7 @@
     <string name="cradle_form_cannot_edit_already_on_server">Unable to edit form that is already uploaded to the server</string>
     <string name="cradle_form_snackbar_failed_to_save_exception">Failed to save due to an exception</string>
     <string name="sync_screen_start_sync_button">Sync</string>
+    <string name="sync_screen_relogin_button">Login again</string>
     <string name="unknown_district">Unknown district</string>
     <string name="district_label_s">District: %1$s</string>
     <string name="logout_dialog_title">Do you want to logout?</string>

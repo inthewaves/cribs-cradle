@@ -5,9 +5,12 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.welbodipartnership.cradle5.data.database.CradleDatabaseWrapper
+import org.welbodipartnership.cradle5.domain.auth.AuthRepository
+import org.welbodipartnership.cradle5.domain.auth.AuthState
 import org.welbodipartnership.cradle5.domain.sync.SyncRepository
 import org.welbodipartnership.cradle5.util.datetime.UnixTimestamp
 import javax.inject.Inject
@@ -15,8 +18,23 @@ import javax.inject.Inject
 @HiltViewModel
 class SyncScreenViewModel @Inject constructor(
   private val syncRepository: SyncRepository,
+  private val authRepository: AuthRepository,
   private val dbWrapper: CradleDatabaseWrapper,
 ) : ViewModel() {
+
+  val isAuthTokenExpiredFlow: StateFlow<Boolean> = authRepository.authStateFlow
+    .map { state ->
+      if (state is AuthState.LoggedInUnlocked) {
+        !state.hasValidToken
+      } else {
+        false
+      }
+    }
+    .stateIn(
+      viewModelScope,
+      SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000L),
+      false
+    )
 
   val currentSyncStatusFlow: StateFlow<SyncRepository.SyncStatus?> =
     syncRepository.currentSyncStatusFlow
@@ -66,6 +84,10 @@ class SyncScreenViewModel @Inject constructor(
       SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000L),
       null
     )
+
+  fun onReloginClicked() {
+    viewModelScope.launch { authRepository.forceLockscreenAndServerLogin() }
+  }
 
   fun enqueueSync() {
     viewModelScope.launch {
