@@ -8,12 +8,11 @@ dependencyResolutionManagement {
         // maven { url = URI("https://androidx.dev/snapshots/builds/8003490/artifacts/repository") }
     }
 
-    enableFeaturePreview("VERSION_CATALOGS")
     versionCatalogs {
         create("appconfig"){
             version("minSdkVersion", "23") // Android 6.0
-            version("compileSdkVersion", "33")
-            version("targetSdkVersion", "33")
+            version("compileSdkVersion", "34")
+            version("targetSdkVersion", "34")
         }
 
         create("libs") {
