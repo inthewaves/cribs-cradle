@@ -1,12 +1,11 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 buildscript {
-    val agp_version by extra("8.8.2")
-  repositories {
+    repositories {
         google()
         mavenCentral()
     }
     dependencies {
-        classpath("com.android.tools.build:gradle:$agp_version")
+        classpath("com.android.tools.build:gradle:7.2.2")
         classpath(libs.kotlin.gradle.plugin)
         classpath(libs.kotlin.serialization.base)
 

@@ -65,10 +65,10 @@ android {
         create("release") {
             storeFile = rootProject.file("release.keystore.jks")
             storePassword =
-                gradleLocalProperties(rootProject.rootDir, providers).getProperty("cradle5AppKeystorePassword")
-            keyAlias = gradleLocalProperties(rootProject.rootDir, providers).getProperty("cradle5AppKeyAlias")
+                gradleLocalProperties(rootProject.rootDir).getProperty("cradle5AppKeystorePassword")
+            keyAlias = gradleLocalProperties(rootProject.rootDir).getProperty("cradle5AppKeyAlias")
             keyPassword =
-                gradleLocalProperties(rootProject.rootDir, providers).getProperty("cradle5AppKeyPassword")
+                gradleLocalProperties(rootProject.rootDir).getProperty("cradle5AppKeyPassword")
         }
     }
 
@@ -116,7 +116,6 @@ android {
     }
     buildFeatures {
         compose = true
-        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = libs.versions.compose.get()
