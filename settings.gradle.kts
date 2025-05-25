@@ -8,7 +8,7 @@ dependencyResolutionManagement {
         // maven { url = URI("https://androidx.dev/snapshots/builds/8003490/artifacts/repository") }
     }
 
-    enableFeaturePreview("VERSION_CATALOGS")
+    // enableFeaturePreview("VERSION_CATALOGS")
     versionCatalogs {
         create("appconfig"){
             version("minSdkVersion", "23") // Android 6.0
@@ -21,7 +21,7 @@ dependencyResolutionManagement {
 
             library("desugar", "com.android.tools:desugar_jdk_libs:1.1.5")
 
-            version("kotlin", "1.6.21")
+            version("kotlin", "1.9.22")
             // Support for using version catalogs in buildscript and plugin blocks is in 7.2.0
             // https://github.com/gradle/gradle/pull/17394
             // https://github.com/gradle/gradle/commit/269148642b4499861bced4b028a400f856273bb2
@@ -122,7 +122,7 @@ dependencyResolutionManagement {
             version("protobuf", "3.21.9")
             library("protobuf-kotlin-lite", "com.google.protobuf", "protobuf-kotlin-lite").versionRef("protobuf")
             library("protobuf-compiler", "com.google.protobuf", "protoc").versionRef("protobuf")
-            plugin("protobuf", "com.google.protobuf").version("0.8.18")
+            plugin("protobuf", "com.google.protobuf").version("0.9.5")
 
             library("datastore", "androidx.datastore:datastore:1.0.0")
 

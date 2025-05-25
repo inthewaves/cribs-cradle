@@ -1,8 +1,4 @@
-import com.google.protobuf.gradle.builtins
-import com.google.protobuf.gradle.generateProtoTasks
-import com.google.protobuf.gradle.id
-import com.google.protobuf.gradle.protobuf
-import com.google.protobuf.gradle.protoc
+import com.google.protobuf.gradle.*
 
 @Suppress("DSL_SCOPE_VIOLATION")
 plugins {
@@ -46,7 +42,7 @@ android {
 
     sourceSets {
         getByName("main") {
-
+            /*
             // https://github.com/google/protobuf-gradle-plugin/pull/433/files
             fun com.android.build.api.dsl.AndroidSourceSet.proto(action: SourceDirectorySet.() -> Unit) {
                 (this as? ExtensionAware)!!
@@ -55,6 +51,8 @@ android {
                     .let { it as? SourceDirectorySet }!!
                     .apply(action)
             }
+
+             */
 
             proto {
                 srcDir("src/main/proto")
@@ -83,7 +81,7 @@ protobuf {
 
     generateProtoTasks {
         all().forEach { task ->
-            task.builtins {
+            task.plugins {
                 id("java") {
                     option("lite")
                 }
