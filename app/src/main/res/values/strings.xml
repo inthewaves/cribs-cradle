@@ -235,6 +235,7 @@
     <string name="unknown_facility">Unknown healthcare facility</string>
     <string name="cradle_form_list_last_update_label">Last update</string>
     <string name="cradle_form_which_steps_in_checklist_missed_label">If they didn\'t score full marks (17/17), which steps in the checklist were missed?</string>
+    <string name="forgot_password">Forgot password</string>
 
     <plurals name="cradle_form_snackbar_failed_to_save_there_are_d_errors">
         <item quantity="one">Failed to save, as there is %1$d error.</item>

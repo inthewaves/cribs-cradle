@@ -579,7 +579,7 @@ private fun LoginForm(
       onClick = onForgotPasswordClicked,
       modifier = Modifier.align(Alignment.CenterHorizontally)
     ) {
-      Text("Forgot password")
+      Text(stringResource(R.string.forgot_password))
     }
 
     Spacer(Modifier.height(2.dp))
