@@ -106,7 +106,7 @@ dependencyResolutionManagement {
             library("compose-material-iconsext", "androidx.compose.material", "material-icons-extended").versionRef("compose")
             library("compose-ui-tooling-preview", "androidx.compose.ui", "ui-tooling-preview").versionRef("compose")
 
-            version("okhttp", "4.10.0")
+            version("okhttp", "4.11.0")
             library("okhttp-okhttp", "com.squareup.okhttp3", "okhttp").versionRef("okhttp")
             library("okhttp-mockwebserver", "com.squareup.okhttp3", "mockwebserver").versionRef("okhttp")
 
