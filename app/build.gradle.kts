@@ -35,7 +35,7 @@ android {
         minSdk = appconfig.versions.minSdkVersion.get().toInt()
         targetSdk = appconfig.versions.targetSdkVersion.get().toInt()
         versionCode = 17
-        versionName = "0.7.2"
+        versionName = "0.7.2-test"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
@@ -132,6 +132,7 @@ dependencies {
     api(project(":api"))
     api(project(":data"))
     api(project(":domain"))
+    api(project(":argon2"))
 
     // implementation(kotlin("reflect"))
 
@@ -176,7 +177,6 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
 
     implementation(libs.google.tink)
-    implementation(libs.signal.argon2)
 
     implementation(libs.gms.location)
 

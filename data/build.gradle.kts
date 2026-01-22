@@ -92,6 +92,7 @@ protobuf {
 
 dependencies {
     api(project(":util"))
+    api(project(":argon2"))
 
     coreLibraryDesugaring(libs.desugar)
 
@@ -118,8 +119,6 @@ dependencies {
 
     api(libs.protobuf.kotlin.lite)
     implementation(libs.datastore)
-
-    implementation(libs.signal.argon2)
 
     testImplementation(kotlin("test-junit5"))
     testImplementation(libs.junit5.api)

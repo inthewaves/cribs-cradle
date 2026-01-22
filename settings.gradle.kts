@@ -58,8 +58,6 @@ dependencyResolutionManagement {
 
             library("google-tink", "com.google.crypto.tink:tink-android:1.7.0")
 
-            library("signal-argon2", "org.signal:argon2:13.1")
-
             version("hilt", "2.42")
             library("dagger-android-gradlePlugin", "com.google.dagger", "hilt-android-gradle-plugin").versionRef("hilt")
             plugin("dagger-android-plugin", "dagger.hilt.android.plugin").versionRef("hilt")
@@ -155,3 +153,4 @@ include(":api")
 include(":data")
 include(":util")
 include(":domain")
+include(":argon2")
