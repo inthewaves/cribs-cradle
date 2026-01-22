@@ -122,7 +122,7 @@ dependencyResolutionManagement {
             version("protobuf", "3.21.9")
             library("protobuf-kotlin-lite", "com.google.protobuf", "protobuf-kotlin-lite").versionRef("protobuf")
             library("protobuf-compiler", "com.google.protobuf", "protoc").versionRef("protobuf")
-            plugin("protobuf", "com.google.protobuf").version("0.8.18")
+            plugin("protobuf", "com.google.protobuf").version("0.9.6")
 
             library("datastore", "androidx.datastore:datastore:1.0.0")
 

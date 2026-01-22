@@ -64,11 +64,10 @@ android {
 
         create("release") {
             storeFile = rootProject.file("release.keystore.jks")
-            storePassword =
-                gradleLocalProperties(rootProject.rootDir).getProperty("cradle5AppKeystorePassword")
-            keyAlias = gradleLocalProperties(rootProject.rootDir).getProperty("cradle5AppKeyAlias")
-            keyPassword =
-                gradleLocalProperties(rootProject.rootDir).getProperty("cradle5AppKeyPassword")
+            val props = gradleLocalProperties(rootDir, providers)
+            storePassword = props.getProperty("cradle5AppKeystorePassword")
+            keyAlias = props.getProperty("cradle5AppKeyAlias")
+            keyPassword = props.getProperty("cradle5AppKeyPassword")
         }
     }
 
