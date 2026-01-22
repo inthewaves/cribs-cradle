@@ -8,7 +8,7 @@ dependencyResolutionManagement {
         // maven { url = URI("https://androidx.dev/snapshots/builds/8003490/artifacts/repository") }
     }
 
-    enableFeaturePreview("VERSION_CATALOGS")
+    // enableFeaturePreview("VERSION_CATALOGS")
     versionCatalogs {
         create("appconfig"){
             version("minSdkVersion", "23") // Android 6.0
